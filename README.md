@@ -1,7 +1,5 @@
 # Aries Framework for .NET
 
-[![Build Status](https://dev.azure.com/Hyperledger/Aries/_apis/build/status/hyperledger.aries-framework-dotnet?branchName=master)](https://dev.azure.com/Hyperledger/Aries/_build/latest?definitionId=80&branchName=master)
-[![Build Status](https://travis-ci.com/hyperledger/aries-framework-dotnet.svg?branch=master)](https://travis-ci.com/hyperledger/aries-framework-dotnet.svg?branch=master)
 [![MyGet](https://img.shields.io/nuget/v/Hyperledger.Aries.svg)](https://www.nuget.org/packages/Hyperledger.Aries/)
 
 Aries Framework for .NET is a comprehensive implementation of the Aries protocols. It's purpose is to provide a universal library for building SSI application for the cloud, mobile and IoT stack.
