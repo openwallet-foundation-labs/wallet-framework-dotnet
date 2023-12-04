@@ -50,7 +50,7 @@ namespace Hyperledger.Aries.Tests.Protocols
         [Fact]
         public void CreateDiscoveryQueryResponseThrowsArguementNullException()
         {
-            Assert.Throws<ArgumentNullException>(() => _discoveryService.CreateQueryResponse(_holderContext, new Features.Discovery.DiscoveryQueryMessage()));
+            Assert.Throws<ArgumentNullException>(() => _discoveryService.CreateQueryResponse(_holderContext, new DiscoveryQueryMessage()));
         }
 
         [Fact]
