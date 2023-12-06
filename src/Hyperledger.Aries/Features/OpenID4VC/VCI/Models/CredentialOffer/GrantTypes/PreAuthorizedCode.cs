@@ -29,5 +29,11 @@ namespace Hyperledger.Aries.Features.OpenId4Vc.Vci.Models.CredentialOffer.GrantT
         /// </summary>
         [JsonProperty("user_pin_description")]
         public string? UserPinDescription { get; set; }
+        
+        /// <summary>
+        ///     Gets or sets the length of the user PIN (if set, it must be between 4 and 8 digits)
+        /// </summary>
+        [JsonProperty("user_pin_length")]
+        public int? UserPinLength { get; set; }
     }
 }
