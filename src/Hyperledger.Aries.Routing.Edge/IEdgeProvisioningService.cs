@@ -6,7 +6,9 @@ namespace Hyperledger.Aries.Agents.Edge
 {
     public interface IEdgeProvisioningService
     {
-        Task ProvisionAsync(AgentOptions options, CancellationToken cancellationToken = default);
+        Task ProvisionAsync(AgentOptions agentOptions, CancellationToken cancellationToken = default);
         Task ProvisionAsync(CancellationToken cancellationToken = default);
+        Task CreateMediatorConnectionAndInboxAsync(AgentOptions agentOptions, CancellationToken cancellationToken = default);
+        Task CreateMediatorConnectionAndInboxAsync(CancellationToken cancellationToken = default);
     }
 }
