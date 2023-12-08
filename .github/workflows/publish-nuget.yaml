@@ -13,7 +13,7 @@ jobs:
 
     env:
       BUILD_CONFIG: 'Release'
-      SOLUTION: 'Hyperledger.Aries.sln'
+      SOLUTION: '../../src/Hyperledger.Aries.sln'
 
     runs-on: ubuntu-latest
 
@@ -37,5 +37,5 @@ jobs:
     #- name: Run tests
     #run: dotnet test /p:Configuration=$env:BUILD_CONFIG --no-restore --no-build --verbosity normal
 
-    - name: Publish
-      run: nuget push **\*.nupkg -Source 'https://api.nuget.org/v3/index.json' -ApiKey ${{secrets.NUGET_API_KEY}}
+    #- name: Publish
+      #run: nuget push **\*.nupkg -Source 'https://api.nuget.org/v3/index.json' -ApiKey ${{secrets.NUGET_API_KEY}}
