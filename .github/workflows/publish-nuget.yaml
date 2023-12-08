@@ -13,7 +13,7 @@ jobs:
 
     env:
       BUILD_CONFIG: 'Release'
-      SOLUTION: '../../src/Hyperledger.Aries.sln'
+      SOLUTION: '/src/Hyperledger.Aries.sln'
 
     runs-on: ubuntu-latest
 
