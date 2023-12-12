@@ -32,18 +32,18 @@ namespace Hyperledger.Aries.Features.OpenId4Vc.Vci.Models.CredentialOffer.GrantT
         ///     Gets or sets the length of the transaction code.
         /// </summary>
         [JsonProperty("length")]
-        public TransactionCode? Length { get; set; }
+        public int? Length { get; set; }
         
         /// <summary>
         ///     Gets or sets a description of the transaction code.
         /// </summary>
         [JsonProperty("description")]
-        public TransactionCode? Description { get; set; }
+        public string? Description { get; set; }
         
         /// <summary>
         ///    Gets or sets the input mode of the transaction code which specifies the valid character set. (Must be 'numeric' ot 'text')
         /// </summary>
         [JsonProperty("input_mode")]
-        public TransactionCode? InputMode { get; set; }
+        public string? InputMode { get; set; }
     }
 }
