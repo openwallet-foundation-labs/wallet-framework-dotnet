@@ -39,7 +39,7 @@
         <SystemReactiveLinqVersion>4.4.1</SystemReactiveLinqVersion>
         <SystemTextJsonVersion>4.7.2</SystemTextJsonVersion>
 
-        <AutofacExtensionsDependencyInjectionVersion>8.0.0</AutofacExtensionsDependencyInjectionVersion>
+        <AutofacExtensionsDependencyInjectionVersion>6.0.0</AutofacExtensionsDependencyInjectionVersion>
         <DawnGuardVersion>1.12.0</DawnGuardVersion>
         <FluentAssertionsVersion>6.12.0</FluentAssertionsVersion>
         <FluentValidationAspNetCoreVersion>9.2.0</FluentValidationAspNetCoreVersion>
