@@ -11,7 +11,6 @@
         <RepositoryType>git</RepositoryType>
         <Version>1.6.4</Version>
     </PropertyGroup>
-
     <!-- Common compile parameters -->
     <PropertyGroup>
         <!-- We use full (Windows PDBs) until cross platform support for source link will get better -->
@@ -21,11 +20,9 @@
         <Nullable>disable</Nullable>
         <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
     </PropertyGroup>
-
     <PropertyGroup>
         <TargetFramework>netstandard2.1</TargetFramework>
     </PropertyGroup>
-
     <!--Versions of packages used across the repository-->
     <PropertyGroup Label="Package Versions">
         <MicrosoftAspNetCoreHttpAbstractionsVersion>2.2.0</MicrosoftAspNetCoreHttpAbstractionsVersion>
@@ -35,13 +32,12 @@
         <MicrosoftExtensionsHostingVersion>3.1.5</MicrosoftExtensionsHostingVersion>
         <MicrosoftExtensionsHttpVersion>3.1.5</MicrosoftExtensionsHttpVersion>
         <MicrosoftExtensionsLoggingVersion>3.1.5</MicrosoftExtensionsLoggingVersion>
-        <MicrosoftNETTestSdkVersion>17.7.2</MicrosoftNETTestSdkVersion>
+        <MicrosoftNETTestSdkVersion>16.6.1</MicrosoftNETTestSdkVersion>
         <SystemReactiveLinqVersion>4.4.1</SystemReactiveLinqVersion>
         <SystemTextJsonVersion>4.7.2</SystemTextJsonVersion>
-
         <AutofacExtensionsDependencyInjectionVersion>6.0.0</AutofacExtensionsDependencyInjectionVersion>
         <DawnGuardVersion>1.12.0</DawnGuardVersion>
-        <FluentAssertionsVersion>6.12.0</FluentAssertionsVersion>
+        <FluentAssertionsVersion>5.10.3</FluentAssertionsVersion>
         <FluentValidationAspNetCoreVersion>9.2.0</FluentValidationAspNetCoreVersion>
         <FluentValidationVersion>9.2.0</FluentValidationVersion>
         <FlurlVersion>2.8.2</FlurlVersion>
@@ -53,7 +49,7 @@
         <MoqVersion>4.14.5</MoqVersion>
         <MultiformatsBaseVersion>2.0.2</MultiformatsBaseVersion>
         <NewtonsoftJsonVersion>13.0.1</NewtonsoftJsonVersion>
-        <NLogConfigVersion>4.7.15</NLogConfigVersion>
+        <NLogConfigVersion>4.7.2</NLogConfigVersion>
         <PollyVersion>7.2.1</PollyVersion>
         <StatelessVersion>5.1.2</StatelessVersion>
         <SwashbuckleAspNetCoreAnnotationsVersion>5.5.1</SwashbuckleAspNetCoreAnnotationsVersion>
@@ -61,8 +57,7 @@
         <SwashbuckleAspNetCoreSwaggerGenVersion>5.5.1</SwashbuckleAspNetCoreSwaggerGenVersion>
         <SwashbuckleAspNetCoreSwaggerUIVersion>5.5.1</SwashbuckleAspNetCoreSwaggerUIVersion>
         <SwashbuckleAspNetCoreSwaggerVersion>5.5.1</SwashbuckleAspNetCoreSwaggerVersion>
-        <XunitRunnerVisualstudioVersion>2.5.3</XunitRunnerVisualstudioVersion>
+        <XunitRunnerVisualstudioVersion>2.4.2</XunitRunnerVisualstudioVersion>
         <XunitVersion>2.4.1</XunitVersion>
     </PropertyGroup>
-
 </Project>
