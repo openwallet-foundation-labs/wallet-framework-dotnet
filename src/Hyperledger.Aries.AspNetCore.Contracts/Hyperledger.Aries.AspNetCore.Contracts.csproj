@@ -1,6 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <Description>Api Library</Description>
+    <PackageId>WalletFramework.AspNetCore.Contracts</PackageId>
     <Nullable>enable</Nullable>
   </PropertyGroup>
 

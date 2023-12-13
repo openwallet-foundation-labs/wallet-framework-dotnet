@@ -3,64 +3,61 @@ name: CI
 on:
     push:
         branches:
-        - setup-cicd-pipeline
+            - setup-cicd-pipeline
     pull_request:
         branches:
-        - setup-cicd-pipeline
+            - setup-cicd-pipeline
 
-  
 env:
-    MAJOR: 0
-    MINOR: 1
-    PATCH: 0
-    APP_VERSION: v$(MAJOR).$(MINOR).$(PATCH)
     BUILD_CONFIG: 'Release'
     SOLUTION: 'src/Hyperledger.Aries.sln'
-    #IS_PULL_REQUEST: ${{ github.ref == 'refs/pull/.../merge' }}
+    IS_PULL_REQUEST: ${{ github.event_name == 'pull_request' }}
     IS_MAIN_BRANCH: ${{ github.ref == 'refs/heads/main' }}
-    IS_DEV_BRANCH: ${{ github.ref == 'refs/heads/develop' }}
-    IS_RELEASE_BRANCH: ${{ github.ref == 'refs/heads/release' }}
-    
+    MAJOR: '0'
+    MINOR: '1'
+    PATCH: '0'
+
 jobs:
-
-#    build_number:
-#        name: Set Build Number
-#        
-#        runs-on: ubuntu-latest
-#        
-#        steps:
-#            - name: Check bats version
-#              run: bats --version
-              
     build:
-        name: Build
-        needs: build_number
-    
+        
         runs-on: ubuntu-latest
-    
+        
         steps:
-        - uses: actions/checkout@v3
-    
-        - name: Setup NuGet
-          uses: NuGet/setup-nuget@v1
+            - uses: actions/checkout@v2
 
-        - name: Configure NuGet sources
-          run: |
-            nuget sources add -name SD-JWT -source https://pkgs.dev.azure.com/mi-lissi/OID4VC/_packaging/lissi-oid4vc/nuget/v3/index.json
-                
-        - name: Restore dependencies
-          run: nuget restore $SOLUTION
-          
-        - name: Setup .NET
-          uses: actions/setup-dotnet@v3
-          with:
-            dotnet-version: 3.1.x
-    
-        - name: Build
-          run: dotnet build $SOLUTION --configuration $BUILD_CONFIG --no-restore
-    
-        #- name: Run tests
-        #run: dotnet test /p:Configuration=$env:BUILD_CONFIG --no-restore --no-build --verbosity normal
-    
-        #- name: Publish
-          #run: nuget push **\*.nupkg -Source 'https://api.nuget.org/v3/index.json' -ApiKey ${{secrets.NUGET_API_KEY}}
+            - name: Set Version
+              run: |
+                  if $IS_MAIN_BRANCH; then
+                    SUFFIX="rc"
+                  elif $IS_PULL_REQUEST; then
+                    SUFFIX="alpha"
+                  fi
+                  echo "APP_VERSION=$MAJOR.$MINOR.$PATCH-$SUFFIX.${{ github.run_number }}" >> $GITHUB_ENV
+
+            - name: Version
+              run: echo $APP_VERSION
+
+            - name: Setup NuGet
+              uses: NuGet/setup-nuget@v1.0.5
+
+            - name: Restore dependencies
+              run: nuget restore $SOLUTION
+
+            - name: Setup .NET
+              uses: actions/setup-dotnet@v3
+              with:
+                  dotnet-version: 3.1.*
+
+            - name: Build
+              run: dotnet build $SOLUTION --configuration $BUILD_CONFIG -p:Version=$APP_VERSION --no-restore
+
+            - name: Run tests
+              run: dotnet test /p:Configuration=$BUILD_CONFIG --no-restore --no-build --verbosity normal
+
+            - name: Pack WalletFramework.Core
+              run: dotnet pack /p:Configuration=$BUILD_CONFIG /p:Version=$APP_VERSION --no-build --output .
+#
+#            - name: Publish
+#              run: nuget push **\*.nupkg -Source 'https://api.nuget.org/v3/index.json' -ApiKey ${{secrets.NUGET_API_KEY}}
+              
+              
