@@ -52,10 +52,10 @@ jobs:
               run: dotnet build $SOLUTION --configuration $BUILD_CONFIG -p:Version=$APP_VERSION --no-restore
 
             - name: Run tests
-              run: dotnet test /p:Configuration=$BUILD_CONFIG --no-restore --no-build --verbosity normal
+              run: dotnet test $SOLUTION /p:Configuration=$BUILD_CONFIG --no-restore --no-build --verbosity normal
 
             - name: Pack WalletFramework
-              run: dotnet pack /p:Configuration=$BUILD_CONFIG /p:Version=$APP_VERSION --no-build --output .
+              run: dotnet pack $SOLUTION /p:Configuration=$BUILD_CONFIG /p:Version=$APP_VERSION --no-build --output .
 #
 #            - name: Publish
 #              run: nuget push **\*.nupkg -Source 'https://api.nuget.org/v3/index.json' -ApiKey ${{secrets.NUGET_API_KEY}}
