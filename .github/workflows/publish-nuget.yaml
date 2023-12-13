@@ -54,7 +54,7 @@ jobs:
             - name: Run tests
               run: dotnet test /p:Configuration=$BUILD_CONFIG --no-restore --no-build --verbosity normal
 
-            - name: Pack WalletFramework.Core
+            - name: Pack WalletFramework
               run: dotnet pack /p:Configuration=$BUILD_CONFIG /p:Version=$APP_VERSION --no-build --output .
 #
 #            - name: Publish
