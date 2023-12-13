@@ -48,6 +48,13 @@ jobs:
               with:
                   dotnet-version: 3.1.*
 
+            - name: Install libindy library
+              run: |
+                  sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys CE7709D068DB5E88
+                  sudo add-apt-repository "deb https://repo.sovrin.org/sdk/deb bionic stable"
+                  sudo apt-get update
+                  sudo apt-get install -y libindy
+                  
             - name: Build
               run: dotnet build $SOLUTION --configuration $BUILD_CONFIG -p:Version=$APP_VERSION --no-restore
 
