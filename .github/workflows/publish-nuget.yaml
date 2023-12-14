@@ -34,9 +34,6 @@ jobs:
                 fi
                 echo "APP_VERSION=$MAJOR.$MINOR.$PATCH$SUFFIX" >> $GITHUB_ENV
 
-            - name: Version
-              run: echo $APP_VERSION
-
             - name: Setup NuGet
               uses: NuGet/setup-nuget@v1.0.5
 
