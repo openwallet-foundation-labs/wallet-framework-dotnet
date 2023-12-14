@@ -27,12 +27,12 @@ jobs:
 
             - name: Set Version
               run: |
-                  if $IS_MAIN_BRANCH; then
-                    SUFFIX="rc"
-                  elif $IS_PULL_REQUEST; then
-                    SUFFIX="alpha"
-                  fi
-                  echo "APP_VERSION=$MAJOR.$MINOR.$PATCH-$SUFFIX.${{ github.run_number }}" >> $GITHUB_ENV
+                if $IS_MAIN_BRANCH; then
+                  SUFFIX="-rc.{{ github.run_number }}"
+                elif $IS_PULL_REQUEST; then
+                  SUFFIX="-pr.${{ github.event.number }}.${{ github.run_number }}
+                fi
+                echo "APP_VERSION=$MAJOR.$MINOR.$PATCH$SUFFIX" >> $GITHUB_ENV
 
             - name: Version
               run: echo $APP_VERSION
