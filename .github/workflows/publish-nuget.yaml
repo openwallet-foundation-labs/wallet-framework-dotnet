@@ -30,7 +30,7 @@ jobs:
                 if $IS_MAIN_BRANCH; then
                   SUFFIX="-rc.{{ github.run_number }}"
                 elif $IS_PULL_REQUEST; then
-                  SUFFIX="-pr.${{ github.event.number }}.${{ github.run_number }}
+                  SUFFIX="-pr.${{ github.event.number }}.${{ github.run_number }}"
                 fi
                 echo "APP_VERSION=$MAJOR.$MINOR.$PATCH$SUFFIX" >> $GITHUB_ENV
 
