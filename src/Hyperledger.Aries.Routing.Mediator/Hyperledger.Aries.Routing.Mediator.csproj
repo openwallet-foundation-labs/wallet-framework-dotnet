@@ -1,6 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
+        <PackageId>WalletFramework.Routing.Mediator</PackageId>
         <DocumentationFile>bin\$(Configuration)\$(TargetFramework)\Hyperledger.Aries.Routing.Mediator.xml</DocumentationFile>
     </PropertyGroup>
 
