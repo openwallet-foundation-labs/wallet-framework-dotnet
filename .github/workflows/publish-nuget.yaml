@@ -13,9 +13,6 @@ env:
     SOLUTION: 'src/Hyperledger.Aries.sln'
     IS_PULL_REQUEST: ${{ github.event_name == 'pull_request' }}
     IS_MAIN_BRANCH: ${{ github.ref == 'refs/heads/main' }}
-    MAJOR: '0'
-    MINOR: '1'
-    PATCH: '0'
 
 jobs:
     build:
@@ -27,12 +24,13 @@ jobs:
 
             - name: Set Version
               run: |
+                VERSION=$(xmllint --xpath "string(/Project/PropertyGroup/Version)" Directory.Build.props)
                 if $IS_MAIN_BRANCH; then
                   SUFFIX="-rc.{{ github.run_number }}"
                 elif $IS_PULL_REQUEST; then
                   SUFFIX="-pr.${{ github.event.pull_request.number }}.${{ github.run_number }}"
                 fi
-                echo "APP_VERSION=$MAJOR.$MINOR.$PATCH$SUFFIX" >> $GITHUB_ENV
+                echo "APP_VERSION=$VERSION$SUFFIX" >> $GITHUB_ENV
 
             - name: Setup NuGet
               uses: NuGet/setup-nuget@v1.0.5
