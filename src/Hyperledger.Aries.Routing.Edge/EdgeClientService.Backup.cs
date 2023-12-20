@@ -68,7 +68,7 @@ namespace Hyperledger.Aries.Routing.Edge
 
             File.Delete(path);
 
-            await messageService
+            await _messageService
                 .SendReceiveAsync<StoreBackupResponseAgentMessage>(context, backupMessage, connection)
                 .ConfigureAwait(false);
             return backupVerkey;
@@ -115,7 +115,7 @@ namespace Hyperledger.Aries.Routing.Edge
             if (connection == null)
                 throw new AriesFrameworkException(ErrorCode.RecordNotFound, "Couldn't locate a connection to mediator agent");
 
-            var response = await messageService.SendReceiveAsync<RetrieveBackupResponseAgentMessage>(context, retrieveBackupResponseMessage, connection).ConfigureAwait(false);
+            var response = await _messageService.SendReceiveAsync<RetrieveBackupResponseAgentMessage>(context, retrieveBackupResponseMessage, connection).ConfigureAwait(false);
             return response.Payload;
         }
 
@@ -130,20 +130,20 @@ namespace Hyperledger.Aries.Routing.Edge
 
             await Task.Run(() => File.WriteAllBytes(tempWalletPath, walletToRestoreInBytes));
 
-            var oldAgentOptionsString = JsonConvert.SerializeObject(agentoptions);
+            var oldAgentOptionsString = JsonConvert.SerializeObject(_agentOptions);
 
             var json = new { path = tempWalletPath, key = seed }.ToJson();
 
-            agentoptions.WalletConfiguration.Id = Guid.NewGuid().ToString();
-            agentoptions.WalletCredentials.Key = Utils.GenerateRandomAsync(32);
+            _agentOptions.WalletConfiguration.Id = Guid.NewGuid().ToString();
+            _agentOptions.WalletCredentials.Key = Utils.GenerateRandomAsync(32);
 
-            await Wallet.ImportAsync(agentoptions.WalletConfiguration.ToJson(), agentoptions.WalletCredentials.ToJson(), json);
+            await Wallet.ImportAsync(_agentOptions.WalletConfiguration.ToJson(), _agentOptions.WalletCredentials.ToJson(), json);
 
             // Try delete the old wallet
             try
             {
                 var oldAgentOptions = JsonConvert.DeserializeObject<AgentOptions>(oldAgentOptionsString);
-                await walletService.DeleteWalletAsync(oldAgentOptions.WalletConfiguration,
+                await _walletService.DeleteWalletAsync(oldAgentOptions.WalletConfiguration,
                     oldAgentOptions.WalletCredentials);
                 // Add 1 sec delay to allow filesystem to catch up
                 await Task.Delay(TimeSpan.FromSeconds(1));
@@ -155,7 +155,7 @@ namespace Hyperledger.Aries.Routing.Edge
 
             File.Delete(tempWalletPath);
 
-            return agentoptions;
+            return _agentOptions;
         }
 
         /// <inheritdoc />
@@ -172,7 +172,7 @@ namespace Hyperledger.Aries.Routing.Edge
             if (connection == null)
                 throw new AriesFrameworkException(ErrorCode.RecordNotFound, "Couldn't locate a connection to mediator agent");
 
-            var response = await messageService.SendReceiveAsync<ListBackupsResponseAgentMessage>(context, listBackupsMessage, connection).ConfigureAwait(false);
+            var response = await _messageService.SendReceiveAsync<ListBackupsResponseAgentMessage>(context, listBackupsMessage, connection).ConfigureAwait(false);
             return response.BackupList.ToList();
         }
 

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 using Hyperledger.Aries.Agents;
 using Hyperledger.Aries.Configuration;
@@ -109,14 +110,27 @@ namespace Hyperledger.Aries.Routing
         Task<AgentOptions> RestoreFromBackupAsync(IAgentContext edgeContext, string seed, List<Attachment> backupData);
 
         /// <summary>
-        /// Retrieves the backup matching the given seed.
-        /// Restores the agent and wallet from backup by creating another wallet with new configuration and imports its content.
-        /// Tries to remove the existing wallet.
-        /// The client should safely store the returned AgentOptions and use its configuration to open the wallet.
+        /// Creates a connection and inbox with a mediator associated with the given public configuration.
         /// </summary>
-        /// <param name="edgeContext">The edge context.</param>
-        /// <param name="seed">The seed.</param>
-        /// <returns>AgentOptions configuration for the newly imported wallet</returns>
-        Task<AgentOptions> RestoreFromBackupAsync(IAgentContext edgeContext, string seed);
+        /// <param name="agentOptions">The edge context.</param>
+        /// <returns></returns>
+        Task CreateMediatorConnectionAndInboxAsync(AgentOptions agentOptions);
+        
+        /// <summary>
+        /// Creates an Edge Wallet based on the provided Agent Options.
+        /// Afterwards the method <see cref="CreateMediatorConnectionAndInboxAsync"/> can be used to establish a mediator connection.
+        /// </summary>
+        /// <param name="agentOptions">The Agent Options.</param>
+        /// <param name="cancellationToken">Cancellation Token to cancel the process.</param>
+        /// <returns></returns>
+        Task ProvisionAsync(AgentOptions agentOptions, CancellationToken cancellationToken = default);
+        
+        /// <summary>
+        /// Creates an Edge Wallet using the default Agent Options.
+        /// Afterwards the method <see cref="CreateMediatorConnectionAndInboxAsync"/> can be used to establish a mediator connection.
+        /// </summary>
+        /// <param name="cancellationToken">Cancellation Token to cancel the process.</param>
+        /// <returns></returns>
+        Task ProvisionAsync(CancellationToken cancellationToken = default);
     }
 }
