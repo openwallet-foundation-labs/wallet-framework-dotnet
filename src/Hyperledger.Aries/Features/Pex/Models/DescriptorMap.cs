@@ -29,7 +29,7 @@ namespace Hyperledger.Aries.Features.Pex.Models
         /// <summary>
         /// This indicate the presence of a multi-Claim envelope format. This means the Claim indicated is to be decoded separately from its parent enclosure
         /// </summary>
-        [JsonProperty("path_nested")]
+        [JsonProperty("path_nested", NullValueHandling = NullValueHandling.Ignore)]
         public DescriptorMap? PathNested { get; set; }
     }
 }
