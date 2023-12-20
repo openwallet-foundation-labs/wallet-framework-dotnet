@@ -92,7 +92,7 @@ namespace Hyperledger.Aries.Routing.Edge
             await _recordService.UpdateAsync(agentContext.Wallet, provisioning);
         }
 
-        internal async Task<ConnectionRecord> GetMediatorConnectionAsync(IAgentContext agentContext)
+        public async Task<ConnectionRecord> GetMediatorConnectionAsync(IAgentContext agentContext)
         {
             var provisioning = await _provisioningService.GetProvisioningAsync(agentContext.Wallet);
             if (provisioning.GetTag(MediatorConnectionIdTagName) == null)

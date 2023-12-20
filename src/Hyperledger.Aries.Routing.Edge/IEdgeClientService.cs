@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Hyperledger.Aries.Agents;
 using Hyperledger.Aries.Configuration;
 using Hyperledger.Aries.Decorators.Attachments;
+using Hyperledger.Aries.Features.Handshakes.Common;
 
 namespace Hyperledger.Aries.Routing
 {
@@ -132,5 +133,12 @@ namespace Hyperledger.Aries.Routing
         /// <param name="cancellationToken">Cancellation Token to cancel the process.</param>
         /// <returns></returns>
         Task ProvisionAsync(CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Method to retrieve the Mediator Connection record.
+        /// </summary>
+        /// <param name="agentContext">The edge agent context.</param>
+        /// <returns>Mediator ConnectionRecord if present</returns>
+        Task<ConnectionRecord> GetMediatorConnectionAsync(IAgentContext agentContext);
     }
 }
