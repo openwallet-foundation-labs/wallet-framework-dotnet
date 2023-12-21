@@ -6,6 +6,7 @@ using Hyperledger.Aries.Agents.Edge;
 using Hyperledger.Aries.Configuration;
 using Hyperledger.Aries.Features.Handshakes.Common;
 using Hyperledger.Aries.Routing;
+using Hyperledger.Aries.Routing.Edge;
 using Hyperledger.Aries.Storage;
 using Hyperledger.TestHarness.Mock;
 using Microsoft.Extensions.DependencyInjection;
@@ -46,6 +47,7 @@ namespace Hyperledger.Aries.Tests.Routing
 
             // Check mediator and edge provisioning record states
             Assert.Equal(provisioning1.GetTag(MediatorProvisioningService.EdgeInvitationTagName), invitation1.Id);
+            Assert.Equal(provisioning2.GetTag(EdgeProvisioningService.MediatorConnectionIdTagName), connection2.Id);
 
             string inboxId = connection1.GetTag("InboxId");
             IWalletRecordService recordService = pair.Agent1.Host.Services.GetRequiredService<IWalletRecordService>();
@@ -84,6 +86,7 @@ namespace Hyperledger.Aries.Tests.Routing
 
             // Check mediator and edge provisioning record states
             provisioning1.GetTag(MediatorProvisioningService.EdgeInvitationTagName).Should().Be(invitation1.Id);
+            provisioning2.GetTag(EdgeProvisioningService.MediatorConnectionIdTagName).Should().Be(connection2.Id);
 
             string inboxId = connection1.GetTag("InboxId");
             IWalletRecordService recordService = pair.Agent1.Host.Services.GetRequiredService<IWalletRecordService>();

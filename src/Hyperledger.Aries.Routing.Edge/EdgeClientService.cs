@@ -50,21 +50,6 @@ namespace Hyperledger.Aries.Routing.Edge
             _messageService = messageService;
             _agentOptions = agentOptions.Value;
         }
-        
-        public async Task ProvisionAsync(AgentOptions agentOptions, CancellationToken cancellationToken = default)
-        {
-            try
-            {
-                await _provisioningService.ProvisionAgentAsync(agentOptions);
-            }
-            catch (WalletExistsException)
-            {
-                // OK
-            }
-        }
-
-        public Task ProvisionAsync(CancellationToken cancellationToken = default) => ProvisionAsync(_agentOptions, cancellationToken);
-
 
         public virtual async Task AddRouteAsync(IAgentContext agentContext, string routeDestination)
         {
@@ -103,45 +88,6 @@ namespace Hyperledger.Aries.Routing.Edge
             if (connection.State != ConnectionState.Connected) throw new AriesFrameworkException(ErrorCode.RecordInInvalidState, $"You must be connected to the mediator agent. Current state is {connection.State}");
 
             return connection;
-        }
-        
-        public async Task CreateMediatorConnectionAndInboxAsync(AgentOptions agentOptions)
-        {
-            var discovery = await DiscoverConfigurationAsync(agentOptions.EndpointUri);
-
-            var agentContext = await _agentProvider.GetContextAsync();
-            
-            await _provisioningService.UpdateEndpointAsync(agentContext.Wallet, new AgentEndpoint
-            {
-                Uri = discovery.ServiceEndpoint, 
-                Verkey = new[] { discovery.RoutingKey}, 
-                Did = agentOptions.AgentDid
-            });
-
-            await CreateMediatorConnection(agentContext, discovery);
-            
-            await CreateInboxAsync(agentContext, agentOptions.MetaData);
-        }
-        
-        private async Task CreateMediatorConnection(IAgentContext agentContext, AgentPublicConfiguration discovery)
-        {
-            if (await GetMediatorConnectionAsync(agentContext) != null)
-                return;
-            
-            var (request, record) = await _connectionService.CreateRequestAsync(agentContext, discovery.Invitation);
-            var response = await _messageService.SendReceiveAsync<ConnectionResponseMessage>(agentContext, request, record);
-        
-            await _connectionService.ProcessResponseAsync(agentContext, response, record);
-        
-            // Remove the routing key explicitly as it won't ever be needed.
-            // Messages will always be sent directly with return routing enabled
-            record = await _connectionService.GetAsync(agentContext, record.Id);
-            record.Endpoint = new AgentEndpoint(record.Endpoint.Uri, null, null);
-            await _recordService.UpdateAsync(agentContext.Wallet, record);
-            
-            var provisioning = await _provisioningService.GetProvisioningAsync(agentContext.Wallet);
-            provisioning.SetTag(MediatorConnectionIdTagName, record.Id);
-            await _recordService.UpdateAsync(agentContext.Wallet, provisioning);
         }
 
         public virtual async Task<AgentPublicConfiguration> DiscoverConfigurationAsync(string agentEndpoint)
