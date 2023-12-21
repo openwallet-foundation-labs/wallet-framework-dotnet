@@ -2,16 +2,13 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
-using System.Threading;
 using System.Threading.Tasks;
 using Hyperledger.Aries.Agents;
 using Hyperledger.Aries.Configuration;
 using Hyperledger.Aries.Extensions;
 using Hyperledger.Aries.Features.Handshakes.Common;
 using Hyperledger.Aries.Features.Handshakes.Connection;
-using Hyperledger.Aries.Features.Handshakes.Connection.Models;
 using Hyperledger.Aries.Storage;
-using Hyperledger.Indy.WalletApi;
 using Microsoft.Extensions.Options;
 
 namespace Hyperledger.Aries.Routing.Edge
@@ -25,8 +22,6 @@ namespace Hyperledger.Aries.Routing.Edge
         private readonly IProvisioningService _provisioningService;
         private readonly IWalletRecordService _recordService;
         private readonly IWalletService _walletService;
-        private readonly IAgentProvider _agentProvider;
-        private readonly IConnectionService _connectionService;
         private readonly IMessageService _messageService;
 
         private readonly AgentOptions _agentOptions;
@@ -37,16 +32,12 @@ namespace Hyperledger.Aries.Routing.Edge
             IWalletRecordService recordService,
             IMessageService messageService,
             IWalletService walletService,
-            IAgentProvider agentProvider,
-            IConnectionService connectionService,
             IOptions<AgentOptions> agentOptions)
         {
             _httpClientFactory = httpClientFactory;
             _provisioningService = provisioningService;
             _recordService = recordService;
             _walletService = walletService;
-            _agentProvider = agentProvider;
-            _connectionService = connectionService;
             _messageService = messageService;
             _agentOptions = agentOptions.Value;
         }
