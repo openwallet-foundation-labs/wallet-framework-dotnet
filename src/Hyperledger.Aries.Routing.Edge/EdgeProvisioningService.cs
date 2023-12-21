@@ -1,10 +1,10 @@
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
-using Hyperledger.Aries.Agents;
 using Hyperledger.Aries.Configuration;
 using Hyperledger.Aries.Features.Handshakes.Connection;
 using Hyperledger.Aries.Features.Handshakes.Connection.Models;
+using Hyperledger.Aries.Routing;
 using Hyperledger.Aries.Storage;
 using Hyperledger.Indy.WalletApi;
 using Microsoft.Extensions.Hosting;
@@ -12,7 +12,7 @@ using Microsoft.Extensions.Options;
 
 [assembly: InternalsVisibleTo("Hyperledger.Aries.Tests")]
 
-namespace Hyperledger.Aries.Routing.Edge
+namespace Hyperledger.Aries.Agents.Edge
 {
     internal class EdgeProvisioningService : IHostedService, IEdgeProvisioningService
     {

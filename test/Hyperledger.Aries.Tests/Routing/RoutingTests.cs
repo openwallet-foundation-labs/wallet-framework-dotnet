@@ -6,7 +6,6 @@ using Hyperledger.Aries.Agents.Edge;
 using Hyperledger.Aries.Configuration;
 using Hyperledger.Aries.Features.Handshakes.Common;
 using Hyperledger.Aries.Routing;
-using Hyperledger.Aries.Routing.Edge;
 using Hyperledger.Aries.Storage;
 using Hyperledger.TestHarness.Mock;
 using Microsoft.Extensions.DependencyInjection;
