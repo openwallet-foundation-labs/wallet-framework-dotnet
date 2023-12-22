@@ -8,7 +8,7 @@ namespace Hyperledger.Aries.Agents.Edge
     {
         /// <summary>
         /// Creates an Edge Wallet based on the provided Agent Options.
-        /// Afterwards the method <see cref="CreateMediatorConnectionAndInboxAsync"/> can be used to establish a mediator connection.
+        /// Afterwards the method <see cref="EnsureMediatorConnectionAndInboxAsync"/> can be used to establish a mediator connection.
         /// </summary>
         /// <param name="agentOptions">The Agent Options.</param>
         /// <param name="cancellationToken">Cancellation Token to cancel the process.</param>
@@ -17,7 +17,7 @@ namespace Hyperledger.Aries.Agents.Edge
         
         /// <summary>
         /// Creates an Edge Wallet using the default Agent Options.
-        /// Afterwards the method <see cref="CreateMediatorConnectionAndInboxAsync"/> can be used to establish a mediator connection.
+        /// Afterwards the method <see cref="EnsureMediatorConnectionAndInboxAsync"/> can be used to establish a mediator connection.
         /// </summary>
         /// <param name="cancellationToken">Cancellation Token to cancel the process.</param>
         /// <returns></returns>
@@ -27,7 +27,15 @@ namespace Hyperledger.Aries.Agents.Edge
         /// Creates a connection and inbox with a mediator associated with the given public configuration.
         /// </summary>
         /// <param name="agentOptions">The edge context.</param>
+        /// <param name="cancellationToken">Cancellation Token to cancel the process.</param>
         /// <returns></returns>
-        Task CreateMediatorConnectionAndInboxAsync(AgentOptions agentOptions);
+        Task EnsureMediatorConnectionAndInboxAsync(AgentOptions agentOptions, CancellationToken cancellationToken = default);
+        
+        /// <summary>
+        /// Creates a connection and inbox with a mediator associated with the given public configuration.
+        /// </summary>
+        /// <param name="cancellationToken">Cancellation Token to cancel the process.</param>
+        /// <returns></returns>
+        Task EnsureMediatorConnectionAndInboxAsync(CancellationToken cancellationToken = default);
     }
 }

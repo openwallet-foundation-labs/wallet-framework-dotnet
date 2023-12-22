@@ -44,29 +44,28 @@ namespace Hyperledger.Aries.Agents.Edge
             _recordService = recordService;
         }
 
-        public async Task CreateMediatorConnectionAndInboxAsync(AgentOptions agentOptions)
+        public async Task EnsureMediatorConnectionAndInboxAsync(AgentOptions agentOptions, CancellationToken cancellationToken = default)
+        {
+            var agentContext = await _agentProvider.GetContextAsync();
+            var provisioning = await _provisioningService.GetProvisioningAsync(agentContext.Wallet);
+            if (provisioning.GetTag(MediatorConnectionIdTagName) != null)
+                return;
+            
+            await CreateMediatorConnection(agentContext, agentOptions);
+            
+            await _edgeClientService.CreateInboxAsync(agentContext, agentOptions.MetaData);
+        }
+        
+        private async Task CreateMediatorConnection(IAgentContext agentContext, AgentOptions agentOptions)
         {
             var discovery = await _edgeClientService.DiscoverConfigurationAsync(agentOptions.EndpointUri);
 
-            var agentContext = await _agentProvider.GetContextAsync();
-            
             await _provisioningService.UpdateEndpointAsync(agentContext.Wallet, new AgentEndpoint
             {
                 Uri = discovery.ServiceEndpoint, 
                 Verkey = new[] { discovery.RoutingKey}, 
                 Did = agentOptions.AgentDid
             });
-
-            await CreateMediatorConnection(agentContext, discovery);
-            
-            await _edgeClientService.CreateInboxAsync(agentContext, agentOptions.MetaData);
-        }
-        
-        private async Task CreateMediatorConnection(IAgentContext agentContext, AgentPublicConfiguration discovery)
-        {
-            var provisioning = await _provisioningService.GetProvisioningAsync(agentContext.Wallet);
-            if (provisioning.GetTag(MediatorConnectionIdTagName) != null)
-                return;
             
             var (request, record) = await _connectionService.CreateRequestAsync(agentContext, discovery.Invitation);
             var response = await _messageService.SendReceiveAsync<ConnectionResponseMessage>(agentContext, request, record);
@@ -79,7 +78,7 @@ namespace Hyperledger.Aries.Agents.Edge
             record.Endpoint = new AgentEndpoint(record.Endpoint.Uri, null, null);
             await _recordService.UpdateAsync(agentContext.Wallet, record);
             
-            
+            var provisioning = await _provisioningService.GetProvisioningAsync(agentContext.Wallet);
             provisioning.SetTag(MediatorConnectionIdTagName, record.Id);
             await _recordService.UpdateAsync(agentContext.Wallet, provisioning);
         }
@@ -97,6 +96,8 @@ namespace Hyperledger.Aries.Agents.Edge
         }
 
         public Task ProvisionAsync(CancellationToken cancellationToken = default) => ProvisionAsync(_agentOptions, cancellationToken);
+        
+        public Task EnsureMediatorConnectionAndInboxAsync(CancellationToken cancellationToken = default) => ProvisionAsync(_agentOptions, cancellationToken);
         
         public Task StartAsync(CancellationToken cancellationToken) => ProvisionAsync(cancellationToken);
 
