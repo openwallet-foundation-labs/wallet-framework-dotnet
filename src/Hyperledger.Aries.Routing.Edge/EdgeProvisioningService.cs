@@ -1,4 +1,4 @@
-﻿using System.Runtime.CompilerServices;
+using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 using Hyperledger.Aries.Configuration;
@@ -17,15 +17,14 @@ namespace Hyperledger.Aries.Agents.Edge
     internal class EdgeProvisioningService : IHostedService, IEdgeProvisioningService
     {
         internal const string MediatorConnectionIdTagName = "MediatorConnectionId";
-        private const string MediatorInboxIdTagName = "MediatorInboxId";
-
-        private readonly IProvisioningService provisioningService;
-        private readonly IConnectionService connectionService;
-        private readonly IMessageService messageService;
-        private readonly IEdgeClientService edgeClientService;
-        private readonly IWalletRecordService recordService;
-        private readonly IAgentProvider agentProvider;
-        private readonly AgentOptions options;
+            
+        private readonly IProvisioningService _provisioningService;
+        private readonly IConnectionService _connectionService;
+        private readonly IMessageService _messageService;
+        private readonly IEdgeClientService _edgeClientService;
+        private readonly IWalletRecordService _recordService;
+        private readonly IAgentProvider _agentProvider;
+        private readonly AgentOptions _agentOptions;
 
         public EdgeProvisioningService(
             IProvisioningService provisioningService,
@@ -34,62 +33,71 @@ namespace Hyperledger.Aries.Agents.Edge
             IEdgeClientService edgeClientService,
             IWalletRecordService recordService,
             IAgentProvider agentProvider,
-            IOptions<AgentOptions> options)
+            IOptions<AgentOptions> agentOptions)
         {
-            this.provisioningService = provisioningService;
-            this.connectionService = connectionService;
-            this.messageService = messageService;
-            this.edgeClientService = edgeClientService;
-            this.recordService = recordService;
-            this.agentProvider = agentProvider;
-            this.options = options.Value;
+            _provisioningService = provisioningService;
+            _connectionService = connectionService;
+            _messageService = messageService;
+            _agentProvider = agentProvider;
+            _agentOptions = agentOptions.Value;
+            _edgeClientService = edgeClientService;
+            _recordService = recordService;
         }
 
-        public async Task ProvisionAsync(AgentOptions options, CancellationToken cancellationToken = default)
+        public async Task EnsureMediatorConnectionAndInboxAsync(AgentOptions agentOptions, CancellationToken cancellationToken = default)
         {
-            var discovery = await edgeClientService.DiscoverConfigurationAsync(options.EndpointUri);
+            var agentContext = await _agentProvider.GetContextAsync();
+            if (_edgeClientService.GetMediatorConnectionAsync(agentContext) != null)
+                return;
+            
+            await CreateMediatorConnection(agentContext, agentOptions);
+            
+            await _edgeClientService.CreateInboxAsync(agentContext, agentOptions.MetaData);
+        }
+        
+        private async Task CreateMediatorConnection(IAgentContext agentContext, AgentOptions agentOptions)
+        {
+            var discovery = await _edgeClientService.DiscoverConfigurationAsync(agentOptions.EndpointUri);
 
+            await _provisioningService.UpdateEndpointAsync(agentContext.Wallet, new AgentEndpoint
+            {
+                Uri = discovery.ServiceEndpoint, 
+                Verkey = new[] { discovery.RoutingKey}, 
+                Did = agentOptions.AgentDid
+            });
+            
+            var (request, record) = await _connectionService.CreateRequestAsync(agentContext, discovery.Invitation);
+            var response = await _messageService.SendReceiveAsync<ConnectionResponseMessage>(agentContext, request, record);
+        
+            await _connectionService.ProcessResponseAsync(agentContext, response, record);
+        
+            // Remove the routing key explicitly as it won't ever be needed.
+            // Messages will always be sent directly with return routing enabled
+            record = await _connectionService.GetAsync(agentContext, record.Id);
+            record.Endpoint = new AgentEndpoint(record.Endpoint.Uri, null, null);
+            await _recordService.UpdateAsync(agentContext.Wallet, record);
+            
+            var provisioning = await _provisioningService.GetProvisioningAsync(agentContext.Wallet);
+            provisioning.SetTag(MediatorConnectionIdTagName, record.Id);
+            await _recordService.UpdateAsync(agentContext.Wallet, provisioning);
+        }
+        
+        public async Task ProvisionAsync(AgentOptions agentOptions, CancellationToken cancellationToken = default)
+        {
             try
             {
-                options.AgentKey = discovery.RoutingKey;
-                options.EndpointUri = discovery.ServiceEndpoint;
-
-                await provisioningService.ProvisionAgentAsync(options);
-            }
-            catch(WalletStorageException)
-            {
-                // OK
+                await _provisioningService.ProvisionAgentAsync(agentOptions);
             }
             catch (WalletExistsException)
             {
                 // OK
             }
-            var agentContext = await agentProvider.GetContextAsync();
-            var provisioning = await provisioningService.GetProvisioningAsync(agentContext.Wallet);
-
-            // Check if connection has been established with mediator agent
-            if (provisioning.GetTag(MediatorConnectionIdTagName) == null)
-            {
-                var (request, record) = await connectionService.CreateRequestAsync(agentContext, discovery.Invitation);
-                var response = await messageService.SendReceiveAsync<ConnectionResponseMessage>(agentContext, request, record);
-
-                await connectionService.ProcessResponseAsync(agentContext, response, record);
-
-                // Remove the routing key explicitly as it won't ever be needed.
-                // Messages will always be sent directly with return routing enabled
-                record = await connectionService.GetAsync(agentContext, record.Id);
-                record.Endpoint = new AgentEndpoint(record.Endpoint.Uri, null, null);
-                await recordService.UpdateAsync(agentContext.Wallet, record);
-
-                provisioning.SetTag(MediatorConnectionIdTagName, record.Id);
-                await recordService.UpdateAsync(agentContext.Wallet, provisioning);
-            }
-
-            await edgeClientService.CreateInboxAsync(agentContext, options.MetaData);
         }
 
-        public Task ProvisionAsync(CancellationToken cancellationToken = default) => ProvisionAsync(options, cancellationToken);
-
+        public Task ProvisionAsync(CancellationToken cancellationToken = default) => ProvisionAsync(_agentOptions, cancellationToken);
+        
+        public Task EnsureMediatorConnectionAndInboxAsync(CancellationToken cancellationToken = default) => ProvisionAsync(_agentOptions, cancellationToken);
+        
         public Task StartAsync(CancellationToken cancellationToken) => ProvisionAsync(cancellationToken);
 
         public Task StopAsync(CancellationToken cancellationToken) => Task.CompletedTask;

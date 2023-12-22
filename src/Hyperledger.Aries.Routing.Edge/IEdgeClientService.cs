@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using Hyperledger.Aries.Agents;
 using Hyperledger.Aries.Configuration;
 using Hyperledger.Aries.Decorators.Attachments;
+using Hyperledger.Aries.Features.Handshakes.Common;
 
 namespace Hyperledger.Aries.Routing
 {
@@ -107,16 +108,12 @@ namespace Hyperledger.Aries.Routing
         /// <returns>AgentOptions configuration for the newly imported wallet</returns>
         [Obsolete("This method is obsolete.")]
         Task<AgentOptions> RestoreFromBackupAsync(IAgentContext edgeContext, string seed, List<Attachment> backupData);
-
+        
         /// <summary>
-        /// Retrieves the backup matching the given seed.
-        /// Restores the agent and wallet from backup by creating another wallet with new configuration and imports its content.
-        /// Tries to remove the existing wallet.
-        /// The client should safely store the returned AgentOptions and use its configuration to open the wallet.
+        /// Method to retrieve the Mediator Connection record.
         /// </summary>
-        /// <param name="edgeContext">The edge context.</param>
-        /// <param name="seed">The seed.</param>
-        /// <returns>AgentOptions configuration for the newly imported wallet</returns>
-        Task<AgentOptions> RestoreFromBackupAsync(IAgentContext edgeContext, string seed);
+        /// <param name="agentContext">The edge agent context.</param>
+        /// <returns>Mediator ConnectionRecord if present</returns>
+        Task<ConnectionRecord> GetMediatorConnectionAsync(IAgentContext agentContext);
     }
 }
