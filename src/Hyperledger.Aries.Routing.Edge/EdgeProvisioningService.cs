@@ -47,7 +47,7 @@ namespace Hyperledger.Aries.Agents.Edge
         public async Task EnsureMediatorConnectionAndInboxAsync(AgentOptions agentOptions, CancellationToken cancellationToken = default)
         {
             var agentContext = await _agentProvider.GetContextAsync();
-            if (_edgeClientService.GetMediatorConnectionAsync(agentContext) != null)
+            if (await _edgeClientService.GetMediatorConnectionAsync(agentContext) != null)
                 return;
             
             await CreateMediatorConnection(agentContext, agentOptions);
