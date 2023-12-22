@@ -10,24 +10,40 @@ namespace Hyperledger.Aries.Features.OpenId4Vc.Vci.Models.CredentialOffer.GrantT
     public class PreAuthorizedCode
     {
         /// <summary>
-        ///     Gets or sets a boolean value specifying whether the Credential Issuer expects presentation of a user PIN along with
-        ///     the Token Request in a Pre-Authorized Code Flow.
-        /// </summary>
-        [JsonProperty("user_pin_required")]
-        public bool? UserPinRequired { get; set; }
-
-        /// <summary>
         ///     Gets or sets the pre-authorized code representing the Credential Issuer's authorization for the Wallet to obtain
         ///     Credentials of a certain type.
         /// </summary>
         [JsonProperty("pre-authorized_code")]
         public string Value { get; set; } = null!;
-
+        
         /// <summary>
-        ///     Gets or sets a description of the user PIN that may be required along with the Token Request in a Pre-Authorized
-        ///     Code Flow.
+        ///     Specifying whether the user must send a Transaction Code along with the Token Request in a Pre-Authorized Code Flow.
         /// </summary>
-        [JsonProperty("user_pin_description")]
-        public string? UserPinDescription { get; set; }
+        [JsonProperty("tx_code")]
+        public TransactionCode? TransactionCode { get; set; }
+    }
+
+    /// <summary>
+    ///    Represents the details of the expected Transaction Code.
+    /// </summary>
+    public class TransactionCode
+    {
+        /// <summary>
+        ///     Gets or sets the length of the transaction code.
+        /// </summary>
+        [JsonProperty("length")]
+        public int? Length { get; set; }
+        
+        /// <summary>
+        ///     Gets or sets a description of the transaction code.
+        /// </summary>
+        [JsonProperty("description")]
+        public string? Description { get; set; }
+        
+        /// <summary>
+        ///    Gets or sets the input mode of the transaction code which specifies the valid character set. (Must be 'numeric' ot 'text')
+        /// </summary>
+        [JsonProperty("input_mode")]
+        public string? InputMode { get; set; }
     }
 }
