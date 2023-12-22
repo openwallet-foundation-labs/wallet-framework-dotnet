@@ -41,8 +41,8 @@ namespace Hyperledger.Aries.Features.OpenId4Vc.Vci.Services.Oid4VciClientService
         /// </summary>
         /// <param name="metadata">The OID issuer metadata.</param>
         /// <param name="preAuthorizedCode">The pre-authorized code for token request.</param>
-        /// <param name="pin">The PIN.</param>
+        /// <param name="transactionCode">The Transaction Code.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains the token response.</returns>
-        Task<TokenResponse> RequestTokenAsync(OidIssuerMetadata metadata, string preAuthorizedCode, string? pin = null);
+        Task<TokenResponse> RequestTokenAsync(OidIssuerMetadata metadata, string preAuthorizedCode, string? transactionCode = null);
     }
 }

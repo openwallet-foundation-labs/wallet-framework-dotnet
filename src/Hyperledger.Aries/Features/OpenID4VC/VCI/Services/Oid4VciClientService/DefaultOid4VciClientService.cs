@@ -110,7 +110,7 @@ namespace Hyperledger.Aries.Features.OpenId4Vc.Vci.Services.Oid4VciClientService
 
         /// <inheritdoc />
         public virtual async Task<TokenResponse> RequestTokenAsync(OidIssuerMetadata metadata, string preAuthorizedCode,
-            string? pin = null)
+            string? transactionCode = null)
         {
             var authServer = await GetAuthorizationServerMetadata(metadata);
 
@@ -120,9 +120,9 @@ namespace Hyperledger.Aries.Features.OpenId4Vc.Vci.Services.Oid4VciClientService
                 PreAuthorizedCode = preAuthorizedCode
             };
 
-            if (!string.IsNullOrEmpty(pin))
+            if (!string.IsNullOrEmpty(transactionCode))
             {
-                tokenRequest.UserPin = pin;
+                tokenRequest.TransactionCode = transactionCode;
             }
 
             var formUrlEncodedRequest = tokenRequest.ToFormUrlEncoded();

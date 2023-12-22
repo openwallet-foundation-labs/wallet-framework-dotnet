@@ -33,8 +33,8 @@ namespace Hyperledger.Aries.Features.OpenId4Vc.Vci.Models.Authorization
         /// <summary>
         ///     Gets or sets the user PIN. This value must be present if a PIN was required in a previous step.
         /// </summary>
-        [JsonProperty("user_pin")]
-        public string? UserPin { get; set; }
+        [JsonProperty("tx_code")]
+        public string? TransactionCode { get; set; }
 
         /// <summary>
         ///     Converts the properties of the TokenRequest instance into an FormUrlEncodedContent type suitable for HTTP POST
@@ -54,8 +54,8 @@ namespace Hyperledger.Aries.Features.OpenId4Vc.Vci.Models.Authorization
             if (!string.IsNullOrEmpty(Scope))
                 keyValuePairs.Add(new KeyValuePair<string, string>("scope", Scope));
 
-            if (!string.IsNullOrEmpty(UserPin))
-                keyValuePairs.Add(new KeyValuePair<string, string>("user_pin", UserPin));
+            if (!string.IsNullOrEmpty(TransactionCode))
+                keyValuePairs.Add(new KeyValuePair<string, string>("tx_code", TransactionCode));
 
             return new FormUrlEncodedContent(keyValuePairs);
         }
