@@ -27,6 +27,7 @@ namespace Hyperledger.Aries.Features.OpenId4Vc.Vci.Services.Oid4VciClientService
         /// <param name="clientNonce">A nonce value for the client.</param>
         /// <param name="type">The type of the credential being requested.</param>
         /// <param name="tokenResponse">The token response from the previous token request.</param>
+        /// <param name="credentialEndpoint">The credential endpoint URL.</param>
         /// <returns>
         ///     A tuple containing the credential response and the key ID used during the signing of the Proof of Possession.
         /// </returns>
@@ -34,6 +35,7 @@ namespace Hyperledger.Aries.Features.OpenId4Vc.Vci.Services.Oid4VciClientService
             string credentialIssuer,
             string clientNonce,
             string type,
+            string credentialEndpoint,
             TokenResponse tokenResponse);
 
         /// <summary>

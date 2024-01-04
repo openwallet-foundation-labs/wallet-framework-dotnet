@@ -66,6 +66,7 @@ namespace Hyperledger.Aries.Features.OpenId4Vc.Vci.Services.Oid4VciClientService
             string credentialIssuer,
             string clientNonce,
             string type,
+            string credentialEndpoint,
             TokenResponse tokenResponse)
         {
             var keyId = await _keyStore.GenerateKey();
@@ -75,7 +76,7 @@ namespace Hyperledger.Aries.Features.OpenId4Vc.Vci.Services.Oid4VciClientService
             var credentialRequest = new OidCredentialRequest
             {
                 Format = "vc+sd-jwt",
-                CredentialDefinition = new OidCredentialDefinition()
+                CredentialDefinition = new OidCredentialDefinition
                 {
                     Vct = type
                 },
@@ -86,7 +87,15 @@ namespace Hyperledger.Aries.Features.OpenId4Vc.Vci.Services.Oid4VciClientService
                 }
             };
 
-            var responseData = await SendCredentialRequest(credentialIssuer, tokenResponse, credentialRequest);
+            var requestData = new StringContent(credentialRequest.ToJson(), Encoding.UTF8, "application/json");
+            
+            var httpClient = _httpClientFactory.CreateClient();
+            
+            httpClient.DefaultRequestHeaders.Remove("Authorization");
+            httpClient.DefaultRequestHeaders.Add("Authorization",
+                $"{tokenResponse.TokenType} {tokenResponse.AccessToken}");
+            
+            var responseData = await httpClient.PostAsync(new Uri(credentialEndpoint), requestData);
 
             var responseString = await responseData.Content.ReadAsStringAsync();
             if (!responseData.IsSuccessStatusCode)
@@ -178,23 +187,6 @@ namespace Hyperledger.Aries.Features.OpenId4Vc.Vci.Services.Oid4VciClientService
             var trimmedPath = credentialIssuerUrl.AbsolutePath.TrimEnd('/');
             return
                 $"{credentialIssuerUrl.GetLeftPart(UriPartial.Authority)}/.well-known/oauth-authorization-server{trimmedPath}";
-        }
-
-        private async Task<HttpResponseMessage> SendCredentialRequest(
-            string credentialIssuer,
-            TokenResponse tokenResponse,
-            OidCredentialRequest credentialRequest)
-        {
-            var requestData = new StringContent(credentialRequest.ToJson(), Encoding.UTF8, "application/json");
-
-            var httpClientWithAuth = _httpClientFactory.CreateClient();
-
-            httpClientWithAuth.DefaultRequestHeaders.Remove("Authorization");
-
-            httpClientWithAuth.DefaultRequestHeaders.Add("Authorization",
-                $"{tokenResponse.TokenType} {tokenResponse.AccessToken}");
-
-            return await httpClientWithAuth.PostAsync(Url.Combine(credentialIssuer, "/credential"), requestData);
         }
     }
 }
