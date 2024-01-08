@@ -58,23 +58,37 @@ namespace Hyperledger.Aries.Features.OpenID4VC.Vp.Services
         }
 
         /// <inheritdoc />
-        public async Task<Uri?> PrepareAndSendAuthorizationResponseAsync(IAgentContext agentContext, AuthorizationRequest authorizationRequest, SelectedCredential[] selectedCredentials)
+        public async Task<Uri?> PrepareAndSendAuthorizationResponseAsync(
+            IAgentContext agentContext,
+            AuthorizationRequest authorizationRequest,
+            SelectedCredential[] selectedCredentials)
         {
-            var authorizationResponse = await PrepareAuthorizationResponse(authorizationRequest, selectedCredentials);
-            var redirectUri = await SendAuthorizationResponse(authorizationResponse, new Uri(authorizationRequest.ResponseUri));
+            var authorizationResponse = await PrepareAuthorizationResponse(
+                authorizationRequest,
+                selectedCredentials);
+            
+            var redirectUri = await SendAuthorizationResponse(
+                authorizationResponse,
+                new Uri(authorizationRequest.ResponseUri));
             
             var presentedCredentials = 
-                (from credential in selectedCredentials 
-                    let inputD = authorizationRequest.PresentationDefinition.InputDescriptors
-                        .FirstOrDefault(x => x.Id == credential.InputDescriptorId) 
-                    select new PresentedCredential()
-                    {
-                        CredentialId = ((SdJwtRecord)credential.Credential).Id, 
-                        PresentedClaims = GetPresentedClaimsForCredential(inputD, (SdJwtRecord)credential.Credential)
-                    }).ToArray();
+                from credential in selectedCredentials 
+                let inputD = authorizationRequest
+                    .PresentationDefinition
+                    .InputDescriptors
+                    .FirstOrDefault(x => x.Id == credential.InputDescriptorId) 
+                select new PresentedCredential
+                {
+                    CredentialId = ((SdJwtRecord)credential.Credential).Id, 
+                    PresentedClaims = GetPresentedClaimsForCredential(inputD, (SdJwtRecord)credential.Credential)
+                };
             
-            await _oid4VpRecordService.StoreAsync(agentContext, authorizationRequest.ClientId,
-                authorizationRequest.ClientMetadata, presentedCredentials);
+            await _oid4VpRecordService.StoreAsync(
+                agentContext,
+                authorizationRequest.ClientId,
+                authorizationRequest.ClientMetadata,
+                authorizationRequest.PresentationDefinition.Name,
+                presentedCredentials.ToArray());
 
             return redirectUri;
         }
