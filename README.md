@@ -169,6 +169,13 @@ First, edit the keyword in the `scripts/tester.sh` file to select the tests you 
 scripts/tester.sh 
 ```
 
+## Releases
+This Repository includes a github actions pipeline which builds and releases the wallet framework whenever a Pull Request is submitted or a merge to the main branch happens. 
+The build is accessible through the Open Wallet Foundation nuget feed.
+
+When the build and release process is triggered by a pull request the build version has a "pr" suffix.
+If it is triggered by a merge towards the main branch the build version has a "rc" suffix.
+
 ## License
 
 [Apache License Version 2.0](https://github.com/hyperledger/aries-cloudagent-python/blob/master/LICENSE)
