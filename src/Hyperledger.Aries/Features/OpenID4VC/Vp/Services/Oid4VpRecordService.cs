@@ -41,17 +41,21 @@ namespace Hyperledger.Aries.Features.OpenID4VC.Vp.Services
         }
 
         /// <inheritdoc />
-        public async Task<string> StoreAsync(IAgentContext context, string clientId, string? clientMetadata, PresentedCredential[] presentedCredentials)
+        public async Task<string> StoreAsync(
+            IAgentContext context,
+            string clientId,
+            string? clientMetadata,
+            string? name,
+            PresentedCredential[] presentedCredentials)
         {
-            var record = new OidPresentationRecord()
-            {
-                Id = Guid.NewGuid().ToString(),
-                ClientId = clientId,
-                ClientMetadata = clientMetadata,
-                PresentedCredentials = presentedCredentials
-            };
+            var record = new OidPresentationRecord(
+                clientId,
+                clientMetadata,
+                name,
+                presentedCredentials);
             
             await RecordService.AddAsync(context.Wallet, record);
+            
             return record.Id;
         }
 
