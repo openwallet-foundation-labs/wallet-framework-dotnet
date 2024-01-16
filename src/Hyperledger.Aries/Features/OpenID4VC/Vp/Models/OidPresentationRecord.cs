@@ -17,7 +17,12 @@ namespace Hyperledger.Aries.Features.OpenId4Vc.Vp.Models
         /// <summary>
         ///     Gets or sets the client id and identifies the Verifier.
         /// </summary>
-        public string ClientId { get; }
+        [JsonIgnore]
+        public string ClientId
+        {
+            get => Get();
+            set => Set(value, false);
+        }
 
         /// <summary>
         ///     Gets or sets the type name.
@@ -27,16 +32,27 @@ namespace Hyperledger.Aries.Features.OpenId4Vc.Vp.Models
         /// <summary>
         ///     Gets or sets the metadata of the Verifier.
         /// </summary>
-        public string? ClientMetadata { get; }
+        public string? ClientMetadata { get; set; }
 
         /// <summary>
         ///     Gets or sets the name of the presentation.
         /// </summary>
-        public string? Name { get; }
+        [JsonIgnore]
+        public string? Name
+        {
+            get => Get();
+            set
+            {
+                if (value is not null)
+                {
+                    Set(value, false);
+                }
+            }
+        }
 
 #pragma warning disable CS8618
         /// <summary>
-        ///     This constructor is required for the record service but should not actually be used.
+        ///     Parameterless Default Constructor.
         /// </summary>
         public OidPresentationRecord()
         {
@@ -44,26 +60,26 @@ namespace Hyperledger.Aries.Features.OpenId4Vc.Vp.Models
 #pragma warning restore CS8618
 
         /// <summary>
-        ///     Initializes a new instance of the <see cref="OidPresentationRecord" /> class.
+        ///     Constructor for Serialization.
         /// </summary>
         /// <param name="clientId"></param>
+        /// <param name="id"></param>
         /// <param name="clientMetadata"></param>
         /// <param name="name"></param>
         /// <param name="presentedCredentials"></param>
         [JsonConstructor]
-        public OidPresentationRecord(
+        private OidPresentationRecord(
+            PresentedCredential[] presentedCredentials,
             string clientId,
+            string id,
             string? clientMetadata,
-            string? name,
-            PresentedCredential[] presentedCredentials)
+            string? name)
         {
             ClientId = clientId;
             ClientMetadata = clientMetadata;
-            CreatedAtUtc = DateTime.UtcNow;
-            Id = Guid.NewGuid().ToString();
+            Id = id;
             Name = name;
             PresentedCredentials = presentedCredentials;
-            RecordVersion = 1;
         }
     }
 }

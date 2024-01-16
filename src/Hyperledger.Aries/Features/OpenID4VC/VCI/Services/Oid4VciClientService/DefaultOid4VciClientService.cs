@@ -43,7 +43,12 @@ namespace Hyperledger.Aries.Features.OpenId4Vc.Vci.Services.Oid4VciClientService
         {
             var httpClient = _httpClientFactory.CreateClient();
             
-            var baseEndpoint = endpoint.AbsolutePath.EndsWith("/") ? endpoint : new Uri(endpoint.OriginalString + "/");
+            var baseEndpoint = endpoint
+                .AbsolutePath
+                .EndsWith("/") 
+                ? endpoint 
+                : new Uri(endpoint.OriginalString + "/");
+            
             var metadataUrl = new Uri(baseEndpoint, ".well-known/openid-credential-issuer");
 
             var response = await httpClient.GetAsync(metadataUrl);

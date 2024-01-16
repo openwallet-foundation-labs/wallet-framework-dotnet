@@ -9,6 +9,7 @@ using Hyperledger.Aries.Features.OpenId4Vc.Vci.Models.Metadata.Credential.Attrib
 using Hyperledger.Aries.Features.OpenId4Vc.Vci.Models.Metadata.Issuer;
 using Hyperledger.Aries.Storage;
 using Hyperledger.Aries.Storage.Models.Interfaces;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using SD_JWT.Models;
 
@@ -18,7 +19,7 @@ namespace Hyperledger.Aries.Features.SdJwt.Models.Records
     ///     A record that represents a Selective Disclosure JSON Web Token (SD-JWT) Credential with additional properties.
     ///     Inherits from base class RecordBase.
     /// </summary>
-    public class SdJwtRecord : RecordBase, ICredential
+    public sealed class SdJwtRecord : RecordBase, ICredential
     {
         /// <summary>
         ///     Gets or sets the attributes that should be displayed.
@@ -28,7 +29,7 @@ namespace Hyperledger.Aries.Features.SdJwt.Models.Records
         /// <summary>
         ///     Gets or sets the claims made.
         /// </summary>
-        public Dictionary<string, string> Claims { get; set; } = null!;
+        public Dictionary<string, string> Claims { get; set; }
 
         /// <summary>
         ///     Gets or sets the name of the issuer in different languages.
@@ -46,27 +47,88 @@ namespace Hyperledger.Aries.Features.SdJwt.Models.Records
         public List<OidCredentialDisplay>? Display { get; set; }
 
         /// <summary>
-        ///     Gets the verifiable credential type.
+        ///     Gets the Issuer-signed JWT part of the SD-JWT.
         /// </summary>
-        public string Vct { get; set; } = null!;
+        public string EncodedIssuerSignedJwt { get; set; } = null!;
 
         /// <summary>
         ///     Gets or sets the identifier for the issuer.
         /// </summary>
-        public string IssuerId { get; set; } = null!;
+        [JsonIgnore]
+        public string IssuerId
+        {
+            get => Get();
+            set => Set(value, false);
+        }
 
         /// <summary>
-        ///     Gets the Issuer-signed JWT part of the SD-JWT.
+        ///     Gets or sets the key record ID.
         /// </summary>
-        public string EncodedIssuerSignedJwt { get; set; } = null!;
+        [JsonIgnore]
+        public string KeyId
+        {
+            get => Get();
+            set => Set(value);
+        }
 
         /// <inheritdoc />
         public override string TypeName => "AF.SdJwtRecord";
 
         /// <summary>
-        ///     Gets or sets the key record ID.
+        ///     Gets the verifiable credential type.
         /// </summary>
-        public string? KeyId { get; set; }
+        [JsonIgnore]
+        public string Vct
+        {
+            get => Get();
+            set => Set(value, false);
+        }
+#pragma warning disable CS8618
+        /// <summary>
+        ///     Parameterless Default Constructor.
+        /// </summary>
+        public SdJwtRecord()
+        {
+        }
+#pragma warning restore CS8618
+
+        /// <summary>
+        ///     Constructor for Serialization.
+        /// </summary>
+        /// <param name="displayedAttributes">The attributes that should be displayed.</param>
+        /// <param name="claims">The claims made.</param>
+        /// <param name="issuerName">The name of the issuer in different languages.</param>
+        /// <param name="disclosures">The disclosures.</param>
+        /// <param name="display">The display of the credential.</param>
+        /// <param name="encodedIssuerSignedJwt">The Issuer-signed JWT part of the SD-JWT.</param>
+        /// <param name="id">The identifier.</param>
+        /// <param name="issuerId">The identifier for the issuer.</param>
+        /// <param name="keyId">The key record ID.</param>
+        /// <param name="vct">The verifiable credential type.</param>
+        [JsonConstructor]
+        private SdJwtRecord(
+            Dictionary<string, OidClaim> displayedAttributes,
+            Dictionary<string, string> claims,
+            Dictionary<string, string> issuerName,
+            ImmutableArray<string> disclosures,
+            List<OidCredentialDisplay> display,
+            string encodedIssuerSignedJwt,
+            string id,
+            string issuerId,
+            string keyId,
+            string vct)
+        {
+            Claims = claims;
+            Disclosures = disclosures;
+            Display = display;
+            DisplayedAttributes = displayedAttributes;
+            EncodedIssuerSignedJwt = encodedIssuerSignedJwt;
+            Id = id;
+            IssuerId = issuerId;
+            IssuerName = issuerName;
+            KeyId = keyId;
+            Vct = vct;
+        }
 
         /// <summary>
         ///     Creates a SdJwtRecord from a SdJwtDoc.
@@ -74,7 +136,7 @@ namespace Hyperledger.Aries.Features.SdJwt.Models.Records
         /// <param name="sdJwtDoc">The SdJwtDoc.</param>
         /// <returns>The SdJwtRecord.</returns>
         public static SdJwtRecord FromSdJwtDoc(SdJwtDoc sdJwtDoc)
-            => new SdJwtRecord
+            => new()
             {
                 EncodedIssuerSignedJwt = sdJwtDoc.EncodedIssuerSignedJwt,
                 Vct = ExtractVctFromJwtPayload(sdJwtDoc.EncodedIssuerSignedJwt),
@@ -90,12 +152,12 @@ namespace Hyperledger.Aries.Features.SdJwt.Models.Records
         /// <param name="issuerMetadata">The issuer metadata.</param>
         /// <param name="credentialMetadataId">The credential metadata ID.</param>
         public void SetDisplayFromIssuerMetadata(
-            OidIssuerMetadata issuerMetadata, 
+            OidIssuerMetadata issuerMetadata,
             string credentialMetadataId)
         {
             Display = issuerMetadata.GetCredentialDisplay(credentialMetadataId);
             DisplayedAttributes = issuerMetadata.GetCredentialClaims(credentialMetadataId);
-            
+
             IssuerId = issuerMetadata.CredentialIssuer;
             IssuerName = CreateIssuerNameDictionary(issuerMetadata);
         }
@@ -129,12 +191,12 @@ namespace Hyperledger.Aries.Features.SdJwt.Models.Records
             var jwtToken = jwtHandler.ReadJwtToken(encodedJwt);
             var payloadJson = jwtToken.Payload.SerializeToJson();
             var payloadObj = JsonDocument.Parse(payloadJson).RootElement;
-        
+
             if (payloadObj.TryGetProperty("vct", out var vct))
             {
                 return vct.GetString() ?? string.Empty;
             }
-        
+
             return string.Empty;
         }
 

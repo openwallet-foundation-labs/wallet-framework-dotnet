@@ -2,25 +2,19 @@
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using Newtonsoft.Json;
+using static System.Int32;
 
 namespace Hyperledger.Aries.Storage
 {
     /// <summary>
-    /// Wallet record.
+    ///     Wallet record.
     /// </summary>
     public abstract class RecordBase
     {
         /// <summary>
-        /// Gets the identifier.
-        /// </summary>
-        /// <returns>The identifier.</returns>
-        public virtual string Id { get; set; }
-
-        /// <summary>
-        /// Gets the created at datetime of the record.
+        ///     Gets the created at datetime of the record.
         /// </summary>
         /// <returns>The created datetime of the record.</returns>
-        //[JsonIgnore]
         public DateTime? CreatedAtUtc
         {
             get => GetDateTime();
@@ -28,62 +22,133 @@ namespace Hyperledger.Aries.Storage
         }
 
         /// <summary>
-        /// Gets the last updated datetime of the record.
+        ///     Gets the last updated datetime of the record.
         /// </summary>
         /// <returns>The last updated datetime of the record.</returns>
-        //[JsonIgnore]
         public DateTime? UpdatedAtUtc
         {
             get => GetDateTime();
             set => Set(value, false);
         }
+        
+        /// <summary>Gets or sets the tags.</summary>
+        /// <value>The tags.</value>
+        [JsonIgnore]
+        protected internal Dictionary<string, string> Tags { get; set; } = new();
 
         /// <summary>
-        /// Gets the name of the type.
+        ///     Get and set the schema version of a wallet record
+        /// </summary>
+        [JsonProperty(DefaultValueHandling = DefaultValueHandling.Populate)]
+        protected internal int RecordVersion
+        {
+            get
+            {
+                var version = Get();
+
+                if (string.IsNullOrWhiteSpace(version))
+                {
+                    Set(1, false);
+                    return 1;
+                }
+                else
+                {
+                    return Parse(version);
+                }
+            }
+            set => Set(value.ToString(), false);
+        }
+
+        /// <summary>
+        ///     Gets the identifier.
+        /// </summary>
+        /// <returns>The identifier.</returns>
+        public virtual string Id { get; set; }
+
+        /// <summary>
+        ///     Gets the name of the type.
         /// </summary>
         /// <returns>The type name.</returns>
         [JsonIgnore]
         public abstract string TypeName { get; }
 
-        /// <summary>Gets or sets the tags.</summary>
-        /// <value>The tags.</value>
-        [JsonIgnore]
-        protected internal Dictionary<string, string> Tags { get; set; } = new Dictionary<string, string>();
-        
         /// <summary>
-        /// Get and set the schema version of a wallet record
-        /// </summary>
-        [JsonProperty(DefaultValueHandling = DefaultValueHandling.Populate)]
-        protected internal int RecordVersion { get; set; }
-
-        /// <summary>
-        /// Gets the attribute.
+        ///     Gets the attribute.
         /// </summary>
         /// <param name="name">Name.</param>
         public string GetTag(string name) => Get(name: name);
 
         /// <summary>
-        /// Sets the attribute.
-        /// </summary>
-        /// <param name="name">Name.</param>
-        /// <param name="value">Value.</param>
-        /// <param name="encrypted">Controls if the tag is encrypted.</param>
-        public void SetTag(string name, string value, bool encrypted = true) => Set(value, encrypted, name);
-
-        /// <summary>
-        /// Removes a user attribute.
+        ///     Removes a user attribute.
         /// </summary>
         /// <returns>The attribute.</returns>
         /// <param name="name">Name.</param>
         public void RemoveTag(string name) => Set(null, name: name);
 
         /// <summary>
-        /// Set the specified value, field and name.
+        ///     Sets the attribute.
+        /// </summary>
+        /// <param name="name">Name.</param>
+        /// <param name="value">Value.</param>
+        /// <param name="encrypted">Controls if the tag is encrypted.</param>
+        public void SetTag(string name, string value, bool encrypted = true) => Set(value, encrypted, name);
+
+        /// <inheritdoc />
+        public override string ToString() =>
+            $"{GetType().Name}: " +
+            $"Id={Id}, " +
+            $"TypeName={TypeName}, " +
+            $"CreatedAtUtc={CreatedAtUtc}, " +
+            $"UpdatedAtUtc={UpdatedAtUtc}";
+
+        /// <summary>
+        ///     Get the value of the specified tag name.
+        /// </summary>
+        /// <returns>The get.</returns>
+        /// <param name="name">Name.</param>
+        protected string Get([CallerMemberName] string name = "")
+        {
+            if (Tags.TryGetValue(name, out var tag))
+                return tag;
+            
+            return Tags.ContainsKey($"~{name}") 
+                ? Tags[$"~{name}"] 
+                : null;
+        }
+
+        /// <summary>Gets the bool.</summary>
+        /// <param name="name">The name.</param>
+        /// <returns></returns>
+        protected bool GetBool([CallerMemberName] string name = "")
+        {
+            var strVal = Get(name);
+
+            if (strVal == null)
+                return false;
+
+            return Convert.ToBoolean(strVal);
+        }
+
+        /// <summary>Gets the date time.</summary>
+        /// <param name="name">The name.</param>
+        /// <returns></returns>
+        protected DateTime? GetDateTime([CallerMemberName] string name = "")
+        {
+            var strVal = Get(name);
+
+            if (strVal == null)
+                return null;
+
+            return new DateTime(Convert.ToInt64(strVal));
+        }
+
+        /// <summary>
+        ///     Set the specified value, field and name.
         /// </summary>
         /// <param name="value">Value.</param>
         /// <param name="encrypted">Controls whether the stored attribute should be encrypted at rest</param>
         /// <param name="name">Name.</param>
-        protected void Set(string value, bool encrypted = true, [CallerMemberName]string name = "")
+        protected void Set(string value, bool encrypted = true, [CallerMemberName] string name = "")
         {
             if (string.IsNullOrWhiteSpace(name))
                 throw new ArgumentNullException(nameof(name), "Attribute name must be specified.");
@@ -102,41 +167,43 @@ namespace Hyperledger.Aries.Storage
         }
 
         /// <summary>
-        /// Set the specified value, field and name.
+        ///     Set the specified value, field and name.
         /// </summary>
         /// <param name="value">Value.</param>
         /// <param name="field">Field.</param>
         /// <param name="encrypted">Controls whether the stored attribute should be encrypted at rest</param>
         /// <param name="name">Name.</param>
         /// <typeparam name="T">The 1st type parameter.</typeparam>
-        protected void Set<T>(T value, ref T field, bool encrypted = true, [CallerMemberName]string name = "") where T : struct
+        protected void Set<T>(T value, ref T field, bool encrypted = true, [CallerMemberName] string name = "")
+            where T : struct
         {
             Set(value, encrypted, name);
             field = value;
         }
 
         /// <summary>
-        /// Set the specified value, field and name.
+        ///     Set the specified value, field and name.
         /// </summary>
         /// <param name="value">Value.</param>
         /// <param name="field">Field.</param>
         /// <param name="encrypted">Controls whether the stored attribute should be encrypted at rest</param>
         /// <param name="name">Name.</param>
         /// <typeparam name="T">The 1st type parameter.</typeparam>
-        protected void Set<T>(T? value, ref T? field, bool encrypted = true, [CallerMemberName]string name = "") where T : struct
+        protected void Set<T>(T? value, ref T? field, bool encrypted = true, [CallerMemberName] string name = "")
+            where T : struct
         {
             Set(value, encrypted, name);
             field = value;
         }
 
         /// <summary>
-        /// Set the specified value, field and name.
+        ///     Set the specified value, field and name.
         /// </summary>
         /// <param name="value">Value.</param>
         /// <param name="encrypted">Controls whether the stored attribute should be encrypted at rest</param>
         /// <param name="name">Name.</param>
         /// <typeparam name="T">The 1st type parameter.</typeparam>
-        protected void Set<T>(T? value, bool encrypted = true, [CallerMemberName]string name = "") where T : struct
+        protected void Set<T>(T? value, bool encrypted = true, [CallerMemberName] string name = "") where T : struct
         {
             if (typeof(T) == typeof(DateTime))
             {
@@ -164,13 +231,13 @@ namespace Hyperledger.Aries.Storage
         }
 
         /// <summary>
-        /// Set the specified value, field and name.
+        ///     Set the specified value, field and name.
         /// </summary>
         /// <param name="value">Value.</param>
         /// <param name="encrypted">Controls whether the stored attribute should be encrypted at rest</param>
         /// <param name="name">Name.</param>
         /// <typeparam name="T">The 1st type parameter.</typeparam>
-        protected void Set<T>(T value, bool encrypted = true, [CallerMemberName]string name = "") where T : struct
+        protected void Set<T>(T value, bool encrypted = true, [CallerMemberName] string name = "") where T : struct
         {
             if (typeof(T) == typeof(DateTime))
             {
@@ -196,53 +263,5 @@ namespace Hyperledger.Aries.Storage
             else
                 Set(value.ToString(), name: name, encrypted: encrypted);
         }
-
-        /// <summary>
-        /// Get the value of the specified tag name.
-        /// </summary>
-        /// <returns>The get.</returns>
-        /// <param name="name">Name.</param>
-        protected string Get([CallerMemberName]string name = "")
-        {
-            if (Tags.ContainsKey(name))
-                return Tags[name];
-            if (Tags.ContainsKey($"~{name}"))
-                return Tags[$"~{name}"];
-            return null;
-        }
-
-        /// <summary>Gets the date time.</summary>
-        /// <param name="name">The name.</param>
-        /// <returns></returns>
-        protected DateTime? GetDateTime([CallerMemberName] string name = "")
-        {
-            var strVal = Get(name);
-
-            if (strVal == null)
-                return null;
-
-            return new DateTime(Convert.ToInt64(strVal));
-        }
-
-        /// <summary>Gets the bool.</summary>
-        /// <param name="name">The name.</param>
-        /// <returns></returns>
-        protected bool GetBool([CallerMemberName] string name = "")
-        {
-            var strVal = Get(name);
-
-            if (strVal == null)
-                return false;
-
-            return Convert.ToBoolean(strVal);
-        }
-
-        /// <inheritdoc />
-        public override string ToString() =>
-            $"{GetType().Name}: " +
-            $"Id={Id}, " +
-            $"TypeName={TypeName}, " +
-            $"CreatedAtUtc={CreatedAtUtc}, " +
-            $"UpdatedAtUtc={UpdatedAtUtc}";
     }
 }

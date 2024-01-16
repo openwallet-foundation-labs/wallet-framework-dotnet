@@ -48,11 +48,14 @@ namespace Hyperledger.Aries.Features.OpenID4VC.Vp.Services
             string? name,
             PresentedCredential[] presentedCredentials)
         {
-            var record = new OidPresentationRecord(
-                clientId,
-                clientMetadata,
-                name,
-                presentedCredentials);
+            var record = new OidPresentationRecord
+            {
+                ClientId = clientId,
+                ClientMetadata = clientMetadata,
+                Id = Guid.NewGuid().ToString(),
+                PresentedCredentials = presentedCredentials,
+                RecordVersion = 1
+            };
             
             await RecordService.AddAsync(context.Wallet, record);
             
