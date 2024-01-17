@@ -17,7 +17,7 @@ namespace Hyperledger.Aries.Storage
         /// <returns>The created datetime of the record.</returns>
         public DateTime? CreatedAtUtc
         {
-            get => GetDateTime();
+            get => GetDateTimeUtc();
             set => Set(value, false);
         }
 
@@ -27,7 +27,7 @@ namespace Hyperledger.Aries.Storage
         /// <returns>The last updated datetime of the record.</returns>
         public DateTime? UpdatedAtUtc
         {
-            get => GetDateTime();
+            get => GetDateTimeUtc();
             set => Set(value, false);
         }
         
@@ -132,14 +132,16 @@ namespace Hyperledger.Aries.Storage
         /// <summary>Gets the date time.</summary>
         /// <param name="name">The name.</param>
         /// <returns></returns>
-        protected DateTime? GetDateTime([CallerMemberName] string name = "")
+        protected DateTime? GetDateTimeUtc([CallerMemberName] string name = "")
         {
             var strVal = Get(name);
 
             if (strVal == null)
                 return null;
 
-            return new DateTime(Convert.ToInt64(strVal));
+            var result = new DateTime(Convert.ToInt64(strVal));
+            
+            return DateTime.SpecifyKind(result, DateTimeKind.Utc);
         }
 
         /// <summary>
