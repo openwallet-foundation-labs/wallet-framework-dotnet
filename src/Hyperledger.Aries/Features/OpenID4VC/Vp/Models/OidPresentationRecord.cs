@@ -41,13 +41,7 @@ namespace Hyperledger.Aries.Features.OpenId4Vc.Vp.Models
         public string? Name
         {
             get => Get();
-            set
-            {
-                if (value is not null)
-                {
-                    Set(value, false);
-                }
-            }
+            set => Set(value!, false);
         }
 
 #pragma warning disable CS8618
