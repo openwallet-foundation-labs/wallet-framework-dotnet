@@ -56,11 +56,11 @@ namespace Hyperledger.Aries.Features.OpenId4Vc.Vp.Models
         /// <summary>
         ///     Constructor for Serialization.
         /// </summary>
-        /// <param name="clientId"></param>
-        /// <param name="id"></param>
-        /// <param name="clientMetadata"></param>
-        /// <param name="name"></param>
-        /// <param name="presentedCredentials"></param>
+        /// <param name="presentedCredentials">The credentials the Holder presented to the Verifier.</param>
+        /// <param name="clientId">The client id for the Verifier.</param>
+        /// <param name="id">The id of the record.</param>
+        /// <param name="clientMetadata">The metadata of the Verifier.</param>
+        /// <param name="name">The name of the presentation.</param>
         [JsonConstructor]
         private OidPresentationRecord(
             PresentedCredential[] presentedCredentials,
