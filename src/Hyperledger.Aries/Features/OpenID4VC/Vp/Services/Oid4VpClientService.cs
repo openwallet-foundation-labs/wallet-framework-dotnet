@@ -114,13 +114,10 @@ namespace Hyperledger.Aries.Features.OpenID4VC.Vp.Services
 
             if (!responseMessage.IsSuccessStatusCode)
                 throw new InvalidOperationException("Authorization Response could not be sent");
-
-            if (responseMessage.Content == null)
-                return null;
-
+            
             var content = await responseMessage.Content.ReadAsStringAsync();
-            var redirectUri = JObject.Parse(content)["redirect_uri"]?.ToString();
-            return redirectUri != null ? new Uri(redirectUri) : null;
+            var redirectUri = string.IsNullOrEmpty(content) ? null : JObject.Parse(content)["redirect_uri"]?.ToString();
+            return redirectUri == null ? null : new Uri(redirectUri);
         }
 
         private async Task<string> CreatePresentation(InputDescriptor inputDescriptor, SdJwtRecord credential,
