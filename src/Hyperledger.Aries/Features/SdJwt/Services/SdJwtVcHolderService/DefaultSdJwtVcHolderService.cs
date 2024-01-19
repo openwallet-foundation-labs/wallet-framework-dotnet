@@ -55,16 +55,16 @@ namespace Hyperledger.Aries.Features.SdJwt.Services.SdJwtVcHolderService
             string? audience = null,
             string? nonce = null)
         {
-            var disclosureNamesDict = new Dictionary<int, string>();
-            for (var i = 0; i < credential.Disclosures.Length; i++)
+            var disclosures = new List<Disclosure>();
+            foreach (var disclosure in credential.Disclosures)
             {
-                var disclosureName = Disclosure.Deserialize(credential.Disclosures[i]).Name;
-                disclosureNamesDict.Add(i, disclosureName);
+                var deserializedDisclosure = Disclosure.Deserialize(disclosure);
+                
+                if (disclosureNames.Any(x => x == deserializedDisclosure.Name))
+                {
+                    disclosures.Add(deserializedDisclosure);
+                }
             }
-
-            var disclosures = disclosureNames
-                .Select(disclosureName => disclosureNamesDict.FirstOrDefault(x => x.Value == disclosureName).Key)
-                .Select(index => Disclosure.Deserialize(credential.Disclosures[index])).ToArray();
 
             string? keybindingJwt = null;
             if (!string.IsNullOrEmpty(credential.KeyId) && !string.IsNullOrEmpty(nonce) &&
@@ -74,7 +74,7 @@ namespace Hyperledger.Aries.Features.SdJwt.Services.SdJwtVcHolderService
                     await KeyStore.GenerateProofOfPossessionAsync(credential.KeyId, audience, nonce, "kb+jwt");
             }
 
-            return Holder.CreatePresentation(credential.EncodedIssuerSignedJwt, disclosures, keybindingJwt);
+            return Holder.CreatePresentation(credential.EncodedIssuerSignedJwt, disclosures.ToArray(), keybindingJwt);
         }
 
         /// <inheritdoc />
