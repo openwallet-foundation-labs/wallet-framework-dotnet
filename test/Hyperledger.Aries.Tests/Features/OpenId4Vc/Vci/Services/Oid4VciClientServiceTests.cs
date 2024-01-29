@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Threading;
@@ -19,36 +20,34 @@ using Xunit;
 
 namespace Hyperledger.Aries.Tests.Features.OpenId4Vc.Vci.Services
 {
-    public class DefaultOid4VciClientServiceTests
+    public class Oid4VciClientServiceTests
     {
         private const string AuthServerMetadata =
             "{\"issuer\":\"https://issuer.io\",\"token_endpoint\":\"https://issuer.io/token\",\"token_endpoint_auth_methods_supported\":[\"urn:ietf:params:oauth:client-assertion-type:verifiable-presentation\"],\"response_types_supported\":[\"urn:ietf:params:oauth:grant-type:pre-authorized_code\"]}\n";
 
-        private const string Vct = "VerifiedEmail";
-
-        private const string IssuerMetadataResponseContent =  
+        private const string IssuerMetadataResponseContent =
             "{\"credential_issuer\":\"https://issuer.io/\",\"credential_endpoint\":\"https://issuer.io/credential\",\"display\":[{\"name\":\"Aussteller\",\"locale\":\"de-DE\"},{\"name\":\"Issuer\",\"locale\":\"en-US\"}],\"credentials_supported\":{\"IdentityCredential\":{\"format\":\"vc+sd-jwt\",\"scope\":\"IdentityCredential_SD-JWT-VC\",\"cryptographic_binding_methods_supported\":[\"did:example\"],\"cryptographic_suites_supported\":[\"ES256K\"],\"display\":[{\"name\":\"IdentityCredential\",\"locale\":\"en-US\",\"background_color\":\"#12107c\",\"text_color\":\"#FFFFFF\"}],\"credential_definition\":{\"type\":\"IdentityCredential\",\"claims\":{\"given_name\":{\"display\":[{\"name\":\"GivenName\",\"locale\":\"en-US\"},{\"name\":\"Vorname\",\"locale\":\"de-DE\"}]},\"last_name\":{\"display\":[{\"name\":\"Surname\",\"locale\":\"en-US\"},{\"name\":\"Nachname\",\"locale\":\"de-DE\"}]},\"email\":{},\"phone_number\":{},\"address\":{\"street_address\":{},\"locality\":{},\"region\":{},\"country\":{}},\"birthdate\":{},\"is_over_18\":{},\"is_over_21\":{},\"is_over_65\":{}}}}}}";
-        
+
         private const string PreAuthorizedCode = "1234";
 
         private const string TokenResponse =
             "{\"access_token\":\"eyJhbGciOiJSUzI1NiIsInR5cCI6Ikp..sHQ\",\"token_type\":\"bearer\",\"expires_in\": 86400,\"c_nonce\": \"tZignsnFbp\",\"c_nonce_expires_in\":86400}";
 
-        private DefaultOid4VciClientService _oid4VciClientService;
+        private const string Vct = "VerifiedEmail";
 
-        private readonly HttpResponseMessage _authServerMetadataResponse = new HttpResponseMessage
+        private readonly HttpResponseMessage _authServerMetadataResponse = new HttpResponseMessage()
         {
             StatusCode = HttpStatusCode.OK,
             Content = new StringContent(AuthServerMetadata)
         };
 
-        private readonly HttpResponseMessage _issuerMetadataResponse = new HttpResponseMessage
+        private readonly HttpResponseMessage _issuerMetadataResponse = new HttpResponseMessage()
         {
             StatusCode = HttpStatusCode.OK,
             Content = new StringContent(IssuerMetadataResponseContent)
         };
 
-        private readonly HttpResponseMessage _tokenResponse = new HttpResponseMessage
+        private readonly HttpResponseMessage _tokenResponse = new HttpResponseMessage()
         {
             StatusCode = HttpStatusCode.OK,
             Content = new StringContent(TokenResponse)
@@ -58,17 +57,19 @@ namespace Hyperledger.Aries.Tests.Features.OpenId4Vc.Vci.Services
         private readonly Mock<IHttpClientFactory> _httpClientFactoryMock = new Mock<IHttpClientFactory>();
         private readonly Mock<IKeyStore> _keyStoreMock = new Mock<IKeyStore>();
 
-        private readonly OidIssuerMetadata _oidIssuerMetadata = new OidIssuerMetadata
+        private Oid4VciClientService _oid4VciClientService;
+
+        private readonly OidIssuerMetadata _oidIssuerMetadata = new OidIssuerMetadata()
         {
             CredentialIssuer = "https://issuer.io",
             CredentialEndpoint = "https://issuer.io/credential",
-            CredentialsSupported = new Dictionary<string, OidCredentialMetadata>()
+            CredentialsSupported = new Dictionary<string, OidCredentialMetadata>
             {
                 {
                     "VerifiedEmail", new OidCredentialMetadata
                     {
                         Format = "vc+sdjwt",
-                        CredentialDefinition = new OidCredentialDefinition()
+                        CredentialDefinition = new OidCredentialDefinition
                         {
                             Vct = Vct,
                             Claims = new Dictionary<string, OidClaim>()
@@ -154,7 +155,8 @@ namespace Hyperledger.Aries.Tests.Features.OpenId4Vc.Vci.Services
             _keyStoreMock.Setup(j => j.GenerateKey(It.IsAny<string>()))
                 .ReturnsAsync(keyId);
             _keyStoreMock.Setup(j =>
-                    j.GenerateProofOfPossessionAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
+                    j.GenerateProofOfPossessionAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
+                        It.IsAny<string>()))
                 .ReturnsAsync(jwtMock);
 
             const string credentialResponse =
@@ -179,9 +181,8 @@ namespace Hyperledger.Aries.Tests.Features.OpenId4Vc.Vci.Services
 
             // Act
             var actualCredentialResponse = await _oid4VciClientService.RequestCredentialAsync(
-                _oidIssuerMetadata.CredentialIssuer,
-                mockTokenResponse.CNonce,
-                Vct,
+                _oidIssuerMetadata.CredentialsSupported.First().Value,
+                _oidIssuerMetadata,
                 mockTokenResponse
             );
 
@@ -243,7 +244,7 @@ namespace Hyperledger.Aries.Tests.Features.OpenId4Vc.Vci.Services
             _httpClientFactoryMock.Setup(f => f.CreateClient(It.IsAny<string>())).Returns(httpClient);
 
             _oid4VciClientService =
-                new DefaultOid4VciClientService(_httpClientFactoryMock.Object, _keyStoreMock.Object);
+                new Oid4VciClientService(_httpClientFactoryMock.Object, _keyStoreMock.Object);
         }
     }
 }

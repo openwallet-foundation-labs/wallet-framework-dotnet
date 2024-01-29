@@ -119,7 +119,7 @@ namespace Microsoft.Extensions.DependencyInjection
             builder.AddSingleton<IHolder, Holder>();
             builder.AddSingleton<ISdJwtVcHolderService, DefaultSdJwtVcHolderService>();
             builder.AddSingleton<IPexService, PexService>();
-            builder.AddSingleton<IOid4VciClientService, DefaultOid4VciClientService>();
+            builder.AddSingleton<IOid4VciClientService, Oid4VciClientService>();
             builder.AddSingleton<IOid4VpClientService, Oid4VpClientService>();
             builder.AddSingleton<IOid4VpHaipClient, Oid4VpHaipClient>();
             builder.AddSingleton<IOid4VpRecordService, Oid4VpRecordService>();
