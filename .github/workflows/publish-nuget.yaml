@@ -4,7 +4,7 @@ on:
     push:
         branches:
             - main
-    pull_request:
+    pull_request_target:
         branches:
             - main
 
@@ -15,10 +15,18 @@ env:
     IS_MAIN_BRANCH: ${{ github.ref == 'refs/heads/main' }}
 
 jobs:
-    build:
-        
+    authorize:
+        environment:
+            ${{ github.event_name == 'pull_request_target' &&
+            github.event.pull_request.head.repo.full_name != github.repository &&
+            'external' || 'internal' }}
         runs-on: ubuntu-latest
-        
+        steps:
+            - run: "true"
+              
+    build:
+        needs: authorize
+        runs-on: ubuntu-latest
         steps:
             - uses: actions/checkout@v2
         
