@@ -1,0 +1,70 @@
+name: CI2
+
+on:
+    push:
+        branches:
+            - main
+    pull_request_target:
+        branches:
+            - main
+
+env:
+    BUILD_CONFIG: 'Release'
+    SOLUTION: 'src/Hyperledger.Aries.sln'
+    IS_PULL_REQUEST: ${{ github.event_name == 'pull_request_target' }}
+    IS_MAIN_BRANCH: ${{ github.ref == 'refs/heads/main' }}
+
+jobs:
+    echo:
+        runs-on: ubuntu-latest
+        steps:
+            - run: |
+                echo "IS_PULL_REQUEST: ${{ env.IS_PULL_REQUEST }}"
+              
+              
+    build:
+        needs: authorize
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v2
+        
+            - name: Set Version
+              run: |
+                sudo apt-get install -y libxml2-utils
+                VERSION=$(xmllint --xpath "string(/Project/PropertyGroup/Version)" Directory.Build.props)
+                if $IS_MAIN_BRANCH; then
+                  SUFFIX="-rc.${{ github.run_number }}"
+                elif $IS_PULL_REQUEST; then
+                  SUFFIX="-pr.${{ github.event.pull_request.number }}.${{ github.run_number }}"
+                fi
+                echo "APP_VERSION=$VERSION$SUFFIX" >> $GITHUB_ENV
+
+            - name: Setup NuGet
+              uses: NuGet/setup-nuget@v1.0.5
+
+            - name: Restore dependencies
+              run: nuget restore $SOLUTION
+
+            - name: Setup .NET
+              uses: actions/setup-dotnet@v3
+              with:
+                  dotnet-version: 3.1.*
+
+#            - name: Install libindy library
+#              run: |
+#                sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys CE7709D068DB5E88
+#                sudo add-apt-repository "deb https://repo.sovrin.org/sdk/deb bionic stable"
+#                sudo apt-get update \
+#                  apt-get install -y libindy
+                  
+            - name: Build
+              run: dotnet build $SOLUTION --configuration $BUILD_CONFIG -p:Version=$APP_VERSION --no-restore
+#
+#            - name: Run tests
+#              run: dotnet test $SOLUTION --configuration $BUILD_CONFIG --no-restore --no-build --verbosity normal
+
+            - name: Pack WalletFramework
+              run: dotnet pack $SOLUTION --configuration $BUILD_CONFIG -p:Version=$APP_VERSION --no-build --output .
+
+            - name: Publish
+              run: nuget push **\*.nupkg -Source 'https://api.nuget.org/v3/index.json' -ApiKey ${{secrets.NUGET_API_KEY}}
