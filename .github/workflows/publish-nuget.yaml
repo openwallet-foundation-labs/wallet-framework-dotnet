@@ -15,12 +15,14 @@ env:
     IS_MAIN_BRANCH: ${{ github.ref == 'refs/heads/main' }}
 
 jobs:
-    echo:
+    authorize:
+        environment:
+            ${{ env.IS_PULL_REQUEST &&
+            github.event.pull_request.head.repo.full_name != github.repository &&
+            'external' || 'internal' }}
         runs-on: ubuntu-latest
         steps:
-            - run: |
-                echo "IS_PULL_REQUEST: ${{ env.IS_PULL_REQUEST }}"
-              
+            - run: "true"
               
     build:
         needs: authorize
