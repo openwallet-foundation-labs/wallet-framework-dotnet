@@ -19,7 +19,7 @@ jobs:
         runs-on: ubuntu-latest
         steps:
             - run: |
-                echo "IS_PULL_REQUEST: $IS_PULL_REQUEST"
+                echo "IS_PULL_REQUEST: ${{ env.IS_PULL_REQUEST }}"
             
     authorize:
         environment:
