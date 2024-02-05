@@ -15,6 +15,12 @@ env:
     IS_MAIN_BRANCH: ${{ github.ref == 'refs/heads/main' }}
 
 jobs:
+    echo:
+        runs-on: ubuntu-latest
+        steps:
+            - run: |
+                echo "IS_PULL_REQUEST: $IS_PULL_REQUEST"
+            
     authorize:
         environment:
             ${{ env.IS_PULL_REQUEST &&
