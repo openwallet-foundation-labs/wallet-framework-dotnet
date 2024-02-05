@@ -49,7 +49,7 @@
         <MoqVersion>4.14.5</MoqVersion>
         <MultiformatsBaseVersion>2.0.2</MultiformatsBaseVersion>
         <NewtonsoftJsonVersion>13.0.1</NewtonsoftJsonVersion>
-        <NLogConfigVersion>4.7.2</NLogConfigVersion>
+        <NLogConfigVersion>4.7.15</NLogConfigVersion>
         <PollyVersion>7.2.1</PollyVersion>
         <StatelessVersion>5.1.2</StatelessVersion>
         <SwashbuckleAspNetCoreAnnotationsVersion>5.5.1</SwashbuckleAspNetCoreAnnotationsVersion>
