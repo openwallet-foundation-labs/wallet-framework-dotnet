@@ -8,6 +8,7 @@ using System;
 using static Hyperledger.Aries.Features.OpenId4Vc.Vp.Models.ClientIdScheme;
 using static Newtonsoft.Json.JsonConvert;
 using static Hyperledger.Aries.Features.OpenId4Vc.Vp.Models.RequestObject;
+using static Hyperledger.Aries.Features.OpenId4Vc.Vp.Models.ClientIdScheme.ClientIdSchemeValue;
 
 namespace Hyperledger.Aries.Features.OpenId4Vc.Vp.Services
 {
@@ -76,7 +77,7 @@ namespace Hyperledger.Aries.Features.OpenId4Vc.Vp.Services
                 );
 
             return
-                requestObject.ClientIdScheme switch
+                requestObject.ClientIdScheme.Value switch
                 {
                     X509SanDns =>
                         requestObject
