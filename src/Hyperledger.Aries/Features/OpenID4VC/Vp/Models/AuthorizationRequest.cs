@@ -1,9 +1,7 @@
 using System;
-using System.IdentityModel.Tokens.Jwt;
-using System.Linq;
-using System.Web;
 using Hyperledger.Aries.Features.Pex.Models;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace Hyperledger.Aries.Features.OpenId4Vc.Vp.Models
 {
@@ -12,156 +10,129 @@ namespace Hyperledger.Aries.Features.OpenId4Vc.Vp.Models
     /// </summary>
     public class AuthorizationRequest
     {
-        /// <summary>
-        ///     Gets or sets the response type. Determines what the Authorization Response should contain.
-        /// </summary>
-        [JsonProperty("response_type")] 
-        public string ResponseType { get; set; } = null!;
+        private const string DirectPost = "direct_post";
+
+        private const string VpToken = "vp_token";
 
         /// <summary>
-        ///     Gets or sets the client id. The Identifier of the Verifier
+        ///     Gets the client id scheme.
         /// </summary>
-        [JsonProperty("client_id")] 
-        public string ClientId { get; set; } = null!;
+        [JsonProperty("client_id_scheme")]
+        public ClientIdScheme ClientIdScheme { get; }
 
         /// <summary>
-        ///     Gets or sets the client id scheme.
+        ///     Gets the presentation definition. Contains the claims that the Verifier wants to receive.
         /// </summary>
-        [JsonProperty("client_id_scheme")] 
-        public string? ClientIdScheme { get; set; }
+        [JsonProperty("presentation_definition")]
+        public PresentationDefinition PresentationDefinition { get; }
 
         /// <summary>
-        ///    Gets or sets the redirect uri.
+        ///     Gets the client id. The Identifier of the Verifier.
         /// </summary>
-        [JsonProperty("redirect_uri")] 
-        public string? RedirectUri { get; set; }
-        
-        /// <summary>
-        ///     Gets or sets the client metadata. Contains the Verifier metadata
-        /// </summary>
-        [JsonProperty("client_metadata")] 
-        public string? ClientMetadata { get; set; }
+        [JsonProperty("client_id")]
+        public string ClientId { get; }
 
         /// <summary>
-        ///    Gets or sets the client metadata uri. Can be used to retrieve the verifier metadata.
+        ///     Gets the nonce. Random string for session binding.
         /// </summary>
-        [JsonProperty("client_metadata_uri")] 
-        public string? ClientMetadataUri { get; set; }
+        [JsonProperty("nonce")]
+        public string Nonce { get; }
 
         /// <summary>
-        ///    The scope of the request.
+        ///     Gets the response mode. Determines how to send the Authorization Response.
         /// </summary>
-        [JsonProperty("scope")] 
-        public string? Scope { get; set; }
+        /// <returns>Will always return "direct_post" due to the HAIP conformance.</returns>
+        [JsonProperty("response_mode")]
+        public string ResponseMode => DirectPost;
 
         /// <summary>
-        ///     Gets or sets the nonce. Random string for session binding.
+        ///     Gets the response type. Determines what the Authorization Response should contain.
         /// </summary>
-        [JsonProperty("nonce")] 
-        public string Nonce { get; set; } = null!;
+        /// <returns>Will always return "vp_token" due to the HAIP conformance.</returns>
+        [JsonProperty("response_type")]
+        public string ResponseType => VpToken;
 
         /// <summary>
-        ///     Gets or sets the response mode. Determines how to send the Authorization Response.
-        /// </summary>
-        [JsonProperty("response_mode")] 
-        public string? ResponseMode { get; set; }
-
-        /// <summary>
-        ///  Gets or sets the response mode. Determines where to send the Authorization Response to.
+        ///     Gets the response mode. Determines where to send the Authorization Response to.
         /// </summary>
         [JsonProperty("response_uri")]
-        public string ResponseUri { get; set; } = null!;
+        public string ResponseUri { get; }
 
         /// <summary>
-        ///    Gets or sets the state.
+        ///     Gets the client metadata. Contains the Verifier metadata.
         /// </summary>
-        [JsonProperty("state")] 
-        public string? State { get; set; }
+        [JsonProperty("client_metadata")]
+        public string? ClientMetadata { get; }
 
         /// <summary>
-        ///    Gets or sets the presentation definition. Contains the claims that the Verifier wants to receive.
+        ///     Gets the client metadata uri. Can be used to retrieve the verifier metadata.
         /// </summary>
-        [JsonIgnore]
-        public PresentationDefinition PresentationDefinition { get; set; } = null!;
+        [JsonProperty("client_metadata_uri")]
+        public string? ClientMetadataUri { get; }
 
         /// <summary>
-        ///  Parses an Authorization Request from a Jwt.
+        ///     The scope of the request.
         /// </summary>
-        /// <param name="jwt"></param>
-        /// <returns>The AuthorizationRequest</returns>
-        public static AuthorizationRequest? ParseFromJwt(string jwt)
+        [JsonProperty("scope")]
+        public string? Scope { get; }
+
+        /// <summary>
+        ///     Gets the state.
+        /// </summary>
+        [JsonProperty("state")]
+        public string? State { get; }
+
+        [JsonConstructor]
+        private AuthorizationRequest(
+            ClientIdScheme clientIdScheme,
+            PresentationDefinition presentationDefinition,
+            string clientId,
+            string nonce,
+            string responseUri,
+            string? clientMetadata,
+            string? clientMetadataUri,
+            string? scope,
+            string? state)
         {
-            var jwtHandler = new JwtSecurityTokenHandler();
-            var token = jwtHandler.ReadToken(jwt) as JwtSecurityToken;
-            if (token == null) return null;
-            
-            var presentationDefinition = JsonConvert.DeserializeObject<PresentationDefinition>(token.Payload["presentation_definition"].ToString());
-            var authorizationRequest = JsonConvert.DeserializeObject<AuthorizationRequest>(token.Payload.SerializeToJson());
-            
-            if (!(authorizationRequest != null && presentationDefinition != null)) 
-                return null;
-
-            authorizationRequest.PresentationDefinition = presentationDefinition;
-            
-            return authorizationRequest;
+            ClientId = clientId;
+            ClientIdScheme = clientIdScheme;
+            ClientMetadata = clientMetadata;
+            ClientMetadataUri = clientMetadataUri;
+            Nonce = nonce;
+            PresentationDefinition = presentationDefinition;
+            ResponseUri = responseUri;
+            Scope = scope;
+            State = state;
         }
 
         /// <summary>
-        ///    Parses an Authorization Request from a Uri.
+        ///     Creates a new instance of the <see cref="AuthorizationRequest" /> class.
         /// </summary>
-        /// <param name="uri"></param>
-        /// <returns>The AuthorizationRequest</returns>
-        public static AuthorizationRequest? ParseFromUri(Uri uri)
+        /// <param name="authorizationRequestJson">The json representation of the authorization request.</param>
+        /// <returns>A new instance of the <see cref="AuthorizationRequest" /> class.</returns>
+        /// <exception cref="InvalidOperationException">Thrown when the request does not match the HAIP.</exception>
+        public static AuthorizationRequest CreateAuthorizationRequest(string authorizationRequestJson)
+            => CreateAuthorizationRequest(JObject.Parse(authorizationRequestJson));
+
+        private static AuthorizationRequest CreateAuthorizationRequest(JObject authorizationRequestJson)
         {
-            var query = HttpUtility.ParseQueryString(uri.Query);
-            var dict = query.AllKeys.ToDictionary(key => key, key => query[key]);
-            var json = JsonConvert.SerializeObject(dict);
+            var responseType = authorizationRequestJson["response_type"]!.ToString();
+            var responseUri = authorizationRequestJson["response_uri"]!.ToString();
+            var responseMode = authorizationRequestJson["response_mode"]!.ToString();
+            var redirectUri = authorizationRequestJson["redirect_uri"];
 
-            var presentationDefinition = JsonConvert.DeserializeObject<PresentationDefinition>(query["presentation_definition"]);
-            var authorizationRequest = JsonConvert.DeserializeObject<AuthorizationRequest>(json);
-            
-            if (!(authorizationRequest != null && presentationDefinition != null)) 
-                return null;
-            
-            authorizationRequest.PresentationDefinition = presentationDefinition;
-            
-            return authorizationRequest;
-        }
-    }
+            if (responseType == VpToken
+                && responseMode == DirectPost
+                && !string.IsNullOrEmpty(responseUri)
+                && redirectUri is null)
+            {
+                return authorizationRequestJson.ToObject<AuthorizationRequest>()
+                       ?? throw new InvalidOperationException("Could not parse the Authorization Request");
+            }
 
-    /// <summary>
-    ///    Extension methods for the <see cref="AuthorizationRequest"/> class.
-    /// </summary>
-    public static class AuthorizationRequestExtension
-    {
-        /// <summary>
-        ///   Checks if the Authorization Request is HAIP conform.
-        /// </summary>
-        /// <param name="authorizationRequest"></param>
-        /// <returns>Returns bool indicating whether the AuthorizationRequest is haip conform</returns>
-        public static bool IsHaipConform(this AuthorizationRequest authorizationRequest)
-        {
-            if (authorizationRequest.ResponseType != "vp_token")
-                return false;
-            
-            if (authorizationRequest.ResponseMode != "direct_post")
-                return false;
-            
-            if (String.IsNullOrEmpty(authorizationRequest.ResponseUri))
-                return false;
-            
-            if (!String.IsNullOrEmpty(authorizationRequest.RedirectUri))
-                return false;
-
-            if (authorizationRequest.ClientIdScheme == "redirect_uri"
-                & authorizationRequest.ClientId != authorizationRequest.ResponseUri)
-                return false;
-            
-            //TODO: Not supported yet
-            //if (!(authorizationRequest.ClientIdScheme == "x509_san_dns" || authorizationRequest.ClientIdScheme == "verifier_attestation")) 
-            //return false;
-
-            return true;
+            throw new InvalidOperationException(
+                "Invalid Authorization Request. The request does not match the HAIP"
+            );
         }
     }
 }
