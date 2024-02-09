@@ -1,3 +1,4 @@
+using System.Linq;
 using Newtonsoft.Json;
 
 namespace Hyperledger.Aries.Features.OpenId4Vc.Vci.Models.Authorization
@@ -41,5 +42,20 @@ namespace Hyperledger.Aries.Features.OpenId4Vc.Vci.Models.Authorization
         /// </summary>
         [JsonProperty("token_endpoint_auth_signing_alg_values_supported")]
         public string[] TokenEndpointAuthSigningAlgValuesSupported { get; set; }
+        
+        /// <summary>
+        ///     Gets or sets the supported DPoP signing algorithms.
+        ///     This indicates which algorithms the Authorization Server supports for DPoP Proof JWTs.
+        /// </summary>
+        [JsonProperty("dpop_signing_alg_values_supported")]
+        public string[]? DPopSigningAlgValuesSupported { get; set; }
+
+        /// <summary>
+        ///    Checks if the Authorization Server supports the DPoP protocol using ES256. 
+        /// </summary>
+        /// <returns></returns>
+        internal bool IsDPoPSupported()
+            => DPopSigningAlgValuesSupported != null
+               && DPopSigningAlgValuesSupported.Contains("ES256");
     }
 }
