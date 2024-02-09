@@ -172,7 +172,7 @@ namespace Hyperledger.Aries.Tests.Features.SdJwt
             
             var claimsToDisclose = new[] { "given_name", "family_name" };
 
-            const string expected = issuerSignedJwt + "~" + givenNameDisclosure + "~" + familyNameDisclosure;
+            const string expected = issuerSignedJwt + "~" + familyNameDisclosure + "~" + givenNameDisclosure + "~";
             
             var service = CreateSdJwtVcHolderService();
 
@@ -257,8 +257,18 @@ namespace Hyperledger.Aries.Tests.Features.SdJwt
             {
                 throw new NotImplementedException();
             }
+            
+            public Task DeleteKey(string keyId)
+            {
+                throw new NotImplementedException();
+            }
 
             public Task<string> GenerateProofOfPossessionAsync(string keyId, string audience, string nonce, string type)
+            {
+                throw new NotImplementedException();
+            }
+
+            public Task<string> GenerateDPopProofOfPossessionAsync(string keyId, string audience, string? nonce, string? accessToken)
             {
                 throw new NotImplementedException();
             }
