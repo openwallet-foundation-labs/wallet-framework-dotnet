@@ -27,6 +27,8 @@ namespace Hyperledger.Aries.Features.OpenId4Vc.Vci.Services.Oid4VciClientService
         /// <param name="credentialMetadata">The credential metadata.</param>
         /// <param name="issuerMetadata">The issuer metadata.</param>
         /// <param name="tokenResponse">The token response from the previous token request.</param>
+        /// <param name="dPopKeyId">The key ID that is used during the signing of the DPoP Jwt Proof.</param>
+        /// <param name="dPopNonce">The nonce that is used for the DPoP Jwt Proof.</param>
         /// <returns>
         ///     A tuple containing the credential response and the key ID used during the signing of the Proof of Possession.
         /// </returns>
@@ -44,7 +46,8 @@ namespace Hyperledger.Aries.Features.OpenId4Vc.Vci.Services.Oid4VciClientService
         /// <param name="metadata">The OID issuer metadata.</param>
         /// <param name="preAuthorizedCode">The pre-authorized code for token request.</param>
         /// <param name="transactionCode">The Transaction Code.</param>
-        /// <returns>A task that represents the asynchronous operation. The task result contains the token response.</returns>
+        /// <returns>A task that represents the asynchronous operation. The task result contains the token response
+        /// and a key ID and nonce for the DPoP process.</returns>
         Task<(TokenResponse tokenResponse, string? dPopKeyId, string? dPopNonce)> RequestTokenAsync(
             OidIssuerMetadata metadata,
             string preAuthorizedCode,
