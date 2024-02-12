@@ -15,7 +15,7 @@
         <PackageReference Include="Microsoft.Extensions.Http" Version="$(MicrosoftExtensionsHttpVersion)" />
         <PackageReference Include="Microsoft.Extensions.Logging" Version="$(MicrosoftExtensionsLoggingVersion)" />
         <PackageReference Include="Multiformats.Base" Version="2.0.2" />
-        <PackageReference Include="Newtonsoft.Json" Version="13.0.2" />
+        <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
         <PackageReference Include="Polly" Version="$(PollyVersion)" />
         <PackageReference Include="SD-JWT" Version="0.1.0-rc.44" />
         <PackageReference Include="Stateless" Version="$(StatelessVersion)" />
