@@ -4,29 +4,21 @@ on:
     push:
         branches:
             - main
-    pull_request_target:
+    pull_request:
         branches:
             - main
 
 env:
     BUILD_CONFIG: 'Release'
     SOLUTION: 'src/Hyperledger.Aries.sln'
-    IS_PULL_REQUEST: ${{ github.event_name == 'pull_request_target' }}
+    IS_PULL_REQUEST: ${{ github.event_name == 'pull_request' }}
     IS_MAIN_BRANCH: ${{ github.ref == 'refs/heads/main' }}
 
 jobs:
-    authorize:
-        environment:
-            ${{ github.event_name == 'pull_request_target' &&
-            github.event.pull_request.head.repo.full_name != github.repository &&
-            'external' || 'internal' }}
-        runs-on: ubuntu-latest
-        steps:
-            - run: "true"
-              
     build:
-        needs: authorize
+        
         runs-on: ubuntu-latest
+        
         steps:
             - uses: actions/checkout@v2
         
