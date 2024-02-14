@@ -32,11 +32,13 @@ namespace Hyperledger.Aries.Features.OpenId4Vc.Vp.Services
         /// <inheritdoc />
         public async Task<AuthorizationRequest> ProcessAuthorizationRequestAsync(HaipAuthorizationRequestUri haipAuthorizationRequestUri)
         {
-            var authorizationRequest = new AuthorizationRequest();
+            AuthorizationRequest? authorizationRequest = null;
 
             if (!String.IsNullOrEmpty(haipAuthorizationRequestUri.RequestUri))
             {
                 var httpClient = _httpClientFactory.CreateClient();
+                httpClient.DefaultRequestHeaders.Clear();
+                
                 var response = await httpClient.GetAsync(haipAuthorizationRequestUri.RequestUri);
                 
                 if (response.StatusCode == HttpStatusCode.OK)
