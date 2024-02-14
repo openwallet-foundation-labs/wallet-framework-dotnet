@@ -21,10 +21,10 @@ namespace Hyperledger.Aries.Features.OpenId4Vc.Vci.Models.CredentialOffer
 
         /// <summary>
         ///     Gets or sets the list of credentials that the Wallet may request. The List contains CredentialMetadataIds
-        ///     that must map to the keys in the credentials_supported dictionary of the Issuer Metadata
+        ///     that must map to the keys in the credential_configurations_supported dictionary of the Issuer Metadata
         /// </summary>
-        [JsonProperty("credentials")]
-        public List<string> Credentials { get; set; } = null!;
+        [JsonProperty("credential_configuration_ids")]
+        public List<string> CredentialConfigurationIds { get; set; } = null!;
 
         /// <summary>
         ///     Gets or sets the URL of the Credential Issuer from where the Wallet is requested to obtain one or more Credentials

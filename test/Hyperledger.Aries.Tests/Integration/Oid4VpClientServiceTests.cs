@@ -84,7 +84,7 @@ namespace Hyperledger.Aries.Tests.Integration
         {
             CredentialIssuer = "https://issuer.io",
             CredentialEndpoint = "https://issuer.io/credential",
-            CredentialsSupported = new Dictionary<string, OidCredentialMetadata>()
+            CredentialConfigurationsSupported = new Dictionary<string, OidCredentialMetadata>()
             {
                 {
                     "VerifiedEmail", new OidCredentialMetadata
