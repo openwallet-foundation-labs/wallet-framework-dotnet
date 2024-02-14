@@ -114,16 +114,17 @@ namespace Hyperledger.Aries.Features.OpenID4VC.Vp.Services
         {
             var authorizationResponseJson = JsonConvert.SerializeObject(authorizationResponse);
             var authorizationResponseDict = JsonConvert.DeserializeObject<Dictionary<string, string>>(authorizationResponseJson);
-            var requestContent = new List<KeyValuePair<string, string>>(authorizationResponseDict);
 
             var request = new HttpRequestMessage
             {
                 RequestUri = responseUri,
                 Method = HttpMethod.Post,
-                Content = new FormUrlEncodedContent(requestContent)
+                Content = new FormUrlEncodedContent(authorizationResponseDict)
             };
 
             var httpClient = _httpClientFactory.CreateClient();
+            httpClient.DefaultRequestHeaders.Clear();
+            
             var responseMessage = await httpClient.SendAsync(request);
 
             if (!responseMessage.IsSuccessStatusCode)
