@@ -17,15 +17,22 @@ namespace Hyperledger.Aries.Features.OpenId4Vc.Vp.Models
             ///     The X509 SAN DNS client ID scheme.
             /// </summary>
             X509SanDns,
+
             /// <summary>
             ///     The verifier attestation client ID scheme.
             /// </summary>
             VerifierAttestation
         }
 
-        private const string VerifierAttestationScheme = "verifier_attestation";
+        /// <summary>
+        ///     The Verifier Attestation scheme.
+        /// </summary>
+        public const string VerifierAttestationScheme = "verifier_attestation";
 
-        private const string X509SanDnsScheme = "x509_san_dns";
+        /// <summary>
+        ///     The X509 SAN DNS scheme.
+        /// </summary>
+        public const string X509SanDnsScheme = "x509_san_dns";
 
         /// <summary>
         ///     The client ID scheme value.

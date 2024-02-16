@@ -2,6 +2,7 @@ using System;
 using Hyperledger.Aries.Features.Pex.Models;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using static Hyperledger.Aries.Features.OpenId4Vc.Vp.Models.ClientIdScheme;
 
 namespace Hyperledger.Aries.Features.OpenId4Vc.Vp.Models
 {
@@ -37,20 +38,6 @@ namespace Hyperledger.Aries.Features.OpenId4Vc.Vp.Models
         /// </summary>
         [JsonProperty("nonce")]
         public string Nonce { get; }
-
-        /// <summary>
-        ///     Gets the response mode. Determines how to send the Authorization Response.
-        /// </summary>
-        /// <returns>Will always return "direct_post" due to the HAIP conformance.</returns>
-        [JsonProperty("response_mode")]
-        public string ResponseMode => DirectPost;
-
-        /// <summary>
-        ///     Gets the response type. Determines what the Authorization Response should contain.
-        /// </summary>
-        /// <returns>Will always return "vp_token" due to the HAIP conformance.</returns>
-        [JsonProperty("response_type")]
-        public string ResponseType => VpToken;
 
         /// <summary>
         ///     Gets the response mode. Determines where to send the Authorization Response to.
@@ -114,25 +101,28 @@ namespace Hyperledger.Aries.Features.OpenId4Vc.Vp.Models
         public static AuthorizationRequest CreateAuthorizationRequest(string authorizationRequestJson)
             => CreateAuthorizationRequest(JObject.Parse(authorizationRequestJson));
 
-        private static AuthorizationRequest CreateAuthorizationRequest(JObject authorizationRequestJson)
+        private static AuthorizationRequest CreateAuthorizationRequest(JObject authorizationRequestJson) =>
+            IsHaipConform(authorizationRequestJson)
+                ? authorizationRequestJson.ToObject<AuthorizationRequest>()
+                  ?? throw new InvalidOperationException("Could not parse the Authorization Request")
+                : throw new InvalidOperationException(
+                    "Invalid Authorization Request. The request does not match the HAIP"
+                );
+
+        private static bool IsHaipConform(JObject authorizationRequestJson)
         {
             var responseType = authorizationRequestJson["response_type"]!.ToString();
             var responseUri = authorizationRequestJson["response_uri"]!.ToString();
             var responseMode = authorizationRequestJson["response_mode"]!.ToString();
             var redirectUri = authorizationRequestJson["redirect_uri"];
+            var clientIdScheme = authorizationRequestJson["client_id_scheme"];
 
-            if (responseType == VpToken
+            return
+                responseType == VpToken
                 && responseMode == DirectPost
                 && !string.IsNullOrEmpty(responseUri)
-                && redirectUri is null)
-            {
-                return authorizationRequestJson.ToObject<AuthorizationRequest>()
-                       ?? throw new InvalidOperationException("Could not parse the Authorization Request");
-            }
-
-            throw new InvalidOperationException(
-                "Invalid Authorization Request. The request does not match the HAIP"
-            );
+                && redirectUri is null
+                && clientIdScheme!.ToString() is X509SanDnsScheme or VerifierAttestationScheme;
         }
     }
 }

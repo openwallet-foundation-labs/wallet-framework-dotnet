@@ -60,11 +60,9 @@ namespace Hyperledger.Aries.Tests.Features.OpenId4Vc.Vp.Services
             );
 
             // Assert
-            authorizationRequest.ResponseType.Should().Be("vp_token");
             authorizationRequest.ClientId.Should().Be("https://verifier.com/presentation/authorization-response");
             authorizationRequest.ResponseUri.Should().Be("https://verifier.com/presentation/authorization-response");
             authorizationRequest.Nonce.Should().Be("87554784260280280442092184171274132458");
-            authorizationRequest.ResponseMode.Should().Be("direct_post");
             authorizationRequest.PresentationDefinition.Id.Should().Be("4dd1c26a-2f46-43ae-a711-70888c93fb4f");
 
             var inputDescriptor = authorizationRequest.PresentationDefinition.InputDescriptors.First();
