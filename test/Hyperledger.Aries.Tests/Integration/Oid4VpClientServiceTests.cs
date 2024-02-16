@@ -75,17 +75,17 @@ namespace Hyperledger.Aries.Tests.Integration
 
         private readonly DefaultSdJwtVcHolderService _sdJwtVcHolderService;
 
-        private readonly Mock<HttpMessageHandler> _httpMessageHandlerMock = new();
-        private readonly Mock<IHttpClientFactory> _httpClientFactoryMock = new();
-        private readonly Mock<IKeyStore> _keyStoreMock = new();
+        private readonly Mock<HttpMessageHandler> _httpMessageHandlerMock = new Mock<HttpMessageHandler>();
+        private readonly Mock<IHttpClientFactory> _httpClientFactoryMock = new Mock<IHttpClientFactory>();
+        private readonly Mock<IKeyStore> _keyStoreMock = new Mock<IKeyStore>();
         private MockAgent? _agent1;
-        private readonly MockAgentRouter _router = new();
+        private readonly MockAgentRouter _router = new MockAgentRouter();
 
         private readonly Oid4VpClientService _oid4VpClientService;
         private readonly Oid4VpHaipClient _oid4VpHaipClient;
         private readonly Oid4VpRecordService _oid4VpRecordService;
 
-        private readonly OidIssuerMetadata _oidIssuerMetadata = new()
+        private readonly OidIssuerMetadata _oidIssuerMetadata = new OidIssuerMetadata()
         {
             CredentialIssuer = "https://issuer.io",
             CredentialEndpoint = "https://issuer.io/credential",
@@ -105,8 +105,8 @@ namespace Hyperledger.Aries.Tests.Integration
             }
         };
 
-        private readonly WalletConfiguration _config1 = new() { Id = Guid.NewGuid().ToString() };
-        private readonly WalletCredentials _cred = new() { Key = "2" };
+        private readonly WalletConfiguration _config1 = new WalletConfiguration() { Id = Guid.NewGuid().ToString() };
+        private readonly WalletCredentials _cred = new WalletCredentials() { Key = "2" };
 
         [Fact]
         public async Task CanExecuteOpenId4VpFlow()
