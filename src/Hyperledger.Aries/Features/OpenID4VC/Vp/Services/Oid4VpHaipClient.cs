@@ -5,7 +5,6 @@ using System.Collections.Generic;
 using System.Net.Http;
 using System.Threading.Tasks;
 using System;
-using static Hyperledger.Aries.Features.OpenId4Vc.Vp.Models.ClientIdScheme;
 using static Newtonsoft.Json.JsonConvert;
 using static Hyperledger.Aries.Features.OpenId4Vc.Vp.Models.RequestObject;
 using static Hyperledger.Aries.Features.OpenId4Vc.Vp.Models.ClientIdScheme.ClientIdSchemeValue;
@@ -69,11 +68,12 @@ namespace Hyperledger.Aries.Features.OpenId4Vc.Vp.Services
         public async Task<AuthorizationRequest> ProcessAuthorizationRequestAsync(
             HaipAuthorizationRequestUri haipAuthorizationRequestUri)
         {
+            var httpClient = _httpClientFactory.CreateClient();
+            httpClient.DefaultRequestHeaders.Clear();
+            
             var requestObject =
                 CreateRequestObject(
-                    await _httpClientFactory
-                        .CreateClient()
-                        .GetStringAsync(haipAuthorizationRequestUri.RequestUri)
+                    await httpClient.GetStringAsync(haipAuthorizationRequestUri.RequestUri)
                 );
 
             return

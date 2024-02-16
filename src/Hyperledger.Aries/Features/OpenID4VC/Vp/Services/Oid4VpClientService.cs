@@ -94,24 +94,25 @@ namespace Hyperledger.Aries.Features.OpenID4VC.Vp.Services
                 authorizationRequest,
                 presentationMaps.ToArray()
             );
+
+            var httpClient = _httpClientFactory.CreateClient();
+            httpClient.DefaultRequestHeaders.Clear();
             
             var responseMessage =
-                await _httpClientFactory
-                    .CreateClient()
-                    .SendAsync(
-                        new HttpRequestMessage
-                        {
-                            RequestUri = new Uri(authorizationRequest.ResponseUri),
-                            Method = HttpMethod.Post,
-                            Content = new FormUrlEncodedContent(
-                                DeserializeObject<Dictionary<string, string>>(
-                                        SerializeObject(authorizationResponse)
-                                    )?
-                                    .ToList()
-                                ?? throw new InvalidOperationException("Authorization Response could not be parsed")
-                            )
-                        }
-                    );
+                await httpClient.SendAsync(
+                    new HttpRequestMessage
+                    {
+                        RequestUri = new Uri(authorizationRequest.ResponseUri),
+                        Method = HttpMethod.Post,
+                        Content = new FormUrlEncodedContent(
+                            DeserializeObject<Dictionary<string, string>>(
+                                    SerializeObject(authorizationResponse)
+                                )?
+                                .ToList()
+                            ?? throw new InvalidOperationException("Authorization Response could not be parsed")
+                        )
+                    }
+                );
 
             if (!responseMessage.IsSuccessStatusCode)
                 throw new InvalidOperationException("Authorization Response could not be sent");
