@@ -69,11 +69,8 @@ namespace Hyperledger.Aries.Tests.Features.OpenId4Vc.Vci.Services
                     "VerifiedEmail", new OidCredentialMetadata
                     {
                         Format = "vc+sdjwt",
-                        CredentialDefinition = new OidCredentialDefinition
-                        {
-                            Vct = Vct,
-                            Claims = new Dictionary<string, OidClaim>()
-                        }
+                        Vct = Vct,
+                        Claims = new Dictionary<string, OidClaim>()
                     }
                 }
             }

@@ -67,7 +67,7 @@ namespace Hyperledger.Aries.Features.OpenId4Vc.Vci.Models.Metadata.Issuer
         ///     null if the Credential is not found in the metadata.
         /// </returns>
         public Dictionary<string, OidClaim>? GetCredentialClaims(string credentialMetadataId) =>
-            CredentialConfigurationsSupported[credentialMetadataId].CredentialDefinition.Claims;
+            CredentialConfigurationsSupported[credentialMetadataId].Claims;
 
         /// <summary>
         ///     Gets the localized attribute names of a given Credential for a specific locale.
@@ -87,7 +87,7 @@ namespace Hyperledger.Aries.Features.OpenId4Vc.Vci.Models.Metadata.Issuer
             if (matchingCredential == null)
                 return null;
 
-            var localeDisplayNames = matchingCredential.CredentialDefinition.Claims
+            var localeDisplayNames = matchingCredential.Claims
                 .SelectMany(subject => subject.Value.Display)
                 .Where(display => display.Locale == locale)
                 .Select(display => display.Name);

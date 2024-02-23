@@ -90,11 +90,8 @@ namespace Hyperledger.Aries.Tests.Integration
                     "VerifiedEmail", new OidCredentialMetadata
                     {
                         Format = "vc+sdjwt",
-                        CredentialDefinition = new OidCredentialDefinition()
-                        {
-                            Vct = Vct,
-                            Claims = new Dictionary<string, OidClaim>()
-                        }
+                        Vct = Vct,
+                        Claims = new Dictionary<string, OidClaim>()
                     }
                 }
             }
