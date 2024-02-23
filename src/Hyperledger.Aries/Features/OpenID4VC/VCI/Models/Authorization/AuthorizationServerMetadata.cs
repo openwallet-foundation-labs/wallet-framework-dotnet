@@ -24,8 +24,8 @@ namespace Hyperledger.Aries.Features.OpenId4Vc.Vci.Models.Authorization
         ///     Gets or sets the response types that the OAuth 2.0 Authorization Server supports.
         ///     These types determine how the Authorization Server responds to client requests.
         /// </summary>
-        [JsonProperty("response_types_supported")]
-        public string[] ResponseTypesSupported { get; set; }
+        [JsonProperty("response_types_supported", NullValueHandling = NullValueHandling.Ignore)]
+        public string[]? ResponseTypesSupported { get; set; }
 
         /// <summary>
         ///     Gets or sets the supported authentication methods the OAuth 2.0 Authorization Server supports
