@@ -63,7 +63,7 @@ namespace Hyperledger.Aries.Tests.Integration
             );
 
             _keyStoreMock.Setup(keyStore =>
-                    keyStore.GenerateProofOfPossessionAsync(
+                    keyStore.GenerateKbProofOfPossessionAsync(
                         It.IsAny<string>(),
                         It.IsAny<string>(),
                         It.IsAny<string>(),

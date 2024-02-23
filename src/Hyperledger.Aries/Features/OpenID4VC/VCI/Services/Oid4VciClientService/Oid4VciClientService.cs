@@ -9,6 +9,7 @@ using Hyperledger.Aries.Features.OpenID4VC.VCI.Extensions;
 using Hyperledger.Aries.Features.OpenId4Vc.Vci.Models.Authorization;
 using Hyperledger.Aries.Features.OpenId4Vc.Vci.Models.CredentialRequest;
 using Hyperledger.Aries.Features.OpenId4Vc.Vci.Models.CredentialResponse;
+using Hyperledger.Aries.Features.OpenID4VC.VCI.Models.DPop;
 using Hyperledger.Aries.Features.OpenId4Vc.Vci.Models.Metadata.Credential;
 using Hyperledger.Aries.Features.OpenId4Vc.Vci.Models.Metadata.Issuer;
 using Newtonsoft.Json.Linq;
@@ -69,168 +70,18 @@ namespace Hyperledger.Aries.Features.OpenId4Vc.Vci.Services.Oid4VciClientService
         public async Task<(OidCredentialResponse credentialResponse, string keyId)> RequestCredentialAsync(
             OidCredentialMetadata credentialMetadata,
             OidIssuerMetadata issuerMetadata,
-            TokenResponse tokenResponse,
-            string? dPopKeyId,
-            string? dPopNonce)
-        {
-            var sdJwtKeyId = await _keyStore.GenerateKey();
-
-            var proofOfPossession = await _keyStore.GenerateProofOfPossessionAsync(
-                sdJwtKeyId,
-                issuerMetadata.CredentialIssuer,
-                tokenResponse.CNonce,
-                "openid4vci-proof+jwt"
-            );
-            
-            var httpClient = _httpClientFactory.CreateClient();
-            httpClient.AddAuthorizationHeader(tokenResponse);
-
-            if (tokenResponse.TokenType == "DPoP" && !string.IsNullOrEmpty(dPopKeyId))
-            {
-                var dPopProofJwt = await _keyStore.GenerateDPopProofOfPossessionAsync(
-                    dPopKeyId, 
-                    issuerMetadata.CredentialEndpoint, 
-                    dPopNonce,
-                    tokenResponse.AccessToken);
-                httpClient.AddDPopHeader(dPopProofJwt);
-            }
-            
-            var response = await httpClient.PostAsync(
-                issuerMetadata.CredentialEndpoint,
-                new StringContent(
-                    content: new OidCredentialRequest
-                    {
-                        Format = credentialMetadata.Format,
-                        CredentialDefinition = credentialMetadata.CredentialDefinition,
-                        Proof = new OidProofOfPossession
-                        {
-                            ProofType = "jwt",
-                            Jwt = proofOfPossession
-                        }
-                    }.ToJson(),
-                    encoding: Encoding.UTF8,
-                    mediaType: "application/json"
-                )
-            );
-
-            var refreshedDPopNonce = await GetDPopNonceIfRequested(response);
-            
-            if (!string.IsNullOrEmpty(refreshedDPopNonce) && !string.IsNullOrEmpty(dPopKeyId))
-            {
-                var dPopProofJwt = await _keyStore.GenerateDPopProofOfPossessionAsync(
-                    dPopKeyId, 
-                    issuerMetadata.CredentialEndpoint, 
-                    refreshedDPopNonce, 
-                    tokenResponse.AccessToken);
-                httpClient.AddDPopHeader(dPopProofJwt);
-
-                response = await httpClient.PostAsync(
-                    issuerMetadata.CredentialEndpoint,
-                    new StringContent(
-                        content: new OidCredentialRequest
-                        {
-                            Format = credentialMetadata.Format,
-                            CredentialDefinition = credentialMetadata.CredentialDefinition,
-                            Proof = new OidProofOfPossession
-                            {
-                                ProofType = "jwt",
-                                Jwt = proofOfPossession
-                            }
-                        }.ToJson(),
-                        encoding: Encoding.UTF8,
-                        mediaType: "application/json"
-                    )
-                );
-            }
-            
-            if (!string.IsNullOrEmpty(dPopKeyId))
-            {
-                await _keyStore.DeleteKey(dPopKeyId);
-            }
-            
-            if (!response.IsSuccessStatusCode)
-            {
-                throw new HttpRequestException(
-                    $"Failed to request Credential. Status Code is {response.StatusCode}"
-                );
-            }
-
-            var credentialResponse = DeserializeObject<OidCredentialResponse>(
-                await response.Content.ReadAsStringAsync()
-            );
-
-            if (credentialResponse?.Credential == null)
-            {
-                throw new InvalidOperationException("Credential response is null.");
-            }
-
-            return (credentialResponse, sdJwtKeyId);
-        }
-
-        /// <inheritdoc />
-        public async Task<(TokenResponse tokenResponse, string? dPopKeyId, string? dPopNonce)> RequestTokenAsync(
-            OidIssuerMetadata metadata,
             string preAuthorizedCode,
-            string? transactionCode = null)
+            string? transactionCode)
         {
-            var authServerMetadata = await FetchAuthorizationServerMetadataAsync(metadata);
+            var authorizationServerMetadata = await FetchAuthorizationServerMetadataAsync(issuerMetadata);
 
-            var httpClient = _httpClientFactory.CreateClient();
+            var tokenResponseParameters = authorizationServerMetadata.IsDPoPSupported()
+                ? await RequestTokenWithDPop(authorizationServerMetadata, preAuthorizedCode, transactionCode)
+                : await RequestTokenWithoutDPop(authorizationServerMetadata, preAuthorizedCode, transactionCode);
             
-            string? dPopKey = null;
-            if (authServerMetadata.IsDPoPSupported())
-            {
-                dPopKey = await _keyStore.GenerateKey();
-                var dPopProofJwt = await _keyStore.GenerateDPopProofOfPossessionAsync(
-                    dPopKey, 
-                    authServerMetadata.TokenEndpoint, 
-                    null, 
-                    null
-                    );
-                httpClient.AddDPopHeader(dPopProofJwt);
-            }
-
-            var response = await httpClient.PostAsync(
-                authServerMetadata.TokenEndpoint,
-                new TokenRequest
-                {
-                    GrantType = "urn:ietf:params:oauth:grant-type:pre-authorized_code",
-                    PreAuthorizedCode = preAuthorizedCode,
-                    TransactionCode = transactionCode
-                }.ToFormUrlEncoded());
-
-            var dPopNonce = await GetDPopNonceIfRequested(response);
-            
-            if (!string.IsNullOrEmpty(dPopNonce))
-            {
-                var dPopProofJwt = await _keyStore.GenerateDPopProofOfPossessionAsync(
-                    dPopKey!, 
-                    authServerMetadata.TokenEndpoint, 
-                    dPopNonce, 
-                    null);
-                
-                httpClient.AddDPopHeader(dPopProofJwt);
-                response = await httpClient.PostAsync(
-                    authServerMetadata.TokenEndpoint,
-                    new TokenRequest
-                    {
-                        GrantType = "urn:ietf:params:oauth:grant-type:pre-authorized_code",
-                        PreAuthorizedCode = preAuthorizedCode,
-                        TransactionCode = transactionCode
-                    }.ToFormUrlEncoded());
-            }
-
-            if (!response.IsSuccessStatusCode)
-            {
-                throw new HttpRequestException(
-                    $"Failed to get token. Status Code is {response.StatusCode}"
-                );
-            }
-
-            var tokenResponse = DeserializeObject<TokenResponse>(await response.Content.ReadAsStringAsync()) 
-                                ?? throw new InvalidOperationException("Failed to deserialize the token response");
-
-            return (tokenResponse, dPopKey, dPopNonce);
+            return tokenResponseParameters.IsDPoPRequested()
+                ? await RequestCredentialWithDPoP(credentialMetadata, issuerMetadata, tokenResponseParameters)
+                : await RequestCredentialWithoutDPoP(credentialMetadata, issuerMetadata, tokenResponseParameters);
         }
         
         private async Task<AuthorizationServerMetadata> FetchAuthorizationServerMetadataAsync(OidIssuerMetadata issuerMetadata)
@@ -266,8 +117,254 @@ namespace Hyperledger.Aries.Features.OpenId4Vc.Vci.Services.Oid4VciClientService
 
             return authServer;
         }
+        
+        private async Task<TokenResponseParameters> RequestTokenWithDPop(
+            AuthorizationServerMetadata authServerMetadata,
+            string preAuthorizedCode,
+            string? transactionCode = null)
+        {
+            var dPopKey = await _keyStore.GenerateKey();
+            var dPopProofJwt = await _keyStore.GenerateDPopProofOfPossessionAsync(
+                dPopKey, 
+                authServerMetadata.TokenEndpoint, 
+                null, 
+                null
+                );
+            
+            var httpClient = _httpClientFactory.CreateClient();
+            httpClient.AddDPopHeader(dPopProofJwt);
+            
+            var response = await httpClient.PostAsync(
+                authServerMetadata.TokenEndpoint,
+                new TokenRequest
+                {
+                    GrantType = "urn:ietf:params:oauth:grant-type:pre-authorized_code",
+                    PreAuthorizedCode = preAuthorizedCode,
+                    TransactionCode = transactionCode
+                }.ToFormUrlEncoded()
+                );
 
-        private async Task<string?> GetDPopNonceIfRequested(HttpResponseMessage response)
+            var dPopNonce = await GetDPopNonce(response);
+
+            if (!string.IsNullOrEmpty(dPopNonce))
+            {
+                dPopProofJwt = await _keyStore.GenerateDPopProofOfPossessionAsync(
+                    dPopKey, 
+                    authServerMetadata.TokenEndpoint, 
+                    dPopNonce, 
+                    null);
+            
+                httpClient.AddDPopHeader(dPopProofJwt);
+                response = await httpClient.PostAsync(
+                    authServerMetadata.TokenEndpoint,
+                    new TokenRequest
+                    {
+                        GrantType = "urn:ietf:params:oauth:grant-type:pre-authorized_code",
+                        PreAuthorizedCode = preAuthorizedCode,
+                        TransactionCode = transactionCode
+                    }.ToFormUrlEncoded());
+            }
+            
+            if (!response.IsSuccessStatusCode)
+            {
+                throw new HttpRequestException(
+                    $"Failed to get token. Status Code is {response.StatusCode}"
+                );
+            }
+
+            var tokenResponse = DeserializeObject<TokenResponse>(await response.Content.ReadAsStringAsync()) 
+                                ?? throw new InvalidOperationException("Failed to deserialize the token response");
+
+            var dPop = new DPop(dPopKey, dPopNonce);
+            var credentialRequestParameters = new TokenResponseParameters(tokenResponse, dPop);
+            
+            return credentialRequestParameters;
+        }
+        
+        private async Task<(OidCredentialResponse credentialResponse, string keyId)> RequestCredentialWithDPoP(
+            OidCredentialMetadata credentialMetadata,
+            OidIssuerMetadata issuerMetadata,
+            TokenResponseParameters tokenResponseParameters)
+        {
+            if (tokenResponseParameters.DPop == null)
+            {
+                throw new InvalidOperationException("The DPoP Flow requires the DPoP specific parameters.");
+            }
+            
+            var dPopProofJwt = await _keyStore.GenerateDPopProofOfPossessionAsync(
+                tokenResponseParameters.DPop.KeyId, 
+                issuerMetadata.CredentialEndpoint, 
+                tokenResponseParameters.DPop.Nonce,
+                tokenResponseParameters.TokenResponse.AccessToken);
+            
+            var sdJwtKeyId = await _keyStore.GenerateKey();
+            var keyBindingJwt = await _keyStore.GenerateKbProofOfPossessionAsync(
+                sdJwtKeyId,
+                issuerMetadata.CredentialIssuer,
+                tokenResponseParameters.TokenResponse.CNonce,
+                "openid4vci-proof+jwt"
+            );
+            
+            var httpClient = _httpClientFactory.CreateClient();
+            httpClient.AddAuthorizationHeader(tokenResponseParameters);
+            httpClient.AddDPopHeader(dPopProofJwt);
+            
+            var response = await httpClient.PostAsync(
+                issuerMetadata.CredentialEndpoint,
+                new StringContent(
+                    content: new OidCredentialRequest
+                    {
+                        Format = credentialMetadata.Format,
+                        CredentialDefinition = credentialMetadata.CredentialDefinition,
+                        Proof = new OidProofOfPossession
+                        {
+                            ProofType = "jwt",
+                            Jwt = keyBindingJwt
+                        }
+                    }.ToJson(),
+                    encoding: Encoding.UTF8,
+                    mediaType: "application/json"
+                )
+            );
+
+            var refreshedDPopNonce = await GetDPopNonce(response);
+            
+            if (!string.IsNullOrEmpty(refreshedDPopNonce))
+            {
+                dPopProofJwt = await _keyStore.GenerateDPopProofOfPossessionAsync(
+                    tokenResponseParameters.DPop.KeyId, 
+                    issuerMetadata.CredentialEndpoint, 
+                    refreshedDPopNonce, 
+                    tokenResponseParameters.TokenResponse.AccessToken);
+                httpClient.AddDPopHeader(dPopProofJwt);
+
+                response = await httpClient.PostAsync(
+                    issuerMetadata.CredentialEndpoint,
+                    new StringContent(
+                        content: new OidCredentialRequest
+                        {
+                            Format = credentialMetadata.Format,
+                            CredentialDefinition = credentialMetadata.CredentialDefinition,
+                            Proof = new OidProofOfPossession
+                            {
+                                ProofType = "jwt",
+                                Jwt = keyBindingJwt
+                            }
+                        }.ToJson(),
+                        encoding: Encoding.UTF8,
+                        mediaType: "application/json"
+                    )
+                );
+            }
+            
+            if (!string.IsNullOrEmpty(tokenResponseParameters.DPop.KeyId))
+            {
+                await _keyStore.DeleteKey(tokenResponseParameters.DPop.KeyId);
+            }
+            
+            if (!response.IsSuccessStatusCode)
+            {
+                throw new HttpRequestException(
+                    $"Failed to request Credential. Status Code is {response.StatusCode}"
+                );
+            }
+
+            var credentialResponse = DeserializeObject<OidCredentialResponse>(
+                await response.Content.ReadAsStringAsync()
+            );
+
+            if (credentialResponse?.Credential == null)
+            {
+                throw new InvalidOperationException("Credential response is null.");
+            }
+
+            return (credentialResponse, sdJwtKeyId);
+        }
+        
+        private async Task<TokenResponseParameters> RequestTokenWithoutDPop(
+            AuthorizationServerMetadata authServerMetadata,
+            string preAuthorizedCode,
+            string? transactionCode = null)
+        {
+            var httpClient = _httpClientFactory.CreateClient();
+
+            var response = await httpClient.PostAsync(
+                authServerMetadata.TokenEndpoint,
+                new TokenRequest
+                {
+                    GrantType = "urn:ietf:params:oauth:grant-type:pre-authorized_code",
+                    PreAuthorizedCode = preAuthorizedCode,
+                    TransactionCode = transactionCode
+                }.ToFormUrlEncoded());
+
+            if (!response.IsSuccessStatusCode)
+            {
+                throw new HttpRequestException(
+                    $"Failed to get token. Status Code is {response.StatusCode}"
+                );
+            }
+
+            var tokenResponse = DeserializeObject<TokenResponse>(await response.Content.ReadAsStringAsync()) 
+                                ?? throw new InvalidOperationException("Failed to deserialize the token response");
+
+            var credentialRequestParameters = new TokenResponseParameters(tokenResponse);
+            return credentialRequestParameters;
+        }
+        
+        private async Task<(OidCredentialResponse credentialResponse, string keyId)> RequestCredentialWithoutDPoP(
+            OidCredentialMetadata credentialMetadata,
+            OidIssuerMetadata issuerMetadata,
+            TokenResponseParameters tokenResponseParameters)
+        {
+            var sdJwtKeyId = await _keyStore.GenerateKey();
+            var proofOfPossession = await _keyStore.GenerateKbProofOfPossessionAsync(
+                sdJwtKeyId,
+                issuerMetadata.CredentialIssuer,
+                tokenResponseParameters.TokenResponse.CNonce,
+                "openid4vci-proof+jwt"
+            );
+            
+            var httpClient = _httpClientFactory.CreateClient();
+            httpClient.AddAuthorizationHeader(tokenResponseParameters);
+            
+            var response = await httpClient.PostAsync(
+                issuerMetadata.CredentialEndpoint,
+                new StringContent(
+                    content: new OidCredentialRequest
+                    {
+                        Format = credentialMetadata.Format,
+                        CredentialDefinition = credentialMetadata.CredentialDefinition,
+                        Proof = new OidProofOfPossession
+                        {
+                            ProofType = "jwt",
+                            Jwt = proofOfPossession
+                        }
+                    }.ToJson(),
+                    encoding: Encoding.UTF8,
+                    mediaType: "application/json"
+                )
+            );
+            
+            if (!response.IsSuccessStatusCode)
+            {
+                throw new HttpRequestException(
+                    $"Failed to request Credential. Status Code is {response.StatusCode}"
+                );
+            }
+
+            var credentialResponse = DeserializeObject<OidCredentialResponse>(
+                await response.Content.ReadAsStringAsync()
+            );
+
+            if (credentialResponse?.Credential == null)
+            {
+                throw new InvalidOperationException("Credential response is null.");
+            }
+
+            return (credentialResponse, sdJwtKeyId);
+        }
+
+        private async Task<string?> GetDPopNonce(HttpResponseMessage response)
         {
             var content = await response.Content.ReadAsStringAsync();
             var errorReason = string.IsNullOrEmpty(content) 
@@ -285,5 +382,7 @@ namespace Hyperledger.Aries.Features.OpenId4Vc.Vci.Services.Oid4VciClientService
 
             return null;
         }
+        
+        
     }
 }

@@ -1,5 +1,5 @@
 using System.Net.Http;
-using Hyperledger.Aries.Features.OpenId4Vc.Vci.Models.Authorization;
+using Hyperledger.Aries.Features.OpenID4VC.VCI.Models.DPop;
 
 namespace Hyperledger.Aries.Features.OpenID4VC.VCI.Extensions
 {
@@ -11,12 +11,13 @@ namespace Hyperledger.Aries.Features.OpenID4VC.VCI.Extensions
             httpClient.DefaultRequestHeaders.Add("DPoP", dPopProofJwt);
         }
         
-        public static void AddAuthorizationHeader(this HttpClient httpClient, TokenResponse tokenResponse)
+        public static void AddAuthorizationHeader(this HttpClient httpClient, TokenResponseParameters tokenResponseParameters)
         {
             httpClient.DefaultRequestHeaders.Remove("Authorization");
             httpClient.DefaultRequestHeaders.Add(
                 "Authorization",
-                $"{tokenResponse.TokenType} {tokenResponse.AccessToken}");
+                $"{tokenResponseParameters.TokenResponse.TokenType} {tokenResponseParameters.TokenResponse.AccessToken}"
+                );
         }
     }
 }
