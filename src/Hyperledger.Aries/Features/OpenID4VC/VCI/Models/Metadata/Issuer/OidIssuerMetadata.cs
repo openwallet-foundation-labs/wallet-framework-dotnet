@@ -1,5 +1,3 @@
-#nullable enable
-
 using System.Collections.Generic;
 using System.Linq;
 using Hyperledger.Aries.Features.OpenId4Vc.Vci.Models.Metadata.Credential;
