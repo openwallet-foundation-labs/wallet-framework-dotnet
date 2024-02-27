@@ -117,7 +117,7 @@ namespace Hyperledger.Aries.Features.OpenID4VC.Vp.Services
                 throw new InvalidOperationException("Authorization Response could not be sent");
 
             var responseContent = await responseMessage.Content.ReadAsStringAsync();
-            var redirectUri = DeserializeObject<AuthorizationResponseCallback>(responseContent)?.RedirectUri;
+            var redirectUri = DeserializeObject<AuthorizationResponseCallback?>(responseContent)?.RedirectUri;
 
             var presentedCredentials = selectedCredentials
                 .Select(credential =>
