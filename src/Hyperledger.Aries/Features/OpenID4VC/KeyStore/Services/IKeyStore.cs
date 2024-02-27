@@ -29,7 +29,7 @@ namespace Hyperledger.Aries.Features.OpenId4Vc.KeyStore.Services
         ///     A <see cref="Task{TResult}" /> representing the asynchronous operation. When evaluated, the task's result contains
         ///     the proof.
         /// </returns>
-        Task<string> GenerateKbProofOfPossessionAsync(string keyId, string audience, string? nonce, string type);
+        Task<string> GenerateKbProofOfPossessionAsync(string keyId, string audience, string nonce, string type);
         
         /// <summary>
         ///     Asynchronously creates a DPoP Proof JWT for a specific key, based on the provided audience, nonce and access token.
