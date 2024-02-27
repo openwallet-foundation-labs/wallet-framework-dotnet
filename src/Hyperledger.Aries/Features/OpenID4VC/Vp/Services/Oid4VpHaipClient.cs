@@ -85,6 +85,8 @@ namespace Hyperledger.Aries.Features.OpenId4Vc.Vp.Services
                             .ValidateTrustChain()
                             .ValidateSanName()
                             .ToAuthorizationRequest(),
+                    RedirectUri =>
+                        requestObject.ToAuthorizationRequest(),
                     VerifierAttestation =>
                         throw new NotImplementedException("Verifier Attestation not yet implemented"),
                     _ =>

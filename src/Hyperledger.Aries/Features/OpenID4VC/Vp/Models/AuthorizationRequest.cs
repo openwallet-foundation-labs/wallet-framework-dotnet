@@ -116,13 +116,21 @@ namespace Hyperledger.Aries.Features.OpenId4Vc.Vp.Models
             var responseMode = authorizationRequestJson["response_mode"]!.ToString();
             var redirectUri = authorizationRequestJson["redirect_uri"];
             var clientIdScheme = authorizationRequestJson["client_id_scheme"];
+            var clientId = authorizationRequestJson["client_id"]!.ToString();
 
             return
-                responseType == VpToken
-                && responseMode == DirectPost
-                && !string.IsNullOrEmpty(responseUri)
-                && redirectUri is null
-                && clientIdScheme!.ToString() is X509SanDnsScheme or VerifierAttestationScheme;
+                (responseType == VpToken
+                 && responseMode == DirectPost
+                 && !string.IsNullOrEmpty(responseUri)
+                 && redirectUri is null
+                 && clientIdScheme!.ToString() is X509SanDnsScheme or VerifierAttestationScheme) 
+                ||
+                (responseType == VpToken
+                 && responseMode == DirectPost
+                 && !string.IsNullOrEmpty(responseUri)
+                 && redirectUri is null
+                 && clientIdScheme!.ToString() is RedirectUriScheme
+                 && clientId == responseUri);
         }
     }
 }
