@@ -9,7 +9,6 @@ using Hyperledger.Aries.Features.OpenId4Vc.Vp.Services;
 using Hyperledger.Aries.Features.SdJwt.Models.Records;
 using Hyperledger.Aries.Features.SdJwt.Services.SdJwtVcHolderService;
 using static Newtonsoft.Json.JsonConvert;
-using static Newtonsoft.Json.Linq.JObject;
 
 namespace Hyperledger.Aries.Features.OpenID4VC.Vp.Services
 {
@@ -118,10 +117,7 @@ namespace Hyperledger.Aries.Features.OpenID4VC.Vp.Services
                 throw new InvalidOperationException("Authorization Response could not be sent");
 
             var responseContent = await responseMessage.Content.ReadAsStringAsync();
-
-            var redirectUri = string.IsNullOrEmpty(responseContent)
-                ? null
-                : new Uri(Parse(responseContent)["redirect_uri"]?.ToString()!);
+            var redirectUri = DeserializeObject<AuthorizationResponseCallback>(responseContent)?.RedirectUri;
 
             var presentedCredentials = selectedCredentials
                 .Select(credential =>
