@@ -4,6 +4,7 @@ using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
 using Hyperledger.Aries.Agents;
+using Hyperledger.Aries.Extensions;
 using Hyperledger.Aries.Features.OpenId4Vc.Vp.Models;
 using Hyperledger.Aries.Features.OpenId4Vc.Vp.Services;
 using Hyperledger.Aries.Features.SdJwt.Models.Records;
@@ -116,8 +117,9 @@ namespace Hyperledger.Aries.Features.OpenID4VC.Vp.Services
             if (!responseMessage.IsSuccessStatusCode)
                 throw new InvalidOperationException("Authorization Response could not be sent");
 
-            var responseContent = await responseMessage.Content.ReadAsStringAsync();
-            var redirectUri = DeserializeObject<AuthorizationResponseCallback?>(responseContent)?.RedirectUri;
+            var redirectUriJson = await responseMessage.Content.ReadAsStringAsync();
+
+            var redirectUri = redirectUriJson?.ToObject<AuthorizationResponseCallback>();
 
             var presentedCredentials = selectedCredentials
                 .Select(credential =>

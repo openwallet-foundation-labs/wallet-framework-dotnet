@@ -3,9 +3,19 @@ using Newtonsoft.Json;
 
 namespace Hyperledger.Aries.Features.OpenId4Vc.Vp.Models
 {
-    internal struct AuthorizationResponseCallback
+    internal record AuthorizationResponseCallback
     {
-        [JsonProperty ("redirect_uri", NullValueHandling = NullValueHandling.Ignore)]
-        internal Uri? RedirectUri { get; set; }
+        [JsonProperty("redirect_uri")]
+        private Uri? RedirectUri { get; }
+        
+        public static implicit operator Uri? (AuthorizationResponseCallback? response) => response?.RedirectUri;
+        
+        public static implicit operator AuthorizationResponseCallback (Uri redirectUri) => new (redirectUri);
+
+        [JsonConstructor]
+        private AuthorizationResponseCallback(Uri redirectUri)
+        {
+            RedirectUri = redirectUri;
+        }
     }
 }
