@@ -21,7 +21,12 @@ namespace Hyperledger.Aries.Features.OpenId4Vc.Vp.Models
             /// <summary>
             ///     The verifier attestation client ID scheme.
             /// </summary>
-            VerifierAttestation
+            VerifierAttestation,
+            
+            /// <summary>
+            ///     The Redirect Uri scheme.
+            /// </summary>
+            RedirectUri
         }
 
         /// <summary>
@@ -33,6 +38,11 @@ namespace Hyperledger.Aries.Features.OpenId4Vc.Vp.Models
         ///     The X509 SAN DNS scheme.
         /// </summary>
         public const string X509SanDnsScheme = "x509_san_dns";
+        
+        /// <summary>
+        ///     The Redirect Uri scheme.
+        /// </summary>
+        public const string RedirectUriScheme = "redirect_uri";
 
         /// <summary>
         ///     The client ID scheme value.
@@ -54,6 +64,7 @@ namespace Hyperledger.Aries.Features.OpenId4Vc.Vp.Models
             input switch
             {
                 X509SanDnsScheme => new ClientIdScheme(X509SanDns),
+                RedirectUriScheme => new ClientIdScheme(RedirectUri),
                 VerifierAttestationScheme =>
                     throw new NotImplementedException("Verifier Attestation not yet implemented"),
                 _ => throw new InvalidOperationException($"Client ID Scheme {input} is not supported")
