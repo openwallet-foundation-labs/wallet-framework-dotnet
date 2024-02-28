@@ -24,7 +24,7 @@ jobs:
         
             - name: Set Version
               run: |
-                sudo apt-get install -y libxml2-utils
+                sudo apt-get update && apt-get install -y libxml2-utils
                 VERSION=$(xmllint --xpath "string(/Project/PropertyGroup/Version)" Directory.Build.props)
                 if $IS_MAIN_BRANCH; then
                   SUFFIX="-rc.${{ github.run_number }}"
