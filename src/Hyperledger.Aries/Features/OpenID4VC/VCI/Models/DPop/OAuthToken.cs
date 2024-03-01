@@ -2,9 +2,9 @@ using Hyperledger.Aries.Features.OpenId4Vc.Vci.Models.Authorization;
 
 namespace Hyperledger.Aries.Features.OpenID4VC.VCI.Models.DPop
 {
-    internal record TokenResponseParameters
+    internal record OAuthToken
     {
-        internal TokenResponseParameters(TokenResponse tokenResponse, DPop? dPop = null)
+        internal OAuthToken(TokenResponse tokenResponse, DPop? dPop = null)
         {
             TokenResponse = tokenResponse;
             DPop = dPop;
@@ -22,12 +22,12 @@ namespace Hyperledger.Aries.Features.OpenID4VC.VCI.Models.DPop
         public string KeyId { get; } = KeyId;
     }
     
-    internal static class CredentialRequestParametersExtensions
+    internal static class OAuthTokenExtensions
     {
-        internal static bool IsDPoPRequested(this TokenResponseParameters tokenResponseParameters)
+        internal static bool IsDPoPRequested(this OAuthToken oAuthToken)
         {
-            return tokenResponseParameters.TokenResponse.TokenType == "DPoP"
-                   && tokenResponseParameters.DPop != null;
+            return oAuthToken.TokenResponse.TokenType == "DPoP"
+                   && oAuthToken.DPop != null;
         }
     }
 }

@@ -49,16 +49,7 @@ namespace Hyperledger.Aries.Features.OpenId4Vc.Vci.Models.Authorization
         /// </summary>
         [JsonProperty("dpop_signing_alg_values_supported")]
         public string[]? DPopSigningAlgValuesSupported { get; set; }
-    }
-    
-    internal static class AuthorizationServerMetadataExtensions
-    {
-        /// <summary>
-        ///    Checks if the Authorization Server supports the DPoP protocol using ES256. 
-        /// </summary>
-        /// <returns></returns>
-        internal static bool IsDPoPSupported(this AuthorizationServerMetadata authorizationServerMetadata)
-            => authorizationServerMetadata.DPopSigningAlgValuesSupported != null
-               && authorizationServerMetadata.DPopSigningAlgValuesSupported.Contains("ES256");
+        
+        internal bool IsDPoPSupported => DPopSigningAlgValuesSupported != null && DPopSigningAlgValuesSupported.Contains("ES256");
     }
 }

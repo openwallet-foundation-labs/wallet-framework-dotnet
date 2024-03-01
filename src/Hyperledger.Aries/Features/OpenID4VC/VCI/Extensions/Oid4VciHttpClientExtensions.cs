@@ -11,12 +11,12 @@ namespace Hyperledger.Aries.Features.OpenID4VC.VCI.Extensions
             httpClient.DefaultRequestHeaders.Add("DPoP", dPopProofJwt);
         }
         
-        public static void AddAuthorizationHeader(this HttpClient httpClient, TokenResponseParameters tokenResponseParameters)
+        public static void AddAuthorizationHeader(this HttpClient httpClient, OAuthToken oAuthToken)
         {
             httpClient.DefaultRequestHeaders.Remove("Authorization");
             httpClient.DefaultRequestHeaders.Add(
                 "Authorization",
-                $"{tokenResponseParameters.TokenResponse.TokenType} {tokenResponseParameters.TokenResponse.AccessToken}"
+                $"{oAuthToken.TokenResponse.TokenType} {oAuthToken.TokenResponse.AccessToken}"
                 );
         }
     }

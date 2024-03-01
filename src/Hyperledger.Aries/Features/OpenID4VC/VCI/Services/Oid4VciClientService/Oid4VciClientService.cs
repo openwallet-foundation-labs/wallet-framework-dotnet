@@ -75,13 +75,13 @@ namespace Hyperledger.Aries.Features.OpenId4Vc.Vci.Services.Oid4VciClientService
         {
             var authorizationServerMetadata = await FetchAuthorizationServerMetadataAsync(issuerMetadata);
 
-            var tokenResponseParameters = authorizationServerMetadata.IsDPoPSupported()
+            var oAuthToken = authorizationServerMetadata.IsDPoPSupported
                 ? await RequestTokenWithDPop(authorizationServerMetadata, preAuthorizedCode, transactionCode)
                 : await RequestTokenWithoutDPop(authorizationServerMetadata, preAuthorizedCode, transactionCode);
             
-            return tokenResponseParameters.IsDPoPRequested()
-                ? await RequestCredentialWithDPoP(credentialMetadata, issuerMetadata, tokenResponseParameters)
-                : await RequestCredentialWithoutDPoP(credentialMetadata, issuerMetadata, tokenResponseParameters);
+            return oAuthToken.IsDPoPRequested()
+                ? await RequestCredentialWithDPoP(credentialMetadata, issuerMetadata, oAuthToken)
+                : await RequestCredentialWithoutDPoP(credentialMetadata, issuerMetadata, oAuthToken);
         }
         
         private async Task<AuthorizationServerMetadata> FetchAuthorizationServerMetadataAsync(OidIssuerMetadata issuerMetadata)
@@ -118,7 +118,7 @@ namespace Hyperledger.Aries.Features.OpenId4Vc.Vci.Services.Oid4VciClientService
             return authServer;
         }
         
-        private async Task<TokenResponseParameters> RequestTokenWithDPop(
+        private async Task<OAuthToken> RequestTokenWithDPop(
             AuthorizationServerMetadata authServerMetadata,
             string preAuthorizedCode,
             string? transactionCode = null)
@@ -176,37 +176,37 @@ namespace Hyperledger.Aries.Features.OpenId4Vc.Vci.Services.Oid4VciClientService
                                 ?? throw new InvalidOperationException("Failed to deserialize the token response");
 
             var dPop = new DPop(dPopKey, dPopNonce);
-            var credentialRequestParameters = new TokenResponseParameters(tokenResponse, dPop);
+            var oAuthToken = new OAuthToken(tokenResponse, dPop);
             
-            return credentialRequestParameters;
+            return oAuthToken;
         }
         
         private async Task<(OidCredentialResponse credentialResponse, string keyId)> RequestCredentialWithDPoP(
             OidCredentialMetadata credentialMetadata,
             OidIssuerMetadata issuerMetadata,
-            TokenResponseParameters tokenResponseParameters)
+            OAuthToken oAuthToken)
         {
-            if (tokenResponseParameters.DPop == null)
+            if (oAuthToken.DPop == null)
             {
                 throw new InvalidOperationException("The DPoP Flow requires the DPoP specific parameters.");
             }
             
             var dPopProofJwt = await _keyStore.GenerateDPopProofOfPossessionAsync(
-                tokenResponseParameters.DPop.KeyId, 
+                oAuthToken.DPop.KeyId, 
                 issuerMetadata.CredentialEndpoint, 
-                tokenResponseParameters.DPop.Nonce,
-                tokenResponseParameters.TokenResponse.AccessToken);
+                oAuthToken.DPop.Nonce,
+                oAuthToken.TokenResponse.AccessToken);
             
             var sdJwtKeyId = await _keyStore.GenerateKey();
             var keyBindingJwt = await _keyStore.GenerateKbProofOfPossessionAsync(
                 sdJwtKeyId,
                 issuerMetadata.CredentialIssuer,
-                tokenResponseParameters.TokenResponse.CNonce,
+                oAuthToken.TokenResponse.CNonce,
                 "openid4vci-proof+jwt"
             );
             
             var httpClient = _httpClientFactory.CreateClient();
-            httpClient.AddAuthorizationHeader(tokenResponseParameters);
+            httpClient.AddAuthorizationHeader(oAuthToken);
             httpClient.AddDPopHeader(dPopProofJwt);
             
             var response = await httpClient.PostAsync(
@@ -232,10 +232,10 @@ namespace Hyperledger.Aries.Features.OpenId4Vc.Vci.Services.Oid4VciClientService
             if (!string.IsNullOrEmpty(refreshedDPopNonce))
             {
                 dPopProofJwt = await _keyStore.GenerateDPopProofOfPossessionAsync(
-                    tokenResponseParameters.DPop.KeyId, 
+                    oAuthToken.DPop.KeyId, 
                     issuerMetadata.CredentialEndpoint, 
                     refreshedDPopNonce, 
-                    tokenResponseParameters.TokenResponse.AccessToken);
+                    oAuthToken.TokenResponse.AccessToken);
                 httpClient.AddDPopHeader(dPopProofJwt);
 
                 response = await httpClient.PostAsync(
@@ -257,9 +257,9 @@ namespace Hyperledger.Aries.Features.OpenId4Vc.Vci.Services.Oid4VciClientService
                 );
             }
             
-            if (!string.IsNullOrEmpty(tokenResponseParameters.DPop.KeyId))
+            if (!string.IsNullOrEmpty(oAuthToken.DPop.KeyId))
             {
-                await _keyStore.DeleteKey(tokenResponseParameters.DPop.KeyId);
+                await _keyStore.DeleteKey(oAuthToken.DPop.KeyId);
             }
             
             if (!response.IsSuccessStatusCode)
@@ -281,7 +281,7 @@ namespace Hyperledger.Aries.Features.OpenId4Vc.Vci.Services.Oid4VciClientService
             return (credentialResponse, sdJwtKeyId);
         }
         
-        private async Task<TokenResponseParameters> RequestTokenWithoutDPop(
+        private async Task<OAuthToken> RequestTokenWithoutDPop(
             AuthorizationServerMetadata authServerMetadata,
             string preAuthorizedCode,
             string? transactionCode = null)
@@ -307,25 +307,25 @@ namespace Hyperledger.Aries.Features.OpenId4Vc.Vci.Services.Oid4VciClientService
             var tokenResponse = DeserializeObject<TokenResponse>(await response.Content.ReadAsStringAsync()) 
                                 ?? throw new InvalidOperationException("Failed to deserialize the token response");
 
-            var credentialRequestParameters = new TokenResponseParameters(tokenResponse);
-            return credentialRequestParameters;
+            var oAuthToken = new OAuthToken(tokenResponse);
+            return oAuthToken;
         }
         
         private async Task<(OidCredentialResponse credentialResponse, string keyId)> RequestCredentialWithoutDPoP(
             OidCredentialMetadata credentialMetadata,
             OidIssuerMetadata issuerMetadata,
-            TokenResponseParameters tokenResponseParameters)
+            OAuthToken oAuthToken)
         {
             var sdJwtKeyId = await _keyStore.GenerateKey();
             var proofOfPossession = await _keyStore.GenerateKbProofOfPossessionAsync(
                 sdJwtKeyId,
                 issuerMetadata.CredentialIssuer,
-                tokenResponseParameters.TokenResponse.CNonce,
+                oAuthToken.TokenResponse.CNonce,
                 "openid4vci-proof+jwt"
             );
             
             var httpClient = _httpClientFactory.CreateClient();
-            httpClient.AddAuthorizationHeader(tokenResponseParameters);
+            httpClient.AddAuthorizationHeader(oAuthToken);
             
             var response = await httpClient.PostAsync(
                 issuerMetadata.CredentialEndpoint,
