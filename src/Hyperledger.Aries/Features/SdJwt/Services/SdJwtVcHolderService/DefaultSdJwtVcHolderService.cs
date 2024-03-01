@@ -71,7 +71,7 @@ namespace Hyperledger.Aries.Features.SdJwt.Services.SdJwtVcHolderService
                 !string.IsNullOrEmpty(audience))
             {
                 keybindingJwt =
-                    await KeyStore.GenerateProofOfPossessionAsync(credential.KeyId, audience, nonce, "kb+jwt");
+                    await KeyStore.GenerateKbProofOfPossessionAsync(credential.KeyId, audience, nonce, "kb+jwt");
             }
 
             return Holder.CreatePresentation(credential.EncodedIssuerSignedJwt, disclosures.ToArray(), keybindingJwt);
