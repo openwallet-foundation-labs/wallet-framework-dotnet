@@ -15,7 +15,7 @@ namespace Hyperledger.Aries.Features.OpenId4Vc.Vci.Models.Authorization
         ///     Gets or sets the grant type of the request. Determines the type of token request being made.
         /// </summary>
         [JsonProperty("grant_type")]
-        public string GrantType { get; set; } = null!; 
+        public string GrantType { get; set; } = null!;
 
         /// <summary>
         ///     Gets or sets the pre-authorized code. Represents the authorization to obtain specific credentials.
