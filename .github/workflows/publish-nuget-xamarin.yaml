@@ -29,11 +29,9 @@ jobs:
                 sudo apt-get update && sudo apt-get install -y libxml2-utils
                 VERSION=$(xmllint --xpath "string(/Project/PropertyGroup/Version)" Directory.Build.props)
                 if $IS_MAIN_BRANCH; then
-                  COUNT=$(git rev-list HEAD --count)
-                  SUFFIX="-xam-rc.$COUNT"
+                  COMMIT_COUNT=$(git log --oneline | wc -l)
+                  SUFFIX="-xam-rc.$COMMIT_COUNT"
                 elif $IS_PULL_REQUEST; then
-                  COUNT=$(git log --oneline | wc -l)
-                  echo "Commit count: $COUNT"
                   COMMIT_COUNT=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" "https://api.github.com/repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/commits?per_page=100" | jq length)
                   SUFFIX="-xam-pr.${{ github.event.pull_request.number }}.$COMMIT_COUNT"
                 fi
