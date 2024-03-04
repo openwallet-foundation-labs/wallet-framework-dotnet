@@ -21,6 +21,8 @@ jobs:
         
         steps:
             - uses: actions/checkout@v2
+              with:
+                fetch-depth: 0
         
             - name: Set Version
               run: |
@@ -30,9 +32,9 @@ jobs:
                   COUNT=$(git rev-list HEAD --count)
                   SUFFIX="-xam-rc.$COUNT"
                 elif $IS_PULL_REQUEST; then
-                  COUNT=$(git rev-list main --count)
+                  COUNT=$(git log --oneline | wc -l)
                   echo "Commit count: $COUNT"
-                  COMMIT_COUNT=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" "https://api.github.com/repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/commits" | jq length)
+                  COMMIT_COUNT=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" "https://api.github.com/repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/commits?per_page=100" | jq length)
                   SUFFIX="-xam-pr.${{ github.event.pull_request.number }}.$COMMIT_COUNT"
                 fi
                 echo "APP_VERSION=$VERSION$SUFFIX" >> $GITHUB_ENV
