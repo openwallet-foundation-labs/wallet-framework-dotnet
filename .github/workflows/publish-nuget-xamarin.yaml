@@ -40,11 +40,9 @@ jobs:
     
                 # Replace WalletFramework.Indy.Sdk with Hyperledger.Aries.Indy.Sdk
                 new_line=$(echo $line | sed "s/WalletFramework.Indy.Sdk/Hyperledger.Indy.Sdk/g" | sed "s/\$(WalletFrameworkIndySdkVersion)/1.11.1/g")
-                echo "new_line: $new_line"
-    
+                
                 # Replace the old line with the new line in the .csproj file
-                path='src/Hyperledger.Aries/Hyperledger.Aries.csproj'
-                sed -i "s/$line/$new_line/g" $path
+                sed -i "s|$line|$new_line|g" src/Hyperledger.Aries/Hyperledger.Aries.csproj
                   
             - name: Setup NuGet
               uses: NuGet/setup-nuget@v1.0.5
