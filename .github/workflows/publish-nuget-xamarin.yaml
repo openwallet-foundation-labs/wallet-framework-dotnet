@@ -37,6 +37,7 @@ jobs:
               run: |
                 # Extract the PackageReference line
                 line=$(xmllint --xpath "string(/Project/ItemGroup/PackageReference[@Include='WalletFramework.Indy.Sdk'])" src/Hyperledger.Aries/Hyperledger.Aries.csproj)
+                echo "line: $line"
     
                 # Replace WalletFramework.Indy.Sdk with Hyperledger.Aries.Indy.Sdk
                 new_line=$(echo $line | sed "s/WalletFramework.Indy.Sdk/Hyperledger.Indy.Sdk/g" | sed "s/\$\(WalletFrameworkIndySdkVersion\)/1.11.1/g")
