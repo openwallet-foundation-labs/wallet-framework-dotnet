@@ -29,7 +29,8 @@ jobs:
                 if $IS_MAIN_BRANCH; then
                   SUFFIX="-xam-rc.${{ github.run_number }}"
                 elif $IS_PULL_REQUEST; then
-                  SUFFIX="-xam-pr.${{ github.event.pull_request.number }}.${{ github.run_number }}"
+                  COMMIT_COUNT=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" "https://api.github.com/repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/commits" | jq length)
+                  SUFFIX="-xam-pr.${{ github.event.pull_request.number }}.$COMMIT_COUNT"
                 fi
                 echo "APP_VERSION=$VERSION$SUFFIX" >> $GITHUB_ENV
 
