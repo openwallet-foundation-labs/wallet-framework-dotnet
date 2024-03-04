@@ -36,7 +36,7 @@ jobs:
             - name: Use Hyperledger Indy Sdk
               run: |
                 # Extract the PackageReference line
-                line=$(xmllint --xpath "string(/Project/ItemGroup/PackageReference[@Include='WalletFramework.Indy.Sdk'])" src/Hyperledger.Aries/Hyperledger.Aries.csproj)
+                line=$(xmllint --xpath '/Project/ItemGroup/PackageReference[@Include="WalletFramework.Indy.Sdk"]' src/Hyperledger.Aries/Hyperledger.Aries.csproj)
                 echo "line: $line"
     
                 # Replace WalletFramework.Indy.Sdk with Hyperledger.Aries.Indy.Sdk
