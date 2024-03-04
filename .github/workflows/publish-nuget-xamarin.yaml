@@ -1,4 +1,4 @@
-name: Maui CI
+name: Xamarin CI
 
 on:
     push:
@@ -21,6 +21,8 @@ jobs:
         
         steps:
             - uses: actions/checkout@v2
+              with:
+                fetch-depth: 0
         
             - name: Set Version
               run: |
@@ -28,13 +30,22 @@ jobs:
                 VERSION=$(xmllint --xpath "string(/Project/PropertyGroup/Version)" Directory.Build.props)
                 if $IS_MAIN_BRANCH; then
                   COMMIT_COUNT=$(git log --oneline | wc -l)
-                  SUFFIX="-rc.$COMMIT_COUNT"
+                  SUFFIX="-xam-rc.$COMMIT_COUNT"
                 elif $IS_PULL_REQUEST; then
                   COMMIT_COUNT=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" "https://api.github.com/repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/commits?per_page=100" | jq length)
-                  SUFFIX="-pr.${{ github.event.pull_request.number }}.$COMMIT_COUNT"
+                  SUFFIX="-xam-pr.${{ github.event.pull_request.number }}.$COMMIT_COUNT"
                 fi
                 echo "APP_VERSION=$VERSION$SUFFIX" >> $GITHUB_ENV
 
+            - name: Use Hyperledger Indy Sdk
+              run: |
+                  oldInclude='Include="WalletFramework.Indy.Sdk"'
+                  oldVersion='Version="$(WalletFrameworkIndySdkVersion)"'
+                  newInclude='Include="Hyperledger.Indy.Sdk"'
+                  newVersion='Version="1.11.1"'
+                  sed -i "s|$oldInclude|$newInclude|g" src/Hyperledger.Aries/Hyperledger.Aries.csproj
+                  sed -i "s|$oldVersion|$newVersion|g" src/Hyperledger.Aries/Hyperledger.Aries.csproj
+                  
             - name: Setup NuGet
               uses: NuGet/setup-nuget@v1.0.5
 
