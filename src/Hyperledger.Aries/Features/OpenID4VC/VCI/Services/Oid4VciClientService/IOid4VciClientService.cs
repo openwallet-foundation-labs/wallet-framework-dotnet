@@ -2,7 +2,6 @@
 
 using System;
 using System.Threading.Tasks;
-using Hyperledger.Aries.Features.OpenId4Vc.Vci.Models.Authorization;
 using Hyperledger.Aries.Features.OpenId4Vc.Vci.Models.CredentialResponse;
 using Hyperledger.Aries.Features.OpenId4Vc.Vci.Models.Metadata.Credential;
 using Hyperledger.Aries.Features.OpenId4Vc.Vci.Models.Metadata.Issuer;
@@ -26,27 +25,16 @@ namespace Hyperledger.Aries.Features.OpenId4Vc.Vci.Services.Oid4VciClientService
         /// </summary>
         /// <param name="credentialMetadata">The credential metadata.</param>
         /// <param name="issuerMetadata">The issuer metadata.</param>
-        /// <param name="tokenResponse">The token response from the previous token request.</param>
+        /// <param name="preAuthorizedCode">The pre-authorized code for token request.</param>
+        /// /// <param name="transactionCode">The Transaction Code.</param>
         /// <returns>
         ///     A tuple containing the credential response and the key ID used during the signing of the Proof of Possession.
         /// </returns>
-        Task<(OidCredentialResponse, string)> RequestCredentialAsync(
+        Task<(OidCredentialResponse credentialResponse, string keyId)> RequestCredentialAsync(
             OidCredentialMetadata credentialMetadata,
             OidIssuerMetadata issuerMetadata,
-            TokenResponse tokenResponse
-        );
-
-        /// <summary>
-        ///     Requests a token using the provided issuer metadata and pre-authorized code.
-        /// </summary>
-        /// <param name="metadata">The OID issuer metadata.</param>
-        /// <param name="preAuthorizedCode">The pre-authorized code for token request.</param>
-        /// <param name="transactionCode">The Transaction Code.</param>
-        /// <returns>A task that represents the asynchronous operation. The task result contains the token response.</returns>
-        Task<TokenResponse> RequestTokenAsync(
-            OidIssuerMetadata metadata,
             string preAuthorizedCode,
-            string? transactionCode = null
+            string? transactionCode
         );
     }
 }
