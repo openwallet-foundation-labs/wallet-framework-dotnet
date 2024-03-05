@@ -14,8 +14,8 @@ namespace Hyperledger.Aries.Features.OpenId4Vc.Vci.Models.Metadata.Issuer
         /// <summary>
         ///     Gets or sets a dictionary which maps a CredentialMetadataId to its credential metadata.
         /// </summary>
-        [JsonProperty("credentials_supported")]
-        public Dictionary<string, OidCredentialMetadata> CredentialsSupported { get; set; } = null!;
+        [JsonProperty("credential_configurations_supported")]
+        public Dictionary<string, OidCredentialMetadata> CredentialConfigurationsSupported { get; set; } = null!;
 
         /// <summary>
         ///     Gets or sets a list of display properties of a Credential Issuer for different languages.
@@ -54,7 +54,7 @@ namespace Hyperledger.Aries.Features.OpenId4Vc.Vci.Models.Metadata.Issuer
         ///     metadata.
         /// </returns>
         public List<OidCredentialDisplay>? GetCredentialDisplay(string credentialMetadataId) 
-            => CredentialsSupported[credentialMetadataId].Display;
+            => CredentialConfigurationsSupported[credentialMetadataId].Display;
 
         /// <summary>
         ///     Gets the claim attributes of a given Credential.
@@ -65,7 +65,7 @@ namespace Hyperledger.Aries.Features.OpenId4Vc.Vci.Models.Metadata.Issuer
         ///     null if the Credential is not found in the metadata.
         /// </returns>
         public Dictionary<string, OidClaim>? GetCredentialClaims(string credentialMetadataId) =>
-            CredentialsSupported[credentialMetadataId].CredentialDefinition.Claims;
+            CredentialConfigurationsSupported[credentialMetadataId].Claims;
 
         /// <summary>
         ///     Gets the localized attribute names of a given Credential for a specific locale.
@@ -80,12 +80,12 @@ namespace Hyperledger.Aries.Features.OpenId4Vc.Vci.Models.Metadata.Issuer
         {
             var displayNames = new List<string>();
 
-            var matchingCredential = CredentialsSupported[credentialMetadataId];
+            var matchingCredential = CredentialConfigurationsSupported[credentialMetadataId];
 
             if (matchingCredential == null)
                 return null;
 
-            var localeDisplayNames = matchingCredential.CredentialDefinition.Claims
+            var localeDisplayNames = matchingCredential.Claims
                 .SelectMany(subject => subject.Value.Display)
                 .Where(display => display.Locale == locale)
                 .Select(display => display.Name);

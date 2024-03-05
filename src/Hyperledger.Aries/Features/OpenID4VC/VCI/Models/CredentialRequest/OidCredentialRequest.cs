@@ -1,4 +1,5 @@
-using Hyperledger.Aries.Features.OpenId4Vc.Vci.Models.Metadata.Credential;
+using System.Collections.Generic;
+using Hyperledger.Aries.Features.OpenId4Vc.Vci.Models.Metadata.Credential.Attributes;
 using Newtonsoft.Json;
 
 namespace Hyperledger.Aries.Features.OpenId4Vc.Vci.Models.CredentialRequest
@@ -21,11 +22,17 @@ namespace Hyperledger.Aries.Features.OpenId4Vc.Vci.Models.CredentialRequest
         /// </summary>
         [JsonProperty("format")]
         public string Format { get; set; } = null!;
-
+        
         /// <summary>
-        ///     Gets or sets the Credential Definition.
+        ///     Gets or sets the dictionary representing the attributes of the credential in different languages.
         /// </summary>
-        [JsonProperty("credential_definition")]
-        public OidCredentialDefinition CredentialDefinition { get; set; } = null!;
+        [JsonProperty("claims")]
+        public Dictionary<string, OidClaim>? Claims { get; set; }
+        
+        /// <summary>
+        ///     Gets or sets the verifiable credential type (vct).
+        /// </summary>
+        [JsonProperty("vct")]
+        public string Vct { get; set; } = null!;
     }
 }

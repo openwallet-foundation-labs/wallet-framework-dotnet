@@ -215,7 +215,7 @@ namespace Hyperledger.Aries.Features.OpenId4Vc.Vci.Services.Oid4VciClientService
                     content: new OidCredentialRequest
                     {
                         Format = credentialMetadata.Format,
-                        CredentialDefinition = credentialMetadata.CredentialDefinition,
+                        Vct = credentialMetadata.Vct,
                         Proof = new OidProofOfPossession
                         {
                             ProofType = "jwt",
@@ -244,7 +244,7 @@ namespace Hyperledger.Aries.Features.OpenId4Vc.Vci.Services.Oid4VciClientService
                         content: new OidCredentialRequest
                         {
                             Format = credentialMetadata.Format,
-                            CredentialDefinition = credentialMetadata.CredentialDefinition,
+                            Vct = credentialMetadata.Vct,
                             Proof = new OidProofOfPossession
                             {
                                 ProofType = "jwt",
@@ -333,7 +333,7 @@ namespace Hyperledger.Aries.Features.OpenId4Vc.Vci.Services.Oid4VciClientService
                     content: new OidCredentialRequest
                     {
                         Format = credentialMetadata.Format,
-                        CredentialDefinition = credentialMetadata.CredentialDefinition,
+                        Vct = credentialMetadata.Vct,
                         Proof = new OidProofOfPossession
                         {
                             ProofType = "jwt",

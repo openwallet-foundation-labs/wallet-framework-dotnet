@@ -22,7 +22,7 @@ namespace Hyperledger.Aries.Tests.Features.OpenId4Vc.Vci.Services
     {
         private const string AuthServerMetadataWithoutDpop =
             "{\"issuer\":\"https://issuer.io\",\"token_endpoint\":\"https://issuer.io/token\",\"token_endpoint_auth_methods_supported\":[\"urn:ietf:params:oauth:client-assertion-type:verifiable-presentation\"],\"response_types_supported\":[\"urn:ietf:params:oauth:grant-type:pre-authorized_code\"]}\n";
-
+            //"{\"credential_issuer\":\"https://issuer.io/\",\"credential_endpoint\":\"https://issuer.io/credential\",\"display\":[{\"name\":\"Aussteller\",\"locale\":\"de-DE\"},{\"name\":\"Issuer\",\"locale\":\"en-US\"}],\"credential_configurations_supported\":{\"IdentityCredential\":{\"format\":\"vc+sd-jwt\",\"scope\":\"IdentityCredential_SD-JWT-VC\",\"cryptographic_binding_methods_supported\":[\"did:example\"],\"credential_signing_alg_values_supported\":[\"ES256K\"],\"display\":[{\"name\":\"IdentityCredential\",\"locale\":\"en-US\",\"background_color\":\"#12107c\",\"text_color\":\"#FFFFFF\"}],\"credential_definition\":{\"type\":\"IdentityCredential\",\"claims\":{\"given_name\":{\"display\":[{\"name\":\"GivenName\",\"locale\":\"en-US\"},{\"name\":\"Vorname\",\"locale\":\"de-DE\"}]},\"last_name\":{\"display\":[{\"name\":\"Surname\",\"locale\":\"en-US\"},{\"name\":\"Nachname\",\"locale\":\"de-DE\"}]},\"email\":{},\"phone_number\":{},\"address\":{\"street_address\":{},\"locality\":{},\"region\":{},\"country\":{}},\"birthdate\":{},\"is_over_18\":{},\"is_over_21\":{},\"is_over_65\":{}}}}}}";
         private const string AuthServerMetadataWithDpop =
             "{\"issuer\":\"https://issuer.io\",\"token_endpoint\":\"https://issuer.io/token\",\"token_endpoint_auth_methods_supported\":[\"urn:ietf:params:oauth:client-assertion-type:verifiable-presentation\"],\"response_types_supported\":[\"urn:ietf:params:oauth:grant-type:pre-authorized_code\"],\"dpop_signing_alg_values_supported\":[\"ES256\"]}\n";
         
@@ -97,17 +97,14 @@ namespace Hyperledger.Aries.Tests.Features.OpenId4Vc.Vci.Services
         {
             CredentialIssuer = "https://issuer.io",
             CredentialEndpoint = "https://issuer.io/credential",
-            CredentialsSupported = new Dictionary<string, OidCredentialMetadata>
+            CredentialConfigurationsSupported = new Dictionary<string, OidCredentialMetadata>
             {
                 {
                     "VerifiedEmail", new OidCredentialMetadata
                     {
                         Format = "vc+sdjwt",
-                        CredentialDefinition = new OidCredentialDefinition
-                        {
-                            Vct = Vct,
-                            Claims = new Dictionary<string, OidClaim>()
-                        }
+                        Vct = Vct,
+                        Claims = new Dictionary<string, OidClaim>()
                     }
                 }
             }
@@ -130,7 +127,7 @@ namespace Hyperledger.Aries.Tests.Features.OpenId4Vc.Vci.Services
             //Act
             var actualCredentialResponse = 
                 await _oid4VciClientService.RequestCredentialAsync(
-                    _oidIssuerMetadata.CredentialsSupported.First().Value,
+                    _oidIssuerMetadata.CredentialConfigurationsSupported.First().Value,
                     _oidIssuerMetadata,
                     PreAuthorizedCode,
                     TransactionCode
@@ -168,7 +165,7 @@ namespace Hyperledger.Aries.Tests.Features.OpenId4Vc.Vci.Services
             //Act
             var actualCredentialResponse = 
                 await _oid4VciClientService.RequestCredentialAsync(
-                    _oidIssuerMetadata.CredentialsSupported.First().Value,
+                    _oidIssuerMetadata.CredentialConfigurationsSupported.First().Value,
                     _oidIssuerMetadata,
                     PreAuthorizedCode,
                     TransactionCode
