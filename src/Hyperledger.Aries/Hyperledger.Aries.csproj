@@ -10,13 +10,14 @@
     <ItemGroup>
         <PackageReference Include="Flurl" Version="$(FlurlVersion)" />
         <PackageReference Include="Hyperledger.Indy-VDR" Version="$(HyperledgerIndyVdrVersion)" />
-        <PackageReference Include="Hyperledger.Indy.Sdk" Version="$(HyperledgerIndySdkVersion)" />
+        <PackageReference Include="WalletFramework.Indy.Sdk" Version="$(WalletFrameworkIndySdkVersion)" />
         <PackageReference Include="Microsoft.Extensions.Hosting" Version="$(MicrosoftExtensionsHostingVersion)" />
         <PackageReference Include="Microsoft.Extensions.Http" Version="$(MicrosoftExtensionsHttpVersion)" />
         <PackageReference Include="Microsoft.Extensions.Logging" Version="$(MicrosoftExtensionsLoggingVersion)" />
         <PackageReference Include="Multiformats.Base" Version="2.0.2" />
         <PackageReference Include="Newtonsoft.Json" Version="13.0.2" />
         <PackageReference Include="Polly" Version="$(PollyVersion)" />
+        <PackageReference Include="Portable.BouncyCastle" Version="1.9.0" />
         <PackageReference Include="SD-JWT" Version="0.1.0-rc.44" />
         <PackageReference Include="Stateless" Version="$(StatelessVersion)" />
         <PackageReference Include="System.Collections.Immutable" Version="1.7.1" />
