@@ -20,5 +20,11 @@ namespace Hyperledger.Aries.Features.OpenId4Vc.Vci.Models.Metadata.Issuer
         /// </summary>
         [JsonProperty("locale")]
         public string? Locale { get; set; }
+        
+        /// <summary>
+        ///     Gets or sets the logo, which represents the specific culture or region..
+        /// </summary>
+        [JsonProperty("logo", NullValueHandling = NullValueHandling.Ignore)]
+        public OidIssuerLogo? Logo { get; set; }
     }
 }
