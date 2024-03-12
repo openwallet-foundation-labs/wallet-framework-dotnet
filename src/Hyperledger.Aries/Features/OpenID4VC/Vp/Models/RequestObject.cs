@@ -10,6 +10,7 @@ using X509Certificate = Org.BouncyCastle.X509.X509Certificate;
 using static Hyperledger.Aries.Features.OpenId4Vc.Vp.Models.AuthorizationRequest;
 using static Newtonsoft.Json.Linq.JArray;
 using static System.Convert;
+using static Hyperledger.Aries.Features.OpenId4Vc.Vp.Models.ClientIdScheme.ClientIdSchemeValue;
 
 namespace Hyperledger.Aries.Features.OpenId4Vc.Vp.Models
 {
@@ -108,7 +109,7 @@ namespace Hyperledger.Aries.Features.OpenId4Vc.Vp.Models
                 ? requestObject
                 : throw new InvalidOperationException("Validation of trust chain failed");
 
-        private static List<X509Certificate> GetCertificates(this RequestObject requestObject) =>
+        internal static List<X509Certificate> GetCertificates(this RequestObject requestObject) =>
             Parse(((JwtSecurityToken)requestObject).Header.X5c)
                 .Select(
                     certAsJToken =>
@@ -119,7 +120,7 @@ namespace Hyperledger.Aries.Features.OpenId4Vc.Vp.Models
                 )
                 .ToList();
 
-        private static X509Certificate GetLeafCertificate(this RequestObject requestObject) =>
+        internal static X509Certificate GetLeafCertificate(this RequestObject requestObject) =>
             GetCertificates(requestObject).First();
     }
 }
