@@ -169,12 +169,15 @@ First, edit the keyword in the `scripts/tester.sh` file to select the tests you 
 scripts/tester.sh 
 ```
 
-## Releases
-This Repository includes a github actions pipeline which builds and releases the wallet framework whenever a Pull Request is submitted or a merge to the main branch happens. 
-The build is accessible through the Open Wallet Foundation nuget feed.
+## Releases / Versioning
+This Repository includes a github actions pipeline which builds and releases 2 versions of the wallet framework whenever a Pull Request is submitted or a merge to the main branch happens.
+When the build and release process is triggered by a pull request the two build versions have a "pr" suffix.
+If it is triggered by a merge towards the main branch the two build versions have a "rc" suffix.
 
-When the build and release process is triggered by a pull request the build version has a "pr" suffix.
-If it is triggered by a merge towards the main branch the build version has a "rc" suffix.
+1. Version one uses the Indy SDK (targets netstandard2.0) without xamarin dependencies. (e.g. 2.0.0-pr.x.x or 2.0.0-rc.x)
+2. Version two uses the Indy SDK with xamarin dependencies which is indicated by a "-xam" tag within its version (e.g. 2.0.0-xam-pr.x.x or 2.0.0-xam-rc.x)
+
+Both builds are accessible through the Open Wallet Foundation nuget feed.
 
 ## License
 
