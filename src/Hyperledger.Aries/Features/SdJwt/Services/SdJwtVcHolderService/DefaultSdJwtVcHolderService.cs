@@ -5,10 +5,12 @@ using System.Threading.Tasks;
 using Hyperledger.Aries.Agents;
 using Hyperledger.Aries.Features.OpenId4Vc.KeyStore.Services;
 using Hyperledger.Aries.Features.OpenId4Vc.Vci.Models.Metadata.Issuer;
+using Hyperledger.Aries.Features.OpenID4VC.Vp.Exceptions;
 using Hyperledger.Aries.Features.OpenId4Vc.Vp.Models;
 using Hyperledger.Aries.Features.Pex.Models;
 using Hyperledger.Aries.Features.SdJwt.Models.Records;
 using Hyperledger.Aries.Storage;
+using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using SD_JWT.Abstractions;
@@ -114,6 +116,11 @@ namespace Hyperledger.Aries.Features.SdJwt.Services.SdJwtVcHolderService
                     matchingCredentials, limitDisclosuresRequired);
 
                 result.Add(credentialCandidates);
+            }
+            
+            if (result.IsNullOrEmpty())
+            {
+                throw new Oid4VpNoCredentialCandidateException("No suitable credential candidates found");
             }
 
             return Task.FromResult(result.ToArray());

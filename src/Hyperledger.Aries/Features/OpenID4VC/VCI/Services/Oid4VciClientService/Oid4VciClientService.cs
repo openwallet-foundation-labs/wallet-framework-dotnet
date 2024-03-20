@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Hyperledger.Aries.Extensions;
 using Hyperledger.Aries.Features.OpenId4Vc.KeyStore.Services;
+using Hyperledger.Aries.Features.OpenID4VC.VCI.Exceptions;
 using Hyperledger.Aries.Features.OpenID4VC.VCI.Extensions;
 using Hyperledger.Aries.Features.OpenId4Vc.Vci.Models.Authorization;
 using Hyperledger.Aries.Features.OpenId4Vc.Vci.Models.CredentialRequest;
@@ -38,6 +39,9 @@ namespace Hyperledger.Aries.Features.OpenId4Vc.Vci.Services.Oid4VciClientService
 
         private readonly IHttpClientFactory _httpClientFactory;
         private readonly IKeyStore _keyStore;
+        
+        private const string InvalidGrantError = "invalid_grant";
+        private const string UseDPopNonceError = "use_dpop_nonce";
 
         /// <inheritdoc />
         public async Task<OidIssuerMetadata> FetchIssuerMetadataAsync(Uri endpoint)
@@ -144,6 +148,8 @@ namespace Hyperledger.Aries.Features.OpenId4Vc.Vci.Services.Oid4VciClientService
                 }.ToFormUrlEncoded()
                 );
 
+            await ThrowIfInvalidGrantError(response);
+            
             var dPopNonce = await GetDPopNonce(response);
 
             if (!string.IsNullOrEmpty(dPopNonce))
@@ -164,6 +170,8 @@ namespace Hyperledger.Aries.Features.OpenId4Vc.Vci.Services.Oid4VciClientService
                         TransactionCode = transactionCode
                     }.ToFormUrlEncoded());
             }
+            
+            await ThrowIfInvalidGrantError(response);
             
             if (!response.IsSuccessStatusCode)
             {
@@ -226,7 +234,7 @@ namespace Hyperledger.Aries.Features.OpenId4Vc.Vci.Services.Oid4VciClientService
                     mediaType: "application/json"
                 )
             );
-
+            
             var refreshedDPopNonce = await GetDPopNonce(response);
             
             if (!string.IsNullOrEmpty(refreshedDPopNonce))
@@ -297,6 +305,8 @@ namespace Hyperledger.Aries.Features.OpenId4Vc.Vci.Services.Oid4VciClientService
                     TransactionCode = transactionCode
                 }.ToFormUrlEncoded());
 
+            await ThrowIfInvalidGrantError(response);
+            
             if (!response.IsSuccessStatusCode)
             {
                 throw new HttpRequestException(
@@ -363,6 +373,20 @@ namespace Hyperledger.Aries.Features.OpenId4Vc.Vci.Services.Oid4VciClientService
 
             return (credentialResponse, sdJwtKeyId);
         }
+        
+        private async Task ThrowIfInvalidGrantError(HttpResponseMessage response)
+        {
+            var content = await response.Content.ReadAsStringAsync();
+            var errorReason = string.IsNullOrEmpty(content) 
+                ? null
+                : JObject.Parse(content)["error"]?.ToString();
+
+            if (response.StatusCode is System.Net.HttpStatusCode.BadRequest
+                && errorReason == "invalid_grant")
+            {
+                throw new Oid4VciInvalidGrantException($"Invalid grant error. Status Code is {response.StatusCode}");
+            }
+        }
 
         private async Task<string?> GetDPopNonce(HttpResponseMessage response)
         {
@@ -382,7 +406,5 @@ namespace Hyperledger.Aries.Features.OpenId4Vc.Vci.Services.Oid4VciClientService
 
             return null;
         }
-        
-        
     }
 }
