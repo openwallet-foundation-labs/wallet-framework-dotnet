@@ -40,6 +40,7 @@ namespace Hyperledger.Aries.Features.OpenId4Vc.Vci.Services.Oid4VciClientService
         private readonly IHttpClientFactory _httpClientFactory;
         private readonly IKeyStore _keyStore;
         
+        private const string ErrorCodeKey = "error";
         private const string InvalidGrantError = "invalid_grant";
         private const string UseDPopNonceError = "use_dpop_nonce";
 
@@ -379,10 +380,10 @@ namespace Hyperledger.Aries.Features.OpenId4Vc.Vci.Services.Oid4VciClientService
             var content = await response.Content.ReadAsStringAsync();
             var errorReason = string.IsNullOrEmpty(content) 
                 ? null
-                : JObject.Parse(content)["error"]?.ToString();
+                : JObject.Parse(content)[ErrorCodeKey]?.ToString();
 
             if (response.StatusCode is System.Net.HttpStatusCode.BadRequest
-                && errorReason == "invalid_grant")
+                && errorReason == InvalidGrantError)
             {
                 throw new Oid4VciInvalidGrantException($"Invalid grant error. Status Code is {response.StatusCode}");
             }
@@ -393,12 +394,12 @@ namespace Hyperledger.Aries.Features.OpenId4Vc.Vci.Services.Oid4VciClientService
             var content = await response.Content.ReadAsStringAsync();
             var errorReason = string.IsNullOrEmpty(content) 
                 ? null 
-                : JObject.Parse(content)["error"]?.ToString();
+                : JObject.Parse(content)[ErrorCodeKey]?.ToString();
             
             if (response.StatusCode 
                     is System.Net.HttpStatusCode.BadRequest 
                     or System.Net.HttpStatusCode.Unauthorized
-                && errorReason == "use_dpop_nonce"
+                && errorReason == UseDPopNonceError
                 && response.Headers.TryGetValues("DPoP-Nonce", out var dPopNonce))
             {
                 return dPopNonce?.FirstOrDefault();
