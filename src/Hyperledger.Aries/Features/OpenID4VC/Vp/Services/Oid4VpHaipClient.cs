@@ -84,7 +84,8 @@ namespace Hyperledger.Aries.Features.OpenId4Vc.Vp.Services
                             .ValidateJwt()
                             .ValidateTrustChain()
                             .ValidateSanName()
-                            .ToAuthorizationRequest(),
+                            .ToAuthorizationRequest()
+                            .WithX509(requestObject),
                     RedirectUri =>
                         requestObject.ToAuthorizationRequest(),
                     VerifierAttestation =>

@@ -1,4 +1,6 @@
 using System;
+using System.Linq;
+using System.Security.Cryptography.X509Certificates;
 using Hyperledger.Aries.Features.Pex.Models;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -9,7 +11,7 @@ namespace Hyperledger.Aries.Features.OpenId4Vc.Vp.Models
     /// <summary>
     ///     Represents the Request of a Verifier to a Holder within the OpenId4VP specification.
     /// </summary>
-    public class AuthorizationRequest
+    public record AuthorizationRequest
     {
         private const string DirectPost = "direct_post";
 
@@ -69,6 +71,16 @@ namespace Hyperledger.Aries.Features.OpenId4Vc.Vp.Models
         [JsonProperty("state")]
         public string? State { get; }
 
+        /// <summary>
+        ///     The X509 certificate of the verifier, this property is only set when ClientIDScheme is X509SanDNS.
+        /// </summary>
+        public X509Certificate2? X509Certificate { get; init; }
+
+        /// <summary>
+        ///     The trust chain of the verifier, this property is only set when ClientIDScheme is X509SanDNS.
+        /// </summary>
+        public X509Chain? X509TrustChain { get; init; }
+
         [JsonConstructor]
         private AuthorizationRequest(
             ClientIdScheme clientIdScheme,
@@ -124,7 +136,35 @@ namespace Hyperledger.Aries.Features.OpenId4Vc.Vp.Models
                 && !string.IsNullOrEmpty(responseUri)
                 && redirectUri is null
                 && (clientIdScheme is X509SanDnsScheme or VerifierAttestationScheme
-                    || clientIdScheme is RedirectUriScheme && clientId == responseUri);
+                    || (clientIdScheme is RedirectUriScheme && clientId == responseUri));
+        }
+    }
+
+    internal static class AuthorizationRequestExtensions
+    {
+        internal static AuthorizationRequest WithX509(
+            this AuthorizationRequest authorizationRequest,
+            RequestObject requestObject)
+        {
+            var encodedCertificate = requestObject.GetLeafCertificate().GetEncoded();
+
+            var certificates =
+                requestObject
+                    .GetCertificates()
+                    .Select(x => x.GetEncoded())
+                    .Select(x => new X509Certificate2(x));
+
+            var trustChain = new X509Chain();
+            foreach (var element in certificates)
+            {
+                trustChain.ChainPolicy.ExtraStore.Add(element);
+            }
+
+            return authorizationRequest with
+            {
+                X509Certificate = new X509Certificate2(encodedCertificate),
+                X509TrustChain = trustChain
+            };
         }
     }
 }
