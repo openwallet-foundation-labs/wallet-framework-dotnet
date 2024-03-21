@@ -27,6 +27,11 @@ namespace Hyperledger.Aries.Features.SdJwt.Models.Records
         public Dictionary<string, OidClaim>? DisplayedAttributes { get; set; }
 
         /// <summary>
+        ///     Gets or sets the attributes that should be displayed.
+        /// </summary>
+        public List<string>? AttributeOrder { get; set; }
+        
+        /// <summary>
         ///     Gets or sets the claims made.
         /// </summary>
         public Dictionary<string, string> Claims { get; set; }
@@ -157,6 +162,7 @@ namespace Hyperledger.Aries.Features.SdJwt.Models.Records
         {
             Display = issuerMetadata.GetCredentialDisplay(credentialMetadataId);
             DisplayedAttributes = issuerMetadata.GetCredentialClaims(credentialMetadataId);
+            AttributeOrder = issuerMetadata.CredentialsSupported[credentialMetadataId].Order;
 
             IssuerId = issuerMetadata.CredentialIssuer;
             IssuerName = CreateIssuerNameDictionary(issuerMetadata);
