@@ -10,7 +10,6 @@ using X509Certificate = Org.BouncyCastle.X509.X509Certificate;
 using static Hyperledger.Aries.Features.OpenId4Vc.Vp.Models.AuthorizationRequest;
 using static Newtonsoft.Json.Linq.JArray;
 using static System.Convert;
-using static Hyperledger.Aries.Features.OpenId4Vc.Vp.Models.ClientIdScheme.ClientIdSchemeValue;
 
 namespace Hyperledger.Aries.Features.OpenId4Vc.Vp.Models
 {
