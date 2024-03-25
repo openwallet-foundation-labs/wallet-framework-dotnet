@@ -385,7 +385,7 @@ namespace Hyperledger.Aries.Features.OpenId4Vc.Vci.Services.Oid4VciClientService
             if (response.StatusCode is System.Net.HttpStatusCode.BadRequest
                 && errorReason == InvalidGrantError)
             {
-                throw new Oid4VciInvalidGrantException($"Invalid grant error. Status Code is {response.StatusCode}");
+                throw new Oid4VciInvalidGrantException(response.StatusCode);
             }
         }
 

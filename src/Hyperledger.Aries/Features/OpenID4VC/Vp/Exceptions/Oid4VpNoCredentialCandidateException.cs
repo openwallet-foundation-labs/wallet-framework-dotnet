@@ -11,9 +11,8 @@ namespace Hyperledger.Aries.Features.OpenID4VC.Vp.Exceptions
         /// <summary>
         ///     Initializes a new instance of the <see cref="Oid4VpNoCredentialCandidateException"/> class.
         /// </summary>
-        /// <param name="message"></param>
-        public Oid4VpNoCredentialCandidateException(string message)
-            : base(message)
+        public Oid4VpNoCredentialCandidateException()
+            : base("No suitable credential candidates found")
         {
         }
     }

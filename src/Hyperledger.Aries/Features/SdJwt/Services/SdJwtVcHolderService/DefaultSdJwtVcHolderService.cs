@@ -120,7 +120,7 @@ namespace Hyperledger.Aries.Features.SdJwt.Services.SdJwtVcHolderService
             
             if (result.IsNullOrEmpty())
             {
-                throw new Oid4VpNoCredentialCandidateException("No suitable credential candidates found");
+                throw new Oid4VpNoCredentialCandidateException();
             }
 
             return Task.FromResult(result.ToArray());

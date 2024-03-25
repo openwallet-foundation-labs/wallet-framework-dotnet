@@ -1,4 +1,5 @@
 using System;
+using System.Net;
 
 namespace Hyperledger.Aries.Features.OpenID4VC.VCI.Exceptions
 {
@@ -10,9 +11,9 @@ namespace Hyperledger.Aries.Features.OpenID4VC.VCI.Exceptions
         /// <summary>
         ///     Initializes a new instance of the <see cref="Oid4VciInvalidGrantException"/> class.
         /// </summary>
-        /// <param name="message"></param>
-        public Oid4VciInvalidGrantException(string message)
-            : base(message)
+        /// <param name="statusCode">The StatusCode associated with the thrown Exception</param>
+        public Oid4VciInvalidGrantException(HttpStatusCode statusCode)
+            : base($"Invalid grant error. Status Code is {statusCode}")
         {
         }
     }
