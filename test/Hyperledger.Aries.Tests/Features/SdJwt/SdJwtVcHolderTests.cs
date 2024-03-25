@@ -4,6 +4,7 @@ using System.Collections.Immutable;
 using System.Threading.Tasks;
 using FluentAssertions;
 using Hyperledger.Aries.Features.OpenId4Vc.KeyStore.Services;
+using Hyperledger.Aries.Features.OpenID4VC.Vp.Exceptions;
 using Hyperledger.Aries.Features.OpenId4Vc.Vp.Models;
 using Hyperledger.Aries.Features.Pex.Models;
 using Hyperledger.Aries.Features.SdJwt.Models.Records;
@@ -110,12 +111,12 @@ namespace Hyperledger.Aries.Tests.Features.SdJwt
             var sdJwtVcHolderService = CreateSdJwtVcHolderService();
 
             // Act
-            var credentialCandidatesArray = await sdJwtVcHolderService.FindCredentialCandidates(
+            Func<Task> act = async () =>  await sdJwtVcHolderService.FindCredentialCandidates(
                 new[] { employeeCredential },
                 new[] { driverLicenseInputDescriptor });
 
             // Assert
-            credentialCandidatesArray.Should().BeEmpty();
+            await Assert.ThrowsAsync<Oid4VpNoCredentialCandidateException>(act);
         }
 
         [Fact]
@@ -148,12 +149,12 @@ namespace Hyperledger.Aries.Tests.Features.SdJwt
             var sdJwtVcHolderService = CreateSdJwtVcHolderService();
 
             // Act
-            var credentialCandidatesArray = await sdJwtVcHolderService.FindCredentialCandidates(
+            Func<Task> act = async () => await sdJwtVcHolderService.FindCredentialCandidates(
                 new[] { driverLicenseCredential },
                 new[] { driverLicenseInputDescriptor });
 
             // Assert
-            credentialCandidatesArray.Should().BeEmpty();
+            await Assert.ThrowsAsync<Oid4VpNoCredentialCandidateException>(act);
         }
 
         [Fact]
