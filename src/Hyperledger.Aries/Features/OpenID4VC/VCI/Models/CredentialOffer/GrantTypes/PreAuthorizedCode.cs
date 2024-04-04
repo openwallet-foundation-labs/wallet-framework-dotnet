@@ -21,6 +21,12 @@ namespace Hyperledger.Aries.Features.OpenId4Vc.Vci.Models.CredentialOffer.GrantT
         /// </summary>
         [JsonProperty("tx_code")]
         public TransactionCode? TransactionCode { get; set; }
+        
+        /// <summary>
+        ///     Specifying whether the user must send a User Pin along with the Token Request in a Pre-Authorized Code Flow.
+        /// </summary>
+        [JsonProperty("user_pin_required")]
+        public bool? UserPinRequired { get; set; }
     }
 
     /// <summary>
