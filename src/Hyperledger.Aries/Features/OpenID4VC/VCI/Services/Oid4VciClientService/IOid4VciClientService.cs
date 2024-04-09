@@ -26,7 +26,8 @@ namespace Hyperledger.Aries.Features.OpenId4Vc.Vci.Services.Oid4VciClientService
         /// <param name="credentialMetadata">The credential metadata.</param>
         /// <param name="issuerMetadata">The issuer metadata.</param>
         /// <param name="preAuthorizedCode">The pre-authorized code for token request.</param>
-        /// /// <param name="transactionCode">The Transaction Code.</param>
+        /// <param name="transactionCode">The Transaction Code.</param>
+        /// <param name="userPin">The User Pin.</param>
         /// <returns>
         ///     A tuple containing the credential response and the key ID used during the signing of the Proof of Possession.
         /// </returns>
@@ -34,7 +35,8 @@ namespace Hyperledger.Aries.Features.OpenId4Vc.Vci.Services.Oid4VciClientService
             OidCredentialMetadata credentialMetadata,
             OidIssuerMetadata issuerMetadata,
             string preAuthorizedCode,
-            string? transactionCode
+            string? transactionCode,
+            string? userPin
         );
     }
 }
