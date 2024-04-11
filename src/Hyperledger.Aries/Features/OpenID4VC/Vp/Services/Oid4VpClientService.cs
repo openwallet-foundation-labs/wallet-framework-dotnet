@@ -8,6 +8,7 @@ using Hyperledger.Aries.Features.OpenId4Vc.Vp.Models;
 using Hyperledger.Aries.Features.OpenId4Vc.Vp.Services;
 using Hyperledger.Aries.Features.SdJwt.Models.Records;
 using Hyperledger.Aries.Features.SdJwt.Services.SdJwtVcHolderService;
+using Microsoft.Extensions.Logging;
 using static Newtonsoft.Json.JsonConvert;
 
 namespace Hyperledger.Aries.Features.OpenID4VC.Vp.Services
@@ -26,16 +27,19 @@ namespace Hyperledger.Aries.Features.OpenID4VC.Vp.Services
             IHttpClientFactory httpClientFactory,
             ISdJwtVcHolderService sdJwtVcHolderService,
             IOid4VpHaipClient oid4VpHaipClient,
+            ILogger<Oid4VpClientService> logger,
             IOid4VpRecordService oid4VpRecordService)
         {
             _httpClientFactory = httpClientFactory;
             _sdJwtVcHolderService = sdJwtVcHolderService;
             _oid4VpHaipClient = oid4VpHaipClient;
+            _logger = logger;
             _oid4VpRecordService = oid4VpRecordService;
         }
 
         private readonly IHttpClientFactory _httpClientFactory;
         private readonly IOid4VpHaipClient _oid4VpHaipClient;
+        private readonly ILogger<Oid4VpClientService> _logger;
         private readonly IOid4VpRecordService _oid4VpRecordService;
         private readonly ISdJwtVcHolderService _sdJwtVcHolderService;
 
@@ -165,8 +169,9 @@ namespace Hyperledger.Aries.Features.OpenID4VC.Vp.Services
                 return DeserializeObject<AuthorizationResponseCallback>(redirectUriJson);
 
             }
-            catch (Exception)
+            catch (Exception e)
             {
+                _logger.LogWarning("Could not parse Redirect URI received from: {ResponseUri} due to exception: {Exception}", authorizationRequest.ResponseUri, e);
                 return null;
             }
         }
