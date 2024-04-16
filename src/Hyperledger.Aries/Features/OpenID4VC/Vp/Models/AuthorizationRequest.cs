@@ -1,6 +1,9 @@
 using System;
 using System.Linq;
+using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Security.Cryptography.X509Certificates;
+using System.Threading.Tasks;
 using Hyperledger.Aries.Features.Pex.Models;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -51,7 +54,7 @@ namespace Hyperledger.Aries.Features.OpenId4Vc.Vp.Models
         ///     Gets the client metadata. Contains the Verifier metadata.
         /// </summary>
         [JsonProperty("client_metadata")]
-        public string? ClientMetadata { get; }
+        public ClientMetadata? ClientMetadata { get; init; }
 
         /// <summary>
         ///     Gets the client metadata uri. Can be used to retrieve the verifier metadata.
@@ -88,7 +91,7 @@ namespace Hyperledger.Aries.Features.OpenId4Vc.Vp.Models
             string clientId,
             string nonce,
             string responseUri,
-            string? clientMetadata,
+            ClientMetadata? clientMetadata,
             string? clientMetadataUri,
             string? scope,
             string? state)
@@ -164,6 +167,26 @@ namespace Hyperledger.Aries.Features.OpenId4Vc.Vp.Models
             {
                 X509Certificate = new X509Certificate2(encodedCertificate),
                 X509TrustChain = trustChain
+            };
+        }
+
+        internal static async Task<AuthorizationRequest> GetClientMetadata(
+            this AuthorizationRequest authorizationRequest, HttpClient httpClient)
+        {
+            httpClient.DefaultRequestHeaders.Clear();
+            httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+
+            if (authorizationRequest.ClientMetadata != null
+                || string.IsNullOrWhiteSpace(authorizationRequest.ClientMetadataUri))
+            {
+                return authorizationRequest;
+            }
+            
+            var response = await httpClient.GetAsync(authorizationRequest.ClientMetadataUri);
+            var clientMetadata = await response.Content.ReadAsStringAsync();
+            return authorizationRequest with
+            {
+                ClientMetadata = JsonConvert.DeserializeObject<ClientMetadata>(clientMetadata)
             };
         }
     }

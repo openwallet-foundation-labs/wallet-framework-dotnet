@@ -80,14 +80,17 @@ namespace Hyperledger.Aries.Features.OpenId4Vc.Vp.Services
                 requestObject.ClientIdScheme.Value switch
                 {
                     X509SanDns =>
-                        requestObject
+                        await requestObject
                             .ValidateJwt()
                             .ValidateTrustChain()
                             .ValidateSanName()
                             .ToAuthorizationRequest()
-                            .WithX509(requestObject),
+                            .WithX509(requestObject)
+                            .GetClientMetadata(httpClient),
                     RedirectUri =>
-                        requestObject.ToAuthorizationRequest(),
+                        await requestObject
+                            .ToAuthorizationRequest()
+                            .GetClientMetadata(httpClient),
                     VerifierAttestation =>
                         throw new NotImplementedException("Verifier Attestation not yet implemented"),
                     _ =>
