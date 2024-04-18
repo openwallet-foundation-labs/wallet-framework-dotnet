@@ -45,7 +45,7 @@ namespace Hyperledger.Aries.Features.OpenId4Vc.Vp.Services
                 var descriptorMap = new DescriptorMap
                 {
                     Format = "vc+sd-jwt",
-                    Path = vpToken.Count > 1 ? "$[" + index + "]" : "$",
+                    Path = presentationMap.Length > 1 ? "$[" + index + "]" : "$",
                     Id = presentationMap[index].inputDescriptorId,
                     PathNested = null
                 };
