@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netcoreapp3.1</TargetFramework>
+    <TargetFramework>net7.0</TargetFramework>
     <IsPackable>false</IsPackable>
     <Nullable>enable</Nullable>
   </PropertyGroup>
@@ -36,16 +36,19 @@
     <ProjectReference Include="..\..\src\Hyperledger.Aries.AspNetCore\Hyperledger.Aries.AspNetCore.csproj" />
     <ProjectReference Include="..\..\src\Hyperledger.Aries.TestHarness\Hyperledger.Aries.TestHarness.csproj" />
     <ProjectReference Include="..\..\src\Hyperledger.Aries.Payments.SovrinToken\Hyperledger.Aries.Payments.SovrinToken.csproj" />
+    <ProjectReference Include="..\..\src\WalletFramework.Oid4Vc\WalletFramework.Oid4Vc.csproj" />
+    <ProjectReference Include="..\..\src\WalletFramework.SdJwtVc\WalletFramework.SdJwtVc.csproj" />
   </ItemGroup>
   <ItemGroup>
     <None Remove="Features\Pex\Models\InputDescriptors.json" />
   </ItemGroup>
   <ItemGroup>
     <None Remove="Features\Pex\Models\Can_Create_Presentation_Submission.json" />
-    <EmbeddedResource Include="Features\Pex\Models\Can_Create_Presentation_Submission.json" />
     <None Remove="Features\Pex\Models\Can_Parse_Presentation_Definition.json" />
-    <EmbeddedResource Include="Features\Pex\Models\Can_Parse_Presentation_Definition.json" />
     <None Remove="Features\Pex\Models\Throws_Exception_When_Descriptors_Are_Missing.json" />
-    <EmbeddedResource Include="Features\Pex\Models\Throws_Exception_When_Descriptors_Are_Missing.json" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Features\OpenId4Vc\" />
+    <Folder Include="Features\Pex\" />
   </ItemGroup>
 </Project>

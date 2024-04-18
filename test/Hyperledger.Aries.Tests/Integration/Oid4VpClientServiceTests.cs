@@ -6,22 +6,21 @@ using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 using FluentAssertions;
-using Hyperledger.Aries.Features.OpenId4Vc.KeyStore.Services;
-using Hyperledger.Aries.Features.OpenId4Vc.Vci.Models.Metadata.Credential;
-using Hyperledger.Aries.Features.OpenId4Vc.Vci.Models.Metadata.Credential.Attributes;
-using Hyperledger.Aries.Features.OpenId4Vc.Vci.Models.Metadata.Issuer;
-using Hyperledger.Aries.Features.OpenId4Vc.Vp.Models;
-using Hyperledger.Aries.Features.OpenId4Vc.Vp.Services;
-using Hyperledger.Aries.Features.OpenID4VC.Vp.Services;
-using Hyperledger.Aries.Features.Pex.Models;
-using Hyperledger.Aries.Features.Pex.Services;
-using Hyperledger.Aries.Features.SdJwt.Services.SdJwtVcHolderService;
 using Hyperledger.Aries.Storage;
 using Hyperledger.Aries.Tests.Extensions;
 using Hyperledger.TestHarness.Mock;
 using Moq;
 using Moq.Protected;
 using SD_JWT;
+using WalletFramework.Oid4Vc.Oid4Vci.Models.Metadata.Credential;
+using WalletFramework.Oid4Vc.Oid4Vci.Models.Metadata.Credential.Attributes;
+using WalletFramework.Oid4Vc.Oid4Vci.Models.Metadata.Issuer;
+using WalletFramework.Oid4Vc.Oid4Vp.Models;
+using WalletFramework.Oid4Vc.Oid4Vp.PresentationExchange.Models;
+using WalletFramework.Oid4Vc.Oid4Vp.PresentationExchange.Services;
+using WalletFramework.Oid4Vc.Oid4Vp.Services;
+using WalletFramework.SdJwtVc.KeyStore.Services;
+using WalletFramework.SdJwtVc.Services.SdJwtVcHolderService;
 using Xunit;
 
 namespace Hyperledger.Aries.Tests.Integration
@@ -109,7 +108,7 @@ namespace Hyperledger.Aries.Tests.Integration
             //Arrange
             SetupHttpClient(RequestUriResponse);
             
-            await _sdJwtVcHolderService.StoreAsync(_agent1.Context, CombinedIssuance, KeyId, _oidIssuerMetadata, "VerifiedEmail");
+            await _sdJwtVcHolderService.StoreAsync(_agent1.Context, CombinedIssuance, KeyId, _oidIssuerMetadata.CredentialIssuer, null, null, null);
 
             //Act
             var (authorizationRequest, credentials) =
