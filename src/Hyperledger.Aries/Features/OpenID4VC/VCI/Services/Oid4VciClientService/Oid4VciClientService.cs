@@ -76,14 +76,13 @@ namespace Hyperledger.Aries.Features.OpenId4Vc.Vci.Services.Oid4VciClientService
             OidCredentialMetadata credentialMetadata,
             OidIssuerMetadata issuerMetadata,
             string preAuthorizedCode,
-            string? transactionCode,
-            string? userPin)
+            string? transactionCode)
         {
             var authorizationServerMetadata = await FetchAuthorizationServerMetadataAsync(issuerMetadata);
 
             var oAuthToken = authorizationServerMetadata.IsDPoPSupported
-                ? await RequestTokenWithDPop(authorizationServerMetadata, preAuthorizedCode, transactionCode, userPin)
-                : await RequestTokenWithoutDPop(authorizationServerMetadata, preAuthorizedCode, transactionCode, userPin);
+                ? await RequestTokenWithDPop(authorizationServerMetadata, preAuthorizedCode, transactionCode)
+                : await RequestTokenWithoutDPop(authorizationServerMetadata, preAuthorizedCode, transactionCode);
             
             return oAuthToken.IsDPoPRequested()
                 ? await RequestCredentialWithDPoP(credentialMetadata, issuerMetadata, oAuthToken)
@@ -127,8 +126,7 @@ namespace Hyperledger.Aries.Features.OpenId4Vc.Vci.Services.Oid4VciClientService
         private async Task<OAuthToken> RequestTokenWithDPop(
             AuthorizationServerMetadata authServerMetadata,
             string preAuthorizedCode,
-            string? transactionCode = null,
-            string? userPin = null)
+            string? transactionCode = null)
         {
             var dPopKey = await _keyStore.GenerateKey();
             var dPopProofJwt = await _keyStore.GenerateDPopProofOfPossessionAsync(
@@ -147,8 +145,7 @@ namespace Hyperledger.Aries.Features.OpenId4Vc.Vci.Services.Oid4VciClientService
                 {
                     GrantType = "urn:ietf:params:oauth:grant-type:pre-authorized_code",
                     PreAuthorizedCode = preAuthorizedCode,
-                    TransactionCode = transactionCode,
-                    UserPin = userPin
+                    TransactionCode = transactionCode
                 }.ToFormUrlEncoded()
                 );
 
@@ -296,8 +293,7 @@ namespace Hyperledger.Aries.Features.OpenId4Vc.Vci.Services.Oid4VciClientService
         private async Task<OAuthToken> RequestTokenWithoutDPop(
             AuthorizationServerMetadata authServerMetadata,
             string preAuthorizedCode,
-            string? transactionCode = null,
-            string? userPin = null)
+            string? transactionCode = null)
         {
             var httpClient = _httpClientFactory.CreateClient();
 
@@ -307,8 +303,7 @@ namespace Hyperledger.Aries.Features.OpenId4Vc.Vci.Services.Oid4VciClientService
                 {
                     GrantType = "urn:ietf:params:oauth:grant-type:pre-authorized_code",
                     PreAuthorizedCode = preAuthorizedCode,
-                    TransactionCode = transactionCode,
-                    UserPin = userPin
+                    TransactionCode = transactionCode
                 }.ToFormUrlEncoded());
 
             await ThrowIfInvalidGrantError(response);
