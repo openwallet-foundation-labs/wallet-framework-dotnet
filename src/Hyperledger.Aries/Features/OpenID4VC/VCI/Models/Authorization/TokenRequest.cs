@@ -31,7 +31,7 @@ namespace Hyperledger.Aries.Features.OpenId4Vc.Vci.Models.Authorization
         public string? Scope { get; set; }
 
         /// <summary>
-        ///     Gets or sets the user PIN. This value must be present if a PIN was required in a previous step.
+        ///     Gets or sets the transaction code. This value must be present if a transaction code was required in a previous step.
         /// </summary>
         [JsonProperty("tx_code")]
         public string? TransactionCode { get; set; }
