@@ -43,8 +43,8 @@
         <FlurlVersion>2.8.2</FlurlVersion>
         <WalletFrameworkIndySdkVersion>2.0.1</WalletFrameworkIndySdkVersion>
         <HyperledgerIndyVdrVersion>0.4.2-alpha</HyperledgerIndyVdrVersion>
-        <MediatrExtensionsMicrosoftDependencyInjectionVersion>8.0.1</MediatrExtensionsMicrosoftDependencyInjectionVersion>
-        <MediatrVersion>8.0.2</MediatrVersion>
+        <MediatrExtensionsMicrosoftDependencyInjectionVersion>11.1.0</MediatrExtensionsMicrosoftDependencyInjectionVersion>
+        <MediatrVersion>11.0.0</MediatrVersion>
         <MicroElementsSwashbuckleFluentValidationVersion>4.0.0</MicroElementsSwashbuckleFluentValidationVersion>
         <MoqVersion>4.14.5</MoqVersion>
         <MultiformatsBaseVersion>2.0.2</MultiformatsBaseVersion>
