@@ -50,6 +50,7 @@ namespace Hyperledger.Aries.Features.OpenID4VC.Vp.Services
         {
             var record = new OidPresentationRecord
             {
+                Name = name,
                 ClientId = clientId,
                 ClientMetadata = clientMetadata,
                 Id = Guid.NewGuid().ToString(),
