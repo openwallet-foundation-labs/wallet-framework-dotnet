@@ -17,6 +17,7 @@ using Hyperledger.Aries.Features.Pex.Services;
 using Hyperledger.Aries.Features.SdJwt.Services.SdJwtVcHolderService;
 using Hyperledger.Aries.Storage;
 using Hyperledger.TestHarness.Mock;
+using Microsoft.Extensions.Logging;
 using Moq;
 using Moq.Protected;
 using SD_JWT;
@@ -59,6 +60,7 @@ namespace Hyperledger.Aries.Tests.Integration
                 _httpClientFactoryMock.Object,
                 _sdJwtVcHolderService,
                 _oid4VpHaipClient,
+                _loggerMock.Object,
                 _oid4VpRecordService
             );
 
@@ -77,6 +79,7 @@ namespace Hyperledger.Aries.Tests.Integration
 
         private readonly Mock<HttpMessageHandler> _httpMessageHandlerMock = new Mock<HttpMessageHandler>();
         private readonly Mock<IHttpClientFactory> _httpClientFactoryMock = new Mock<IHttpClientFactory>();
+        private readonly Mock<ILogger<Oid4VpClientService>> _loggerMock = new Mock<ILogger<Oid4VpClientService>>();
         private readonly Mock<IKeyStore> _keyStoreMock = new Mock<IKeyStore>();
         private MockAgent? _agent1;
         private readonly MockAgentRouter _router = new MockAgentRouter();

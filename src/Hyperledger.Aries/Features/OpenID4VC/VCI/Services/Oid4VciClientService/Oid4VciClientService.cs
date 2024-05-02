@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Hyperledger.Aries.Extensions;
 using Hyperledger.Aries.Features.OpenId4Vc.KeyStore.Services;
+using Hyperledger.Aries.Features.OpenID4VC.VCI.Exceptions;
 using Hyperledger.Aries.Features.OpenID4VC.VCI.Extensions;
 using Hyperledger.Aries.Features.OpenId4Vc.Vci.Models.Authorization;
 using Hyperledger.Aries.Features.OpenId4Vc.Vci.Models.CredentialRequest;
@@ -38,6 +39,10 @@ namespace Hyperledger.Aries.Features.OpenId4Vc.Vci.Services.Oid4VciClientService
 
         private readonly IHttpClientFactory _httpClientFactory;
         private readonly IKeyStore _keyStore;
+        
+        private const string ErrorCodeKey = "error";
+        private const string InvalidGrantError = "invalid_grant";
+        private const string UseDPopNonceError = "use_dpop_nonce";
 
         /// <inheritdoc />
         public async Task<OidIssuerMetadata> FetchIssuerMetadataAsync(Uri endpoint, string preferredLanguage)
@@ -72,13 +77,14 @@ namespace Hyperledger.Aries.Features.OpenId4Vc.Vci.Services.Oid4VciClientService
             OidCredentialMetadata credentialMetadata,
             OidIssuerMetadata issuerMetadata,
             string preAuthorizedCode,
-            string? transactionCode)
+            string? transactionCode,
+            string? userPin)
         {
             var authorizationServerMetadata = await FetchAuthorizationServerMetadataAsync(issuerMetadata);
 
             var oAuthToken = authorizationServerMetadata.IsDPoPSupported
-                ? await RequestTokenWithDPop(authorizationServerMetadata, preAuthorizedCode, transactionCode)
-                : await RequestTokenWithoutDPop(authorizationServerMetadata, preAuthorizedCode, transactionCode);
+                ? await RequestTokenWithDPop(authorizationServerMetadata, preAuthorizedCode, transactionCode, userPin)
+                : await RequestTokenWithoutDPop(authorizationServerMetadata, preAuthorizedCode, transactionCode, userPin);
             
             return oAuthToken.IsDPoPRequested()
                 ? await RequestCredentialWithDPoP(credentialMetadata, issuerMetadata, oAuthToken)
@@ -122,7 +128,8 @@ namespace Hyperledger.Aries.Features.OpenId4Vc.Vci.Services.Oid4VciClientService
         private async Task<OAuthToken> RequestTokenWithDPop(
             AuthorizationServerMetadata authServerMetadata,
             string preAuthorizedCode,
-            string? transactionCode = null)
+            string? transactionCode = null,
+            string? userPin = null)
         {
             var dPopKey = await _keyStore.GenerateKey();
             var dPopProofJwt = await _keyStore.GenerateDPopProofOfPossessionAsync(
@@ -141,10 +148,13 @@ namespace Hyperledger.Aries.Features.OpenId4Vc.Vci.Services.Oid4VciClientService
                 {
                     GrantType = "urn:ietf:params:oauth:grant-type:pre-authorized_code",
                     PreAuthorizedCode = preAuthorizedCode,
-                    TransactionCode = transactionCode
+                    TransactionCode = transactionCode,
+                    UserPin = userPin
                 }.ToFormUrlEncoded()
                 );
 
+            await ThrowIfInvalidGrantError(response);
+            
             var dPopNonce = await GetDPopNonce(response);
 
             if (!string.IsNullOrEmpty(dPopNonce))
@@ -165,6 +175,8 @@ namespace Hyperledger.Aries.Features.OpenId4Vc.Vci.Services.Oid4VciClientService
                         TransactionCode = transactionCode
                     }.ToFormUrlEncoded());
             }
+            
+            await ThrowIfInvalidGrantError(response);
             
             if (!response.IsSuccessStatusCode)
             {
@@ -227,7 +239,7 @@ namespace Hyperledger.Aries.Features.OpenId4Vc.Vci.Services.Oid4VciClientService
                     mediaType: "application/json"
                 )
             );
-
+            
             var refreshedDPopNonce = await GetDPopNonce(response);
             
             if (!string.IsNullOrEmpty(refreshedDPopNonce))
@@ -285,7 +297,8 @@ namespace Hyperledger.Aries.Features.OpenId4Vc.Vci.Services.Oid4VciClientService
         private async Task<OAuthToken> RequestTokenWithoutDPop(
             AuthorizationServerMetadata authServerMetadata,
             string preAuthorizedCode,
-            string? transactionCode = null)
+            string? transactionCode = null,
+            string? userPin = null)
         {
             var httpClient = _httpClientFactory.CreateClient();
 
@@ -295,9 +308,12 @@ namespace Hyperledger.Aries.Features.OpenId4Vc.Vci.Services.Oid4VciClientService
                 {
                     GrantType = "urn:ietf:params:oauth:grant-type:pre-authorized_code",
                     PreAuthorizedCode = preAuthorizedCode,
-                    TransactionCode = transactionCode
+                    TransactionCode = transactionCode,
+                    UserPin = userPin
                 }.ToFormUrlEncoded());
 
+            await ThrowIfInvalidGrantError(response);
+            
             if (!response.IsSuccessStatusCode)
             {
                 throw new HttpRequestException(
@@ -364,18 +380,32 @@ namespace Hyperledger.Aries.Features.OpenId4Vc.Vci.Services.Oid4VciClientService
 
             return (credentialResponse, sdJwtKeyId);
         }
+        
+        private async Task ThrowIfInvalidGrantError(HttpResponseMessage response)
+        {
+            var content = await response.Content.ReadAsStringAsync();
+            var errorReason = string.IsNullOrEmpty(content) 
+                ? null
+                : JObject.Parse(content)[ErrorCodeKey]?.ToString();
+
+            if (response.StatusCode is System.Net.HttpStatusCode.BadRequest
+                && errorReason == InvalidGrantError)
+            {
+                throw new Oid4VciInvalidGrantException(response.StatusCode);
+            }
+        }
 
         private async Task<string?> GetDPopNonce(HttpResponseMessage response)
         {
             var content = await response.Content.ReadAsStringAsync();
             var errorReason = string.IsNullOrEmpty(content) 
                 ? null 
-                : JObject.Parse(content)["error"]?.ToString();
+                : JObject.Parse(content)[ErrorCodeKey]?.ToString();
             
             if (response.StatusCode 
                     is System.Net.HttpStatusCode.BadRequest 
                     or System.Net.HttpStatusCode.Unauthorized
-                && errorReason == "use_dpop_nonce"
+                && errorReason == UseDPopNonceError
                 && response.Headers.TryGetValues("DPoP-Nonce", out var dPopNonce))
             {
                 return dPopNonce?.FirstOrDefault();
@@ -383,7 +413,5 @@ namespace Hyperledger.Aries.Features.OpenId4Vc.Vci.Services.Oid4VciClientService
 
             return null;
         }
-        
-        
     }
 }

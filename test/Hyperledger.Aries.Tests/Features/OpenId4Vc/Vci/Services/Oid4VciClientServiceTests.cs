@@ -130,7 +130,8 @@ namespace Hyperledger.Aries.Tests.Features.OpenId4Vc.Vci.Services
                     _oidIssuerMetadata.CredentialConfigurationsSupported.First().Value,
                     _oidIssuerMetadata,
                     PreAuthorizedCode,
-                    TransactionCode
+                    TransactionCode,
+                    null
                     );
             
             //Assert
@@ -168,7 +169,8 @@ namespace Hyperledger.Aries.Tests.Features.OpenId4Vc.Vci.Services
                     _oidIssuerMetadata.CredentialConfigurationsSupported.First().Value,
                     _oidIssuerMetadata,
                     PreAuthorizedCode,
-                    TransactionCode
+                    TransactionCode,
+                    null
                 );
             
             //Assert
