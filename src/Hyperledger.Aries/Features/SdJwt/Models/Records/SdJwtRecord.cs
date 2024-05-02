@@ -162,7 +162,7 @@ namespace Hyperledger.Aries.Features.SdJwt.Models.Records
         {
             Display = issuerMetadata.GetCredentialDisplay(credentialMetadataId);
             DisplayedAttributes = issuerMetadata.GetCredentialClaims(credentialMetadataId);
-            AttributeOrder = issuerMetadata.CredentialsSupported[credentialMetadataId].Order;
+            AttributeOrder = issuerMetadata.CredentialConfigurationsSupported[credentialMetadataId].Order;
 
             IssuerId = issuerMetadata.CredentialIssuer;
             IssuerName = CreateIssuerNameDictionary(issuerMetadata);
