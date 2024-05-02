@@ -40,7 +40,7 @@ namespace Hyperledger.Aries.Features.OpenId4Vc.Vci.Services.Oid4VciClientService
         private readonly IKeyStore _keyStore;
 
         /// <inheritdoc />
-        public async Task<OidIssuerMetadata> FetchIssuerMetadataAsync(Uri endpoint)
+        public async Task<OidIssuerMetadata> FetchIssuerMetadataAsync(Uri endpoint, string preferredLanguage)
         {
             var baseEndpoint = endpoint
                 .AbsolutePath
@@ -50,9 +50,10 @@ namespace Hyperledger.Aries.Features.OpenId4Vc.Vci.Services.Oid4VciClientService
 
             var metadataUrl = new Uri(baseEndpoint, ".well-known/openid-credential-issuer");
 
-            var response = await _httpClientFactory
-                .CreateClient()
-                .GetAsync(metadataUrl);
+            var client = _httpClientFactory.CreateClient();
+            client.DefaultRequestHeaders.Add("Accept-Language", preferredLanguage);
+            
+            var response = await client.GetAsync(metadataUrl);
 
             if (!response.IsSuccessStatusCode)
             {
