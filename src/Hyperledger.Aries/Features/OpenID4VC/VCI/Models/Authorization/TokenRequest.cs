@@ -33,7 +33,7 @@ namespace Hyperledger.Aries.Features.OpenId4Vc.Vci.Models.Authorization
         /// <summary>
         ///     Gets or sets the transaction code. This value must be present if a transaction code was required in a previous step.
         /// </summary>
-        [JsonProperty("tx_code")]
+        [JsonProperty("tx_code", NullValueHandling = NullValueHandling.Ignore)]
         public string? TransactionCode { get; set; }
 
         /// <summary>
