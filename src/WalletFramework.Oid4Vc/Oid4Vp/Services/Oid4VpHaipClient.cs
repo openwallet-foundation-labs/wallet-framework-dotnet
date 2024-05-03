@@ -1,17 +1,14 @@
-using System.Net;
-using Newtonsoft.Json;
 using WalletFramework.Oid4Vc.Oid4Vp.Models;
 using WalletFramework.Oid4Vc.Oid4Vp.PresentationExchange.Models;
 using WalletFramework.Oid4Vc.Oid4Vp.PresentationExchange.Services;
+using static Newtonsoft.Json.JsonConvert;
+using static WalletFramework.Oid4Vc.Oid4Vp.Models.RequestObject;
 
 namespace WalletFramework.Oid4Vc.Oid4Vp.Services
 {
     /// <inheritdoc />
     public class Oid4VpHaipClient : IOid4VpHaipClient
     {
-        private readonly IHttpClientFactory _httpClientFactory;
-        private readonly IPexService _pexService;
-
         /// <summary>
         ///     Initializes a new instance of the <see cref="Oid4VpHaipClient" /> class.
         /// </summary>
@@ -25,45 +22,21 @@ namespace WalletFramework.Oid4Vc.Oid4Vp.Services
             _pexService = pexService;
         }
 
+        private readonly IHttpClientFactory _httpClientFactory;
+        private readonly IPexService _pexService;
+
         /// <inheritdoc />
-        public async Task<AuthorizationRequest> ProcessAuthorizationRequestAsync(HaipAuthorizationRequestUri haipAuthorizationRequestUri)
-        {
-            var authorizationRequest = new AuthorizationRequest();
-
-            if (!String.IsNullOrEmpty(haipAuthorizationRequestUri.RequestUri))
-            {
-                var httpClient = _httpClientFactory.CreateClient();
-                var response = await httpClient.GetAsync(haipAuthorizationRequestUri.RequestUri);
-                
-                if (response.StatusCode == HttpStatusCode.OK)
-                {
-                    var content = await response.Content.ReadAsStringAsync();
-                    authorizationRequest = AuthorizationRequest.ParseFromJwt(content);
-                }
-            }
-            else
-            {
-                authorizationRequest = AuthorizationRequest.ParseFromUri(haipAuthorizationRequestUri.Uri);
-            }
-
-            if (authorizationRequest == null) 
-                throw new InvalidOperationException("Could not parse Authorization Request Url");
-            
-            if (!authorizationRequest.IsHaipConform())
-                throw new InvalidOperationException("Authorization Request is not HAIP conform");
-
-            return authorizationRequest;
-        }
-        
-        /// <inheritdoc />
-        public async Task<AuthorizationResponse> CreateAuthorizationResponseAsync(AuthorizationRequest authorizationRequest, (string inputDescriptorId, string presentation)[] presentationMap)
+        public async Task<AuthorizationResponse> CreateAuthorizationResponseAsync(
+            AuthorizationRequest authorizationRequest,
+            (string inputDescriptorId, string presentation)[] presentationMap)
         {
             var descriptorMaps = new List<DescriptorMap>();
             var vpToken = new List<string>();
+            
             for (var index = 0; index < presentationMap.Length; index++)
             {
                 vpToken.Add(presentationMap[index].presentation);
-                
+
                 var descriptorMap = new DescriptorMap
                 {
                     Format = "vc+sd-jwt",
@@ -74,14 +47,49 @@ namespace WalletFramework.Oid4Vc.Oid4Vp.Services
                 descriptorMaps.Add(descriptorMap);
             }
 
-            var presentationSubmission = await _pexService.CreatePresentationSubmission(authorizationRequest.PresentationDefinition, descriptorMaps.ToArray());
-            
+            var presentationSubmission =
+                await _pexService.CreatePresentationSubmission(authorizationRequest.PresentationDefinition,
+                    descriptorMaps.ToArray());
+
             return new AuthorizationResponse
             {
-                PresentationSubmission = JsonConvert.SerializeObject(presentationSubmission),
-                VpToken = vpToken.Count > 1 ? JsonConvert.SerializeObject(vpToken) : vpToken[0],
+                PresentationSubmission = SerializeObject(presentationSubmission),
+                VpToken = vpToken.Count > 1 ? SerializeObject(vpToken) : vpToken[0],
                 State = authorizationRequest.State
             };
+        }
+
+        /// <inheritdoc />
+        public async Task<AuthorizationRequest> ProcessAuthorizationRequestAsync(
+            HaipAuthorizationRequestUri haipAuthorizationRequestUri)
+        {
+            var httpClient = _httpClientFactory.CreateClient();
+            httpClient.DefaultRequestHeaders.Clear();
+            
+            var requestObject =
+                CreateRequestObject(
+                    await httpClient.GetStringAsync(haipAuthorizationRequestUri.RequestUri)
+                );
+
+            return
+                requestObject.ClientIdScheme.Value switch
+                {
+                    ClientIdScheme.ClientIdSchemeValue.X509SanDns =>
+                        requestObject
+                            .ValidateJwt()
+                            .ValidateTrustChain()
+                            .ValidateSanName()
+                            .ToAuthorizationRequest()
+                            .WithX509(requestObject),
+                    ClientIdScheme.ClientIdSchemeValue.RedirectUri =>
+                        requestObject.ToAuthorizationRequest(),
+                    ClientIdScheme.ClientIdSchemeValue.VerifierAttestation =>
+                        throw new NotImplementedException("Verifier Attestation not yet implemented"),
+                    _ =>
+                        throw new InvalidOperationException(
+                            $"Client ID Scheme {requestObject.ClientIdScheme} not supported"
+                        )
+                };
         }
     }
 }

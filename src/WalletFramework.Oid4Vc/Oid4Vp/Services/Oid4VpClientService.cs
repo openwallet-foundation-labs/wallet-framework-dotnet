@@ -1,22 +1,19 @@
 using System.Reactive.Linq;
 using Hyperledger.Aries.Agents;
+using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using WalletFramework.Oid4Vc.Oid4Vp.Models;
 using WalletFramework.Oid4Vc.Oid4Vp.PresentationExchange.Models;
 using WalletFramework.SdJwtVc.Models.Records;
 using WalletFramework.SdJwtVc.Services.SdJwtVcHolderService;
+using static Newtonsoft.Json.JsonConvert;
 
 namespace WalletFramework.Oid4Vc.Oid4Vp.Services
 {
     /// <inheritdoc />
     public class Oid4VpClientService : IOid4VpClientService
     {
-        private readonly IHttpClientFactory _httpClientFactory;
-        private readonly IOid4VpHaipClient _oid4VpHaipClient;
-        private readonly IOid4VpRecordService _oid4VpRecordService;
-        private readonly ISdJwtVcHolderService _sdJwtVcHolderService;
-        
         /// <summary>
         ///     Initializes a new instance of the <see cref="Oid4VpClientService" /> class.
         /// </summary>
@@ -28,20 +25,28 @@ namespace WalletFramework.Oid4Vc.Oid4Vp.Services
             IHttpClientFactory httpClientFactory,
             ISdJwtVcHolderService sdJwtVcHolderService,
             IOid4VpHaipClient oid4VpHaipClient,
+            ILogger<Oid4VpClientService> logger,
             IOid4VpRecordService oid4VpRecordService)
         {
             _httpClientFactory = httpClientFactory;
             _sdJwtVcHolderService = sdJwtVcHolderService;
             _oid4VpHaipClient = oid4VpHaipClient;
+            _logger = logger;
             _oid4VpRecordService = oid4VpRecordService;
         }
+
+        private readonly IHttpClientFactory _httpClientFactory;
+        private readonly IOid4VpHaipClient _oid4VpHaipClient;
+        private readonly ILogger<Oid4VpClientService> _logger;
+        private readonly IOid4VpRecordService _oid4VpRecordService;
+        private readonly ISdJwtVcHolderService _sdJwtVcHolderService;
 
         /// <inheritdoc />
         public async Task<(AuthorizationRequest, CredentialCandidates[])> ProcessAuthorizationRequestAsync(
             IAgentContext agentContext, Uri authorizationRequestUri)
         {
             var haipAuthorizationRequestUri = HaipAuthorizationRequestUri.FromUri(authorizationRequestUri);
-            
+
             var authorizationRequest = await _oid4VpHaipClient.ProcessAuthorizationRequestAsync(haipAuthorizationRequestUri);
             
             var credentialCandidates = await FindCredentialCandidates(agentContext, 
@@ -51,39 +56,117 @@ namespace WalletFramework.Oid4Vc.Oid4Vp.Services
         }
 
         /// <inheritdoc />
-        public async Task<Uri?> PrepareAndSendAuthorizationResponseAsync(
+        public async Task<Uri?> SendAuthorizationResponseAsync(
             IAgentContext agentContext,
             AuthorizationRequest authorizationRequest,
             SelectedCredential[] selectedCredentials)
         {
-            var authorizationResponse = await PrepareAuthorizationResponse(
+            var createPresentationMaps =
+                from credential in selectedCredentials
+                from inputDescriptor in authorizationRequest.PresentationDefinition.InputDescriptors
+                where credential.InputDescriptorId == inputDescriptor.Id
+                let disclosureNames = inputDescriptor
+                    .Constraints
+                    .Fields?
+                    .SelectMany(field => field
+                        .Path
+                        .Select(path => path.Split(".").Last())
+                    )
+                let createPresentation = _sdJwtVcHolderService.CreatePresentation(
+                    (SdJwtRecord)credential.Credential,
+                    disclosureNames.ToArray(),
+                    authorizationRequest.ClientId,
+                    authorizationRequest.Nonce
+                )
+                select (inputDescriptor.Id, createPresentation);
+
+            var presentationMaps = new List<(string, string)>();
+            foreach (var (inputDescriptorId, createPresentation) in createPresentationMaps)
+            {
+                presentationMaps.Add((inputDescriptorId, await createPresentation));
+            }
+
+            var authorizationResponse = await _oid4VpHaipClient.CreateAuthorizationResponseAsync(
                 authorizationRequest,
-                selectedCredentials);
+                presentationMaps.ToArray()
+            );
+
+            var httpClient = _httpClientFactory.CreateClient();
+            httpClient.DefaultRequestHeaders.Clear();
             
-            var redirectUri = await SendAuthorizationResponse(
-                authorizationResponse,
-                new Uri(authorizationRequest.ResponseUri));
-            
-            var presentedCredentials = 
-                from credential in selectedCredentials 
-                let inputD = authorizationRequest
-                    .PresentationDefinition
-                    .InputDescriptors
-                    .FirstOrDefault(x => x.Id == credential.InputDescriptorId) 
-                select new PresentedCredential
-                {
-                    CredentialId = ((SdJwtRecord)credential.Credential).Id, 
-                    PresentedClaims = GetPresentedClaimsForCredential(inputD, (SdJwtRecord)credential.Credential)
-                };
-            
+            var responseMessage =
+                await httpClient.SendAsync(
+                    new HttpRequestMessage
+                    {
+                        RequestUri = new Uri(authorizationRequest.ResponseUri),
+                        Method = HttpMethod.Post,
+                        Content = new FormUrlEncodedContent(
+                            DeserializeObject<Dictionary<string, string>>(
+                                    SerializeObject(authorizationResponse)
+                                )?
+                                .ToList()
+                            ?? throw new InvalidOperationException("Authorization Response could not be parsed")
+                        )
+                    }
+                );
+
+            if (!responseMessage.IsSuccessStatusCode)
+                throw new InvalidOperationException("Authorization Response could not be sent");
+
+            var presentedCredentials = selectedCredentials
+                .Select(credential =>
+                    {
+                        var inputDescriptor =
+                            authorizationRequest
+                                .PresentationDefinition
+                                .InputDescriptors
+                                .Single(descriptor => descriptor.Id == credential.InputDescriptorId);
+
+                        return new PresentedCredential
+                        {
+                            CredentialId = ((SdJwtRecord)credential.Credential).Id,
+                            PresentedClaims =
+                                inputDescriptor
+                                    .Constraints
+                                    .Fields?
+                                    .SelectMany(
+                                        field => field.Path.Select(
+                                            path =>
+                                                ((SdJwtRecord)credential.Credential)
+                                                .Claims
+                                                .First(x =>
+                                                    x.Key == path.Split(".").Last()
+                                                )
+                                        )
+                                    )
+                                    .ToDictionary(
+                                        claim => claim.Key,
+                                        claim => new PresentedClaim { Value = claim.Value }
+                                    )!
+                        };
+                    }
+                );
+
             await _oid4VpRecordService.StoreAsync(
                 agentContext,
                 authorizationRequest.ClientId,
                 authorizationRequest.ClientMetadata,
                 authorizationRequest.PresentationDefinition.Name,
-                presentedCredentials.ToArray());
+                presentedCredentials.ToArray()
+            );
 
-            return redirectUri;
+            var redirectUriJson = await responseMessage.Content.ReadAsStringAsync();
+
+            try
+            {
+                return DeserializeObject<AuthorizationResponseCallback>(redirectUriJson);
+
+            }
+            catch (Exception e)
+            {
+                _logger.LogWarning("Could not parse Redirect URI received from: {ResponseUri} due to exception: {Exception}", authorizationRequest.ResponseUri, e);
+                return null;
+            }
         }
         
         private async Task<AuthorizationResponse> PrepareAuthorizationResponse(AuthorizationRequest authorizationRequest, SelectedCredential[] selectedCredentials)
@@ -101,30 +184,6 @@ namespace WalletFramework.Oid4Vc.Oid4Vp.Services
 
             return await _oid4VpHaipClient.CreateAuthorizationResponseAsync(authorizationRequest,
                 await presentationMaps.ToArray());
-        }
-
-        private async Task<Uri?> SendAuthorizationResponse(AuthorizationResponse authorizationResponse, Uri responseUri)
-        {
-            var authorizationResponseJson = JsonConvert.SerializeObject(authorizationResponse);
-            var authorizationResponseDict = JsonConvert.DeserializeObject<Dictionary<string, string>>(authorizationResponseJson);
-            var requestContent = new List<KeyValuePair<string, string>>(authorizationResponseDict);
-
-            var request = new HttpRequestMessage
-            {
-                RequestUri = responseUri,
-                Method = HttpMethod.Post,
-                Content = new FormUrlEncodedContent(requestContent)
-            };
-
-            var httpClient = _httpClientFactory.CreateClient();
-            var responseMessage = await httpClient.SendAsync(request);
-
-            if (!responseMessage.IsSuccessStatusCode)
-                throw new InvalidOperationException("Authorization Response could not be sent");
-            
-            var content = await responseMessage.Content.ReadAsStringAsync();
-            var redirectUri = string.IsNullOrEmpty(content) ? null : JObject.Parse(content)["redirect_uri"]?.ToString();
-            return redirectUri == null ? null : new Uri(redirectUri);
         }
 
         private async Task<string> CreatePresentation(InputDescriptor inputDescriptor, SdJwtRecord credential,

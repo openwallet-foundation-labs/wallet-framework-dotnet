@@ -41,5 +41,18 @@ namespace WalletFramework.Oid4Vc.Oid4Vci.Models.Authorization
         /// </summary>
         [JsonProperty("token_endpoint_auth_signing_alg_values_supported")]
         public string[] TokenEndpointAuthSigningAlgValuesSupported { get; set; }
+        
+        /// <summary>
+        ///     Gets or sets the supported DPoP signing algorithms.
+        ///     This indicates which algorithms the Authorization Server supports for DPoP Proof JWTs.
+        /// </summary>
+        [JsonProperty("dpop_signing_alg_values_supported")]
+        public string[]? DPopSigningAlgValuesSupported { get; set; }
+    }
+    
+    internal static class AuthorizationServerMetadataExtensions
+    {
+        internal static bool IsDPoPSupported(this AuthorizationServerMetadata metadata) => 
+            metadata.DPopSigningAlgValuesSupported != null && metadata.DPopSigningAlgValuesSupported.Contains("ES256");
     }
 }

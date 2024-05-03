@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Logging;
 using Moq;
 using WalletFramework.Oid4Vc.Oid4Vp.PresentationExchange.Models;
 using WalletFramework.Oid4Vc.Oid4Vp.Services;
@@ -178,11 +179,12 @@ public class Oid4VpClientServiceTests
     {
         var httpClientFactory = new Mock<IHttpClientFactory>();
         var sdJwtVcHolderService = new Mock<ISdJwtVcHolderService>();
+        var logger = new Mock<ILogger<Oid4VpClientService>>();
         var oid4VpHaipClient = new Mock<IOid4VpHaipClient>();
         var oid4VpRecordservice = new Mock<IOid4VpRecordService>();
 
         return new Oid4VpClientService(
-            httpClientFactory.Object, sdJwtVcHolderService.Object, oid4VpHaipClient.Object, oid4VpRecordservice.Object);
+            httpClientFactory.Object, sdJwtVcHolderService.Object, oid4VpHaipClient.Object, logger.Object, oid4VpRecordservice.Object);
     }
     
     private static Field CreateField(string path, Filter? filter = null)

@@ -12,6 +12,16 @@ namespace WalletFramework.SdJwtVc.Tests
                 throw new NotImplementedException();
             }
 
+            public Task<string> GenerateKbProofOfPossessionAsync(string keyId, string audience, string nonce, string type)
+            {
+                throw new NotImplementedException();
+            }
+
+            public Task<string> GenerateDPopProofOfPossessionAsync(string keyId, string audience, string? nonce, string? accessToken)
+            {
+                throw new NotImplementedException();
+            }
+
             public Task<string> GenerateProofOfPossessionAsync(string keyId, string audience, string nonce, string type)
             {
                 throw new NotImplementedException();
@@ -23,6 +33,11 @@ namespace WalletFramework.SdJwtVc.Tests
             }
 
             public Task<byte[]> Sign(string keyId, byte[] payload)
+            {
+                throw new NotImplementedException();
+            }
+
+            public Task DeleteKey(string keyId)
             {
                 throw new NotImplementedException();
             }

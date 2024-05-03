@@ -19,6 +19,13 @@ namespace WalletFramework.Oid4Vc.Oid4Vci.Models.CredentialOffer.GrantTypes
         /// </summary>
         [JsonProperty("tx_code")]
         public TransactionCode? TransactionCode { get; set; }
+        
+        /// <summary>
+        ///     Specifying whether the user must send a User Pin along with the Token Request in a Pre-Authorized Code Flow.
+        /// </summary>
+        [Obsolete]
+        [JsonProperty("user_pin_required")]
+        public bool? UserPinRequired { get; set; }
     }
 
     /// <summary>

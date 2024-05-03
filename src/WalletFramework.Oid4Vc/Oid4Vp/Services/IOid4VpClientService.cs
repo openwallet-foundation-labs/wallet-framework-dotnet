@@ -28,6 +28,6 @@ namespace WalletFramework.Oid4Vc.Oid4Vp.Services
         /// <returns>
         ///     A task representing the asynchronous operation. The task result contains the Callback Url of the Authorization Response if present.
         /// </returns>
-        Task<Uri?> PrepareAndSendAuthorizationResponseAsync(IAgentContext agentContext, AuthorizationRequest authorizationRequest, SelectedCredential[] selectedCredentials);
+        Task<Uri?> SendAuthorizationResponseAsync(IAgentContext agentContext, AuthorizationRequest authorizationRequest, SelectedCredential[] selectedCredentials);
     }
 }

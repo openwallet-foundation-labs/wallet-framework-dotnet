@@ -27,7 +27,20 @@ namespace WalletFramework.SdJwtVc.KeyStore.Services
         ///     A <see cref="Task{TResult}" /> representing the asynchronous operation. When evaluated, the task's result contains
         ///     the proof.
         /// </returns>
-        Task<string> GenerateProofOfPossessionAsync(string keyId, string audience, string nonce, string type);
+        Task<string> GenerateKbProofOfPossessionAsync(string keyId, string audience, string nonce, string type);
+        
+        /// <summary>
+        ///     Asynchronously creates a DPoP Proof JWT for a specific key, based on the provided audience, nonce and access token.
+        /// </summary>
+        /// <param name="keyId">The identifier of the key to be used in creating the proof of possession.</param>
+        /// <param name="audience">The intended recipient of the proof. Typically represents the entity that will verify it.</param>
+        /// <param name="nonce">A unique token, typically used to prevent replay attacks by ensuring that the proof is only used once.</param>
+        /// <param name="accessToken">The access token, that the DPoP Proof JWT is bound to</param>
+        /// <returns>
+        ///     A <see cref="Task{TResult}" /> representing the asynchronous operation. When evaluated, the task's result contains
+        ///     the DPoP Proof JWT.
+        /// </returns>
+        Task<string> GenerateDPopProofOfPossessionAsync(string keyId, string audience, string? nonce, string? accessToken);
 
         /// <summary>
         ///     Asynchronously loads a key by its identifier and returns it as a JSON Web Key (JWK) containing the public key
@@ -44,5 +57,12 @@ namespace WalletFramework.SdJwtVc.KeyStore.Services
         /// <param name="payload">The payload to sign.</param>
         /// <returns>A <see cref="Task{TResult}" /> representing the signed payload as a byte array.</returns>
         Task<byte[]> Sign(string keyId, byte[] payload);
+        
+        /// <summary>
+        ///     Asynchronously deletes the key associated with the provided key ID.
+        /// </summary>
+        /// <param name="keyId">The identifier of the key that should be deleted</param>
+        /// <returns>A <see cref="Task" /> representing the asynchronous operation.</returns>
+        Task DeleteKey(string keyId);
     }
 }

@@ -40,8 +40,8 @@ Wallet Framework for .NET is an open framework for building digital identity wal
 | - Authorization Code Flow           | [Auth-Flow](https://openid.github.io/OpenID4VCI/openid-4-verifiable-credential-issuance-wg-draft.html#name-authorization-code-flow)              | :construction: |
 | - Holder Binding / Key Binding      | [KB-JWT](https://openid.github.io/OpenID4VCI/openid-4-verifiable-credential-issuance-wg-draft.html#name-binding-the-issued-credenti)             | :white_check_mark: |
 | - Wallet Attestation                | [Wallet Attestation](https://openid.github.io/OpenID4VCI/openid-4-verifiable-credential-issuance-wg-draft.html#name-trust-between-wallet-and-is) | :construction: |
-| - Issuer Authentication             | [Issuer Authentication](https://openid.github.io/oid4vc-haip-sd-jwt-vc/draft-oid4vc-haip-sd-jwt-vc.html#name-issuer-identification-and-k)        | :construction: |
-| - Demonstrating Proof of Possession | [DPoP](https://openid.github.io/oid4vc-haip-sd-jwt-vc/draft-oid4vc-haip-sd-jwt-vc.html#name-crypto-suites)                                       | :construction: |
+| - Issuer Authentication             | [Issuer Authentication](https://openid.net/specs/openid4vc-high-assurance-interoperability-profile-sd-jwt-vc-1_0-00.html#name-issuer-identification-and-k)        | :construction: |
+| - Demonstrating Proof of Possession | [DPoP](https://openid.net/specs/openid4vc-high-assurance-interoperability-profile-sd-jwt-vc-1_0-00.html#name-crypto-suites)                                       | :construction: |
 | **OpenID for Verifiable Presentations** | [OID4VP](https://openid.net/specs/openid-4-verifiable-presentations-1_0-ID2.html)                                                                | :construction: |
 | - Same-Device Flow                  | [Same-Device](https://openid.github.io/OpenID4VP/openid-4-verifiable-presentations-wg-draft.html#name-same-device-flow)                          | :white_check_mark: |
 | - Cross-Device Flow                 | [Cross-Device](https://openid.github.io/OpenID4VP/openid-4-verifiable-presentations-wg-draft.html#name-cross-device-flow)                        | :white_check_mark: |                                      | :white_check_mark: |
@@ -169,12 +169,15 @@ First, edit the keyword in the `scripts/tester.sh` file to select the tests you 
 scripts/tester.sh 
 ```
 
-## Releases
-This Repository includes a github actions pipeline which builds and releases the wallet framework whenever a Pull Request is submitted or a merge to the main branch happens. 
-The build is accessible through the Open Wallet Foundation nuget feed.
+## Releases / Versioning
+This Repository includes a github actions pipeline which builds and releases 2 versions of the wallet framework whenever a Pull Request is submitted or a merge to the main branch happens.
+When the build and release process is triggered by a pull request the two build versions have a "pr" suffix.
+If it is triggered by a merge towards the main branch the two build versions have a "rc" suffix.
 
-When the build and release process is triggered by a pull request the build version has a "pr" suffix.
-If it is triggered by a merge towards the main branch the build version has a "rc" suffix.
+1. Version one uses the Indy SDK (targets netstandard2.0) without xamarin dependencies. (e.g. 2.0.0-pr.x.x or 2.0.0-rc.x)
+2. Version two uses the Indy SDK with xamarin dependencies which is indicated by a "-xam" tag within its version (e.g. 2.0.0-xam-pr.x.x or 2.0.0-xam-rc.x)
+
+Both builds are accessible through the Open Wallet Foundation nuget feed.
 
 ## License
 

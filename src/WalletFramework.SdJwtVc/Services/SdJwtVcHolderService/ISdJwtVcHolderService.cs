@@ -77,6 +77,7 @@ namespace WalletFramework.SdJwtVc.Services.SdJwtVcHolderService
         /// <param name="issuerDisplayInfo"></param>
         /// <param name="credentialDisplayInfo"></param>
         /// <param name="claimsDisplayInfo"></param>
+        /// <param name="order"></param>
         /// <returns>A task representing the asynchronous operation. The task result contains the ID of the stored JWT record.</returns>
         Task<string> StoreAsync(
             IAgentContext context,
@@ -85,6 +86,7 @@ namespace WalletFramework.SdJwtVc.Services.SdJwtVcHolderService
             string issuerId,
             Dictionary<string, string> issuerDisplayInfo,
             List<CredentialDisplayInfo> credentialDisplayInfo,
-            Dictionary<string, ClaimDisplayInfo> claimsDisplayInfo);
+            Dictionary<string, ClaimDisplayInfo> claimsDisplayInfo,
+            List<string>? order);
     }
 }

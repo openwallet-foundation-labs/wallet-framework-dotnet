@@ -22,6 +22,11 @@ namespace WalletFramework.SdJwtVc.Models.Records
         public Dictionary<string, ClaimDisplayInfo>? DisplayedAttributes { get; set; }
 
         /// <summary>
+        ///     Gets or sets the attributes that should be displayed.
+        /// </summary>
+        public List<string>? AttributeOrder { get; set; }
+        
+        /// <summary>
         ///     Gets or sets the claims made.
         /// </summary>
         public Dictionary<string, string> Claims { get; set; }
@@ -148,16 +153,19 @@ namespace WalletFramework.SdJwtVc.Models.Records
         /// <param name="issuerId"></param>
         /// <param name="issuerName"></param>
         /// <param name="displayedAttributes"></param>
+        /// <param name="order"></param>
         internal void SetDisplayInfo(
             List<CredentialDisplayInfo> display,
             Dictionary<string, ClaimDisplayInfo> displayedAttributes,
             string issuerId,
-            Dictionary<string, string>? issuerName)
+            Dictionary<string, string>? issuerName,
+            List<string>? order)
         {
             Display = display;
             DisplayedAttributes = displayedAttributes;
             IssuerId = issuerId;
             IssuerName = issuerName;
+            AttributeOrder = order;
         }
 
         /// <summary>

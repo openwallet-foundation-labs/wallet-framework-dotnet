@@ -70,7 +70,7 @@ namespace WalletFramework.SdJwtVc.Services.SdJwtVcHolderService
                 !string.IsNullOrEmpty(audience))
             {
                 keybindingJwt =
-                    await KeyStore.GenerateProofOfPossessionAsync(credential.KeyId, audience, nonce, "kb+jwt");
+                    await KeyStore.GenerateKbProofOfPossessionAsync(credential.KeyId, audience, nonce, "kb+jwt");
             }
 
             return Holder.CreatePresentation(credential.EncodedIssuerSignedJwt, disclosures.ToArray(), keybindingJwt);
@@ -110,12 +110,13 @@ namespace WalletFramework.SdJwtVc.Services.SdJwtVcHolderService
             string issuerId,
             Dictionary<string, string> issuerDisplayInfo,
             List<CredentialDisplayInfo> credentialDisplayInfo,
-            Dictionary<string, ClaimDisplayInfo> claimsDisplayInfo)
+            Dictionary<string, ClaimDisplayInfo> claimsDisplayInfo,
+            List<string>? order)
         {
             var sdJwtDoc = Holder.ReceiveCredential(combinedIssuance);
             var record = SdJwtRecord.FromSdJwtDoc(sdJwtDoc);
 
-            record.SetDisplayInfo(credentialDisplayInfo, claimsDisplayInfo, issuerId, issuerDisplayInfo);
+            record.SetDisplayInfo(credentialDisplayInfo, claimsDisplayInfo, issuerId, issuerDisplayInfo, order);
             
             record.Id = Guid.NewGuid().ToString();
             record.KeyId = keyId;

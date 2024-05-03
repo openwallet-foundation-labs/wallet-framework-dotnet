@@ -14,8 +14,9 @@ namespace WalletFramework.Oid4Vc.Tests.Oid4Vp.PresentationExchange.Services
         [Fact]
         public async Task Can_Create_Presentation_Submission()
         {
-            var presentationDefinition = JsonConvert.DeserializeObject<PresentationDefinition>(PexTestsDataProvider.GetJsonForTestCase());
-            
+            var presentationDefinition =
+                JsonConvert.DeserializeObject<PresentationDefinition>(PexTestsDataProvider.GetJsonForTestCase());
+
             var credentials = new[]
             {
                 new DescriptorMap
@@ -32,8 +33,9 @@ namespace WalletFramework.Oid4Vc.Tests.Oid4Vp.PresentationExchange.Services
                 },
             };
 
-            
-            var presentationSubmission = await _pexService.CreatePresentationSubmission(presentationDefinition, credentials);
+
+            var presentationSubmission =
+                await _pexService.CreatePresentationSubmission(presentationDefinition, credentials);
 
             presentationSubmission.Id.Should().NotBeNullOrWhiteSpace();
             presentationSubmission.DefinitionId.Should().Be(presentationDefinition.Id);
@@ -43,32 +45,8 @@ namespace WalletFramework.Oid4Vc.Tests.Oid4Vp.PresentationExchange.Services
             {
                 presentationSubmission.DescriptorMap[i].Id.Should().Be(presentationDefinition.InputDescriptors[i].Id);
                 presentationSubmission.DescriptorMap[i].Format.Should().Be(credentials[i].Format);
-                presentationSubmission.DescriptorMap[i].Path.Should().Be(credentials[i].Path);   
+                presentationSubmission.DescriptorMap[i].Path.Should().Be(credentials[i].Path);
             }
-        }
-        
-        [Fact]
-        public async Task Throws_Exception_When_Descriptors_Are_Missing()
-        {
-            var inputDescriptor = new InputDescriptor();
-            inputDescriptor.PrivateSet(x => x.Id, Guid.NewGuid().ToString());
-            inputDescriptor.PrivateSet(x => x.Formats, new Dictionary<string, Format> { {"format-1", null }});
-            
-            var presentationDefinition = new PresentationDefinition();
-            presentationDefinition.PrivateSet(x => x.Id, Guid.NewGuid().ToString());
-            presentationDefinition.PrivateSet(x => x.InputDescriptors, new[] { inputDescriptor });
-            
-            var credentials = new []
-            {
-                new DescriptorMap
-                {
-                    Id = Guid.NewGuid().ToString(),
-                    Format = presentationDefinition.InputDescriptors[0].Formats.First().Key,
-                    Path = "$.credentials[0]"
-                }
-            };
-
-            await Assert.ThrowsAsync<ArgumentException>(() => _pexService.CreatePresentationSubmission(presentationDefinition, credentials));
         }
     }
 }

@@ -1,11 +1,11 @@
 using Newtonsoft.Json;
 
-namespace WalletFramework.Oid4Vc.Oid4Vci.Models.Metadata.Credential
+namespace WalletFramework.Oid4Vc.Oid4Vci.Models.Metadata.Issuer
 {
     /// <summary>
-    ///     Represents the Logo for a Credential.
+    ///     Represents the Logo of the Issuer.
     /// </summary>
-    public class OidCredentialLogo
+    public class OidIssuerLogo
     {
         /// <summary>
         ///     Gets or sets the alternate text that describes the logo image. This is typically used for accessibility purposes.
