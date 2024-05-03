@@ -17,8 +17,9 @@ namespace Hyperledger.Aries.Features.OpenId4Vc.Vci.Services.Oid4VciClientService
         ///     Fetches the metadata related to the OID issuer from the specified endpoint.
         /// </summary>
         /// <param name="endpoint">The endpoint URL to retrieve the issuer metadata.</param>
+        /// <param name="preferredLanguage">The preferred language of the wallet in which it would like to retrieve the issuer metadata. The default is "en"</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains the OID issuer metadata.</returns>
-        Task<OidIssuerMetadata> FetchIssuerMetadataAsync(Uri endpoint);
+        Task<OidIssuerMetadata> FetchIssuerMetadataAsync(Uri endpoint, string preferredLanguage = "en");
 
         /// <summary>
         ///     Requests a verifiable credential using the provided parameters.

@@ -45,7 +45,7 @@ namespace Hyperledger.Aries.Features.OpenId4Vc.Vci.Services.Oid4VciClientService
         private const string UseDPopNonceError = "use_dpop_nonce";
 
         /// <inheritdoc />
-        public async Task<OidIssuerMetadata> FetchIssuerMetadataAsync(Uri endpoint)
+        public async Task<OidIssuerMetadata> FetchIssuerMetadataAsync(Uri endpoint, string preferredLanguage)
         {
             var baseEndpoint = endpoint
                 .AbsolutePath
@@ -55,9 +55,10 @@ namespace Hyperledger.Aries.Features.OpenId4Vc.Vci.Services.Oid4VciClientService
 
             var metadataUrl = new Uri(baseEndpoint, ".well-known/openid-credential-issuer");
 
-            var response = await _httpClientFactory
-                .CreateClient()
-                .GetAsync(metadataUrl);
+            var client = _httpClientFactory.CreateClient();
+            client.DefaultRequestHeaders.Add("Accept-Language", preferredLanguage);
+            
+            var response = await client.GetAsync(metadataUrl);
 
             if (!response.IsSuccessStatusCode)
             {
@@ -224,7 +225,7 @@ namespace Hyperledger.Aries.Features.OpenId4Vc.Vci.Services.Oid4VciClientService
                     content: new OidCredentialRequest
                     {
                         Format = credentialMetadata.Format,
-                        CredentialDefinition = credentialMetadata.CredentialDefinition,
+                        Vct = credentialMetadata.Vct,
                         Proof = new OidProofOfPossession
                         {
                             ProofType = "jwt",
@@ -253,7 +254,7 @@ namespace Hyperledger.Aries.Features.OpenId4Vc.Vci.Services.Oid4VciClientService
                         content: new OidCredentialRequest
                         {
                             Format = credentialMetadata.Format,
-                            CredentialDefinition = credentialMetadata.CredentialDefinition,
+                            Vct = credentialMetadata.Vct,
                             Proof = new OidProofOfPossession
                             {
                                 ProofType = "jwt",
@@ -344,7 +345,7 @@ namespace Hyperledger.Aries.Features.OpenId4Vc.Vci.Services.Oid4VciClientService
                     content: new OidCredentialRequest
                     {
                         Format = credentialMetadata.Format,
-                        CredentialDefinition = credentialMetadata.CredentialDefinition,
+                        Vct = credentialMetadata.Vct,
                         Proof = new OidProofOfPossession
                         {
                             ProofType = "jwt",

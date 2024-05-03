@@ -1,6 +1,7 @@
 #nullable enable
 
 using System.Collections.Generic;
+using Hyperledger.Aries.Features.OpenId4Vc.Vci.Models.Metadata.Credential.Attributes;
 using Newtonsoft.Json;
 
 namespace Hyperledger.Aries.Features.OpenId4Vc.Vci.Models.Metadata.Credential
@@ -11,10 +12,16 @@ namespace Hyperledger.Aries.Features.OpenId4Vc.Vci.Models.Metadata.Credential
     public class OidCredentialMetadata
     {
         /// <summary>
-        ///     Gets or sets the credential definition which specifies a specific credential.
+        ///     Gets or sets the verifiable credential type (vct).
         /// </summary>
-        [JsonProperty("credential_definition")]
-        public OidCredentialDefinition CredentialDefinition { get; set; } = null!;
+        [JsonProperty("vct")]
+        public string Vct { get; set; } = null!;
+        
+        /// <summary>
+        ///     Gets or sets the dictionary representing the attributes of the credential in different languages.
+        /// </summary>
+        [JsonProperty("claims")]
+        public Dictionary<string, OidClaim>? Claims { get; set; }
 
         /// <summary>
         ///     Gets or sets a list of display properties of the supported credential for different languages.
@@ -30,10 +37,11 @@ namespace Hyperledger.Aries.Features.OpenId4Vc.Vci.Models.Metadata.Credential
         public List<string>? CryptographicBindingMethodsSupported { get; set; }
 
         /// <summary>
-        ///     Gets or sets a list of identifiers for the cryptographic suites that are supported.
+        ///     Gets or sets a list of identifiers for the signing algorithms that are supported by the issuer and used
+        ///     to sign credentials.
         /// </summary>
-        [JsonProperty("cryptographic_suites_supported", NullValueHandling = NullValueHandling.Ignore)]
-        public List<string>? CryptographicSuitesSupported { get; set; }
+        [JsonProperty("credential_signing_alg_values_supported", NullValueHandling = NullValueHandling.Ignore)]
+        public List<string>? CredentialSigningAlgValuesSupported { get; set; }
 
         /// <summary>
         ///     A list of claim display names, arranged in the order in which they should be displayed by the Wallet.
@@ -52,5 +60,23 @@ namespace Hyperledger.Aries.Features.OpenId4Vc.Vci.Models.Metadata.Credential
         /// </summary>
         [JsonProperty("id", NullValueHandling = NullValueHandling.Ignore)]
         public string? Id { get; set; }
+        
+        /// <summary>
+        ///     Gets or sets a dictionary which maps a credential type to its supported signing algorithms for key proofs.
+        /// </summary>
+        [JsonProperty("proof_types_supported", NullValueHandling = NullValueHandling.Ignore)]
+        public Dictionary<string, OidCredentialProofType>? ProofTypesSupported { get; set; }
+    }
+    
+    /// <summary>
+    ///     Represents credential type specific signing algorithm information.
+    /// </summary>
+    public class OidCredentialProofType
+    {
+        /// <summary>
+        ///     Gets or sets the available signing algorithms for the associated credential type.
+        /// </summary>
+        [JsonProperty("proof_signing_alg_values_supported")]
+        public string[] ProofSigningAlgValuesSupported { get; set; } = null!;
     }
 }

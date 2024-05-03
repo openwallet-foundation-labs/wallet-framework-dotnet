@@ -18,12 +18,6 @@ namespace Hyperledger.Aries.Features.OpenId4Vc.Vci.Models.CredentialResponse
         public int? CNonceExpiresIn { get; set; }
 
         /// <summary>
-        ///     REQUIRED. JSON string denoting the format of the issued Credential.
-        /// </summary>
-        [JsonProperty("format")]
-        public string Format { get; set; } = null!;
-
-        /// <summary>
         ///     OPTIONAL. A JSON string containing a security token subsequently used to obtain a Credential.
         ///     MUST be present when credential is not returned.
         /// </summary>
