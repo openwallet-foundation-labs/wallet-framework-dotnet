@@ -44,12 +44,13 @@ namespace Hyperledger.Aries.Features.OpenID4VC.Vp.Services
         public async Task<string> StoreAsync(
             IAgentContext context,
             string clientId,
-            string? clientMetadata,
+            ClientMetadata? clientMetadata,
             string? name,
             PresentedCredential[] presentedCredentials)
         {
             var record = new OidPresentationRecord
             {
+                Name = name,
                 ClientId = clientId,
                 ClientMetadata = clientMetadata,
                 Id = Guid.NewGuid().ToString(),

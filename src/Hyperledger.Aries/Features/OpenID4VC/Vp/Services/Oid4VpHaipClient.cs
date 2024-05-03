@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Net.Http;
 using System.Threading.Tasks;
 using System;
+using System.Net.Http.Headers;
 using static Newtonsoft.Json.JsonConvert;
 using static Hyperledger.Aries.Features.OpenId4Vc.Vp.Models.RequestObject;
 using static Hyperledger.Aries.Features.OpenId4Vc.Vp.Models.ClientIdScheme.ClientIdSchemeValue;
@@ -75,6 +76,8 @@ namespace Hyperledger.Aries.Features.OpenId4Vc.Vp.Services
                 CreateRequestObject(
                     await httpClient.GetStringAsync(haipAuthorizationRequestUri.RequestUri)
                 );
+            
+            var clientMetadata = await FetchClientMetadata(requestObject.ToAuthorizationRequest());
 
             return
                 requestObject.ClientIdScheme.Value switch
@@ -85,9 +88,12 @@ namespace Hyperledger.Aries.Features.OpenId4Vc.Vp.Services
                             .ValidateTrustChain()
                             .ValidateSanName()
                             .ToAuthorizationRequest()
-                            .WithX509(requestObject),
+                            .WithX509(requestObject)
+                            .WithClientMetadata(clientMetadata),
                     RedirectUri =>
-                        requestObject.ToAuthorizationRequest(),
+                        requestObject
+                            .ToAuthorizationRequest()
+                            .WithClientMetadata(clientMetadata),
                     VerifierAttestation =>
                         throw new NotImplementedException("Verifier Attestation not yet implemented"),
                     _ =>
@@ -95,6 +101,23 @@ namespace Hyperledger.Aries.Features.OpenId4Vc.Vp.Services
                             $"Client ID Scheme {requestObject.ClientIdScheme} not supported"
                         )
                 };
+        }
+        
+        private async Task<ClientMetadata?> FetchClientMetadata(AuthorizationRequest authorizationRequest)
+        {
+            var httpClient = _httpClientFactory.CreateClient();
+            httpClient.DefaultRequestHeaders.Clear();
+            httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+
+            if (authorizationRequest.ClientMetadata != null)
+                return authorizationRequest.ClientMetadata;
+
+            if (string.IsNullOrWhiteSpace(authorizationRequest.ClientMetadataUri))
+                return null;
+            
+            var response = await httpClient.GetAsync(authorizationRequest.ClientMetadataUri);
+            var clientMetadata = await response.Content.ReadAsStringAsync();
+            return DeserializeObject<ClientMetadata>(clientMetadata);
         }
     }
 }

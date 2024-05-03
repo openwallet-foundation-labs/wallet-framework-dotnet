@@ -32,7 +32,7 @@ namespace Hyperledger.Aries.Features.OpenId4Vc.Vp.Models
         /// <summary>
         ///     Gets or sets the metadata of the Verifier.
         /// </summary>
-        public string? ClientMetadata { get; set; }
+        public ClientMetadata? ClientMetadata { get; set; }
 
         /// <summary>
         ///     Gets or sets the name of the presentation.
@@ -66,7 +66,7 @@ namespace Hyperledger.Aries.Features.OpenId4Vc.Vp.Models
             PresentedCredential[] presentedCredentials,
             string clientId,
             string id,
-            string? clientMetadata,
+            ClientMetadata? clientMetadata,
             string? name)
         {
             ClientId = clientId;
