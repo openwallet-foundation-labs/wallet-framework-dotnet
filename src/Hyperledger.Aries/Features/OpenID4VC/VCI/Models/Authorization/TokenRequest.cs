@@ -35,12 +35,6 @@ namespace Hyperledger.Aries.Features.OpenId4Vc.Vci.Models.Authorization
         /// </summary>
         [JsonProperty("tx_code", NullValueHandling = NullValueHandling.Ignore)]
         public string? TransactionCode { get; set; }
-        
-        /// <summary>
-        ///     Gets or sets the user PIN. This value must be present if a PIN was required in a previous step.
-        /// </summary>
-        [JsonProperty("user_pin", NullValueHandling = NullValueHandling.Ignore)]
-        public string? UserPin { get; set; }
 
         /// <summary>
         ///     Converts the properties of the TokenRequest instance into an FormUrlEncodedContent type suitable for HTTP POST
