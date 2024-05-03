@@ -169,25 +169,10 @@ namespace Hyperledger.Aries.Features.OpenId4Vc.Vp.Models
                 X509TrustChain = trustChain
             };
         }
-
-        internal static async Task<AuthorizationRequest> GetClientMetadata(
-            this AuthorizationRequest authorizationRequest, HttpClient httpClient)
-        {
-            httpClient.DefaultRequestHeaders.Clear();
-            httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-
-            if (authorizationRequest.ClientMetadata != null
-                || string.IsNullOrWhiteSpace(authorizationRequest.ClientMetadataUri))
-            {
-                return authorizationRequest;
-            }
-            
-            var response = await httpClient.GetAsync(authorizationRequest.ClientMetadataUri);
-            var clientMetadata = await response.Content.ReadAsStringAsync();
-            return authorizationRequest with
-            {
-                ClientMetadata = JsonConvert.DeserializeObject<ClientMetadata>(clientMetadata)
-            };
-        }
+        
+        internal static AuthorizationRequest WithClientMetadata(
+            this AuthorizationRequest authorizationRequest,
+            ClientMetadata? clientMetadata) 
+            => authorizationRequest with { ClientMetadata = clientMetadata };
     }
 }
