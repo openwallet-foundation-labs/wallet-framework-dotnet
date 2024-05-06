@@ -24,4 +24,16 @@
         <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="6.25.1" />
         <PackageReference Include="System.Reactive.Linq" Version="$(SystemReactiveLinqVersion)" />
     </ItemGroup>
+    <ItemGroup>
+      <Compile Remove="Features\OpenID4VC\VCI\Services\**" />
+    </ItemGroup>
+    <ItemGroup>
+      <EmbeddedResource Remove="Features\OpenID4VC\VCI\Services\**" />
+    </ItemGroup>
+    <ItemGroup>
+      <None Remove="Features\OpenID4VC\VCI\Services\**" />
+    </ItemGroup>
+    <ItemGroup>
+      <Folder Include="Features\SdJwt\" />
+    </ItemGroup>
 </Project>
