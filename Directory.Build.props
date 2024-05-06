@@ -53,7 +53,7 @@
         <PollyVersion>7.2.1</PollyVersion>
         <StatelessVersion>5.1.2</StatelessVersion>
         <SwashbuckleAspNetCoreAnnotationsVersion>5.5.1</SwashbuckleAspNetCoreAnnotationsVersion>
-        <SwashbuckleAspNetCoreFiltersVersion>5.1.2</SwashbuckleAspNetCoreFiltersVersion>
+        <SwashbuckleAspNetCoreFiltersVersion>8.0.2</SwashbuckleAspNetCoreFiltersVersion>
         <SwashbuckleAspNetCoreSwaggerGenVersion>5.5.1</SwashbuckleAspNetCoreSwaggerGenVersion>
         <SwashbuckleAspNetCoreSwaggerUIVersion>5.5.1</SwashbuckleAspNetCoreSwaggerUIVersion>
         <SwashbuckleAspNetCoreSwaggerVersion>5.5.1</SwashbuckleAspNetCoreSwaggerVersion>
