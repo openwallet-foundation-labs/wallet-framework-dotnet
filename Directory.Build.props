@@ -33,7 +33,7 @@
         <MicrosoftExtensionsHttpVersion>3.1.5</MicrosoftExtensionsHttpVersion>
         <MicrosoftExtensionsLoggingVersion>3.1.5</MicrosoftExtensionsLoggingVersion>
         <MicrosoftNETTestSdkVersion>16.6.1</MicrosoftNETTestSdkVersion>
-        <SystemReactiveLinqVersion>4.4.1</SystemReactiveLinqVersion>
+        <SystemReactiveLinqVersion>6.0.0</SystemReactiveLinqVersion>
         <SystemTextJsonVersion>4.7.2</SystemTextJsonVersion>
         <AutofacExtensionsDependencyInjectionVersion>6.0.0</AutofacExtensionsDependencyInjectionVersion>
         <DawnGuardVersion>1.12.0</DawnGuardVersion>
