@@ -264,7 +264,7 @@ namespace Hyperledger.Aries.Tests.Features.SdJwt
                 throw new NotImplementedException();
             }
 
-            public Task<string> GenerateKbProofOfPossessionAsync(string keyId, string audience, string nonce, string type)
+            public Task<string> GenerateKbProofOfPossessionAsync(string keyId, string audience, string nonce, string type, string? sdHash)
             {
                 throw new NotImplementedException();
             }

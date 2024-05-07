@@ -67,16 +67,18 @@ namespace Hyperledger.Aries.Features.SdJwt.Services.SdJwtVcHolderService
                     disclosures.Add(deserializedDisclosure);
                 }
             }
+            
+            var presentationFormat = Holder.CreatePresentationFormat(credential.EncodedIssuerSignedJwt, disclosures.ToArray());
 
-            string? keybindingJwt = null;
             if (!string.IsNullOrEmpty(credential.KeyId) && !string.IsNullOrEmpty(nonce) &&
                 !string.IsNullOrEmpty(audience))
             {
-                keybindingJwt =
-                    await KeyStore.GenerateKbProofOfPossessionAsync(credential.KeyId, audience, nonce, "kb+jwt");
+                var keybindingJwt =
+                    await KeyStore.GenerateKbProofOfPossessionAsync(credential.KeyId, audience, nonce, "kb+jwt", presentationFormat.ToSdHash());
+                return presentationFormat.AddKeyBindingJwt(keybindingJwt);
             }
 
-            return Holder.CreatePresentation(credential.EncodedIssuerSignedJwt, disclosures.ToArray(), keybindingJwt);
+            return presentationFormat.Value;
         }
 
         /// <inheritdoc />
