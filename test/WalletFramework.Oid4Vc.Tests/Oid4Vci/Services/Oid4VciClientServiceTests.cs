@@ -112,7 +112,7 @@ namespace WalletFramework.Oid4Vc.Tests.Oid4Vci.Services
             SetupKeyStoreGenerateKeySequence(KeyBindingJwtKeyId);
             _keyStoreMock.Setup(j =>
                     j.GenerateKbProofOfPossessionAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
-                        It.IsAny<string>()))
+                        It.IsAny<string>(),It.IsAny<string>()))
                 .ReturnsAsync(KbJwtMock);
             
             SetupHttpClientSequence(_authServerMetadataResponseWithoutDPopSupport, _tokenResponseWithoutDpopSupport, _credentialResponse);
@@ -142,7 +142,7 @@ namespace WalletFramework.Oid4Vc.Tests.Oid4Vci.Services
             SetupKeyStoreGenerateKeySequence(DPopJwtKeyId, KeyBindingJwtKeyId);
             _keyStoreMock.Setup(j =>
                     j.GenerateKbProofOfPossessionAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
-                        It.IsAny<string>()))
+                        It.IsAny<string>(),It.IsAny<string>()))
                 .ReturnsAsync(KbJwtMock);
             _keyStoreMock.Setup(j =>
                     j.GenerateDPopProofOfPossessionAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),

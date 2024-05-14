@@ -1,5 +1,4 @@
 using System.Net;
-using FluentAssertions;
 using Hyperledger.Aries.Storage;
 using Hyperledger.TestHarness.Mock;
 using Microsoft.Extensions.Logging;
@@ -9,7 +8,6 @@ using SD_JWT;
 using WalletFramework.Oid4Vc.Oid4Vci.Models.Metadata.Credential;
 using WalletFramework.Oid4Vc.Oid4Vci.Models.Metadata.Credential.Attributes;
 using WalletFramework.Oid4Vc.Oid4Vci.Models.Metadata.Issuer;
-using WalletFramework.Oid4Vc.Oid4Vp.Models;
 using WalletFramework.Oid4Vc.Oid4Vp.PresentationExchange.Services;
 using WalletFramework.Oid4Vc.Oid4Vp.Services;
 using WalletFramework.SdJwtVc.KeyStore.Services;
@@ -59,6 +57,7 @@ namespace WalletFramework.Oid4Vc.Tests.Oid4Vp.Services
 
             _keyStoreMock.Setup(keyStore =>
                     keyStore.GenerateKbProofOfPossessionAsync(
+                        It.IsAny<string>(),
                         It.IsAny<string>(),
                         It.IsAny<string>(),
                         It.IsAny<string>(),

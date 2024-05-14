@@ -23,11 +23,12 @@ namespace WalletFramework.SdJwtVc.KeyStore.Services
         ///     A unique token, typically used to prevent replay attacks by ensuring that the proof is only used once.
         /// </param>
         /// <param name="type">The type of the proof. (For example "openid4vci-proof+jwt")</param>
+        /// <param name="sdHash">Base64url-encoded hash digest over the Issuer-signed JWT and the selected Disclosures for integrity protection</param>
         /// <returns>
         ///     A <see cref="Task{TResult}" /> representing the asynchronous operation. When evaluated, the task's result contains
         ///     the proof.
         /// </returns>
-        Task<string> GenerateKbProofOfPossessionAsync(string keyId, string audience, string nonce, string type);
+        Task<string> GenerateKbProofOfPossessionAsync(string keyId, string audience, string nonce, string type, string? sdHash = null);
         
         /// <summary>
         ///     Asynchronously creates a DPoP Proof JWT for a specific key, based on the provided audience, nonce and access token.
