@@ -112,11 +112,7 @@ namespace Hyperledger.Aries.Features.OpenId4Vc.Vp.Models
 
                 foreach (var line in sanData.Split(new[] { "\r\n", "\n" }, StringSplitOptions.None))
                 {
-                    if (line.StartsWith("DNS Name="))
-                    {
-                        var dnsName = line.Substring("DNS Name=".Length);
-                        sanNames.Add(dnsName);
-                    }
+                    sanNames.Add(line.Split(':', '=')[1].Trim());
                 }
             }
 
