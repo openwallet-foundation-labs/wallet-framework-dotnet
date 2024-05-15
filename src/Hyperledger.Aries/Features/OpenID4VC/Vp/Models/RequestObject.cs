@@ -110,9 +110,9 @@ namespace Hyperledger.Aries.Features.OpenId4Vc.Vp.Models
                 var sanExtension = (AsnEncodedData)extension;
                 var sanData = sanExtension.Format(true);
 
-                foreach (var line in sanData.Split(new[] { "\r\n", "\n" }, StringSplitOptions.None))
+                foreach (var line in sanData.Split(new[] { "\r\n", "\n" }, StringSplitOptions.RemoveEmptyEntries))
                 {
-                    sanNames.Add(line.Split(':', '=')[1].Trim());
+                    sanNames.Add(line.Split(':', '=').Last().Trim());
                 }
             }
 
