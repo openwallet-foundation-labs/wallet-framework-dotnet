@@ -22,7 +22,7 @@ namespace WalletFramework.SdJwtVc.Models.Records
         /// <summary>
         ///     Gets or sets the attributes that should be displayed.
         /// </summary>
-        public Dictionary<string, OidClaim>? DisplayedAttributes { get; set; }
+        public Dictionary<string, ClaimMetadata>? DisplayedAttributes { get; set; }
 
         /// <summary>
         ///     Gets or sets the attributes that should be displayed.
@@ -30,7 +30,8 @@ namespace WalletFramework.SdJwtVc.Models.Records
         public List<string>? AttributeOrder { get; set; }
         
         /// <summary>
-        ///     Gets or sets the claims made.
+        ///     Gets or sets the flattened structure of the claims in the credential.
+        ///     The key is a JSON path to the claim value in the decoded SdJwtVc.
         /// </summary>
         public Dictionary<string, string> Claims { get; set; }
 
@@ -47,7 +48,7 @@ namespace WalletFramework.SdJwtVc.Models.Records
         /// <summary>
         ///     Gets or sets the display of the credential.
         /// </summary>
-        public List<OidCredentialDisplay>? Display { get; set; }
+        public List<CredentialDisplayMetadata>? Display { get; set; }
 
         /// <summary>
         ///     Gets the Issuer-signed JWT part of the SD-JWT.
@@ -110,11 +111,11 @@ namespace WalletFramework.SdJwtVc.Models.Records
         /// <param name="vct">The verifiable credential type.</param>
         [JsonConstructor]
         private SdJwtRecord(
-            Dictionary<string, OidClaim> displayedAttributes,
+            Dictionary<string, ClaimMetadata> displayedAttributes,
             Dictionary<string, string> claims,
             Dictionary<string, string> issuerName,
             ImmutableArray<string> disclosures,
-            List<OidCredentialDisplay> display,
+            List<CredentialDisplayMetadata> display,
             string encodedIssuerSignedJwt,
             string id,
             string issuerId,
@@ -155,7 +156,7 @@ namespace WalletFramework.SdJwtVc.Models.Records
         /// <param name="issuerMetadata">The issuer metadata.</param>
         /// <param name="credentialMetadataId">The credential metadata ID.</param>
         public void SetDisplayFromIssuerMetadata(
-            OidIssuerMetadata issuerMetadata,
+            IssuerMetadata issuerMetadata,
             string credentialMetadataId)
         {
             Display = issuerMetadata.GetCredentialDisplay(credentialMetadataId);
@@ -171,12 +172,12 @@ namespace WalletFramework.SdJwtVc.Models.Records
         /// </summary>
         /// <param name="issuerMetadata">The issuer metadata.</param>
         /// <returns>The dictionary of the issuer name in different languages.</returns>
-        private static Dictionary<string, string>? CreateIssuerNameDictionary(OidIssuerMetadata issuerMetadata)
+        private static Dictionary<string, string>? CreateIssuerNameDictionary(IssuerMetadata issuerMetadata)
         {
             var issuerNameDictionary = new Dictionary<string, string>();
 
             foreach (var display in issuerMetadata.Display?.Where(d => d.Locale != null) ??
-                                    Enumerable.Empty<OidIssuerDisplay>())
+                                    Enumerable.Empty<IssuerDisplayMetadata>())
             {
                 issuerNameDictionary[display.Locale!] = display.Name!;
             }

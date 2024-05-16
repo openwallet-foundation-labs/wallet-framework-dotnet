@@ -1,5 +1,3 @@
-#nullable enable
-
 using Newtonsoft.Json;
 
 namespace WalletFramework.SdJwtVc.Models.Credential
@@ -7,13 +5,13 @@ namespace WalletFramework.SdJwtVc.Models.Credential
     /// <summary>
     ///     Represents the visual representations for the credential.
     /// </summary>
-    public class OidCredentialDisplay
+    public class CredentialDisplayMetadata
     {
         /// <summary>
         ///     Gets or sets the logo associated with this Credential.
         /// </summary>
         [JsonProperty("logo", NullValueHandling = NullValueHandling.Ignore)]
-        public OidCredentialLogo? Logo { get; set; }
+        public CredentialLogo? Logo { get; set; }
 
         /// <summary>
         ///     Gets or sets the name of the Credential.
@@ -38,5 +36,23 @@ namespace WalletFramework.SdJwtVc.Models.Credential
         /// </summary>
         [JsonProperty("text_color", NullValueHandling = NullValueHandling.Ignore)]
         public string? TextColor { get; set; }
+        
+        /// <summary>
+        ///     Represents the Logo for a Credential.
+        /// </summary>
+        public class CredentialLogo
+        {
+            /// <summary>
+            ///     Gets or sets the alternate text that describes the logo image. This is typically used for accessibility purposes.
+            /// </summary>
+            [JsonProperty("alt_text")]
+            public string? AltText { get; set; }
+
+            /// <summary>
+            ///     Gets or sets the URL of the logo image.
+            /// </summary>
+            [JsonProperty("uri")]
+            public Uri Uri { get; set; } = null!;
+        }
     }
 }

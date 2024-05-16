@@ -7,19 +7,19 @@ namespace WalletFramework.SdJwtVc.Models.Issuer
     /// <summary>
     ///     Represents the metadata of an OpenID4VCI Credential Issuer.
     /// </summary>
-    public class OidIssuerMetadata
+    public class IssuerMetadata
     {
         /// <summary>
         ///     Gets or sets a dictionary which maps a CredentialMetadataId to its credential metadata.
         /// </summary>
         [JsonProperty("credential_configurations_supported")]
-        public Dictionary<string, OidCredentialMetadata> CredentialConfigurationsSupported { get; set; } = null!;
+        public Dictionary<string, CredentialMetadata> CredentialConfigurationsSupported { get; set; } = null!;
 
         /// <summary>
         ///     Gets or sets a list of display properties of a Credential Issuer for different languages.
         /// </summary>
         [JsonProperty("display", NullValueHandling = NullValueHandling.Ignore)]
-        public List<OidIssuerDisplay>? Display { get; set; }
+        public List<IssuerDisplayMetadata>? Display { get; set; }
 
         /// <summary>
         ///     Gets or sets the URL of the Credential Issuer's Credential Endpoint.
@@ -51,7 +51,7 @@ namespace WalletFramework.SdJwtVc.Models.Issuer
         ///     A list of display properties for the specified Credential or null if the Credential is not found in the
         ///     metadata.
         /// </returns>
-        public List<OidCredentialDisplay>? GetCredentialDisplay(string credentialMetadataId) 
+        public List<CredentialDisplayMetadata>? GetCredentialDisplay(string credentialMetadataId) 
             => CredentialConfigurationsSupported[credentialMetadataId].Display;
 
         /// <summary>
@@ -62,7 +62,7 @@ namespace WalletFramework.SdJwtVc.Models.Issuer
         ///     A dictionary of attribute names and their corresponding display properties for the specified Credential, or
         ///     null if the Credential is not found in the metadata.
         /// </returns>
-        public Dictionary<string, OidClaim>? GetCredentialClaims(string credentialMetadataId) =>
+        public Dictionary<string, ClaimMetadata>? GetCredentialClaims(string credentialMetadataId) =>
             CredentialConfigurationsSupported[credentialMetadataId].Claims;
 
         /// <summary>

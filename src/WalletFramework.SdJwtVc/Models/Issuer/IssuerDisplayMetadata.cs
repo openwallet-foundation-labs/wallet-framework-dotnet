@@ -1,5 +1,3 @@
-#nullable enable
-
 using Newtonsoft.Json;
 
 namespace WalletFramework.SdJwtVc.Models.Issuer
@@ -7,7 +5,7 @@ namespace WalletFramework.SdJwtVc.Models.Issuer
     /// <summary>
     ///     Represents the visual representations for the Issuer.
     /// </summary>
-    public class OidIssuerDisplay
+    public class IssuerDisplayMetadata
     {
         /// <summary>
         ///     Gets or sets the name of the Issuer.
@@ -25,6 +23,24 @@ namespace WalletFramework.SdJwtVc.Models.Issuer
         ///     Gets or sets the logo, which represents the specific culture or region..
         /// </summary>
         [JsonProperty("logo", NullValueHandling = NullValueHandling.Ignore)]
-        public OidIssuerLogo? Logo { get; set; }
+        public IssuerLogo? Logo { get; set; }
+        
+        /// <summary>
+        ///     Represents the Logo of the Issuer.
+        /// </summary>
+        public class IssuerLogo
+        {
+            /// <summary>
+            ///     Gets or sets the alternate text that describes the logo image. This is typically used for accessibility purposes.
+            /// </summary>
+            [JsonProperty("alt_text")]
+            public string? AltText { get; set; }
+
+            /// <summary>
+            ///     Gets or sets the URL of the logo image.
+            /// </summary>
+            [JsonProperty("uri")]
+            public Uri Uri { get; set; } = null!;
+        }
     }
 }
