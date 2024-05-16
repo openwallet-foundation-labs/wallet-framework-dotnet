@@ -72,7 +72,7 @@ namespace WalletFramework.SdJwtVc.Services.SdJwtVcHolderService
             IAgentContext context,
             string combinedIssuance,
             string keyId,
-            OidIssuerMetadata issuerMetadata,
+            IssuerMetadata issuerMetadata,
             string credentialMetadataId);
     }
 }
