@@ -178,8 +178,11 @@ namespace Hyperledger.Aries.Features.SdJwt.Services.SdJwtVcHolderService
                 let isFound =
                     (from field in fields
                         let candidate = claimsJObject.SelectToken(field.Path[0])
-                        where candidate != null && (field.Filter == null ||
-                                                    string.Equals(field.Filter.Const, candidate.ToString()))
+                        where candidate != null 
+                              && (field.Filter?.Const == null 
+                                  || string.Equals(field.Filter.Const, candidate.ToString())) 
+                              && (field.Filter?.Type == null 
+                                  || string.Equals(field.Filter.Type, "string") && candidate.Type == JTokenType.String)
                         select field).Count() == fields.Length
                 where isFound
                 select sdJwtRecord).ToArray();
