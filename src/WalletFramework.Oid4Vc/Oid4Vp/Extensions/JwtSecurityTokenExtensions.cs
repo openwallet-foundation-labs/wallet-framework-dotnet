@@ -1,10 +1,11 @@
-using System.IdentityModel.Tokens.Jwt;
 using Org.BouncyCastle.Asn1;
 using Org.BouncyCastle.Crypto.Parameters;
 using Org.BouncyCastle.Math;
-using static System.Text.Encoding;
-using static Org.BouncyCastle.Security.SignerUtilities;
+using System.IdentityModel.Tokens.Jwt;
+using Org.BouncyCastle.Crypto;
 using static Microsoft.IdentityModel.Tokens.Base64UrlEncoder;
+using static Org.BouncyCastle.Security.SignerUtilities;
+using static System.Text.Encoding;
 
 namespace WalletFramework.Oid4Vc.Oid4Vp.Extensions
 {
@@ -17,24 +18,28 @@ namespace WalletFramework.Oid4Vc.Oid4Vp.Extensions
         ///     Validates the signature of the JWT token using the provided public key.
         /// </summary>
         /// <param name="token">The JWT token to validate.</param>
-        /// <param name="publicKey">The public key to use for validation.</param>
+        /// <param name="publicKeyParameters">The public key to use for validation.</param>
         /// <returns>True if the signature is valid, otherwise false.</returns>
-        public static bool IsSignatureValid(this JwtSecurityToken token, ECPublicKeyParameters publicKey)
-        {
-            var signer = GetSigner("SHA-256withECDSA");
-
-            signer.Init(false, publicKey);
-
-            var encodedHeaderAndPayload = UTF8.GetBytes(token.EncodedHeader + "." + token.EncodedPayload);
-
-            signer.BlockUpdate(encodedHeaderAndPayload, 0, encodedHeaderAndPayload.Length);
-
-            return signer.VerifySignature(
-                ConvertRawToDerFormat(
-                    DecodeBytes(token.RawSignature)
-                )
-            );
-        }
+        public static bool IsSignatureValid(this JwtSecurityToken token, AsymmetricKeyParameter publicKeyParameters)
+            {
+                var encodedHeaderAndPayload = UTF8.GetBytes(token.EncodedHeader + "." + token.EncodedPayload);
+                
+                switch (publicKeyParameters)
+                {
+                    case RsaKeyParameters:
+                        var rsaSigner = GetSigner("SHA-256withRSA");
+                        rsaSigner.Init(false, publicKeyParameters);
+                        rsaSigner.BlockUpdate(encodedHeaderAndPayload, 0, encodedHeaderAndPayload.Length);
+                        return rsaSigner.VerifySignature(DecodeBytes(token.RawSignature));
+                    case ECPublicKeyParameters:
+                        var ecdsaSigner = GetSigner("SHA-256withECDSA");
+                        ecdsaSigner.Init(false, publicKeyParameters);
+                        ecdsaSigner.BlockUpdate(encodedHeaderAndPayload, 0, encodedHeaderAndPayload.Length);
+                        return ecdsaSigner.VerifySignature(ConvertRawToDerFormat(DecodeBytes(token.RawSignature)));
+                    default:
+                        throw new InvalidOperationException("Unsupported public key type");
+                }
+            }
 
         private static byte[] ConvertRawToDerFormat(byte[] rawSignature)
         {
