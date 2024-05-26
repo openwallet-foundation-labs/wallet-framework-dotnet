@@ -1,8 +1,8 @@
 using System.IdentityModel.Tokens.Jwt;
+using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
-using Org.BouncyCastle.Crypto.Parameters;
-using Org.BouncyCastle.X509;
 using WalletFramework.Oid4Vc.Oid4Vp.Extensions;
+using Org.BouncyCastle.X509;
 using X509Certificate = Org.BouncyCastle.X509.X509Certificate;
 using static WalletFramework.Oid4Vc.Oid4Vp.Models.AuthorizationRequest;
 using static Newtonsoft.Json.Linq.JArray;
@@ -73,25 +73,49 @@ namespace WalletFramework.Oid4Vc.Oid4Vp.Models
         /// </summary>
         /// <returns>The validated request object.</returns>
         /// <exception cref="InvalidOperationException">Throws when validation fails</exception>
-        public static RequestObject ValidateJwt(this RequestObject requestObject) =>
-            ((JwtSecurityToken)requestObject).IsSignatureValid(
-                (ECPublicKeyParameters)requestObject.GetLeafCertificate().GetPublicKey()
-            )
-                ? requestObject
+        public static RequestObject ValidateJwt(this RequestObject requestObject) 
+            => ((JwtSecurityToken)requestObject).IsSignatureValid(requestObject.GetLeafCertificate().GetPublicKey()) 
+                ? requestObject 
                 : throw new InvalidOperationException("Invalid JWT Signature");
-
+        
         /// <summary>
         ///     Validates the SAN name of the leaf certificate
         /// </summary>
         /// <returns>The validated request object</returns>
         /// <exception cref="InvalidOperationException">Throws when validation fails</exception>
-        public static RequestObject ValidateSanName(this RequestObject requestObject) =>
-            new X509Certificate2(
-                    requestObject.GetLeafCertificate().GetEncoded()
-                )
-                .GetNameInfo(X509NameType.DnsName, false) == requestObject.ClientId
+        public static RequestObject ValidateSanName(this RequestObject requestObject)
+        {
+            var x509Certificate = new X509Certificate2(
+                requestObject.GetLeafCertificate().GetEncoded()
+            );
+            
+            return GetSanDnsNames(x509Certificate).Any(sanDnsName => sanDnsName == requestObject.ClientId)
                 ? requestObject
                 : throw new InvalidOperationException("SAN does not match Client ID");
+        }
+            
+        private static IEnumerable<string> GetSanDnsNames(X509Certificate2 certificate)
+        {
+            const string sanOid = "2.5.29.17";
+            var sanNames = new List<string>();
+
+            foreach (var extension in certificate.Extensions)
+            {
+                if (extension.Oid.Value != sanOid) 
+                    continue;
+                
+                var sanExtension = (AsnEncodedData)extension;
+                var sanData = sanExtension.Format(true);
+
+                foreach (var line in sanData.Split(new[] { "\r\n", "\n" }, StringSplitOptions.RemoveEmptyEntries))
+                {
+                    sanNames.Add(line.Split(':', '=').Last().Trim());
+                }
+            }
+
+            return sanNames;
+        }
+                
 
         /// <summary>
         ///     Validates the trust chain of the leaf certificate
