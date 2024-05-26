@@ -1,9 +1,12 @@
 using Hyperledger.Aries;
 using Hyperledger.Aries.Agents;
 using Hyperledger.Aries.Storage;
-using SD_JWT.Abstractions;
+using Hyperledger.Indy.WalletApi;
 using SD_JWT.Models;
+using SD_JWT.Roles;
 using WalletFramework.SdJwtVc.KeyStore.Services;
+using WalletFramework.SdJwtVc.Models.Credential;
+using WalletFramework.SdJwtVc.Models.Credential.Attributes;
 using WalletFramework.SdJwtVc.Models.Issuer;
 using WalletFramework.SdJwtVc.Models.Records;
 
@@ -97,24 +100,37 @@ namespace WalletFramework.SdJwtVc.Services.SdJwtVcHolderService
         }
 
         /// <inheritdoc />
+        [Obsolete("Use SaveAsync instead.")]
         public virtual async Task<string> StoreAsync(
             IAgentContext context, 
             string combinedIssuance,
             string keyId, 
             IssuerMetadata issuerMetadata,
-            string credentialMetadataId)
+            List<CredentialDisplayMetadata> displayMetadata,
+            Dictionary<string, ClaimMetadata> claimMetadata,
+            Dictionary<string, string> issuerName
+        )
         {
-            var sdJwtDoc = Holder.ReceiveCredential(combinedIssuance);
-            var record = SdJwtRecord.FromSdJwtDoc(sdJwtDoc);
+            var record = new SdJwtRecord(combinedIssuance, claimMetadata, displayMetadata, issuerName, keyId);
 
-            record.SetDisplayFromIssuerMetadata(issuerMetadata, credentialMetadataId);
-            
-            record.Id = Guid.NewGuid().ToString();
-            record.KeyId = keyId;
-
-            await RecordService.AddAsync(context.Wallet, record);
-
+            await SaveAsync(context, record);
             return record.Id;
+        }
+
+        /// <inheritdoc />
+        public virtual async Task SaveAsync(IAgentContext context, SdJwtRecord record)
+        {
+            try
+            {
+                await RecordService.GetAsync<SdJwtRecord>(context.Wallet, record.Id);
+            }
+            catch (WalletItemNotFoundException)
+            {
+                await RecordService.AddAsync(context.Wallet, record);
+                return;
+            }
+            
+            await RecordService.UpdateAsync(context.Wallet, record);
         }
     }
 }

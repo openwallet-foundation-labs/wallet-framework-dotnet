@@ -1,5 +1,7 @@
 using Hyperledger.Aries.Agents;
 using Hyperledger.Aries.Storage;
+using WalletFramework.SdJwtVc.Models.Credential;
+using WalletFramework.SdJwtVc.Models.Credential.Attributes;
 using WalletFramework.SdJwtVc.Models.Issuer;
 using WalletFramework.SdJwtVc.Models.Records;
 
@@ -66,13 +68,17 @@ namespace WalletFramework.SdJwtVc.Services.SdJwtVcHolderService
         /// <param name="combinedIssuance">The combined issuance.</param>
         /// <param name="keyId">The key id.</param>
         /// <param name="issuerMetadata">The issuer metadata.</param>
-        /// <param name="credentialMetadataId">The credential metadata ID.</param>
+        /// <param name="displayMetadata"></param>
+        /// <param name="claimMetadata"></param>
+        /// <param name="issuerName"></param>
         /// <returns>A task representing the asynchronous operation. The task result contains the ID of the stored JWT record.</returns>
         Task<string> StoreAsync(
-            IAgentContext context,
+            IAgentContext context, 
             string combinedIssuance,
-            string keyId,
+            string keyId, 
             IssuerMetadata issuerMetadata,
-            string credentialMetadataId);
+            List<CredentialDisplayMetadata> displayMetadata,
+            Dictionary<string, ClaimMetadata> claimMetadata,
+            Dictionary<string, string> issuerName);
     }
 }
