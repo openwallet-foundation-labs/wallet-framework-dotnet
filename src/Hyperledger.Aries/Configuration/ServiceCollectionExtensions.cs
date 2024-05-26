@@ -7,14 +7,9 @@ using Hyperledger.Aries.Features.Discovery;
 using Hyperledger.Aries.Features.Handshakes.Connection;
 using Hyperledger.Aries.Features.Handshakes.DidExchange;
 using Hyperledger.Aries.Features.IssueCredential;
-using Hyperledger.Aries.Features.OpenId4Vc.Vci.Services.Oid4VciClientService;
-using Hyperledger.Aries.Features.OpenId4Vc.Vp.Services;
-using Hyperledger.Aries.Features.OpenID4VC.Vp.Services;
 using Hyperledger.Aries.Features.OutOfBand;
-using Hyperledger.Aries.Features.Pex.Services;
 using Hyperledger.Aries.Features.PresentProof;
 using Hyperledger.Aries.Features.RevocationNotification;
-using Hyperledger.Aries.Features.SdJwt.Services.SdJwtVcHolderService;
 using Hyperledger.Aries.Ledger;
 using Hyperledger.Aries.Ledger.V2;
 using Hyperledger.Aries.Payments;
@@ -22,8 +17,6 @@ using Hyperledger.Aries.Runtime;
 using Hyperledger.Aries.Signatures;
 using Hyperledger.Aries.Storage;
 using Microsoft.Extensions.DependencyInjection.Extensions;
-using SD_JWT;
-using SD_JWT.Abstractions;
 
 // ReSharper disable once CheckNamespace
 namespace Microsoft.Extensions.DependencyInjection
@@ -107,23 +100,6 @@ namespace Microsoft.Extensions.DependencyInjection
             builder.AddSingleton<IPoolService, DefaultPoolServiceV2>();
             builder.AddSingleton<ISigningService, DefaultSigningService>();
 
-            return builder;
-        }
-
-        /// <summary>
-        /// Adds the default OpenID services.
-        /// </summary>
-        /// <param name="builder"> The builder. </param>
-        public static IServiceCollection AddOpenIdDefaultServices(this IServiceCollection builder)
-        {
-            builder.AddSingleton<IHolder, Holder>();
-            builder.AddSingleton<ISdJwtVcHolderService, DefaultSdJwtVcHolderService>();
-            builder.AddSingleton<IPexService, PexService>();
-            builder.AddSingleton<IOid4VciClientService, Oid4VciClientService>();
-            builder.AddSingleton<IOid4VpClientService, Oid4VpClientService>();
-            builder.AddSingleton<IOid4VpHaipClient, Oid4VpHaipClient>();
-            builder.AddSingleton<IOid4VpRecordService, Oid4VpRecordService>();
-            
             return builder;
         }
 
@@ -471,40 +447,6 @@ namespace Microsoft.Extensions.DependencyInjection
             where TImplementation : class, IWalletService
         {
             builder.AddSingleton<IWalletService, TImplementation>();
-            return builder;
-        }
-        
-        /// <summary>
-        /// Adds the extended Sd-JWT credential service.
-        /// </summary>
-        /// <returns>The extended SD-JWT credential service.</returns>
-        /// <param name="builder">Builder.</param>
-        /// <typeparam name="TService">The 1st type parameter.</typeparam>
-        /// <typeparam name="TImplementation">The 2nd type parameter.</typeparam>
-        public static IServiceCollection AddExtendedSdJwtCredentialService<TService, TImplementation>(this IServiceCollection builder)
-            where TService : class, ISdJwtVcHolderService
-            where TImplementation : class, TService, ISdJwtVcHolderService
-        {
-            builder.AddSingleton<TImplementation>();
-            builder.AddSingleton<ISdJwtVcHolderService>(x => x.GetService<TImplementation>());
-            builder.AddSingleton<TService>(x => x.GetService<TImplementation>());
-            return builder;
-        }
-        
-        /// <summary>
-        /// Adds the extended OpenID4Vci Client service.
-        /// </summary>
-        /// <returns>The extended OpenID4Vci Client service.</returns>
-        /// <param name="builder">Builder.</param>
-        /// <typeparam name="TService">The 1st type parameter.</typeparam>
-        /// <typeparam name="TImplementation">The 2nd type parameter.</typeparam>
-        public static IServiceCollection AddExtendedOid4VciClientService<TService, TImplementation>(this IServiceCollection builder)
-            where TService : class, IOid4VciClientService
-            where TImplementation : class, TService, IOid4VciClientService
-        {
-            builder.AddSingleton<TImplementation>();
-            builder.AddSingleton<IOid4VciClientService>(x => x.GetService<TImplementation>());
-            builder.AddSingleton<TService>(x => x.GetService<TImplementation>());
             return builder;
         }
     }

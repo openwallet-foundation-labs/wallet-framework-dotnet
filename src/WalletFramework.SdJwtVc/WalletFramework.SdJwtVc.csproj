@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.1</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Hyperledger.Aries\Hyperledger.Aries.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="SD-JWT" Version="0.1.0-rc.46" />
+  </ItemGroup>
+
+</Project>
