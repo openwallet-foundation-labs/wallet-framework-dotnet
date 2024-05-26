@@ -1,10 +1,7 @@
 using Microsoft.Extensions.DependencyInjection;
-using SD_JWT;
-using SD_JWT.Abstractions;
 using WalletFramework.Oid4Vc.Oid4Vci.Services.Oid4VciClientService;
 using WalletFramework.Oid4Vc.Oid4Vp.PresentationExchange.Services;
 using WalletFramework.Oid4Vc.Oid4Vp.Services;
-using WalletFramework.SdJwtVc.Services.SdJwtVcHolderService;
 
 namespace WalletFramework.Oid4Vc;
 
@@ -16,8 +13,6 @@ public static class SeviceCollectionExtensions
     /// <param name="builder"> The builder. </param>
     public static IServiceCollection AddOpenIdDefaultServices(this IServiceCollection builder)
     {
-        builder.AddSingleton<IHolder, Holder>();
-        builder.AddSingleton<ISdJwtVcHolderService, DefaultSdJwtVcHolderService>();
         builder.AddSingleton<IPexService, PexService>();
         builder.AddSingleton<IOid4VciClientService, Oid4VciClientService>();
         builder.AddSingleton<IOid4VpClientService, Oid4VpClientService>();

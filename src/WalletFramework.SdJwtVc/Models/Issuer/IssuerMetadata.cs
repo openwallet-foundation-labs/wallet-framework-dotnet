@@ -4,8 +4,9 @@ using WalletFramework.SdJwtVc.Models.Credential.Attributes;
 
 namespace WalletFramework.SdJwtVc.Models.Issuer
 {
+    // Todo: Clean up this class and remove the unnecessary fields
     /// <summary>
-    ///     Represents the metadata of an OpenID4VCI Credential Issuer.
+    ///     Represents the metadata of an SdJwtVc issuer.
     /// </summary>
     public class IssuerMetadata
     {

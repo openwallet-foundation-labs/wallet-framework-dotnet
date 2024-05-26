@@ -3,7 +3,8 @@ using FluentAssertions;
 using Hyperledger.Aries.Storage;
 using Hyperledger.Aries.Tests.Extensions;
 using Moq;
-using SD_JWT;
+using SD_JWT.Roles;
+using SD_JWT.Roles.Implementation;
 using WalletFramework.SdJwtVc.KeyStore.Services;
 using WalletFramework.SdJwtVc.Models.Records;
 using WalletFramework.SdJwtVc.Services.SdJwtVcHolderService;
@@ -52,7 +53,7 @@ namespace WalletFramework.SdJwtVc.Tests
 
         private static ISdJwtVcHolderService CreateSdJwtVcHolderService()
         {
-            var holder = new Holder();
+            IHolder holder = new Holder();
             var keystore = new MockKeystore();
             var walletRecordService = new Mock<IWalletRecordService>();
 

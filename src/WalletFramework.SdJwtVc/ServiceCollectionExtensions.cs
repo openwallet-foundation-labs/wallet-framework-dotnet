@@ -1,10 +1,20 @@
 using Microsoft.Extensions.DependencyInjection;
+using SD_JWT.Roles;
+using SD_JWT.Roles.Implementation;
 using WalletFramework.SdJwtVc.Services.SdJwtVcHolderService;
 
 namespace WalletFramework.SdJwtVc;
 
 public static class ServiceCollectionExtensions
 {
+    public static IServiceCollection AddSdJwtVcDefaultServices(this IServiceCollection builder)
+    {
+        builder.AddSingleton<IHolder, Holder>();
+        builder.AddSingleton<ISdJwtVcHolderService, DefaultSdJwtVcHolderService>();
+        return builder;
+    }
+    
+    
     /// <summary>
     /// Adds the extended Sd-JWT credential service.
     /// </summary>
