@@ -52,7 +52,7 @@
         <NLogConfigVersion>4.7.2</NLogConfigVersion>
         <PollyVersion>7.2.1</PollyVersion>
         <StatelessVersion>5.1.2</StatelessVersion>
-        <SwashbuckleAspNetCoreAnnotationsVersion>5.5.1</SwashbuckleAspNetCoreAnnotationsVersion>
+        <SwashbuckleAspNetCoreAnnotationsVersion>6.6.2</SwashbuckleAspNetCoreAnnotationsVersion>
         <SwashbuckleAspNetCoreFiltersVersion>5.1.2</SwashbuckleAspNetCoreFiltersVersion>
         <SwashbuckleAspNetCoreSwaggerGenVersion>5.5.1</SwashbuckleAspNetCoreSwaggerGenVersion>
         <SwashbuckleAspNetCoreSwaggerUIVersion>5.5.1</SwashbuckleAspNetCoreSwaggerUIVersion>
