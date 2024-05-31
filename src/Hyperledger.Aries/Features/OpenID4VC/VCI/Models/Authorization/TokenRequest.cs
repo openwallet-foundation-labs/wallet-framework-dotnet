@@ -2,7 +2,6 @@
 
 using System.Collections.Generic;
 using System.Net.Http;
-using Newtonsoft.Json;
 
 namespace Hyperledger.Aries.Features.OpenId4Vc.Vci.Models.Authorization
 {
@@ -14,26 +13,46 @@ namespace Hyperledger.Aries.Features.OpenId4Vc.Vci.Models.Authorization
         /// <summary>
         ///     Gets or sets the grant type of the request. Determines the type of token request being made.
         /// </summary>
-        [JsonProperty("grant_type")]
         public string GrantType { get; set; } = null!;
 
         /// <summary>
         ///     Gets or sets the pre-authorized code. Represents the authorization to obtain specific credentials.
         ///     This is required if the grant type is urn:ietf:params:oauth:grant-type:pre-authorized_code.
         /// </summary>
-        [JsonProperty("pre-authorized_code")]
-        public string PreAuthorizedCode { get; set; } = null!;
+        public string? PreAuthorizedCode { get; set; }
+        
+        /// <summary>
+        ///     Gets or sets the pre-authorized code. Represents the authorization to obtain specific credentials.
+        ///     This is required if the grant type is urn:ietf:params:oauth:grant-type:pre-authorized_code.
+        /// </summary>
+        public string? Code { get; set; }
+        
+        /// <summary>
+        ///     Gets or sets the pre-authorized code. Represents the authorization to obtain specific credentials.
+        ///     This is required if the grant type is urn:ietf:params:oauth:grant-type:pre-authorized_code.
+        /// </summary>
+        public string? CodeVerifier { get; set; }
+        
+        /// <summary>
+        ///     Gets or sets the pre-authorized code. Represents the authorization to obtain specific credentials.
+        ///     This is required if the grant type is urn:ietf:params:oauth:grant-type:pre-authorized_code.
+        /// </summary>
+        public string? ClientId { get; set; }
+        
+        /// <summary>
+        ///     Gets or sets the pre-authorized code. Represents the authorization to obtain specific credentials.
+        ///     This is required if the grant type is urn:ietf:params:oauth:grant-type:pre-authorized_code.
+        /// </summary>
+        public string? RedirectUri { get; set; }
 
         /// <summary>
         ///     Gets or sets the scope of the access request. Defines the permissions the client is asking for.
         /// </summary>
-        [JsonProperty("scope")]
         public string? Scope { get; set; }
 
         /// <summary>
         ///     Gets or sets the transaction code. This value must be present if a transaction code was required in a previous step.
         /// </summary>
-        [JsonProperty("tx_code", NullValueHandling = NullValueHandling.Ignore)]
         public string? TransactionCode { get; set; }
 
         /// <summary>
@@ -56,6 +75,18 @@ namespace Hyperledger.Aries.Features.OpenId4Vc.Vci.Models.Authorization
 
             if (!string.IsNullOrEmpty(TransactionCode))
                 keyValuePairs.Add(new KeyValuePair<string, string>("tx_code", TransactionCode));
+            
+            if (!string.IsNullOrEmpty(Code))
+                keyValuePairs.Add(new KeyValuePair<string, string>("code", Code));
+
+            if (!string.IsNullOrEmpty(RedirectUri))
+                keyValuePairs.Add(new KeyValuePair<string, string>("redirect_uri", RedirectUri));
+
+            if (!string.IsNullOrEmpty(CodeVerifier))
+                keyValuePairs.Add(new KeyValuePair<string, string>("code_verifier", CodeVerifier));
+            
+            if (!string.IsNullOrEmpty(ClientId))
+                keyValuePairs.Add(new KeyValuePair<string, string>("client_id", ClientId));
 
             return new FormUrlEncodedContent(keyValuePairs);
         }

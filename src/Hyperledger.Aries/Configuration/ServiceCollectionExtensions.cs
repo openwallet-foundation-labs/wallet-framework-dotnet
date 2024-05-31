@@ -7,7 +7,7 @@ using Hyperledger.Aries.Features.Discovery;
 using Hyperledger.Aries.Features.Handshakes.Connection;
 using Hyperledger.Aries.Features.Handshakes.DidExchange;
 using Hyperledger.Aries.Features.IssueCredential;
-using Hyperledger.Aries.Features.OpenId4Vc.Vci.Services.Oid4VciClientService;
+using Hyperledger.Aries.Features.OpenID4VC.VCI.Services;
 using Hyperledger.Aries.Features.OpenId4Vc.Vp.Services;
 using Hyperledger.Aries.Features.OpenID4VC.Vp.Services;
 using Hyperledger.Aries.Features.OutOfBand;
@@ -123,6 +123,7 @@ namespace Microsoft.Extensions.DependencyInjection
             builder.AddSingleton<IOid4VpClientService, Oid4VpClientService>();
             builder.AddSingleton<IOid4VpHaipClient, Oid4VpHaipClient>();
             builder.AddSingleton<IOid4VpRecordService, Oid4VpRecordService>();
+            builder.AddSingleton<IAuthorizationRecordService, AuthorizationRecordService>();
             
             return builder;
         }

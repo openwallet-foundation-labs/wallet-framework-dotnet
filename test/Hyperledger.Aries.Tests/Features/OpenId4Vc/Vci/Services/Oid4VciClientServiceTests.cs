@@ -10,7 +10,7 @@ using Hyperledger.Aries.Features.OpenId4Vc.Vci.Models.CredentialResponse;
 using Hyperledger.Aries.Features.OpenId4Vc.Vci.Models.Metadata.Credential;
 using Hyperledger.Aries.Features.OpenId4Vc.Vci.Models.Metadata.Credential.Attributes;
 using Hyperledger.Aries.Features.OpenId4Vc.Vci.Models.Metadata.Issuer;
-using Hyperledger.Aries.Features.OpenId4Vc.Vci.Services.Oid4VciClientService;
+using Hyperledger.Aries.Features.OpenID4VC.VCI.Services;
 using Moq;
 using Moq.Protected;
 using Newtonsoft.Json;
@@ -89,6 +89,7 @@ namespace Hyperledger.Aries.Tests.Features.OpenId4Vc.Vci.Services
 
         private readonly Mock<HttpMessageHandler> _httpMessageHandlerMock = new Mock<HttpMessageHandler>();
         private readonly Mock<IHttpClientFactory> _httpClientFactoryMock = new Mock<IHttpClientFactory>();
+        private readonly Mock<IAuthorizationRecordService> _authorizationRecordService = new Mock<IAuthorizationRecordService>();
         private readonly Mock<IKeyStore> _keyStoreMock = new Mock<IKeyStore>();
 
         private Oid4VciClientService _oid4VciClientService;
@@ -134,8 +135,8 @@ namespace Hyperledger.Aries.Tests.Features.OpenId4Vc.Vci.Services
                     );
             
             //Assert
-            actualCredentialResponse.Item1.Should().BeEquivalentTo(expectedCredentialResponse);
-            actualCredentialResponse.Item2.Should().BeEquivalentTo(KeyBindingJwtKeyId);
+            actualCredentialResponse[0].Item1.Should().BeEquivalentTo(expectedCredentialResponse);
+            actualCredentialResponse[0].Item2.Should().BeEquivalentTo(KeyBindingJwtKeyId);
         }
         
         [Fact]
@@ -172,8 +173,8 @@ namespace Hyperledger.Aries.Tests.Features.OpenId4Vc.Vci.Services
                 );
             
             //Assert
-            actualCredentialResponse.Item1.Should().BeEquivalentTo(expectedCredentialResponse);
-            actualCredentialResponse.Item2.Should().BeEquivalentTo(KeyBindingJwtKeyId);
+            actualCredentialResponse[0].Item1.Should().BeEquivalentTo(expectedCredentialResponse);
+            actualCredentialResponse[0].Item2.Should().BeEquivalentTo(KeyBindingJwtKeyId);
         }
 
         private void SetupHttpClientSequence(params HttpResponseMessage[] responses)
@@ -189,7 +190,7 @@ namespace Hyperledger.Aries.Tests.Features.OpenId4Vc.Vci.Services
             _httpClientFactoryMock.Setup(f => f.CreateClient(It.IsAny<string>())).Returns(httpClient);
 
             _oid4VciClientService =
-                new Oid4VciClientService(_httpClientFactoryMock.Object, _keyStoreMock.Object);
+                new Oid4VciClientService(_httpClientFactoryMock.Object, _authorizationRecordService.Object, _keyStoreMock.Object);
         }
         
         private void SetupKeyStoreGenerateKeySequence(params string[] responses)

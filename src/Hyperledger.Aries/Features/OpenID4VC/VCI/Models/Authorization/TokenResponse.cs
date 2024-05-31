@@ -64,5 +64,11 @@ namespace Hyperledger.Aries.Features.OpenId4Vc.Vci.Models.Authorization
         /// </summary>
         [JsonProperty("token_type")]
         public string TokenType { get; set; }
+        
+        /// <summary>
+        ///     Gets or sets the credential identifier.
+        /// </summary>
+        [JsonProperty("credential_identifiers")]
+        public AuthorizationDetails? CredentialIdentifier { get; set; }
     }
 }

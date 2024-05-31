@@ -42,8 +42,8 @@ namespace Hyperledger.Aries.Features.OpenId4Vc.Vci.Models.Metadata.Issuer
         ///     identifier is used as the OAuth 2.0 Issuer value to obtain the Authorization Server
         ///     metadata.
         /// </summary>
-        [JsonProperty("authorization_server", NullValueHandling = NullValueHandling.Ignore)]
-        public string? AuthorizationServer { get; set; }
+        [JsonProperty("authorization_servers", NullValueHandling = NullValueHandling.Ignore)]
+        public string[]? AuthorizationServers { get; set; }
 
         /// <summary>
         ///     Gets the display properties of a given Credential for different languages.

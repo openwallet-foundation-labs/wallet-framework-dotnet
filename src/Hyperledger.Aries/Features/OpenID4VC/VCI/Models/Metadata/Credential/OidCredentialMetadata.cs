@@ -12,10 +12,22 @@ namespace Hyperledger.Aries.Features.OpenId4Vc.Vci.Models.Metadata.Credential
     public class OidCredentialMetadata
     {
         /// <summary>
-        ///     Gets or sets the verifiable credential type (vct).
+        ///     Gets or sets the verifiable credential type (vct). This is SD-JWT specific.
         /// </summary>
         [JsonProperty("vct")]
-        public string Vct { get; set; } = null!;
+        public string? Vct { get; set; }
+        
+        /// <summary>
+        ///     
+        /// </summary>
+        [JsonProperty("scope")]
+        public string? Scope { get; set; }
+        
+        /// <summary>
+        ///     Gets or sets the credential type. This is ISO MDOC specific.
+        /// </summary>
+        [JsonProperty("doctype")]
+        public string? Doctype { get; set; }
         
         /// <summary>
         ///     Gets or sets the dictionary representing the attributes of the credential in different languages.

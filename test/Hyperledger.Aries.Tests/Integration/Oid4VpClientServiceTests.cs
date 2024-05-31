@@ -70,6 +70,7 @@ namespace Hyperledger.Aries.Tests.Integration
                         It.IsAny<string>(),
                         It.IsAny<string>(),
                         It.IsAny<string>(),
+                        It.IsAny<string>(),
                         It.IsAny<string>()
                     )
                 )
