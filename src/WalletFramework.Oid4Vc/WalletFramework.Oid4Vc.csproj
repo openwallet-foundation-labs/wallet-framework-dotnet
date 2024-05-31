@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.1</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+
+  <ItemGroup>
+    <ProjectReference Include="..\Hyperledger.Aries\Hyperledger.Aries.csproj" />
+    <ProjectReference Include="..\WalletFramework.SdJwtVc\WalletFramework.SdJwtVc.csproj" />
+  </ItemGroup>
+
+</Project>

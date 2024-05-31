@@ -1,13 +1,13 @@
 <Project>
     <!-- Set common properties regarding assembly information and nuget packages -->
     <PropertyGroup>
-        <Authors>Hyperledger Aries Dotnet Maintainers</Authors>
-        <Company>Hyperledger</Company>
+        <Authors>Wallet Framework Dotnet Maintainers</Authors>
+        <Company>OWF</Company>
         <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
-        <PackageProjectUrl>https://github.com/hyperledger/aries-framework-dotnet</PackageProjectUrl>
-        <PackageTags>Hyperledger Aries Self-Sovereign-Identity</PackageTags>
-        <Product>Hyperledger Aries Dotnet</Product>
-        <RepositoryUrl>https://github.com/hyperledger/aries-framework-dotnet.git</RepositoryUrl>
+        <PackageProjectUrl>https://github.com/openwallet-foundation-labs/wallet-framework-dotnet</PackageProjectUrl>
+        <PackageTags>Wallet Framework for Dotnet</PackageTags>
+        <Product>Wallet Framework for .NET</Product>
+        <RepositoryUrl>https://github.com/openwallet-foundation-labs/wallet-framework-dotnet.git</RepositoryUrl>
         <RepositoryType>git</RepositoryType>
         <Version>2.0.0</Version>
     </PropertyGroup>

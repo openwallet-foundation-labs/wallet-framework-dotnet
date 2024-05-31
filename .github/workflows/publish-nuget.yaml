@@ -10,7 +10,7 @@ on:
 
 env:
     BUILD_CONFIG: 'Release'
-    SOLUTION: 'src/Hyperledger.Aries.sln'
+    SOLUTION: 'src/WalletFramework.sln'
     IS_PULL_REQUEST: ${{ github.event_name == 'pull_request' }}
     IS_MAIN_BRANCH: ${{ github.ref == 'refs/heads/main' }}
 
