@@ -188,41 +188,52 @@ namespace WalletFramework.SdJwtVc.Models.Records
             
             RemoveRegisteredClaims(unsecuredPayload);
             
-            var allPaths = GetAllJsonPaths(unsecuredPayload);
+            var allLeafClaims = GetLeafNodePaths(unsecuredPayload);
 
-            return allPaths.ToDictionary(key => key, key => unsecuredPayload.SelectToken(key)?.ToString() ?? string.Empty);
+            return allLeafClaims.ToDictionary(key => key, key => unsecuredPayload.SelectToken(key)?.ToString() ?? string.Empty);
 
             void RemoveRegisteredClaims(JObject jObject)
             {
-                string[] registeredClaims = { "iss", "sub", "aud", "exp", "nbf", "iat", "jti", "vct", "cnf" };
+                string[] registeredClaims = { "iss", "sub", "aud", "exp", "nbf", "iat", "jti", "vct", "cnf", "status" };
                 foreach (var claim in registeredClaims)
                 {
                     jObject.Remove(claim);
                 }
             }
         }
-    
-        private static List<string> GetAllJsonPaths(this JToken token, string path = "")
+        
+        private static List<string> GetLeafNodePaths(JObject jObject)
+        {
+            var leafNodePaths = new List<string>();
+
+            TraverseJToken(jObject, "", leafNodePaths);
+
+            return leafNodePaths;
+        }
+
+        private static void TraverseJToken(JToken token, string currentPath, List<string> leafNodePaths)
         {
             switch (token.Type)
             {
                 case JTokenType.Object:
-                    var result = new List<string>();
-                    foreach (var property in ((JObject)token).Properties())
+                    foreach (var property in token.Children<JProperty>())
                     {
-                        result.AddRange(property.Value.GetAllJsonPaths($"{path}.{property.Name}"));
+                        TraverseJToken(property.Value, $"{currentPath}.{property.Name}", leafNodePaths);
                     }
-                    return result;
+                    break;
+
                 case JTokenType.Array:
-                    var resultArray = new List<string>();
-                    var index = 0;
-                    foreach (var value in ((JArray)token).Values())
+                    int index = 0;
+                    foreach (var item in token.Children())
                     {
-                        resultArray.AddRange(value.GetAllJsonPaths($"{path}[{index++}]"));
+                        TraverseJToken(item, $"{currentPath}[{index}]", leafNodePaths);
+                        index++;
                     }
-                    return resultArray;
+                    break;
+
                 default:
-                    return new List<string> { path };
+                    leafNodePaths.Add(currentPath.TrimStart('.'));
+                    break;
             }
         }
     }

@@ -58,6 +58,8 @@ namespace WalletFramework.Oid4Vc.Oid4Vci.Models.Metadata.Issuer
             CredentialIssuer = credentialIssuer ?? throw new ArgumentNullException(nameof(credentialIssuer));
             AuthorizationServer = authorizationServer;
         }
+        
+        public OidIssuerMetadata() {}
 
         /// <summary>
         ///     Gets the display properties of a given Credential for different languages.

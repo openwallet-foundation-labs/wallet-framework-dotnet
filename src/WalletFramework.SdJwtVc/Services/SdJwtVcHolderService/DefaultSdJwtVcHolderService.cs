@@ -104,7 +104,7 @@ namespace WalletFramework.SdJwtVc.Services.SdJwtVcHolderService
         public virtual async Task<string> StoreAsync(
             IAgentContext context, 
             string combinedIssuance,
-            string keyId, 
+            string keyId,
             IssuerMetadata issuerMetadata,
             List<CredentialDisplayMetadata> displayMetadata,
             Dictionary<string, ClaimMetadata> claimMetadata,
@@ -122,15 +122,12 @@ namespace WalletFramework.SdJwtVc.Services.SdJwtVcHolderService
         {
             try
             {
-                await RecordService.GetAsync<SdJwtRecord>(context.Wallet, record.Id);
-            }
-            catch (WalletItemNotFoundException)
-            {
                 await RecordService.AddAsync(context.Wallet, record);
-                return;
             }
-            
-            await RecordService.UpdateAsync(context.Wallet, record);
+            catch (WalletItemAlreadyExistsException)
+            {
+                await RecordService.UpdateAsync(context.Wallet, record);
+            }
         }
     }
 }
