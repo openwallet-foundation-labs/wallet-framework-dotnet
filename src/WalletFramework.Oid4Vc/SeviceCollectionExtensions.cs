@@ -26,7 +26,7 @@ public static class SeviceCollectionExtensions
         builder.AddSingleton<IOid4VpHaipClient, Oid4VpHaipClient>();
         builder.AddSingleton<IOid4VpRecordService, Oid4VpRecordService>();
         builder.AddSingleton<IOid4VpRecordService, Oid4VpRecordService>();
-        builder.AddSingleton<IAuthorizationRecordService, AuthorizationRecordService>();
+        builder.AddSingleton<ISessionRecordService, SessionRecordService>();
             
         return builder;
     }

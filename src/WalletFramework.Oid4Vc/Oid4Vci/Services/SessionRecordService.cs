@@ -5,12 +5,11 @@ using WalletFramework.Oid4Vc.Oid4Vci.Models.Authorization;
 using WalletFramework.Oid4Vc.Oid4Vci.Models.CredentialOffer.GrantTypes;
 using WalletFramework.Oid4Vc.Oid4Vci.Models.Metadata;
 using WalletFramework.Oid4Vc.Oid4Vp.Services;
-using WalletFramework.SdJwtVc.Models;
 
 namespace WalletFramework.Oid4Vc.Oid4Vci.Services
 {
     /// <inheritdoc />
-    public class AuthorizationRecordService : IAuthorizationRecordService
+    public class SessionRecordService : ISessionRecordService
     {
         /// <summary>
         ///     The service responsible for wallet record operations.
@@ -21,7 +20,7 @@ namespace WalletFramework.Oid4Vc.Oid4Vci.Services
         ///     Initializes a new instance of the <see cref="Oid4VpRecordService" /> class.
         /// </summary>
         /// <param name="recordService">The service responsible for wallet record operations.</param>
-        public AuthorizationRecordService(IWalletRecordService recordService)
+        public SessionRecordService(IWalletRecordService recordService)
         {
             RecordService = recordService;
         }

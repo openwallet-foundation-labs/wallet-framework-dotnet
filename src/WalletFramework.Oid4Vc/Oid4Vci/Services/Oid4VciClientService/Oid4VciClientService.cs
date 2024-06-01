@@ -29,15 +29,15 @@ namespace WalletFramework.Oid4Vc.Oid4Vci.Services.Oid4VciClientService
         ///     The factory to create instances of <see cref="HttpClient" />. Used for making HTTP
         ///     requests.
         /// </param>
-        /// <param name="authorizationRecordService">The authorization record service</param>
+        /// <param name="sessionRecordService">The authorization record service</param>
         /// <param name="keyStore">The key store.</param>
         public Oid4VciClientService(
             IHttpClientFactory httpClientFactory,
-            IAuthorizationRecordService authorizationRecordService,
+            ISessionRecordService sessionRecordService,
             IKeyStore keyStore)
         {
             _httpClientFactory = httpClientFactory;
-            RecordService = authorizationRecordService;
+            RecordService = sessionRecordService;
             _keyStore = keyStore;
         }
 
@@ -53,7 +53,7 @@ namespace WalletFramework.Oid4Vc.Oid4Vci.Services.Oid4VciClientService
         /// <summary>
         ///     The service responsible for wallet record operations.
         /// </summary>
-        protected readonly IAuthorizationRecordService RecordService;
+        protected readonly ISessionRecordService RecordService;
 
         /// <inheritdoc />
         public async Task<MetadataSet> FetchMetadataAsync(Uri issuerEndpoint, string preferredLanguage)

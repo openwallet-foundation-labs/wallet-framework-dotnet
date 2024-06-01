@@ -8,7 +8,7 @@ namespace WalletFramework.Oid4Vc.Oid4Vci.Services
     /// <summary>
     ///    Service for managing authorization records. They are used during the VCI Authorization Code Flow to hold session relevant inforation.
     /// </summary>
-    public interface IAuthorizationRecordService
+    public interface ISessionRecordService
     {
         /// <summary>
         ///    Stores the authorization session record.

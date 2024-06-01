@@ -66,7 +66,7 @@ namespace WalletFramework.SdJwtVc.Tests
                 throw new NotImplementedException();
             }
 
-            public Task<string> GenerateKbProofOfPossessionAsync(string keyId, string audience, string nonce, string type, string? sdHash = null)
+            public Task<string> GenerateKbProofOfPossessionAsync(string keyId, string audience, string nonce, string type, string? sdHash = null, string? clientId = null)
             {
                 throw new NotImplementedException();
             }
