@@ -2,11 +2,15 @@ using FluentAssertions;
 using Hyperledger.Aries.Storage.Models.Interfaces;
 using Hyperledger.Aries.Tests.Extensions;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using SD_JWT.Roles.Implementation;
 using WalletFramework.Oid4Vc.Oid4Vp.Exceptions;
 using WalletFramework.Oid4Vc.Oid4Vp.Models;
 using WalletFramework.Oid4Vc.Oid4Vp.PresentationExchange.Models;
 using WalletFramework.Oid4Vc.Oid4Vp.PresentationExchange.Services;
 using WalletFramework.Oid4Vc.Tests.PresentationExchange.Models;
+using WalletFramework.SdJwtVc.Models.Credential;
+using WalletFramework.SdJwtVc.Models.Credential.Attributes;
 using WalletFramework.SdJwtVc.Models.Records;
 
 namespace WalletFramework.Oid4Vc.Tests.PresentationExchange.Services
@@ -54,23 +58,9 @@ namespace WalletFramework.Oid4Vc.Tests.PresentationExchange.Services
         [Fact]
         public async Task Can_Get_Credential_Candidates_For_Input_Descriptors()
         {
-            // Arrange
-            var driverLicenseClaims = new Dictionary<string, string>
-            {
-                { "id", "123" },
-                { "issuer", "did:example:gov" },
-                { "dateOfBirth", "01/01/2000" }
-            };
-
-            var universityCredentialClaims = new Dictionary<string, string>
-            {
-                { "degree", "Master of Science" },
-                { "universityName", "ExampleUniversity" }
-            };
-
-            var driverLicenseCredential = CreateCredential(driverLicenseClaims);
-            var driverLicenseCredentialClone = CreateCredential(driverLicenseClaims);
-            var universityCredential = CreateCredential(universityCredentialClaims);
+            var driverLicenseCredential = CreateCredential(CredentialExamples.DriverCredential);
+            var driverLicenseCredentialClone = CreateCredential(CredentialExamples.DriverCredential);
+            var universityCredential = CreateCredential(CredentialExamples.UniversityCredential);
 
             var idFilter = new Filter();
             idFilter.PrivateSet(x => x.Type, "string");
@@ -126,7 +116,7 @@ namespace WalletFramework.Oid4Vc.Tests.PresentationExchange.Services
                 { "dateOfBirth", "01/01/2000" }
             };
 
-            var employeeCredential = CreateCredential(driverLicenseClaims);
+            var employeeCredential = CreateCredential(CredentialExamples.UniversityCredential);
 
             var driverLicenseInputDescriptor = CreateInputDescriptor(
                 CreateConstraints(new[]
@@ -161,7 +151,7 @@ namespace WalletFramework.Oid4Vc.Tests.PresentationExchange.Services
                 { "dateOfBirth", "01/01/2000" }
             };
 
-            var driverLicenseCredential = CreateCredential(driverLicenseClaims);
+            var driverLicenseCredential = CreateCredential(CredentialExamples.DriverCredential);
 
             var idFilter = new Filter();
             idFilter.PrivateSet(x => x.Type, "string");
@@ -187,19 +177,21 @@ namespace WalletFramework.Oid4Vc.Tests.PresentationExchange.Services
             // Assert
             await Assert.ThrowsAsync<Oid4VpNoCredentialCandidateException>(act);
         }
-        
+
+        #region Helper Methods
         private static IPexService CreatePexService()
         {
             return new PexService();
         }
         
-        private static SdJwtRecord CreateCredential(Dictionary<string, string> claims)
+        private static SdJwtRecord CreateCredential(JObject payload)
         {
-            var record = new SdJwtRecord
-            {
-                Id = Guid.NewGuid().ToString(),
-                Claims = claims
-            };
+            const string jwk = "{\"kty\":\"EC\",\"d\":\"1_2Dagk1gvTIOX-DLPe7GHNsGLJMc7biySNA-so7TXE\",\"use\":\"sig\",\"crv\":\"P-256\",\"x\":\"X6sZhH_kFp_oKYiPXW-LvUyAv9mHp1xYcpAK3yy0wGY\",\"y\":\"p0URU7tgWbh42miznti0NVKM36fpJBbIfnF8ZCYGryE\",\"alg\":\"ES256\"}";
+
+            var issuedSdJwt = new Issuer().IssueCredential(payload, jwk);
+            
+            var record = new SdJwtRecord(issuedSdJwt.IssuanceFormat, new Dictionary<string, ClaimMetadata>(),
+                new List<CredentialDisplayMetadata>(), new Dictionary<string, string>(), "0");
 
             return record;
         }
@@ -251,5 +243,6 @@ namespace WalletFramework.Oid4Vc.Tests.PresentationExchange.Services
 
             return inputDescriptor;
         }
+        #endregion
     }
 }

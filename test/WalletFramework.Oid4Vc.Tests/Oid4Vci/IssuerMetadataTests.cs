@@ -2,7 +2,7 @@ using FluentAssertions;
 using Hyperledger.Aries.Extensions;
 using Newtonsoft.Json.Linq;
 using WalletFramework.Oid4Vc.Oid4Vci.Models.Metadata.Issuer;
-using static Hyperledger.Aries.Tests.Features.OpenId4Vc.Samples;
+using static WalletFramework.Oid4Vc.Tests.Samples;
 
 
 namespace WalletFramework.Oid4Vc.Tests.Oid4Vci

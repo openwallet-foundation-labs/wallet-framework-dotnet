@@ -47,18 +47,17 @@ namespace WalletFramework.SdJwtVc.Services.SdJwtVcHolderService
         }
 
         /// <inheritdoc />
-        public async Task<string> CreatePresentation(SdJwtRecord credential, string[]? disclosureNames,
+        public async Task<string> CreatePresentation(SdJwtRecord credential, string[] disclosedClaimPaths,
             string? audience = null,
             string? nonce = null)
         {
+            var sdJwtDoc = credential.ToSdJwtDoc();
             var disclosures = new List<Disclosure>();
-            foreach (var disclosure in credential.Disclosures)
+            foreach (var disclosure in sdJwtDoc.Disclosures)
             {
-                var deserializedDisclosure = Disclosure.Deserialize(disclosure);
-                
-                if (disclosureNames.Any(x => x == deserializedDisclosure.Name))
+                if (disclosedClaimPaths.Any(disclosedClaim => disclosedClaim.StartsWith(disclosure.Path ?? string.Empty)))
                 {
-                    disclosures.Add(deserializedDisclosure);
+                    disclosures.Add(disclosure);
                 }
             }
             
@@ -128,6 +127,14 @@ namespace WalletFramework.SdJwtVc.Services.SdJwtVcHolderService
             {
                 await RecordService.UpdateAsync(context.Wallet, record);
             }
+        }
+    }
+    
+    internal static class SdJwtRecordExtensions
+    {
+        internal static SdJwtDoc ToSdJwtDoc(this SdJwtRecord record)
+        {
+            return new SdJwtDoc(record.EncodedIssuerSignedJwt + "~" + string.Join("~", record.Disclosures) + "~");
         }
     }
 }
