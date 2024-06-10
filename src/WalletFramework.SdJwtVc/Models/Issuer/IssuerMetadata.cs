@@ -20,7 +20,7 @@ namespace WalletFramework.SdJwtVc.Models.Issuer
         ///     Gets or sets a list of display properties of a Credential Issuer for different languages.
         /// </summary>
         [JsonProperty("display", NullValueHandling = NullValueHandling.Ignore)]
-        public List<IssuerDisplayMetadata>? Display { get; set; }
+        public List<IssuerDisplay>? Display { get; set; }
 
         /// <summary>
         ///     Gets or sets the URL of the Credential Issuer's Credential Endpoint.

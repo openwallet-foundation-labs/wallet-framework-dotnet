@@ -145,6 +145,46 @@ namespace WalletFramework.Oid4Vc.Tests.PresentationExchange.Services
             // Assert
             credentialCandidatesArray.Should().BeEquivalentTo(expected);
         }
+        
+        [Fact]
+        public async Task Can_Get_Multiple_Credential_Candidates_For_Input_Descriptors_With_Nested_Paths()
+        {
+            var driverLicenseCredential = CreateCredential(CredentialExamples.DriverCredential);
+            var nestedCredential = CreateCredential(CredentialExamples.NestedCredential);
+            var alternativeNestedCredential = CreateCredential(CredentialExamples.AlternativeNestedCredential);
+
+            var vctFilter = new Filter();
+            vctFilter.PrivateSet(x => x.Const, "IdentityCredential");
+
+            var identityCredentialInputDescriptor = CreateInputDescriptor(
+                CreateConstraints(new[]
+                    { CreateField("$.address.city"), CreateField("$.vct", vctFilter), CreateField("$.iss") }),
+                new Dictionary<string, Format> { {"vc+sd-jwt", CreateFormat(new[] { "ES256" }) }},
+                Guid.NewGuid().ToString(),
+                "Identity Credential",
+                "We can only accept digital identity credentials.",
+                new[] { "A" });
+
+            var expected = new List<CredentialCandidates>
+            {
+                new CredentialCandidates(
+                    identityCredentialInputDescriptor.Id,
+                    new List<ICredential> { nestedCredential, alternativeNestedCredential }),
+            };
+
+            var sdJwtVcHolderService = CreatePexService();
+
+            // Act
+            var credentialCandidatesArray = await sdJwtVcHolderService.FindCredentialCandidates(
+                new[]
+                {
+                    driverLicenseCredential, alternativeNestedCredential, nestedCredential
+                },
+                new[] { identityCredentialInputDescriptor });
+
+            // Assert
+            credentialCandidatesArray.Should().BeEquivalentTo(expected);
+        }
 
         [Fact]
         public async Task Cant_Get_Credential_Candidates_When_Not_All_Fields_Are_Fulfilled()

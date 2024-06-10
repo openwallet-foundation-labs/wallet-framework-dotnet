@@ -171,7 +171,7 @@ namespace WalletFramework.SdJwtVc.Models.Records
             var issuerNameDictionary = new Dictionary<string, string>();
 
             foreach (var display in issuerMetadata.Display?.Where(d => d.Locale != null) ??
-                                    Enumerable.Empty<IssuerDisplayMetadata>())
+                                    Enumerable.Empty<IssuerDisplay>())
             {
                 issuerNameDictionary[display.Locale!] = display.Name!;
             }

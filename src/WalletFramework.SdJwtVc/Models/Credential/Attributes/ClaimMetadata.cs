@@ -15,7 +15,7 @@ namespace WalletFramework.SdJwtVc.Models.Credential.Attributes
         ///     be displayed.
         /// </value>
         [JsonProperty("display", NullValueHandling = NullValueHandling.Ignore)]
-        public List<ClaimDisplayMetadata>? Display { get; set; }
+        public List<ClaimDisplay>? Display { get; set; }
 
         /// <summary>
         ///     String value determining type of value of the claim. A non-exhaustive list of valid values defined by this

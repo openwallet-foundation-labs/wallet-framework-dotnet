@@ -5,7 +5,7 @@ namespace WalletFramework.SdJwtVc.Models.Issuer
     /// <summary>
     ///     Represents the visual representations for the Issuer.
     /// </summary>
-    public class IssuerDisplayMetadata
+    public class IssuerDisplay
     {
         /// <summary>
         ///     Gets or sets the name of the Issuer.
