@@ -7,7 +7,7 @@ namespace WalletFramework.SdJwtVc.Models.Credential.Attributes
     /// <summary>
     ///     Represents the visual representations for the credential attribute.
     /// </summary>
-    public class OidCredentialAttributeDisplay
+    public class ClaimDisplay
     {
         /// <summary>
         ///     Gets or sets the name for the credential attribute.

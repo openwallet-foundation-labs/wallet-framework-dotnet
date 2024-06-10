@@ -1,7 +1,4 @@
 using System.Collections.Immutable;
-using System.Globalization;
-using System.IdentityModel.Tokens.Jwt;
-using System.Text.Json;
 using Hyperledger.Aries.Storage;
 using Hyperledger.Aries.Storage.Models.Interfaces;
 using Newtonsoft.Json;
@@ -22,15 +19,16 @@ namespace WalletFramework.SdJwtVc.Models.Records
         /// <summary>
         ///     Gets or sets the attributes that should be displayed.
         /// </summary>
-        public Dictionary<string, OidClaim>? DisplayedAttributes { get; set; }
+        public Dictionary<string, ClaimMetadata>? DisplayedAttributes { get; set; }
 
         /// <summary>
         ///     Gets or sets the attributes that should be displayed.
         /// </summary>
         public List<string>? AttributeOrder { get; set; }
-        
+
         /// <summary>
-        ///     Gets or sets the claims made.
+        ///     Gets or sets the flattened structure of the claims in the credential.
+        ///     The key is a JSON path to the claim value in the decoded SdJwtVc.
         /// </summary>
         public Dictionary<string, string> Claims { get; set; }
 
@@ -47,7 +45,7 @@ namespace WalletFramework.SdJwtVc.Models.Records
         /// <summary>
         ///     Gets or sets the display of the credential.
         /// </summary>
-        public List<OidCredentialDisplay>? Display { get; set; }
+        public List<CredentialDisplayMetadata>? Display { get; set; }
 
         /// <summary>
         ///     Gets the Issuer-signed JWT part of the SD-JWT.
@@ -109,61 +107,58 @@ namespace WalletFramework.SdJwtVc.Models.Records
         /// <param name="keyId">The key record ID.</param>
         /// <param name="vct">The verifiable credential type.</param>
         [JsonConstructor]
-        private SdJwtRecord(
-            Dictionary<string, OidClaim> displayedAttributes,
+        public SdJwtRecord(
+            Dictionary<string, ClaimMetadata> displayedAttributes,
             Dictionary<string, string> claims,
             Dictionary<string, string> issuerName,
             ImmutableArray<string> disclosures,
-            List<OidCredentialDisplay> display,
+            List<CredentialDisplayMetadata> display,
             string encodedIssuerSignedJwt,
-            string id,
             string issuerId,
             string keyId,
             string vct)
         {
+            Id = Guid.NewGuid().ToString();
+            
             Claims = claims;
             Disclosures = disclosures;
+            
             Display = display;
             DisplayedAttributes = displayedAttributes;
+            
             EncodedIssuerSignedJwt = encodedIssuerSignedJwt;
-            Id = id;
+            
             IssuerId = issuerId;
             IssuerName = issuerName;
+            
             KeyId = keyId;
             Vct = vct;
         }
-
-        /// <summary>
-        ///     Creates a SdJwtRecord from a SdJwtDoc.
-        /// </summary>
-        /// <param name="sdJwtDoc">The SdJwtDoc.</param>
-        /// <returns>The SdJwtRecord.</returns>
-        public static SdJwtRecord FromSdJwtDoc(SdJwtDoc sdJwtDoc)
-            => new()
-            {
-                EncodedIssuerSignedJwt = sdJwtDoc.EncodedIssuerSignedJwt,
-                Vct = ExtractVctFromJwtPayload(sdJwtDoc.EncodedIssuerSignedJwt),
-                Disclosures = sdJwtDoc.Disclosures.Select(x => x.Serialize()).ToImmutableArray(),
-                Claims = WithDisclosedClaims(sdJwtDoc.EncodedIssuerSignedJwt)
-                    .Concat(WithSelectivelyDisclosableClaims(sdJwtDoc.Disclosures))
-                    .ToDictionary(x => x.key, x => x.value)
-            };
-
-        /// <summary>
-        ///     Sets display properties of the SdJwtRecord based on the provided issuer metadata.
-        /// </summary>
-        /// <param name="issuerMetadata">The issuer metadata.</param>
-        /// <param name="credentialMetadataId">The credential metadata ID.</param>
-        public void SetDisplayFromIssuerMetadata(
-            OidIssuerMetadata issuerMetadata,
-            string credentialMetadataId)
+        
+        public SdJwtRecord(
+            string serializedSdJwtWithDisclosures,
+            Dictionary<string, ClaimMetadata> displayedAttributes,
+            List<CredentialDisplayMetadata> display,
+            Dictionary<string, string> issuerName,
+            string keyId
+        )
         {
-            Display = issuerMetadata.GetCredentialDisplay(credentialMetadataId);
-            DisplayedAttributes = issuerMetadata.GetCredentialClaims(credentialMetadataId);
-            AttributeOrder = issuerMetadata.CredentialConfigurationsSupported[credentialMetadataId].Order;
-
-            IssuerId = issuerMetadata.CredentialIssuer;
-            IssuerName = CreateIssuerNameDictionary(issuerMetadata);
+            Id = Guid.NewGuid().ToString();
+            
+            SdJwtDoc sdJwtDoc = new SdJwtDoc(serializedSdJwtWithDisclosures);
+            EncodedIssuerSignedJwt = sdJwtDoc.IssuerSignedJwt;
+            Disclosures = sdJwtDoc.Disclosures.Select(x => x.Serialize()).ToImmutableArray();
+            Claims = sdJwtDoc.GetAllSubjectClaims();
+            Display = display;
+            DisplayedAttributes = displayedAttributes;
+            
+            IssuerName = issuerName;
+            
+            KeyId = keyId;
+            IssuerId = sdJwtDoc.UnsecuredPayload.SelectToken("iss")?.Value<string>() ?? 
+                       throw new ArgumentNullException(nameof(IssuerId), "iss claim is missing or null");
+            Vct = sdJwtDoc.UnsecuredPayload.SelectToken("vct")?.Value<string>() ?? 
+                  throw new ArgumentNullException(nameof(Vct), "vct claim is missing or null"); // Extract vct
         }
 
         /// <summary>
@@ -171,54 +166,75 @@ namespace WalletFramework.SdJwtVc.Models.Records
         /// </summary>
         /// <param name="issuerMetadata">The issuer metadata.</param>
         /// <returns>The dictionary of the issuer name in different languages.</returns>
-        private static Dictionary<string, string>? CreateIssuerNameDictionary(OidIssuerMetadata issuerMetadata)
+        private static Dictionary<string, string>? CreateIssuerNameDictionary(IssuerMetadata issuerMetadata)
         {
             var issuerNameDictionary = new Dictionary<string, string>();
 
             foreach (var display in issuerMetadata.Display?.Where(d => d.Locale != null) ??
-                                    Enumerable.Empty<OidIssuerDisplay>())
+                                    Enumerable.Empty<IssuerDisplay>())
             {
                 issuerNameDictionary[display.Locale!] = display.Name!;
             }
 
             return issuerNameDictionary.Count > 0 ? issuerNameDictionary : null;
         }
-
-        /// <summary>
-        ///     Extracts the "vct" property from the JWT payload.
-        /// </summary>
-        /// <param name="encodedJwt">The encoded JWT.</param>
-        /// <returns>The value of the verifiable credential type claim.</returns>
-        private static string ExtractVctFromJwtPayload(string encodedJwt)
+    }
+    
+    internal static class JsonExtensions
+    {
+        internal static Dictionary<string, string> GetAllSubjectClaims(this SdJwtDoc sdJwtDoc)
         {
-            var jwtHandler = new JwtSecurityTokenHandler();
-            var jwtToken = jwtHandler.ReadJwtToken(encodedJwt);
-            var payloadJson = jwtToken.Payload.SerializeToJson();
-            var payloadObj = JsonDocument.Parse(payloadJson).RootElement;
+            var unsecuredPayload = (JObject)sdJwtDoc.UnsecuredPayload.DeepClone();
+            
+            RemoveRegisteredClaims(unsecuredPayload);
+            
+            var allLeafClaims = GetLeafNodePaths(unsecuredPayload);
 
-            if (payloadObj.TryGetProperty("vct", out var vct))
+            return allLeafClaims.ToDictionary(key => key, key => unsecuredPayload.SelectToken(key)?.ToString() ?? string.Empty);
+
+            void RemoveRegisteredClaims(JObject jObject)
             {
-                return vct.GetString() ?? string.Empty;
+                string[] registeredClaims = { "iss", "sub", "aud", "exp", "nbf", "iat", "jti", "vct", "cnf", "status" };
+                foreach (var claim in registeredClaims)
+                {
+                    jObject.Remove(claim);
+                }
             }
+        }
+        
+        private static List<string> GetLeafNodePaths(JObject jObject)
+        {
+            var leafNodePaths = new List<string>();
 
-            return string.Empty;
+            TraverseJToken(jObject, "", leafNodePaths);
+
+            return leafNodePaths;
         }
 
-        private static IEnumerable<(string key, string value)> WithDisclosedClaims(string tokenAsString)
-            => new JwtSecurityTokenHandler()
-                .ReadJwtToken(tokenAsString).Claims
-                .Where(claim => !string.Equals(claim.Type, "_sd") && !string.Equals(claim.Type, "..."))
-                .Select(c => (c.Type, c.Value));
+        private static void TraverseJToken(JToken token, string currentPath, List<string> leafNodePaths)
+        {
+            switch (token.Type)
+            {
+                case JTokenType.Object:
+                    foreach (var property in token.Children<JProperty>())
+                    {
+                        TraverseJToken(property.Value, $"{currentPath}.{property.Name}", leafNodePaths);
+                    }
+                    break;
 
-        /// <summary>
-        ///     Creates a dictionary of claims based on the list of disclosures.
-        /// </summary>
-        /// <param name="disclosures">The list of disclosures.</param>
-        /// <returns>The dictionary of claims.</returns>
-        private static IEnumerable<(string key, string value)> WithSelectivelyDisclosableClaims(
-            IEnumerable<Disclosure> disclosures)
-            => disclosures
-                .Where(x => x.Value is JValue jValue)
-                .Select(d => (d.Name, ((JValue)d.Value).ToString(CultureInfo.InvariantCulture)));
+                case JTokenType.Array:
+                    int index = 0;
+                    foreach (var item in token.Children())
+                    {
+                        TraverseJToken(item, $"{currentPath}[{index}]", leafNodePaths);
+                        index++;
+                    }
+                    break;
+
+                default:
+                    leafNodePaths.Add(currentPath.TrimStart('.'));
+                    break;
+            }
+        }
     }
 }

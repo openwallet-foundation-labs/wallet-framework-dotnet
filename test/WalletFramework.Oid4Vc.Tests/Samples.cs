@@ -1,6 +1,6 @@
 using Newtonsoft.Json.Linq;
 
-namespace Hyperledger.Aries.Tests.Features.OpenId4Vc
+namespace WalletFramework.Oid4Vc.Tests
 {
     public static class Samples
     {

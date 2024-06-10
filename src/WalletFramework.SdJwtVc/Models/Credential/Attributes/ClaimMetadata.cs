@@ -1,5 +1,3 @@
-#nullable enable
-
 using Newtonsoft.Json;
 
 namespace WalletFramework.SdJwtVc.Models.Credential.Attributes
@@ -7,7 +5,7 @@ namespace WalletFramework.SdJwtVc.Models.Credential.Attributes
     /// <summary>
     ///     Represents the specifics about a claim.
     /// </summary>
-    public class OidClaim
+    public class ClaimMetadata
     {
         /// <summary>
         ///     Gets or sets the list of display properties associated with a specific credential attribute.
@@ -17,7 +15,7 @@ namespace WalletFramework.SdJwtVc.Models.Credential.Attributes
         ///     be displayed.
         /// </value>
         [JsonProperty("display", NullValueHandling = NullValueHandling.Ignore)]
-        public List<OidCredentialAttributeDisplay>? Display { get; set; }
+        public List<ClaimDisplay>? Display { get; set; }
 
         /// <summary>
         ///     String value determining type of value of the claim. A non-exhaustive list of valid values defined by this

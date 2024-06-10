@@ -4,7 +4,7 @@ using Hyperledger.TestHarness.Mock;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Moq.Protected;
-using SD_JWT;
+using SD_JWT.Roles.Implementation;
 using WalletFramework.Oid4Vc.Oid4Vci.Models.Metadata.Credential;
 using WalletFramework.Oid4Vc.Oid4Vci.Models.Metadata.Credential.Attributes;
 using WalletFramework.Oid4Vc.Oid4Vci.Models.Metadata.Issuer;

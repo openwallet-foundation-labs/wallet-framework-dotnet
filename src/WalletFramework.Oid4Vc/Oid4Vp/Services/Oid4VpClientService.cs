@@ -1,5 +1,6 @@
 using Hyperledger.Aries.Agents;
 using Microsoft.Extensions.Logging;
+using SD_JWT.Models;
 using WalletFramework.Oid4Vc.Oid4Vp.Models;
 using WalletFramework.Oid4Vc.Oid4Vp.PresentationExchange.Services;
 using WalletFramework.SdJwtVc.Models.Records;
@@ -72,16 +73,13 @@ namespace WalletFramework.Oid4Vc.Oid4Vp.Services
                 from credential in selectedCredentials
                 from inputDescriptor in authorizationRequest.PresentationDefinition.InputDescriptors
                 where credential.InputDescriptorId == inputDescriptor.Id
-                let disclosureNames = inputDescriptor
+                let disclosedClaims = inputDescriptor
                     .Constraints
                     .Fields?
-                    .SelectMany(field => field
-                        .Path
-                        .Select(path => path.Split(".").Last())
-                    )
+                    .SelectMany(field => field.Path.Select(path => path.TrimStart('$', '.')))
                 let createPresentation = _sdJwtVcHolderService.CreatePresentation(
                     (SdJwtRecord)credential.Credential,
-                    disclosureNames.ToArray(),
+                    disclosedClaims.ToArray(),
                     authorizationRequest.ClientId,
                     authorizationRequest.Nonce
                 )
@@ -120,39 +118,44 @@ namespace WalletFramework.Oid4Vc.Oid4Vp.Services
             if (!responseMessage.IsSuccessStatusCode)
                 throw new InvalidOperationException("Authorization Response could not be sent");
 
-            var presentedCredentials = selectedCredentials
-                .Select(credential =>
+            var presentedCredentials = presentationMaps
+                .Join(
+                    selectedCredentials,
+                    presentation => presentation.Item1,
+                    selectedCredential => selectedCredential.InputDescriptorId,
+                    (presentation, selectedCredential) => new
                     {
-                        var inputDescriptor =
-                            authorizationRequest
-                                .PresentationDefinition
-                                .InputDescriptors
-                                .Single(descriptor => descriptor.Id == credential.InputDescriptorId);
-
-                        return new PresentedCredential
-                        {
-                            CredentialId = ((SdJwtRecord)credential.Credential).Id,
-                            PresentedClaims =
-                                inputDescriptor
-                                    .Constraints
-                                    .Fields?
-                                    .SelectMany(
-                                        field => field.Path.Select(
-                                            path =>
-                                                ((SdJwtRecord)credential.Credential)
-                                                .Claims
-                                                .First(x =>
-                                                    x.Key == path.Split(".").Last()
-                                                )
-                                        )
-                                    )
-                                    .ToDictionary(
-                                        claim => claim.Key,
-                                        claim => new PresentedClaim { Value = claim.Value }
-                                    )!
-                        };
+                        inputDescriptorId = presentation.Item1,
+                        presentationFormat = presentation.Item2,
+                        credential = selectedCredential.Credential
                     }
-                );
+                ).Select(presentationMapItem =>
+                {
+                    var credentialRecord = (SdJwtRecord)presentationMapItem.credential;
+                    var issuanceSdJwtDoc = credentialRecord.ToSdJwtDoc();
+                    var presentationSdJwtDoc = new SdJwtDoc(presentationMapItem.presentationFormat);
+
+                    var nonDisclosedDisclosure =
+                        from issuedDisclosures in issuanceSdJwtDoc.Disclosures
+                        let base64Encoded = issuedDisclosures.Base64UrlEncoded
+                        where presentationSdJwtDoc.Disclosures.All(itm => itm.Base64UrlEncoded != base64Encoded)
+                        select issuedDisclosures;
+                    
+                    var presentedClaims = 
+                        from claim in credentialRecord.Claims
+                        where !nonDisclosedDisclosure.Any(nd => claim.Key.StartsWith(nd.Path ?? string.Empty))
+                        select new
+                        {
+                            key = claim.Key, 
+                            value = new PresentedClaim { Value = claim.Value }  
+                        };
+
+                    return new PresentedCredential
+                    {
+                        CredentialId = credentialRecord.Id,
+                        PresentedClaims = presentedClaims.ToDictionary(itm => itm.key, itm => itm.value)
+                    };
+                });
 
             await _oid4VpRecordService.StoreAsync(
                 agentContext,
@@ -174,6 +177,14 @@ namespace WalletFramework.Oid4Vc.Oid4Vp.Services
                 _logger.LogWarning("Could not parse Redirect URI received from: {ResponseUri} due to exception: {Exception}", authorizationRequest.ResponseUri, e);
                 return null;
             }
+        }
+    }
+    
+    internal static class SdJwtRecordExtensions
+    {
+        internal static SdJwtDoc ToSdJwtDoc(this SdJwtRecord record)
+        {
+            return new SdJwtDoc(record.EncodedIssuerSignedJwt + "~" + string.Join("~", record.Disclosures) + "~");
         }
     }
 }
