@@ -1,9 +1,12 @@
 using Hyperledger.Aries;
 using Hyperledger.Aries.Agents;
 using Hyperledger.Aries.Storage;
-using SD_JWT.Abstractions;
+using Hyperledger.Indy.WalletApi;
 using SD_JWT.Models;
+using SD_JWT.Roles;
 using WalletFramework.SdJwtVc.KeyStore.Services;
+using WalletFramework.SdJwtVc.Models.Credential;
+using WalletFramework.SdJwtVc.Models.Credential.Attributes;
 using WalletFramework.SdJwtVc.Models.Issuer;
 using WalletFramework.SdJwtVc.Models.Records;
 
@@ -44,18 +47,17 @@ namespace WalletFramework.SdJwtVc.Services.SdJwtVcHolderService
         }
 
         /// <inheritdoc />
-        public async Task<string> CreatePresentation(SdJwtRecord credential, string[]? disclosureNames,
+        public async Task<string> CreatePresentation(SdJwtRecord credential, string[] disclosedClaimPaths,
             string? audience = null,
             string? nonce = null)
         {
+            var sdJwtDoc = credential.ToSdJwtDoc();
             var disclosures = new List<Disclosure>();
-            foreach (var disclosure in credential.Disclosures)
+            foreach (var disclosure in sdJwtDoc.Disclosures)
             {
-                var deserializedDisclosure = Disclosure.Deserialize(disclosure);
-                
-                if (disclosureNames.Any(x => x == deserializedDisclosure.Name))
+                if (disclosedClaimPaths.Any(disclosedClaim => disclosedClaim.StartsWith(disclosure.Path ?? string.Empty)))
                 {
-                    disclosures.Add(deserializedDisclosure);
+                    disclosures.Add(disclosure);
                 }
             }
             
@@ -97,24 +99,42 @@ namespace WalletFramework.SdJwtVc.Services.SdJwtVcHolderService
         }
 
         /// <inheritdoc />
+        [Obsolete("Use SaveAsync instead.")]
         public virtual async Task<string> StoreAsync(
             IAgentContext context, 
             string combinedIssuance,
-            string keyId, 
-            OidIssuerMetadata issuerMetadata,
-            string credentialMetadataId)
+            string keyId,
+            IssuerMetadata issuerMetadata,
+            List<CredentialDisplayMetadata> displayMetadata,
+            Dictionary<string, ClaimMetadata> claimMetadata,
+            Dictionary<string, string> issuerName
+        )
         {
-            var sdJwtDoc = Holder.ReceiveCredential(combinedIssuance);
-            var record = SdJwtRecord.FromSdJwtDoc(sdJwtDoc);
+            var record = new SdJwtRecord(combinedIssuance, claimMetadata, displayMetadata, issuerName, keyId);
 
-            record.SetDisplayFromIssuerMetadata(issuerMetadata, credentialMetadataId);
-            
-            record.Id = Guid.NewGuid().ToString();
-            record.KeyId = keyId;
-
-            await RecordService.AddAsync(context.Wallet, record);
-
+            await SaveAsync(context, record);
             return record.Id;
+        }
+
+        /// <inheritdoc />
+        public virtual async Task SaveAsync(IAgentContext context, SdJwtRecord record)
+        {
+            try
+            {
+                await RecordService.AddAsync(context.Wallet, record);
+            }
+            catch (WalletItemAlreadyExistsException)
+            {
+                await RecordService.UpdateAsync(context.Wallet, record);
+            }
+        }
+    }
+    
+    internal static class SdJwtRecordExtensions
+    {
+        internal static SdJwtDoc ToSdJwtDoc(this SdJwtRecord record)
+        {
+            return new SdJwtDoc(record.EncodedIssuerSignedJwt + "~" + string.Join("~", record.Disclosures) + "~");
         }
     }
 }

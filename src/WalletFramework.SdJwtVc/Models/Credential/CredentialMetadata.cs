@@ -1,5 +1,3 @@
-#nullable enable
-
 using Newtonsoft.Json;
 using WalletFramework.SdJwtVc.Models.Credential.Attributes;
 
@@ -8,7 +6,7 @@ namespace WalletFramework.SdJwtVc.Models.Credential
     /// <summary>
     ///     Represents the metadata of a specific type of credential that a Credential Issuer can issue.
     /// </summary>
-    public class OidCredentialMetadata
+    public class CredentialMetadata
     {
         /// <summary>
         ///     Gets or sets the verifiable credential type (vct). This is SD-JWT specific.
@@ -32,13 +30,13 @@ namespace WalletFramework.SdJwtVc.Models.Credential
         ///     Gets or sets the dictionary representing the attributes of the credential in different languages.
         /// </summary>
         [JsonProperty("claims")]
-        public Dictionary<string, OidClaim>? Claims { get; set; }
+        public Dictionary<string, ClaimMetadata>? Claims { get; set; }
 
         /// <summary>
         ///     Gets or sets a list of display properties of the supported credential for different languages.
         /// </summary>
         [JsonProperty("display", NullValueHandling = NullValueHandling.Ignore)]
-        public List<OidCredentialDisplay>? Display { get; set; }
+        public List<CredentialDisplayMetadata>? Display { get; set; }
 
         /// <summary>
         ///     Gets or sets a list of methods that identify how the Credential is bound to the identifier of the End-User who
@@ -76,13 +74,13 @@ namespace WalletFramework.SdJwtVc.Models.Credential
         ///     Gets or sets a dictionary which maps a credential type to its supported signing algorithms for key proofs.
         /// </summary>
         [JsonProperty("proof_types_supported", NullValueHandling = NullValueHandling.Ignore)]
-        public Dictionary<string, OidCredentialProofType>? ProofTypesSupported { get; set; }
+        public Dictionary<string, CredentialProofType>? ProofTypesSupported { get; set; }
     }
     
     /// <summary>
     ///     Represents credential type specific signing algorithm information.
     /// </summary>
-    public class OidCredentialProofType
+    public class CredentialProofType
     {
         /// <summary>
         ///     Gets or sets the available signing algorithms for the associated credential type.

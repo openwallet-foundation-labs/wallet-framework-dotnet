@@ -67,10 +67,10 @@ namespace WalletFramework.Oid4Vc.Oid4Vci.Services.Oid4VciClientService
         /// <inheritdoc />
         public async Task<Uri> InitiateAuthentication(
             IAgentContext agentContext,
-            AuthorizationCode authorizationCode,
             ClientOptions clientOptions,
             MetadataSet metadataSet,
-            string[] credentialConfigurationIds)
+            string[] credentialConfigurationIds,
+            AuthorizationCode? authorizationCode)
         {
             var authorizationCodeParameters = CreateAndStoreCodeChallenge();
             var sessionId = Guid.NewGuid().ToString();
@@ -93,7 +93,7 @@ namespace WalletFramework.Oid4Vc.Oid4Vci.Services.Oid4VciClientService
                         Locations = metadataSet.IssuerMetadata.AuthorizationServers
                     }).ToArray(),
                 string.Join(" ", credentialMetadatas.Select(metadata => metadata.Scope)),
-                authorizationCode.IssuerState,
+                authorizationCode?.IssuerState,
                 clientOptions.WalletIssuer,
                 null,
                 null
@@ -117,11 +117,11 @@ namespace WalletFramework.Oid4Vc.Oid4Vci.Services.Oid4VciClientService
             await RecordService.StoreAsync(
                 agentContext, 
                 sessionId, 
-                authorizationCodeParameters, 
-                authorizationCode, 
+                authorizationCodeParameters,
                 clientOptions,
                 metadataSet,
-                credentialConfigurationIds);
+                credentialConfigurationIds,
+                authorizationCode);
             
             return authorizationRequestUri;
         }

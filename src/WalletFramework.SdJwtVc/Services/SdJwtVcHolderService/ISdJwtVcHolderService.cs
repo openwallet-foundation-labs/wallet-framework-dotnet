@@ -1,5 +1,7 @@
 using Hyperledger.Aries.Agents;
 using Hyperledger.Aries.Storage;
+using WalletFramework.SdJwtVc.Models.Credential;
+using WalletFramework.SdJwtVc.Models.Credential.Attributes;
 using WalletFramework.SdJwtVc.Models.Issuer;
 using WalletFramework.SdJwtVc.Models.Records;
 
@@ -27,12 +29,12 @@ namespace WalletFramework.SdJwtVc.Services.SdJwtVcHolderService
         /// <remarks>
         ///     The SD-JWT is created using the provided SD-JWT credential and the provided claims are disclosed
         /// </remarks>
-        /// <param name="disclosureNames">The claims to disclose</param>
+        /// <param name="disclosedClaimPaths">The claims to disclose</param>
         /// <param name="credential">The SD-JWT credential</param>
         /// <param name="audience">The targeted audience</param>
         /// <param name="nonce">The nonce</param>
         /// <returns>The SD-JWT in presentation format</returns>
-        Task<string> CreatePresentation(SdJwtRecord credential, string[]? disclosureNames, string? audience = null, string? nonce = null);
+        Task<string> CreatePresentation(SdJwtRecord credential, string[] disclosedClaimPaths, string? audience = null, string? nonce = null);
         
         /// <summary>
         ///     Retrieves a specific SD-JWT record by its ID.
@@ -66,13 +68,17 @@ namespace WalletFramework.SdJwtVc.Services.SdJwtVcHolderService
         /// <param name="combinedIssuance">The combined issuance.</param>
         /// <param name="keyId">The key id.</param>
         /// <param name="issuerMetadata">The issuer metadata.</param>
-        /// <param name="credentialMetadataId">The credential metadata ID.</param>
+        /// <param name="displayMetadata"></param>
+        /// <param name="claimMetadata"></param>
+        /// <param name="issuerName"></param>
         /// <returns>A task representing the asynchronous operation. The task result contains the ID of the stored JWT record.</returns>
         Task<string> StoreAsync(
-            IAgentContext context,
+            IAgentContext context, 
             string combinedIssuance,
-            string keyId,
-            OidIssuerMetadata issuerMetadata,
-            string credentialMetadataId);
+            string keyId, 
+            IssuerMetadata issuerMetadata,
+            List<CredentialDisplayMetadata> displayMetadata,
+            Dictionary<string, ClaimMetadata> claimMetadata,
+            Dictionary<string, string> issuerName);
     }
 }

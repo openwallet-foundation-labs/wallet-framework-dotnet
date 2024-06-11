@@ -26,17 +26,17 @@ namespace WalletFramework.Oid4Vc.Oid4Vci.Services.Oid4VciClientService
         ///    Initiates the authorization process of the VCI authorization code flow.
         /// </summary>
         /// <param name="agentContext">Agent Context</param>
-        /// <param name="authorizationCode"></param>
-        /// <param name="clientOptions"></param>
-        /// <param name="metadataSet"></param>
-        /// <param name="credentialConfigurationIds"></param>
+        /// <param name="clientOptions">Options specified by the Client (Wallet)</param>
+        /// <param name="metadataSet">Consists of Issuer and Credential Metadata</param>
+        /// <param name="credentialConfigurationIds">Identifiers of the Credentials that will be requested</param>
+        /// <param name="authorizationCode">Authorization Code from the Credential Offer. Only used within the Issuer Initiated Authorization Code Flow</param>
         /// <returns></returns>
         Task<Uri> InitiateAuthentication(
             IAgentContext agentContext,
-            AuthorizationCode authorizationCode,
             ClientOptions clientOptions,
             MetadataSet metadataSet,
-            string[] credentialConfigurationIds);
+            string[] credentialConfigurationIds,
+            AuthorizationCode? authorizationCode);
 
         /// <summary>
         ///     Requests a verifiable credential using the pre authorized code flow.

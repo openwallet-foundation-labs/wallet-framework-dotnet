@@ -6,7 +6,7 @@ namespace WalletFramework.SdJwtVc.Models.Credential
     /// <summary>
     ///    Represents the detailed description of the credential type.
     /// </summary>
-    public class OidCredentialDefinition
+    public class CredentialDefinition
     {
         /// <summary>
         ///     Gets or sets the verifiable credential type (vct).
@@ -18,6 +18,6 @@ namespace WalletFramework.SdJwtVc.Models.Credential
         ///     Gets or sets the dictionary representing the attributes of the credential in different languages.
         /// </summary>
         [JsonProperty("claims")]
-        public Dictionary<string, OidClaim>? Claims { get; set; }
+        public Dictionary<string, ClaimMetadata>? Claims { get; set; }
     }
 }

@@ -13,22 +13,22 @@ namespace WalletFramework.Oid4Vc.Oid4Vci.Services
         /// <summary>
         ///    Stores the authorization session record.
         /// </summary>
-        /// <param name="context"></param>
-        /// <param name="sessionId"></param>
-        /// <param name="authorizationCodeParameters"></param>
-        /// <param name="authorizationCode"></param>
-        /// <param name="clientOptions"></param>
-        /// <param name="metadataSet"></param>
-        /// <param name="credentialConfigurationIds"></param>
+        /// <param name="context">Agent Context</param>
+        /// <param name="sessionId">Session Identifier of a Authorization Code Flow session</param>
+        /// <param name="authorizationCodeParameters">Parameters required for the authorization during the VCI authorization code flow.</param>
+        /// <param name="clientOptions">Options specified by the Client (Wallet)</param>
+        /// <param name="metadataSet">Consists of Issuer and Credential Metadata</param>
+        /// <param name="credentialConfigurationIds">Identifiers of the Credentials that will be requested</param>
+        /// <param name="authorizationCode">Authorization Code from the Credential Offer. Only used within the Issuer Initiated Authorization Code Flow</param>
         /// <returns></returns>
         Task<string> StoreAsync(
             IAgentContext context,
             VciSessionId sessionId,
             AuthorizationCodeParameters authorizationCodeParameters,
-            AuthorizationCode authorizationCode,
             ClientOptions clientOptions,
             MetadataSet metadataSet,
-            string[] credentialConfigurationIds);
+            string[] credentialConfigurationIds,
+            AuthorizationCode? authorizationCode);
         
         /// <summary>
         ///    Retrieves the authorization session record by the session identifier.

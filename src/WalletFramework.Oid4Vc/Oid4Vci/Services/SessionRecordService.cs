@@ -30,18 +30,18 @@ namespace WalletFramework.Oid4Vc.Oid4Vci.Services
             IAgentContext agentContext,
             VciSessionId sessionId,
             AuthorizationCodeParameters authorizationCodeParameters,
-            AuthorizationCode authorizationCode,
             ClientOptions clientOptions,
             MetadataSet metadataSet,
-            string[] credentialConfigurationIds)
+            string[] credentialConfigurationIds,
+            AuthorizationCode? authorizationCode)
         {
             var record = new VciAuthorizationSessionRecord(
                 sessionId, 
-                authorizationCodeParameters, 
-                authorizationCode, 
+                authorizationCodeParameters,
                 clientOptions, 
                 metadataSet, 
-                credentialConfigurationIds);
+                credentialConfigurationIds,
+                authorizationCode);
             
             await RecordService.AddAsync(
                 agentContext.Wallet,

@@ -1,6 +1,6 @@
 using Microsoft.IdentityModel.Tokens;
-using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using SD_JWT.Models;
 using WalletFramework.Oid4Vc.Oid4Vp.Exceptions;
 using WalletFramework.Oid4Vc.Oid4Vp.Models;
 using WalletFramework.Oid4Vc.Oid4Vp.PresentationExchange.Models;
@@ -47,7 +47,7 @@ namespace WalletFramework.Oid4Vc.Oid4Vp.PresentationExchange.Services
                 }
 
                 var matchingCredentials =
-                    FindMatchingCredentialsForFields(credentials, inputDescriptor.Constraints.Fields);
+                    _filterMatchingCredentialsForFields(credentials, inputDescriptor.Constraints.Fields);
                 if (matchingCredentials.Length == 0)
                 {
                     continue;
@@ -68,24 +68,41 @@ namespace WalletFramework.Oid4Vc.Oid4Vp.PresentationExchange.Services
 
             return Task.FromResult(result.ToArray());
         }
-        
-        private static SdJwtRecord[] FindMatchingCredentialsForFields(
-            SdJwtRecord[] records, Field[] fields)
+
+        private static SdJwtRecord[] _filterMatchingCredentialsForFields(SdJwtRecord[] records, Field[] fields) 
         {
-            return (from sdJwtRecord in records
-                let claimsJson = JsonConvert.SerializeObject(sdJwtRecord.Claims)
-                let claimsJObject = JObject.Parse(claimsJson)
-                let isFound =
-                    (from field in fields
-                        let candidate = claimsJObject.SelectToken(field.Path[0])
-                        where candidate != null 
-                              && (field.Filter?.Const == null 
-                                  || string.Equals(field.Filter.Const, candidate.ToString())) 
-                              && (field.Filter?.Type == null 
-                                  || string.Equals(field.Filter.Type, "string") && candidate.Type == JTokenType.String)
-                        select field).Count() == fields.Length
-                where isFound
-                select sdJwtRecord).ToArray();
+            var candidateRecords = new List<SdJwtRecord>();
+            foreach (var record in records)
+            {
+                var doc = _toSdJwtDoc(record);
+                bool isAMatch = fields.All(field =>
+                {
+                    try
+                    {
+                        if (doc.UnsecuredPayload.SelectToken(field.Path.First(), true) is JValue value && field.Filter?.Const != null)
+                        {
+                            return field.Filter?.Const == value.Value?.ToString();
+                        }
+
+                        return true;
+                    }
+                    catch (Exception)
+                    {
+                        return false;
+                    }
+                });
+
+                if (isAMatch)
+                    candidateRecords.Add(record);
+            }
+
+            return candidateRecords.ToArray();
+        }
+
+
+        private static SdJwtDoc _toSdJwtDoc(SdJwtRecord record)
+        {
+            return new SdJwtDoc(record.EncodedIssuerSignedJwt + "~" + string.Join("~", record.Disclosures) + "~");
         }
     }
 }

@@ -1,12 +1,8 @@
 using Microsoft.Extensions.DependencyInjection;
-using SD_JWT;
-using SD_JWT.Abstractions;
 using WalletFramework.Oid4Vc.Oid4Vci.Services;
+using WalletFramework.Oid4Vc.Oid4Vci.Services.Oid4VciClientService;
 using WalletFramework.Oid4Vc.Oid4Vp.PresentationExchange.Services;
 using WalletFramework.Oid4Vc.Oid4Vp.Services;
-using WalletFramework.SdJwtVc.Services.SdJwtVcHolderService;
-using IOid4VciClientService = WalletFramework.Oid4Vc.Oid4Vci.Services.Oid4VciClientService.IOid4VciClientService;
-using Oid4VciClientService = WalletFramework.Oid4Vc.Oid4Vci.Services.Oid4VciClientService.Oid4VciClientService;
 
 namespace WalletFramework.Oid4Vc;
 
@@ -18,13 +14,10 @@ public static class SeviceCollectionExtensions
     /// <param name="builder"> The builder. </param>
     public static IServiceCollection AddOpenIdDefaultServices(this IServiceCollection builder)
     {
-        builder.AddSingleton<IHolder, Holder>();
-        builder.AddSingleton<ISdJwtVcHolderService, DefaultSdJwtVcHolderService>();
         builder.AddSingleton<IPexService, PexService>();
         builder.AddSingleton<IOid4VciClientService, Oid4VciClientService>();
         builder.AddSingleton<IOid4VpClientService, Oid4VpClientService>();
         builder.AddSingleton<IOid4VpHaipClient, Oid4VpHaipClient>();
-        builder.AddSingleton<IOid4VpRecordService, Oid4VpRecordService>();
         builder.AddSingleton<IOid4VpRecordService, Oid4VpRecordService>();
         builder.AddSingleton<ISessionRecordService, SessionRecordService>();
             

@@ -11,9 +11,9 @@ namespace WalletFramework.Oid4Vc.Oid4Vci.Models.Authorization
     public sealed class VciAuthorizationSessionRecord : RecordBase
     {
         /// <summary>
-        ///     The AuthroizationCode from the CredentialOffer associated with the session.
+        ///     The Authroization Code from the CredentialOffer associated with the session. Only needed within the Pre Authorization Code flow.
         /// </summary>
-        public AuthorizationCode AuthorizationCode { get; }
+        public AuthorizationCode? AuthorizationCode { get; }
         
         /// <summary>
         ///     The parameters for the 'authorization_code' grant type.
@@ -63,10 +63,10 @@ namespace WalletFramework.Oid4Vc.Oid4Vci.Models.Authorization
         public VciAuthorizationSessionRecord(
             VciSessionId sessionId,
             AuthorizationCodeParameters authorizationCodeParameters,
-            AuthorizationCode authorizationCode,
             ClientOptions clientOptions,
             MetadataSet metadataSet,
-            string[] credentialConfigurationIds)
+            string[] credentialConfigurationIds,
+            AuthorizationCode? authorizationCode)
         {
             Id = sessionId;
             RecordVersion = 1;
