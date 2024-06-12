@@ -39,7 +39,7 @@ namespace WalletFramework.Oid4Vc.Oid4Vci.Services.Oid4VciClientService
             AuthorizationCode? authorizationCode);
 
         /// <summary>
-        ///     Requests a verifiable credential using the pre authorized code flow.
+        ///     Requests a verifiable credential using the pre-authorized code flow.
         /// </summary>
         /// <param name="metadataSet">Holds the Issuer Metadata and Authorization Server Metadata</param>
         /// <param name="credentialMetadata">The credential metadata.</param>

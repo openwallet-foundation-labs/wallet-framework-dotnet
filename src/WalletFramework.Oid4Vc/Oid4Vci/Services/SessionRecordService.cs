@@ -54,7 +54,12 @@ namespace WalletFramework.Oid4Vc.Oid4Vci.Services
         /// <inheritdoc />
         public async Task<VciAuthorizationSessionRecord> GetAsync(IAgentContext context, VciSessionId sessionId)
         {
-            var record = await RecordService.GetAsync<VciAuthorizationSessionRecord>(context.Wallet, sessionId);
+            var record = (await RecordService.SearchAsync<VciAuthorizationSessionRecord>(
+                context.Wallet, 
+                SearchQuery.Equal(
+                    "~" + nameof(VciAuthorizationSessionRecord.SessionId),
+                    sessionId
+            ))).First();
             if (record == null)
                 throw new AriesFrameworkException(ErrorCode.RecordNotFound, "VciAuthorizationSessionRecord record not found");
 

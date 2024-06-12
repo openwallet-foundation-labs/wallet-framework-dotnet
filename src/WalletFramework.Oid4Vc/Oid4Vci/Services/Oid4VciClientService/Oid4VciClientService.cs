@@ -136,7 +136,7 @@ namespace WalletFramework.Oid4Vc.Oid4Vci.Services.Oid4VciClientService
             var tokenRequest = new TokenRequest
             {
                 GrantType = AuthorizationCodeGrantTypeIdentifier,
-                RedirectUri = record.ClientOptions.RedirectUri + "?session=" + record.Id,
+                RedirectUri = record.ClientOptions.RedirectUri + "?session=" + record.SessionId,
                 CodeVerifier = record.AuthorizationCodeParameters.Verifier,
                 Code = issuanceSessionParameters.Code,
                 ClientId = record.ClientOptions.ClientId

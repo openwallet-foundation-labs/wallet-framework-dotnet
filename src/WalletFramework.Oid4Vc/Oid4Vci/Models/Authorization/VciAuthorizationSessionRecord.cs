@@ -11,6 +11,15 @@ namespace WalletFramework.Oid4Vc.Oid4Vci.Models.Authorization
     public sealed class VciAuthorizationSessionRecord : RecordBase
     {
         /// <summary>
+        ///     The session specific id.
+        /// </summary>
+        [JsonIgnore]
+        public string SessionId {
+            get => Get();
+            set => Set(value, false);
+        }
+        
+        /// <summary>
         ///     The Authroization Code from the CredentialOffer associated with the session. Only needed within the Pre Authorization Code flow.
         /// </summary>
         public AuthorizationCode? AuthorizationCode { get; }
@@ -68,7 +77,9 @@ namespace WalletFramework.Oid4Vc.Oid4Vci.Models.Authorization
             string[] credentialConfigurationIds,
             AuthorizationCode? authorizationCode)
         {
-            Id = sessionId;
+            //TODO: Normal Id and Session id. SessionId as Tag
+            SessionId = sessionId;
+            Id = Guid.NewGuid().ToString();
             RecordVersion = 1;
             AuthorizationCodeParameters = authorizationCodeParameters;
             AuthorizationCode = authorizationCode;
