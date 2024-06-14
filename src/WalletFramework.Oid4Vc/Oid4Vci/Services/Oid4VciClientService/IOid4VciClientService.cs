@@ -1,7 +1,6 @@
 using Hyperledger.Aries.Agents;
 using WalletFramework.Oid4Vc.Oid4Vci.Models;
 using WalletFramework.Oid4Vc.Oid4Vci.Models.Authorization;
-using WalletFramework.Oid4Vc.Oid4Vci.Models.CredentialOffer.GrantTypes;
 using WalletFramework.Oid4Vc.Oid4Vci.Models.CredentialResponse;
 using WalletFramework.Oid4Vc.Oid4Vci.Models.Metadata;
 using WalletFramework.Oid4Vc.Oid4Vci.Models.Metadata.Credential;
@@ -25,18 +24,12 @@ namespace WalletFramework.Oid4Vc.Oid4Vci.Services.Oid4VciClientService
         /// <summary>
         ///    Initiates the authorization process of the VCI authorization code flow.
         /// </summary>
-        /// <param name="agentContext">Agent Context</param>
-        /// <param name="clientOptions">Options specified by the Client (Wallet)</param>
-        /// <param name="metadataSet">Consists of Issuer and Credential Metadata</param>
-        /// <param name="credentialConfigurationIds">Identifiers of the Credentials that will be requested</param>
-        /// <param name="authorizationCode">Authorization Code from the Credential Offer. Only used within the Issuer Initiated Authorization Code Flow</param>
+        /// <param name="agentContext">The Agent Context</param>
+        /// <param name="authorizationData">Holds all the necessary data to initiate the authorization within the Oid4Vci authorization code flow</param>
         /// <returns></returns>
         Task<Uri> InitiateAuthentication(
             IAgentContext agentContext,
-            ClientOptions clientOptions,
-            MetadataSet metadataSet,
-            string[] credentialConfigurationIds,
-            AuthorizationCode? authorizationCode);
+            AuthorizationData authorizationData);
 
         /// <summary>
         ///     Requests a verifiable credential using the pre-authorized code flow.

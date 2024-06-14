@@ -6,19 +6,19 @@ namespace WalletFramework.Oid4Vc.Oid4Vci.Models.Authorization
     internal record PushedAuthorizationRequest
     {
         [JsonProperty("client_id")]
-        public string ClientId { get; } = null!;
+        public string ClientId { get; }
         
         [JsonProperty("response_type")]
         public string ResponseType { get; } = "code";
 
         [JsonProperty("redirect_uri")] 
-        public string RedirectUri { get; } = null!;
+        public string RedirectUri { get; }
         
         [JsonProperty("code_challenge")]
-        public string CodeChallenge { get; } = null!;
+        public string CodeChallenge { get; }
         
         [JsonProperty("code_challenge_method")]
-        public string CodeChallengeMethod { get; } = null!;
+        public string CodeChallengeMethod { get; }
         
         [JsonProperty("authorization_details", NullValueHandling = NullValueHandling.Ignore)]
         public AuthorizationDetails[]? AuthorizationDetails { get; }
@@ -39,28 +39,27 @@ namespace WalletFramework.Oid4Vc.Oid4Vci.Models.Authorization
         public string? Resource { get; }
 
         public PushedAuthorizationRequest(
-            string clientId, 
-            string redirectUri, 
-            string codeChallenge, 
-            string codeChallengeMethod, 
+            VciSessionId sessionId,
+            ClientOptions clientOptions,
+            AuthorizationCodeParameters authorizationCodeParameters,
             AuthorizationDetails[]? authorizationDetails, 
             string? scope, 
             string? issuerState, 
-            string? walletIssuer, 
             string? userHint,  
             string? resource)
         {
-            ClientId = clientId;
-            RedirectUri = redirectUri;
-            CodeChallenge = codeChallenge;
-            CodeChallengeMethod = codeChallengeMethod;
+            ClientId = clientOptions.ClientId;
+            RedirectUri = clientOptions.RedirectUri + "?session=" + sessionId;
+            WalletIssuer = clientOptions.WalletIssuer;
+            CodeChallenge = authorizationCodeParameters.Challenge;
+            CodeChallengeMethod = authorizationCodeParameters.CodeChallengeMethod;
             AuthorizationDetails = authorizationDetails;
             IssuerState = issuerState;
-            WalletIssuer = walletIssuer;
             UserHint = userHint;
             Scope = scope;
             Resource = resource;
         }
+        
         public FormUrlEncodedContent ToFormUrlEncoded()
         {
             var keyValuePairs = new List<KeyValuePair<string, string>>();

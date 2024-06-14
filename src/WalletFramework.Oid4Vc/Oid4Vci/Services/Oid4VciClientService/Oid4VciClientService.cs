@@ -7,7 +7,6 @@ using WalletFramework.Oid4Vc.Oid4Vci.Exceptions;
 using WalletFramework.Oid4Vc.Oid4Vci.Extensions;
 using WalletFramework.Oid4Vc.Oid4Vci.Models;
 using WalletFramework.Oid4Vc.Oid4Vci.Models.Authorization;
-using WalletFramework.Oid4Vc.Oid4Vci.Models.CredentialOffer.GrantTypes;
 using WalletFramework.Oid4Vc.Oid4Vci.Models.CredentialRequest;
 using WalletFramework.Oid4Vc.Oid4Vci.Models.CredentialResponse;
 using WalletFramework.Oid4Vc.Oid4Vci.Models.DPop;
@@ -67,34 +66,28 @@ namespace WalletFramework.Oid4Vc.Oid4Vci.Services.Oid4VciClientService
         /// <inheritdoc />
         public async Task<Uri> InitiateAuthentication(
             IAgentContext agentContext,
-            ClientOptions clientOptions,
-            MetadataSet metadataSet,
-            string[] credentialConfigurationIds,
-            AuthorizationCode? authorizationCode)
+            AuthorizationData authorizationData)
         {
             var authorizationCodeParameters = CreateAndStoreCodeChallenge();
             var sessionId = Guid.NewGuid().ToString();
             
-            var credentialMetadatas = metadataSet.IssuerMetadata.CredentialConfigurationsSupported
-                .Where(credentialConfiguration => credentialConfigurationIds.Contains(credentialConfiguration.Key))
+            var credentialMetadatas = authorizationData.MetadataSet.IssuerMetadata.CredentialConfigurationsSupported
+                .Where(credentialConfiguration => authorizationData.CredentialConfigurationIds.Contains(credentialConfiguration.Key))
                 .Select(y => y.Value).ToList();
 
             var par = new PushedAuthorizationRequest(
-                clientOptions.ClientId,
-                clientOptions.RedirectUri + "?session=" + sessionId,
-                authorizationCodeParameters.Challenge,
-                authorizationCodeParameters.CodeChallengeMethod,
+                VciSessionId.CreateSessionId(sessionId),
+                authorizationData.ClientOptions,
+                authorizationCodeParameters,
                 credentialMetadatas?
-                    .Select(credentialMetadata => new AuthorizationDetails
-                    {
-                        CredentialConfigurationId = credentialMetadata.Id, 
-                        Format = credentialMetadata.Format, 
-                        Vct = credentialMetadata.Vct, 
-                        Locations = metadataSet.IssuerMetadata.AuthorizationServers
-                    }).ToArray(),
+                    .Select(credentialMetadata => new AuthorizationDetails(
+                        credentialMetadata.Format,
+                        credentialMetadata.Vct, 
+                        credentialMetadata.Id, 
+                        authorizationData.MetadataSet.IssuerMetadata.AuthorizationServers)
+                    ).ToArray(),
                 string.Join(" ", credentialMetadatas.Select(metadata => metadata.Scope)),
-                authorizationCode?.IssuerState,
-                clientOptions.WalletIssuer,
+                authorizationData.AuthorizationCode?.IssuerState,
                 null,
                 null
                 );
@@ -103,25 +96,22 @@ namespace WalletFramework.Oid4Vc.Oid4Vci.Services.Oid4VciClientService
             client.DefaultRequestHeaders.Clear();
             
             var response = await client.PostAsync(
-                metadataSet.AuthorizationServerMetadata.PushedAuthorizationRequestEndpoint,
+                authorizationData.MetadataSet.AuthorizationServerMetadata.PushedAuthorizationRequestEndpoint,
                 par.ToFormUrlEncoded()
             );
 
             var parResponse = DeserializeObject<PushedAuthorizationRequestResponse>(await response.Content.ReadAsStringAsync()) 
                               ?? throw new InvalidOperationException("Failed to deserialize the PAR response.");
             
-            var authorizationRequestUri = new Uri(metadataSet.AuthorizationServerMetadata.AuthorizationEndpoint 
+            var authorizationRequestUri = new Uri(authorizationData.MetadataSet.AuthorizationServerMetadata.AuthorizationEndpoint 
                                                   + "?client_id=" + par.ClientId 
                                                   + "&request_uri=" + System.Net.WebUtility.UrlEncode(parResponse.RequestUri.ToString()));
 
             await RecordService.StoreAsync(
-                agentContext, 
-                sessionId, 
-                authorizationCodeParameters,
-                clientOptions,
-                metadataSet,
-                credentialConfigurationIds,
-                authorizationCode);
+                agentContext,
+                VciSessionId.CreateSessionId(sessionId),
+                authorizationData,
+                authorizationCodeParameters);
             
             return authorizationRequestUri;
         }
@@ -136,37 +126,37 @@ namespace WalletFramework.Oid4Vc.Oid4Vci.Services.Oid4VciClientService
             var tokenRequest = new TokenRequest
             {
                 GrantType = AuthorizationCodeGrantTypeIdentifier,
-                RedirectUri = record.ClientOptions.RedirectUri + "?session=" + record.SessionId,
+                RedirectUri = record.AuthorizationData.ClientOptions.RedirectUri + "?session=" + record.SessionId,
                 CodeVerifier = record.AuthorizationCodeParameters.Verifier,
                 Code = issuanceSessionParameters.Code,
-                ClientId = record.ClientOptions.ClientId
+                ClientId = record.AuthorizationData.ClientOptions.ClientId
             };
 
-            var oAuthToken = record.MetadataSet.AuthorizationServerMetadata.IsDPoPSupported
+            var oAuthToken = record.AuthorizationData.MetadataSet.AuthorizationServerMetadata.IsDPoPSupported
                 ? await RequestTokenWithDPop(
-                    new Uri(record.MetadataSet.AuthorizationServerMetadata.TokenEndpoint), 
+                    new Uri(record.AuthorizationData.MetadataSet.AuthorizationServerMetadata.TokenEndpoint), 
                     tokenRequest)
                 : await RequestTokenWithoutDPop(
-                    new Uri(record.MetadataSet.AuthorizationServerMetadata.TokenEndpoint), 
+                    new Uri(record.AuthorizationData.MetadataSet.AuthorizationServerMetadata.TokenEndpoint), 
                     tokenRequest);
                 
-            var credentialMetadatas = record.MetadataSet.IssuerMetadata.CredentialConfigurationsSupported
-                .Where(credentialConfiguration => record.CredentialConfigurationIds.Contains(credentialConfiguration.Key))
+            var credentialMetadatas = record.AuthorizationData.MetadataSet.IssuerMetadata.CredentialConfigurationsSupported
+                .Where(credentialConfiguration => record.AuthorizationData.CredentialConfigurationIds.Contains(credentialConfiguration.Key))
                 .Select(y => y.Value);
             
             var credential = oAuthToken.IsDPoPRequested()
                 ? await RequestCredentialWithDPoP(
                     credentialMetadatas.First(), 
-                    record.MetadataSet.IssuerMetadata, 
+                    record.AuthorizationData.MetadataSet.IssuerMetadata, 
                     oAuthToken,
-                    record.ClientOptions)
+                    record.AuthorizationData.ClientOptions)
                 : await RequestCredentialWithoutDPoP(
                     credentialMetadatas.First(), 
-                    record.MetadataSet.IssuerMetadata, 
+                    record.AuthorizationData.MetadataSet.IssuerMetadata, 
                     oAuthToken,
-                    record.ClientOptions);
+                    record.AuthorizationData.ClientOptions);
             
-            await RecordService.DeleteAsync(context, record.Id);
+            await RecordService.DeleteAsync(context, VciSessionId.CreateSessionId(record.SessionId));
             
             //TODO: Return multiple credentials
             return new[] { credential };

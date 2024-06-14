@@ -1,7 +1,5 @@
 using Hyperledger.Aries.Storage;
 using Newtonsoft.Json;
-using WalletFramework.Oid4Vc.Oid4Vci.Models.CredentialOffer.GrantTypes;
-using WalletFramework.Oid4Vc.Oid4Vci.Models.Metadata;
 
 namespace WalletFramework.Oid4Vc.Oid4Vci.Models.Authorization
 {
@@ -20,30 +18,14 @@ namespace WalletFramework.Oid4Vc.Oid4Vci.Models.Authorization
         }
         
         /// <summary>
-        ///     The Authroization Code from the CredentialOffer associated with the session. Only needed within the Pre Authorization Code flow.
+        ///     The Authorization Code from the CredentialOffer associated with the session. Only needed within the Pre Authorization Code flow.
         /// </summary>
-        public AuthorizationCode? AuthorizationCode { get; }
+        public AuthorizationData AuthorizationData { get; }
         
         /// <summary>
         ///     The parameters for the 'authorization_code' grant type.
         /// </summary>
         public AuthorizationCodeParameters AuthorizationCodeParameters { get; }
-        
-        /// <summary>
-        ///     The client options that are used during the VCI Authorization Code Flow. Here the wallet acts as the client.
-        /// </summary>
-        public ClientOptions ClientOptions { get; }
-        
-        /// <summary>
-        ///     The metadata set that is associated with the session.
-        /// </summary>
-        public MetadataSet MetadataSet { get; }
-        
-        /// <summary>
-        ///     The credential configuration identifiers that are associated with the session. They represent the credentials
-        ///     the wallet wants to request.
-        /// </summary>
-        public string[] CredentialConfigurationIds { get; }
 
         /// <summary>
         ///    Initializes a new instance of the <see cref="VciAuthorizationSessionRecord" /> class.
@@ -63,29 +45,19 @@ namespace WalletFramework.Oid4Vc.Oid4Vci.Models.Authorization
         ///   Initializes a new instance of the <see cref="VciAuthorizationSessionRecord" /> class.
         /// </summary>
         /// <param name="sessionId"></param>
+        /// <param name="authorizationData"></param>
         /// <param name="authorizationCodeParameters"></param>
-        /// <param name="authorizationCode"></param>
-        /// <param name="clientOptions"></param>
-        /// <param name="metadataSet"></param>
-        /// <param name="credentialConfigurationIds"></param>
         [JsonConstructor]
         public VciAuthorizationSessionRecord(
             VciSessionId sessionId,
-            AuthorizationCodeParameters authorizationCodeParameters,
-            ClientOptions clientOptions,
-            MetadataSet metadataSet,
-            string[] credentialConfigurationIds,
-            AuthorizationCode? authorizationCode)
+            AuthorizationData authorizationData,
+            AuthorizationCodeParameters authorizationCodeParameters)
         {
-            //TODO: Normal Id and Session id. SessionId as Tag
             SessionId = sessionId;
             Id = Guid.NewGuid().ToString();
             RecordVersion = 1;
             AuthorizationCodeParameters = authorizationCodeParameters;
-            AuthorizationCode = authorizationCode;
-            ClientOptions = clientOptions;
-            MetadataSet = metadataSet;
-            CredentialConfigurationIds = credentialConfigurationIds;
+            AuthorizationData = authorizationData;
         }
     }
 }

@@ -65,7 +65,7 @@ namespace WalletFramework.Oid4Vc.Oid4Vci.Models.Metadata.Credential
         public Dictionary<string, OidCredentialProofType>? ProofTypesSupported { get; set; }
         
         /// <summary>
-        ///     Gets or sets a dictionary which maps a credential type to its supported signing algorithms for key proofs.
+        ///     Gets or sets a string indicating the credential that can be issued.
         /// </summary>
         [JsonProperty("scope", NullValueHandling = NullValueHandling.Ignore)]
         public string? Scope { get; set; }

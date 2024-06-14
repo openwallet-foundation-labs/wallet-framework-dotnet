@@ -1,7 +1,5 @@
 using Hyperledger.Aries.Agents;
 using WalletFramework.Oid4Vc.Oid4Vci.Models.Authorization;
-using WalletFramework.Oid4Vc.Oid4Vci.Models.CredentialOffer.GrantTypes;
-using WalletFramework.Oid4Vc.Oid4Vci.Models.Metadata;
 
 namespace WalletFramework.Oid4Vc.Oid4Vci.Services
 {
@@ -13,22 +11,16 @@ namespace WalletFramework.Oid4Vc.Oid4Vci.Services
         /// <summary>
         ///    Stores the authorization session record.
         /// </summary>
-        /// <param name="context">Agent Context</param>
+        /// <param name="agentContext">The Agent Context</param>
         /// <param name="sessionId">Session Identifier of a Authorization Code Flow session</param>
+        /// <param name="authorizationData">Options specified by the Client (Wallet)</param>
         /// <param name="authorizationCodeParameters">Parameters required for the authorization during the VCI authorization code flow.</param>
-        /// <param name="clientOptions">Options specified by the Client (Wallet)</param>
-        /// <param name="metadataSet">Consists of Issuer and Credential Metadata</param>
-        /// <param name="credentialConfigurationIds">Identifiers of the Credentials that will be requested</param>
-        /// <param name="authorizationCode">Authorization Code from the Credential Offer. Only used within the Issuer Initiated Authorization Code Flow</param>
         /// <returns></returns>
         Task<string> StoreAsync(
-            IAgentContext context,
+            IAgentContext agentContext,
             VciSessionId sessionId,
-            AuthorizationCodeParameters authorizationCodeParameters,
-            ClientOptions clientOptions,
-            MetadataSet metadataSet,
-            string[] credentialConfigurationIds,
-            AuthorizationCode? authorizationCode);
+            AuthorizationData authorizationData,
+            AuthorizationCodeParameters authorizationCodeParameters);
         
         /// <summary>
         ///    Retrieves the authorization session record by the session identifier.

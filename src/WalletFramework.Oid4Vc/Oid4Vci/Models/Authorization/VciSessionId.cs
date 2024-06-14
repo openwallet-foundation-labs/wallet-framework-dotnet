@@ -19,13 +19,14 @@ namespace WalletFramework.Oid4Vc.Oid4Vci.Models.Authorization
         /// <returns></returns>
         public static implicit operator string(VciSessionId sessionParameters) => sessionParameters.Value;
         
-        /// <summary>
-        ///     Creates a new instance of <see cref="VciSessionId"/> from the given <see cref="string"/>.
-        /// </summary>
-        /// <param name="sessionId"></param>
-        /// <returns></returns>
-        public static implicit operator VciSessionId(string sessionId) => CreateSessionId(sessionId);
-        
-        private static VciSessionId CreateSessionId(string sessionId) => new (sessionId);
+        public static VciSessionId CreateSessionId(string sessionId)
+        {
+            if (!Guid.TryParse(sessionId, out _))
+            {
+                throw new ArgumentException("SessionId must not be a Guid");
+            }
+            
+            return new VciSessionId(sessionId);
+        }
     }
 }

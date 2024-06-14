@@ -2,8 +2,6 @@ using Hyperledger.Aries;
 using Hyperledger.Aries.Agents;
 using Hyperledger.Aries.Storage;
 using WalletFramework.Oid4Vc.Oid4Vci.Models.Authorization;
-using WalletFramework.Oid4Vc.Oid4Vci.Models.CredentialOffer.GrantTypes;
-using WalletFramework.Oid4Vc.Oid4Vci.Models.Metadata;
 using WalletFramework.Oid4Vc.Oid4Vp.Services;
 
 namespace WalletFramework.Oid4Vc.Oid4Vci.Services
@@ -29,19 +27,13 @@ namespace WalletFramework.Oid4Vc.Oid4Vci.Services
         public async Task<string> StoreAsync(
             IAgentContext agentContext,
             VciSessionId sessionId,
-            AuthorizationCodeParameters authorizationCodeParameters,
-            ClientOptions clientOptions,
-            MetadataSet metadataSet,
-            string[] credentialConfigurationIds,
-            AuthorizationCode? authorizationCode)
+            AuthorizationData authorizationData,
+            AuthorizationCodeParameters authorizationCodeParameters)
         {
             var record = new VciAuthorizationSessionRecord(
-                sessionId, 
-                authorizationCodeParameters,
-                clientOptions, 
-                metadataSet, 
-                credentialConfigurationIds,
-                authorizationCode);
+                sessionId,
+                authorizationData,
+                authorizationCodeParameters);
             
             await RecordService.AddAsync(
                 agentContext.Wallet,

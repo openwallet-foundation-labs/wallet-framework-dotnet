@@ -38,7 +38,7 @@ namespace WalletFramework.Oid4Vc.Oid4Vci.Models
                 throw new InvalidOperationException("Query parameter 'code' and/or 'session' are missing");
             }
 
-            return new IssuanceSessionParameters(sessionId, code);
+            return new IssuanceSessionParameters(VciSessionId.CreateSessionId(sessionId), code);
         }
     }
 }
