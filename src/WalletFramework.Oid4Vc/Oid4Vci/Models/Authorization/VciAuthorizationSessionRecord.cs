@@ -12,11 +12,12 @@ namespace WalletFramework.Oid4Vc.Oid4Vci.Models.Authorization
         ///     The session specific id.
         /// </summary>
         [JsonIgnore]
-        public string SessionId {
-            get => Get();
-            set => Set(value, false);
+        public VciSessionId SessionId
+        {
+            get => VciSessionId.CreateSessionId(Get());
+            set => Set((string)value, false);
         }
-        
+
         /// <summary>
         ///     The Authorization Code from the CredentialOffer associated with the session. Only needed within the Pre Authorization Code flow.
         /// </summary>

@@ -157,7 +157,7 @@ namespace WalletFramework.Oid4Vc.Oid4Vci.Services.Oid4VciClientService
                     oAuthToken,
                     record.AuthorizationData.ClientOptions);
             
-            await RecordService.DeleteAsync(context, VciSessionId.CreateSessionId(record.SessionId));
+            await RecordService.DeleteAsync(context, record.SessionId);
             
             //TODO: Return multiple credentials
             return new[] { credential };
