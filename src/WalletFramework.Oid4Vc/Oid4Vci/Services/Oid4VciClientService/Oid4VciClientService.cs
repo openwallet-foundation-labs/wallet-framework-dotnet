@@ -7,6 +7,7 @@ using WalletFramework.Oid4Vc.Oid4Vci.Exceptions;
 using WalletFramework.Oid4Vc.Oid4Vci.Extensions;
 using WalletFramework.Oid4Vc.Oid4Vci.Models;
 using WalletFramework.Oid4Vc.Oid4Vci.Models.Authorization;
+using WalletFramework.Oid4Vc.Oid4Vci.Models.CredentialOffer;
 using WalletFramework.Oid4Vc.Oid4Vci.Models.CredentialRequest;
 using WalletFramework.Oid4Vc.Oid4Vci.Models.CredentialResponse;
 using WalletFramework.Oid4Vc.Oid4Vci.Models.DPop;
@@ -55,10 +56,12 @@ namespace WalletFramework.Oid4Vc.Oid4Vci.Services.Oid4VciClientService
         protected readonly ISessionRecordService RecordService;
 
         /// <inheritdoc />
-        public async Task<MetadataSet> FetchMetadataAsync(Uri issuerEndpoint, string preferredLanguage)
+        public async Task<MetadataSet> FetchMetadataAsync(OidCredentialOffer offer, string preferredLanguage)
         {
+            var issuerEndpoint = new Uri(offer.CredentialIssuer);
             var issuerMetadata = await FetchIssuerMetadataAsync(issuerEndpoint, "en");
-            var authorizationServerMetadata = await FetchAuthorizationServerMetadataAsync(issuerMetadata);
+            
+            var authorizationServerMetadata = await FetchAuthorizationServerMetadataAsync(issuerMetadata, offer);
             
             return new MetadataSet(issuerMetadata, authorizationServerMetadata);
         }
@@ -79,12 +82,10 @@ namespace WalletFramework.Oid4Vc.Oid4Vci.Services.Oid4VciClientService
                 VciSessionId.CreateSessionId(sessionId),
                 authorizationData.ClientOptions,
                 authorizationCodeParameters,
-                credentialMetadatas?
-                    .Select(credentialMetadata => new AuthorizationDetails(
-                        credentialMetadata.Format,
-                        credentialMetadata.Vct, 
-                        credentialMetadata.Id, 
-                        authorizationData.MetadataSet.IssuerMetadata.AuthorizationServers)
+                authorizationData.CredentialConfigurationIds
+                    .Select(configurationId => new AuthorizationDetails(
+                        configurationId,
+                        new []{authorizationData.MetadataSet.IssuerMetadata.CredentialIssuer})
                     ).ToArray(),
                 string.Join(" ", credentialMetadatas.Select(metadata => metadata.Scope)),
                 authorizationData.AuthorizationCode?.IssuerState,
@@ -198,7 +199,6 @@ namespace WalletFramework.Oid4Vc.Oid4Vci.Services.Oid4VciClientService
             return new[] { credential };
         }
 
-        /// <inheritdoc />
         private async Task<OidIssuerMetadata> FetchIssuerMetadataAsync(Uri endpoint, string preferredLanguage)
         {
             var baseEndpoint = endpoint
@@ -226,17 +226,23 @@ namespace WalletFramework.Oid4Vc.Oid4Vci.Services.Oid4VciClientService
             ) ?? throw new InvalidOperationException("Failed to deserialize the issuer metadata.");
         }
         
-        private async Task<AuthorizationServerMetadata> FetchAuthorizationServerMetadataAsync(OidIssuerMetadata issuerMetadata)
+        private async Task<AuthorizationServerMetadata> FetchAuthorizationServerMetadataAsync(OidIssuerMetadata issuerMetadata, OidCredentialOffer offer)
         {
-            var credentialIssuerUrl = new Uri(issuerMetadata.CredentialIssuer);
-
-            var getAuthServerUrl =
-                !string.IsNullOrEmpty(issuerMetadata.AuthorizationServers?.First())
-                    ? issuerMetadata.AuthorizationServers?.First()
-                    : string.IsNullOrEmpty(credentialIssuerUrl.AbsolutePath) || credentialIssuerUrl.AbsolutePath == "/"
-                        ? $"{credentialIssuerUrl.GetLeftPart(UriPartial.Authority)}/.well-known/oauth-authorization-server"
-                        : $"{credentialIssuerUrl.GetLeftPart(UriPartial.Authority)}/.well-known/oauth-authorization-server"
-                          + credentialIssuerUrl.AbsolutePath.TrimEnd('/');
+            if (!string.IsNullOrWhiteSpace(offer.Grants?.AuthorizationCode?.AuthorizationServer) 
+                && (issuerMetadata.AuthorizationServers == null
+                    || !issuerMetadata.AuthorizationServers.Contains(offer.Grants.AuthorizationCode.AuthorizationServer)))
+            {
+                throw new InvalidOperationException("The AuthorizationServer in the offer must be one of the Authorization Servers listed in the Issuer Metadata.");
+            }
+            
+            var authServerUrl = new Uri(offer.Grants?.AuthorizationCode?.AuthorizationServer 
+                                        ?? issuerMetadata.AuthorizationServers?.First() 
+                                        ?? issuerMetadata.CredentialIssuer);
+            
+            var getAuthServerUrl = string.IsNullOrEmpty(authServerUrl.AbsolutePath) || authServerUrl.AbsolutePath == "/"
+                ? $"{authServerUrl.GetLeftPart(UriPartial.Authority)}/.well-known/oauth-authorization-server"
+                : $"{authServerUrl.GetLeftPart(UriPartial.Authority)}/.well-known/oauth-authorization-server"
+                  + authServerUrl.AbsolutePath.TrimEnd('/');
 
             var httpClient = _httpClientFactory.CreateClient();
 

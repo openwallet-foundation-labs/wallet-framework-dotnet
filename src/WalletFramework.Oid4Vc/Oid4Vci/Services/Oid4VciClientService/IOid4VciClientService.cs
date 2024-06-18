@@ -1,6 +1,7 @@
 using Hyperledger.Aries.Agents;
 using WalletFramework.Oid4Vc.Oid4Vci.Models;
 using WalletFramework.Oid4Vc.Oid4Vci.Models.Authorization;
+using WalletFramework.Oid4Vc.Oid4Vci.Models.CredentialOffer;
 using WalletFramework.Oid4Vc.Oid4Vci.Models.CredentialResponse;
 using WalletFramework.Oid4Vc.Oid4Vci.Models.Metadata;
 using WalletFramework.Oid4Vc.Oid4Vci.Models.Metadata.Credential;
@@ -15,11 +16,11 @@ namespace WalletFramework.Oid4Vc.Oid4Vci.Services.Oid4VciClientService
         /// <summary>
         ///     Fetches the metadata related to the OID issuer from the specified endpoint.
         /// </summary>
-        /// <param name="issuerEndpoint">The endpoint URL to retrieve the issuer metadata.</param>
+        /// <param name="offer">The Credential Offer.</param>
         /// <param name="preferredLanguage">The preferred language of the wallet in which it would like to retrieve the issuer metadata. The default is "en"</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains the OID issuer metadata.</returns>
         //Task<OidIssuerMetadata> FetchIssuerMetadataAsync(Uri endpoint, string preferredLanguage = "en");
-        Task<MetadataSet> FetchMetadataAsync(Uri issuerEndpoint, string preferredLanguage = "en");
+        Task<MetadataSet> FetchMetadataAsync(OidCredentialOffer offer, string preferredLanguage = "en");
 
         /// <summary>
         ///    Initiates the authorization process of the VCI authorization code flow.
