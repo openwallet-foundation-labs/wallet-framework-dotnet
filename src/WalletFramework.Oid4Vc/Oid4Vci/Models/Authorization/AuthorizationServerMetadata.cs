@@ -19,6 +19,19 @@ namespace WalletFramework.Oid4Vc.Oid4Vci.Models.Authorization
         /// </summary>
         [JsonProperty("token_endpoint")]
         public string TokenEndpoint { get; set; }
+        
+        /// <summary>
+        ///    Gets or sets the URL of the OAuth 2.0 JSON Web Key Set (JWKS) document.
+        ///    Clients use this to verify the signatures from the Authorization Server. 
+        /// </summary>
+        [JsonProperty("jwks_uri")]
+        public string JwksUri { get; set; }
+        
+        /// <summary>
+        ///    Gets or sets the URL of the OAuth 2.0 authorization endpoint.
+        /// </summary>
+        [JsonProperty("authorization_endpoint")]
+        public string AuthorizationEndpoint { get; set; }
 
         /// <summary>
         ///     Gets or sets the response types that the OAuth 2.0 Authorization Server supports.
@@ -48,6 +61,18 @@ namespace WalletFramework.Oid4Vc.Oid4Vci.Models.Authorization
         /// </summary>
         [JsonProperty("dpop_signing_alg_values_supported")]
         public string[]? DPopSigningAlgValuesSupported { get; set; }
+        
+        /// <summary>
+        ///     Gets or sets the URL of the endpoint where the wallet sends the Pushed Authorization Request (PAR) to.
+        /// </summary>
+        [JsonProperty("pushed_authorization_request_endpoint")]
+        public string? PushedAuthorizationRequestEndpoint { get; set; }
+        
+        /// <summary>
+        ///     Gets or sets a value indicating whether the Authorization Server requires the use of Pushed Authorization Requests.
+        /// </summary>
+        [JsonProperty("require_pushed_authorization_requests")]
+        public bool? RequirePushedAuthorizationRequests { get; set; }
         
         internal bool IsDPoPSupported => DPopSigningAlgValuesSupported != null && DPopSigningAlgValuesSupported.Contains("ES256");
     }

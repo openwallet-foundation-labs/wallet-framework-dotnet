@@ -40,8 +40,8 @@ namespace WalletFramework.Oid4Vc.Oid4Vci.Models.Metadata.Issuer
         ///     identifier is used as the OAuth 2.0 Issuer value to obtain the Authorization Server
         ///     metadata.
         /// </summary>
-        [JsonProperty("authorization_server", NullValueHandling = NullValueHandling.Ignore)]
-        public string? AuthorizationServer { get; set; }
+        [JsonProperty("authorization_servers", NullValueHandling = NullValueHandling.Ignore)]
+        public string[]? AuthorizationServers { get; set; }
         
         [JsonConstructor]
         public OidIssuerMetadata(
@@ -49,14 +49,14 @@ namespace WalletFramework.Oid4Vc.Oid4Vci.Models.Metadata.Issuer
             List<OidIssuerDisplay>? display,
             string credentialEndpoint,
             string credentialIssuer,
-            string? authorizationServer
+            string[]? authorizationServer
         )
         {
             CredentialConfigurationsSupported = credentialConfigurationsSupported ?? throw new ArgumentNullException(nameof(credentialConfigurationsSupported));
             Display = display;
             CredentialEndpoint = credentialEndpoint ?? throw new ArgumentNullException(nameof(credentialEndpoint));
             CredentialIssuer = credentialIssuer ?? throw new ArgumentNullException(nameof(credentialIssuer));
-            AuthorizationServer = authorizationServer;
+            AuthorizationServers = authorizationServer;
         }
         
         public OidIssuerMetadata() {}

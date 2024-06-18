@@ -3,10 +3,13 @@ using FluentAssertions;
 using Moq;
 using Moq.Protected;
 using Newtonsoft.Json;
+using WalletFramework.Oid4Vc.Oid4Vci.Models.Authorization;
 using WalletFramework.Oid4Vc.Oid4Vci.Models.CredentialResponse;
+using WalletFramework.Oid4Vc.Oid4Vci.Models.Metadata;
 using WalletFramework.Oid4Vc.Oid4Vci.Models.Metadata.Credential;
 using WalletFramework.Oid4Vc.Oid4Vci.Models.Metadata.Credential.Attributes;
 using WalletFramework.Oid4Vc.Oid4Vci.Models.Metadata.Issuer;
+using WalletFramework.Oid4Vc.Oid4Vci.Services;
 using WalletFramework.Oid4Vc.Oid4Vci.Services.Oid4VciClientService;
 using WalletFramework.SdJwtVc.KeyStore.Services;
 
@@ -16,9 +19,12 @@ namespace WalletFramework.Oid4Vc.Tests.Oid4Vci.Services
     {
         private const string AuthServerMetadataWithoutDpop =
             "{\"issuer\":\"https://issuer.io\",\"token_endpoint\":\"https://issuer.io/token\",\"token_endpoint_auth_methods_supported\":[\"urn:ietf:params:oauth:client-assertion-type:verifiable-presentation\"],\"response_types_supported\":[\"urn:ietf:params:oauth:grant-type:pre-authorized_code\"]}\n";
-            //"{\"credential_issuer\":\"https://issuer.io/\",\"credential_endpoint\":\"https://issuer.io/credential\",\"display\":[{\"name\":\"Aussteller\",\"locale\":\"de-DE\"},{\"name\":\"Issuer\",\"locale\":\"en-US\"}],\"credential_configurations_supported\":{\"IdentityCredential\":{\"format\":\"vc+sd-jwt\",\"scope\":\"IdentityCredential_SD-JWT-VC\",\"cryptographic_binding_methods_supported\":[\"did:example\"],\"credential_signing_alg_values_supported\":[\"ES256K\"],\"display\":[{\"name\":\"IdentityCredential\",\"locale\":\"en-US\",\"background_color\":\"#12107c\",\"text_color\":\"#FFFFFF\"}],\"credential_definition\":{\"type\":\"IdentityCredential\",\"claims\":{\"given_name\":{\"display\":[{\"name\":\"GivenName\",\"locale\":\"en-US\"},{\"name\":\"Vorname\",\"locale\":\"de-DE\"}]},\"last_name\":{\"display\":[{\"name\":\"Surname\",\"locale\":\"en-US\"},{\"name\":\"Nachname\",\"locale\":\"de-DE\"}]},\"email\":{},\"phone_number\":{},\"address\":{\"street_address\":{},\"locality\":{},\"region\":{},\"country\":{}},\"birthdate\":{},\"is_over_18\":{},\"is_over_21\":{},\"is_over_65\":{}}}}}}";
+            
         private const string AuthServerMetadataWithDpop =
             "{\"issuer\":\"https://issuer.io\",\"token_endpoint\":\"https://issuer.io/token\",\"token_endpoint_auth_methods_supported\":[\"urn:ietf:params:oauth:client-assertion-type:verifiable-presentation\"],\"response_types_supported\":[\"urn:ietf:params:oauth:grant-type:pre-authorized_code\"],\"dpop_signing_alg_values_supported\":[\"ES256\"]}\n";
+
+        private const string IssuerMetadata =
+            "{\"credential_configurations_supported\":{\"VerifiedEmail\":{\"vct\":\"VerifiedEmail\",\"claims\":{},\"format\":\"vc+sdjwt\"}},\"credential_endpoint\":\"https://issuer.io/credential\",\"credential_issuer\":\"https://issuer.io\"}";
         
         private const string PreAuthorizedCode = "1234";
 
@@ -43,18 +49,6 @@ namespace WalletFramework.Oid4Vc.Tests.Oid4Vci.Services
         private const string KbJwtMock = "someKeyBindingJwtMock";
 
         private const string TransactionCode = "someTransactionCode";
-        
-        private readonly HttpResponseMessage _authServerMetadataResponseWithoutDPopSupport = new HttpResponseMessage()
-        {
-            StatusCode = HttpStatusCode.OK,
-            Content = new StringContent(AuthServerMetadataWithoutDpop)
-        };
-        
-        private readonly HttpResponseMessage _authServerMetadataResponseWithDPopSupport = new HttpResponseMessage()
-        {
-            StatusCode = HttpStatusCode.OK,
-            Content = new StringContent(AuthServerMetadataWithDpop)
-        };
         
         private readonly HttpResponseMessage _credentialResponse = new HttpResponseMessage()
         {
@@ -83,11 +77,11 @@ namespace WalletFramework.Oid4Vc.Tests.Oid4Vci.Services
 
         private readonly Mock<HttpMessageHandler> _httpMessageHandlerMock = new Mock<HttpMessageHandler>();
         private readonly Mock<IHttpClientFactory> _httpClientFactoryMock = new Mock<IHttpClientFactory>();
+        private readonly Mock<ISessionRecordService> _authorizationRecordService = new Mock<ISessionRecordService>();
         private readonly Mock<IKeyStore> _keyStoreMock = new Mock<IKeyStore>();
-
         private Oid4VciClientService _oid4VciClientService;
 
-        private readonly OidIssuerMetadata _oidIssuerMetadata = new (
+        private readonly OidIssuerMetadata _issuerMetadata = new(
             credentialConfigurationsSupported: new Dictionary<string, OidCredentialMetadata>()
             {
                 {
@@ -105,36 +99,59 @@ namespace WalletFramework.Oid4Vc.Tests.Oid4Vci.Services
             authorizationServer: null
         );
 
+        private readonly AuthorizationServerMetadata _authorizationServerMetadataWithDpop =
+            new AuthorizationServerMetadata()
+            {
+                Issuer = "https://issuer.io",
+                TokenEndpoint = "https://issuer.io/token",
+                TokenEndpointAuthMethodsSupported = new string[] {"urn:ietf:params:oauth:client-assertion-type:verifiable-presentation"},
+                ResponseTypesSupported = new string[] {"urn:ietf:params:oauth:grant-type:pre-authorized_code"},
+                DPopSigningAlgValuesSupported = new string[] {"ES256"}
+            };
+        
+        private readonly AuthorizationServerMetadata _authorizationServerMetadataWithoutDpop =
+            new AuthorizationServerMetadata()
+            {
+                Issuer = "https://issuer.io",
+                TokenEndpoint = "https://issuer.io/token",
+                TokenEndpointAuthMethodsSupported = new string[] {"urn:ietf:params:oauth:client-assertion-type:verifiable-presentation"},
+                ResponseTypesSupported = new string[] {"urn:ietf:params:oauth:grant-type:pre-authorized_code"}
+            };
+        
+        //TODO: Add tests for Authorization Code Flow when Storage is replaced (indy-sdk)
+        
         [Fact]
-        public async Task CanRequestCredentialWithoutDPopAsync()
+        public async Task CanRequestCredentialWithoutDPopInPreAuthFlowAsync()
         {
             //Arrange
             SetupKeyStoreGenerateKeySequence(KeyBindingJwtKeyId);
             _keyStoreMock.Setup(j =>
                     j.GenerateKbProofOfPossessionAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
-                        It.IsAny<string>(),It.IsAny<string>()))
+                        It.IsAny<string>(),It.IsAny<string>(), It.IsAny<string>()))
                 .ReturnsAsync(KbJwtMock);
             
-            SetupHttpClientSequence(_authServerMetadataResponseWithoutDPopSupport, _tokenResponseWithoutDpopSupport, _credentialResponse);
+            SetupHttpClientSequence(_tokenResponseWithoutDpopSupport, _credentialResponse);
             
             var expectedCredentialResponse = JsonConvert.DeserializeObject<OidCredentialResponse>(CredentialResponse);
             
-            //Act
-            var actualCredentialResponse = 
-                await _oid4VciClientService.RequestCredentialAsync(
-                    _oidIssuerMetadata.CredentialConfigurationsSupported.First().Value,
-                    _oidIssuerMetadata,
-                    PreAuthorizedCode,
-                    TransactionCode
-                    );
+            var metadataSet =  new MetadataSet(_issuerMetadata, _authorizationServerMetadataWithoutDpop);
             
-            //Assert
-            actualCredentialResponse.Item1.Should().BeEquivalentTo(expectedCredentialResponse);
-            actualCredentialResponse.Item2.Should().BeEquivalentTo(KeyBindingJwtKeyId);
+            // Act
+             var actualCredentialResponse = 
+                 await _oid4VciClientService.RequestCredentialAsync(
+                     metadataSet,
+                     _issuerMetadata.CredentialConfigurationsSupported.First().Value,
+                     PreAuthorizedCode,
+                     TransactionCode
+                     );
+            
+             //Assert
+             actualCredentialResponse[0].Item1.Should().BeEquivalentTo(expectedCredentialResponse);
+             actualCredentialResponse[0].Item2.Should().BeEquivalentTo(KeyBindingJwtKeyId);
         }
         
         [Fact]
-        public async Task CanRequestCredentialWithDPoPAsync()
+        public async Task CanRequestCredentialWithDPoPInPreAuthFlowAsync()
         {
             //Arrange
             const string dPopJwtMock = "someDPopJwtMock";
@@ -142,33 +159,34 @@ namespace WalletFramework.Oid4Vc.Tests.Oid4Vci.Services
             SetupKeyStoreGenerateKeySequence(DPopJwtKeyId, KeyBindingJwtKeyId);
             _keyStoreMock.Setup(j =>
                     j.GenerateKbProofOfPossessionAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
-                        It.IsAny<string>(),It.IsAny<string>()))
+                        It.IsAny<string>(),It.IsAny<string>(), It.IsAny<string>()))
                 .ReturnsAsync(KbJwtMock);
             _keyStoreMock.Setup(j =>
                     j.GenerateDPopProofOfPossessionAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
                         It.IsAny<string>()))
                 .ReturnsAsync(dPopJwtMock);
             
-            SetupHttpClientSequence(
-                _authServerMetadataResponseWithDPopSupport, 
+            SetupHttpClientSequence( 
                 _dPopBadRequestTokenResponse,
                 _tokenResponseWithDpopSupport, 
                 _credentialResponse);
             
             var expectedCredentialResponse = JsonConvert.DeserializeObject<OidCredentialResponse>(CredentialResponse);
             
+            var metadataSet =  new MetadataSet(_issuerMetadata, _authorizationServerMetadataWithDpop);
+            
             //Act
             var actualCredentialResponse = 
                 await _oid4VciClientService.RequestCredentialAsync(
-                    _oidIssuerMetadata.CredentialConfigurationsSupported.First().Value,
-                    _oidIssuerMetadata,
+                    metadataSet,
+                    _issuerMetadata.CredentialConfigurationsSupported.First().Value,
                     PreAuthorizedCode,
                     TransactionCode
                 );
             
             //Assert
-            actualCredentialResponse.Item1.Should().BeEquivalentTo(expectedCredentialResponse);
-            actualCredentialResponse.Item2.Should().BeEquivalentTo(KeyBindingJwtKeyId);
+            actualCredentialResponse[0].Item1.Should().BeEquivalentTo(expectedCredentialResponse);
+            actualCredentialResponse[0].Item2.Should().BeEquivalentTo(KeyBindingJwtKeyId);
         }
 
         private void SetupHttpClientSequence(params HttpResponseMessage[] responses)
@@ -184,7 +202,7 @@ namespace WalletFramework.Oid4Vc.Tests.Oid4Vci.Services
             _httpClientFactoryMock.Setup(f => f.CreateClient(It.IsAny<string>())).Returns(httpClient);
 
             _oid4VciClientService =
-                new Oid4VciClientService(_httpClientFactoryMock.Object, _keyStoreMock.Object);
+                new Oid4VciClientService(_httpClientFactoryMock.Object, _authorizationRecordService.Object, _keyStoreMock.Object);
         }
         
         private void SetupKeyStoreGenerateKeySequence(params string[] responses)

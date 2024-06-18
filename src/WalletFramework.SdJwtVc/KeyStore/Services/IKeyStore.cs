@@ -28,7 +28,7 @@ namespace WalletFramework.SdJwtVc.KeyStore.Services
         ///     A <see cref="Task{TResult}" /> representing the asynchronous operation. When evaluated, the task's result contains
         ///     the proof.
         /// </returns>
-        Task<string> GenerateKbProofOfPossessionAsync(string keyId, string audience, string nonce, string type, string? sdHash = null);
+        Task<string> GenerateKbProofOfPossessionAsync(string keyId, string audience, string nonce, string type, string? sdHash = null, string? clientId = null);
         
         /// <summary>
         ///     Asynchronously creates a DPoP Proof JWT for a specific key, based on the provided audience, nonce and access token.

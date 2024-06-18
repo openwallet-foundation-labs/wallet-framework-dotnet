@@ -6,7 +6,7 @@ namespace WalletFramework.Oid4Vc.Oid4Vci.Models.Authorization
     ///     Represents a successful response from the OAuth 2.0 Authorization Server containing
     ///     the issued access token and related information.
     /// </summary>
-    public class TokenResponse
+    internal class TokenResponse
     {
         /// <summary>
         ///     Indicates if the Token Request is still pending as the Credential Issuer
@@ -64,5 +64,11 @@ namespace WalletFramework.Oid4Vc.Oid4Vci.Models.Authorization
         /// </summary>
         [JsonProperty("token_type")]
         public string TokenType { get; set; }
+        
+        /// <summary>
+        ///     Gets or sets the credential identifier.
+        /// </summary>
+        [JsonProperty("credential_identifiers")]
+        public AuthorizationDetails? CredentialIdentifier { get; set; }
     }
 }

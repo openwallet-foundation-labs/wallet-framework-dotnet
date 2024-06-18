@@ -1,4 +1,5 @@
 using Microsoft.Extensions.DependencyInjection;
+using WalletFramework.Oid4Vc.Oid4Vci.Services;
 using WalletFramework.Oid4Vc.Oid4Vci.Services.Oid4VciClientService;
 using WalletFramework.Oid4Vc.Oid4Vp.PresentationExchange.Services;
 using WalletFramework.Oid4Vc.Oid4Vp.Services;
@@ -18,6 +19,7 @@ public static class SeviceCollectionExtensions
         builder.AddSingleton<IOid4VpClientService, Oid4VpClientService>();
         builder.AddSingleton<IOid4VpHaipClient, Oid4VpHaipClient>();
         builder.AddSingleton<IOid4VpRecordService, Oid4VpRecordService>();
+        builder.AddSingleton<ISessionRecordService, SessionRecordService>();
             
         return builder;
     }

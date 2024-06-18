@@ -61,6 +61,7 @@ namespace WalletFramework.Oid4Vc.Tests.Oid4Vp.Services
                         It.IsAny<string>(),
                         It.IsAny<string>(),
                         It.IsAny<string>(),
+                        It.IsAny<string>(),
                         It.IsAny<string>()
                     )
                 )
