@@ -47,8 +47,8 @@ namespace WalletFramework.Oid4Vc.Oid4Vp.Extensions
                     }
                 )
                 {
-                    IsRevocationEnabled =
-                        leafCert.GetExtensionValue(X509Extensions.CrlDistributionPoints) is not null
+                    //TODO: Check if CRLs (Certificate Revocation Lists) are valid
+                    IsRevocationEnabled = false
                 };
 
             builderParams.AddStore(
