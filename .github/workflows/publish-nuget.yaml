@@ -57,9 +57,11 @@ jobs:
                   
             - name: Build
               run: dotnet build $SOLUTION --configuration $BUILD_CONFIG -p:Version=$APP_VERSION --no-restore
-#
-#            - name: Run tests
-#              run: dotnet test $SOLUTION --configuration $BUILD_CONFIG --no-restore --no-build --verbosity normal
+
+            - name: Run tests
+              run: |
+                dotnet test test/WalletFramework.Oid4Vc.Tests --configuration $BUILD_CONFIG --no-restore --no-build
+                dotnet test test/WalletFramework.SdJwtVc.Tests --configuration $BUILD_CONFIG --no-restore --no-build
 
             - name: Pack WalletFramework
               run: dotnet pack $SOLUTION --configuration $BUILD_CONFIG -p:Version=$APP_VERSION --no-build --output .
