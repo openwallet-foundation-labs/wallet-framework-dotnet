@@ -1,7 +1,6 @@
 using Newtonsoft.Json.Linq;
 using PeterO.Cbor;
 using WalletFramework.Functional;
-using WalletFramework.Mdoc.Common;
 
 namespace WalletFramework.Mdoc;
 
