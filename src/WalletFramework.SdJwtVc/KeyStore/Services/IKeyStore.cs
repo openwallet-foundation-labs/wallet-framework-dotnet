@@ -1,3 +1,5 @@
+using WalletFramework.SdJwtVc.Models;
+
 namespace WalletFramework.SdJwtVc.KeyStore.Services
 {
     /// <summary>
@@ -43,6 +45,8 @@ namespace WalletFramework.SdJwtVc.KeyStore.Services
         /// </returns>
         Task<string> GenerateDPopProofOfPossessionAsync(string keyId, string audience, string? nonce, string? accessToken);
 
+        Task<string> CreateClientAttestationProofOfPossession(string keyId, ClientAttestationPopOptions popOptions);
+        
         /// <summary>
         ///     Asynchronously loads a key by its identifier and returns it as a JSON Web Key (JWK) containing the public key
         ///     information.
