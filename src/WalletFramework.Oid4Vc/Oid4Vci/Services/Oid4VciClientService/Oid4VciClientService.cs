@@ -72,14 +72,14 @@ namespace WalletFramework.Oid4Vc.Oid4Vci.Services.Oid4VciClientService
             AuthorizationData authorizationData)
         {
             var authorizationCodeParameters = CreateAndStoreCodeChallenge();
-            var sessionId = Guid.NewGuid().ToString();
+            var state = Guid.NewGuid().ToString();
             
             var credentialMetadatas = authorizationData.MetadataSet.IssuerMetadata.CredentialConfigurationsSupported
                 .Where(credentialConfiguration => authorizationData.CredentialConfigurationIds.Contains(credentialConfiguration.Key))
                 .Select(y => y.Value).ToList();
 
             var par = new PushedAuthorizationRequest(
-                VciSessionId.CreateSessionId(sessionId),
+                State.CreateState(state),
                 authorizationData.ClientOptions,
                 authorizationCodeParameters,
                 authorizationData.CredentialConfigurationIds
@@ -110,7 +110,7 @@ namespace WalletFramework.Oid4Vc.Oid4Vci.Services.Oid4VciClientService
 
             await RecordService.StoreAsync(
                 agentContext,
-                VciSessionId.CreateSessionId(sessionId),
+                State.CreateState(state),
                 authorizationData,
                 authorizationCodeParameters);
             
@@ -122,12 +122,12 @@ namespace WalletFramework.Oid4Vc.Oid4Vci.Services.Oid4VciClientService
             IAgentContext context,
             IssuanceSessionParameters issuanceSessionParameters)
         {
-            var record = await RecordService.GetAsync(context, issuanceSessionParameters.SessionId);
+            var record = await RecordService.GetAsync(context, issuanceSessionParameters.State);
 
             var tokenRequest = new TokenRequest
             {
                 GrantType = AuthorizationCodeGrantTypeIdentifier,
-                RedirectUri = record.AuthorizationData.ClientOptions.RedirectUri + "?session=" + record.SessionId,
+                RedirectUri = record.AuthorizationData.ClientOptions.RedirectUri,
                 CodeVerifier = record.AuthorizationCodeParameters.Verifier,
                 Code = issuanceSessionParameters.Code,
                 ClientId = record.AuthorizationData.ClientOptions.ClientId

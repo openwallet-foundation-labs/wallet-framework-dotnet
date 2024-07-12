@@ -12,9 +12,9 @@ namespace WalletFramework.Oid4Vc.Oid4Vci.Models.Authorization
         ///     The session specific id.
         /// </summary>
         [JsonIgnore]
-        public VciSessionId SessionId
+        public State SessionId
         {
-            get => VciSessionId.CreateSessionId(Get());
+            get => State.CreateState(Get());
             set => Set((string)value, false);
         }
 
@@ -50,7 +50,7 @@ namespace WalletFramework.Oid4Vc.Oid4Vci.Models.Authorization
         /// <param name="authorizationCodeParameters"></param>
         [JsonConstructor]
         public VciAuthorizationSessionRecord(
-            VciSessionId sessionId,
+            State sessionId,
             AuthorizationData authorizationData,
             AuthorizationCodeParameters authorizationCodeParameters)
         {

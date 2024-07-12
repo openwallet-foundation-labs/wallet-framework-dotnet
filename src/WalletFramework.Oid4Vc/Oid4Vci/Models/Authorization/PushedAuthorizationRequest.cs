@@ -37,23 +37,27 @@ namespace WalletFramework.Oid4Vc.Oid4Vci.Models.Authorization
         
         [JsonProperty("resource", NullValueHandling = NullValueHandling.Ignore)]
         public string? Resource { get; }
+        
+        [JsonProperty("state", NullValueHandling = NullValueHandling.Ignore)]
+        public string? State { get; }
 
         public PushedAuthorizationRequest(
-            VciSessionId sessionId,
+            State state,
             ClientOptions clientOptions,
             AuthorizationCodeParameters authorizationCodeParameters,
-            AuthorizationDetails[]? authorizationDetails, 
+            AuthorizationDetails[]? authorizationDetails,
             string? scope, 
             string? issuerState, 
-            string? userHint,  
+            string? userHint, 
             string? resource)
         {
             ClientId = clientOptions.ClientId;
-            RedirectUri = clientOptions.RedirectUri + "?session=" + sessionId;
+            RedirectUri = clientOptions.RedirectUri;
             WalletIssuer = clientOptions.WalletIssuer;
             CodeChallenge = authorizationCodeParameters.Challenge;
             CodeChallengeMethod = authorizationCodeParameters.CodeChallengeMethod;
             AuthorizationDetails = authorizationDetails;
+            State = state;
             IssuerState = issuerState;
             UserHint = userHint;
             Scope = scope;
@@ -93,6 +97,9 @@ namespace WalletFramework.Oid4Vc.Oid4Vci.Models.Authorization
             
             if (!string.IsNullOrEmpty(Scope))
                 keyValuePairs.Add(new KeyValuePair<string, string>("scope", Scope));
+            
+            if (!string.IsNullOrEmpty(State))
+                keyValuePairs.Add(new KeyValuePair<string, string>("state", State));
         
             return new FormUrlEncodedContent(keyValuePairs);
         }

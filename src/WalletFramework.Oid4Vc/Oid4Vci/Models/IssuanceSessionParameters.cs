@@ -11,14 +11,14 @@ namespace WalletFramework.Oid4Vc.Oid4Vci.Models
         /// <summary>
         ///   Gets the session identifier.
         /// </summary>
-        public VciSessionId SessionId { get; }
+        public State State { get; }
         
         /// <summary>
         ///  Gets the actual authorization code that is received from the authorization server upon succesful authorization.
         /// </summary>
         public string Code { get; }
         
-        private IssuanceSessionParameters(VciSessionId sessionId, string code) => (SessionId, Code) = (sessionId, code);
+        private IssuanceSessionParameters(State sessionId, string code) => (State, Code) = (sessionId, code);
         
         /// <summary>
         ///    Creates a new instance of <see cref="IssuanceSessionParameters"/> from the given <see cref="Uri"/>.
@@ -31,14 +31,14 @@ namespace WalletFramework.Oid4Vc.Oid4Vci.Models
             var queryParams = ParseQueryString(uri.Query);
         
             var code = queryParams.Get("code");
-            var sessionId = queryParams.Get("session");
+            var state = queryParams.Get("state");
         
-            if (string.IsNullOrWhiteSpace(code) || string.IsNullOrWhiteSpace(sessionId))
+            if (string.IsNullOrWhiteSpace(code) || string.IsNullOrWhiteSpace(state))
             {
-                throw new InvalidOperationException("Query parameter 'code' and/or 'session' are missing");
+                throw new InvalidOperationException("Query parameter 'code' and/or 'state' are missing");
             }
 
-            return new IssuanceSessionParameters(VciSessionId.CreateSessionId(sessionId), code);
+            return new IssuanceSessionParameters(State.CreateState(state), code);
         }
     }
 }

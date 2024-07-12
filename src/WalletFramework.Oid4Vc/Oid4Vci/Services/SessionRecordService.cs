@@ -26,7 +26,7 @@ namespace WalletFramework.Oid4Vc.Oid4Vci.Services
         /// <inheritdoc />
         public async Task<string> StoreAsync(
             IAgentContext agentContext,
-            VciSessionId sessionId,
+            State sessionId,
             AuthorizationData authorizationData,
             AuthorizationCodeParameters authorizationCodeParameters)
         {
@@ -44,7 +44,7 @@ namespace WalletFramework.Oid4Vc.Oid4Vci.Services
         }
         
         /// <inheritdoc />
-        public async Task<VciAuthorizationSessionRecord> GetAsync(IAgentContext context, VciSessionId sessionId)
+        public async Task<VciAuthorizationSessionRecord> GetAsync(IAgentContext context, State sessionId)
         {
             var record = (await RecordService.SearchAsync<VciAuthorizationSessionRecord>(
                 context.Wallet, 
@@ -59,7 +59,7 @@ namespace WalletFramework.Oid4Vc.Oid4Vci.Services
         }
         
         /// <inheritdoc />
-        public async Task<bool> DeleteAsync(IAgentContext context, VciSessionId sessionId)
+        public async Task<bool> DeleteAsync(IAgentContext context, State sessionId)
         {
             return await RecordService.DeleteAsync<VciAuthorizationSessionRecord>(context.Wallet, sessionId);
         }

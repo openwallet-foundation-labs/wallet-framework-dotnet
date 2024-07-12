@@ -18,7 +18,7 @@ namespace WalletFramework.Oid4Vc.Oid4Vci.Services
         /// <returns></returns>
         Task<string> StoreAsync(
             IAgentContext agentContext,
-            VciSessionId sessionId,
+            State sessionId,
             AuthorizationData authorizationData,
             AuthorizationCodeParameters authorizationCodeParameters);
         
@@ -28,7 +28,7 @@ namespace WalletFramework.Oid4Vc.Oid4Vci.Services
         /// <param name="context">Agent Context</param>
         /// <param name="sessionId">Session Identifier of a Authorization Code Flow session</param>
         /// <returns></returns>
-        Task<VciAuthorizationSessionRecord> GetAsync(IAgentContext context, VciSessionId sessionId);
+        Task<VciAuthorizationSessionRecord> GetAsync(IAgentContext context, State sessionId);
         
         /// <summary>
         ///     Deletes the authorization session record by the session identifier.
@@ -36,6 +36,6 @@ namespace WalletFramework.Oid4Vc.Oid4Vci.Services
         /// <param name="context">Agent Context</param>
         /// <param name="sessionId">Session Identifier of a Authorization Code Flow session</param>
         /// <returns></returns>
-        Task<bool> DeleteAsync(IAgentContext context, VciSessionId sessionId);
+        Task<bool> DeleteAsync(IAgentContext context, State sessionId);
     }
 }
