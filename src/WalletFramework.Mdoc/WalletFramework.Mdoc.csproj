@@ -13,7 +13,7 @@
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="Microsoft.IdentityModel.Tokens" Version="7.5.2"/>
+        <PackageReference Include="Microsoft.IdentityModel.Tokens" Version="7.6.3"/>
         <PackageReference Include="Newtonsoft.Json" Version="13.0.3"/>
         <PackageReference Include="PeterO.Cbor" Version="4.5.3"/>
     </ItemGroup>
