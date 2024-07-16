@@ -6,10 +6,15 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+    <ItemGroup>
+        <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
+            <_Parameter1>WalletFramework.Oid4Vc.Tests</_Parameter1>
+        </AssemblyAttribute>
+    </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Hyperledger.Aries\Hyperledger.Aries.csproj" />
+    <ProjectReference Include="..\WalletFramework.MdocVc\WalletFramework.MdocVc.csproj" />
     <ProjectReference Include="..\WalletFramework.SdJwtVc\WalletFramework.SdJwtVc.csproj" />
   </ItemGroup>
-
 </Project>

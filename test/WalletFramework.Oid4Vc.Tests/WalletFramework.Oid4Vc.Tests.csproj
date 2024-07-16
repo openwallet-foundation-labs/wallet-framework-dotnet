@@ -10,7 +10,7 @@
 
   <ItemGroup>
     <PackageReference Include="FluentAssertions" Version="$(FluentAssertionsVersion)" />
-    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.1.0" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.10.0" />
     <PackageReference Include="Moq" Version="$(MoqVersion)" />
     <PackageReference Include="xunit" Version="$(XunitVersion)" />
     <PackageReference Include="xunit.runner.visualstudio" Version="2.4.3">
@@ -35,6 +35,11 @@
     <ProjectReference Include="..\..\src\Hyperledger.Aries\Hyperledger.Aries.csproj" />
     <ProjectReference Include="..\..\src\WalletFramework.Oid4Vc\WalletFramework.Oid4Vc.csproj" />
     <ProjectReference Include="..\..\src\WalletFramework.SdJwtVc\WalletFramework.SdJwtVc.csproj" />
+  </ItemGroup>
+
+
+  <ItemGroup>
+    <Folder Include="Oid4Vci\CredRequest\" />
   </ItemGroup>
 
 </Project>

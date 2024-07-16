@@ -75,7 +75,7 @@ namespace WalletFramework.Oid4Vc.Oid4Vp.PresentationExchange.Services
             foreach (var record in records)
             {
                 var doc = _toSdJwtDoc(record);
-                bool isAMatch = fields.All(field =>
+                var isAMatch = fields.All(field =>
                 {
                     try
                     {
