@@ -1,12 +1,10 @@
-using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using OneOf;
-using WalletFramework.Core.Json.Converters;
 using WalletFramework.Oid4Vc.Oid4Vci.CredConfiguration.Models.Mdoc;
 using WalletFramework.Oid4Vc.Oid4Vci.CredConfiguration.Models.SdJwt;
 
 namespace WalletFramework.Oid4Vc.Oid4Vci.CredConfiguration.Models;
 
-[JsonConverter(typeof(OneOfJsonConverter<SupportedCredentialConfiguration, SdJwtConfiguration, MdocConfiguration>))]
 public sealed class SupportedCredentialConfiguration : OneOfBase<SdJwtConfiguration, MdocConfiguration>
 {
     public static implicit operator OneOf<SdJwtConfiguration, MdocConfiguration>(
@@ -28,4 +26,13 @@ public sealed class SupportedCredentialConfiguration : OneOfBase<SdJwtConfigurat
     private SupportedCredentialConfiguration(OneOf<SdJwtConfiguration, MdocConfiguration> input) : base(input)
     {
     }
+}
+
+public static class SupportedCredentialConfigurationFun
+{
+    public static JObject EncodeToJson(this SupportedCredentialConfiguration config) =>
+        config.Match(
+            sdJwt => sdJwt.EncodeToJson(),
+            mdoc => mdoc.EncodeToJson()
+        );
 }

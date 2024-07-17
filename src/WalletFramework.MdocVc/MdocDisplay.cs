@@ -1,47 +1,30 @@
 using LanguageExt;
-using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using WalletFramework.Core.Colors;
 using WalletFramework.Core.Functional;
 using WalletFramework.Core.Json;
-using WalletFramework.Core.Json.Converters;
 using WalletFramework.Core.Localization;
 using WalletFramework.MdocLib;
 
 namespace WalletFramework.MdocVc;
 
 public record MdocDisplay(
-    [property: JsonProperty(MdocDisplayJsonKeys.Logo)]
-    [property: JsonConverter(typeof(OptionJsonConverter<MdocLogo>))]
     Option<MdocLogo> Logo,
-    [property: JsonProperty(MdocDisplayJsonKeys.Name)]
-    [property: JsonConverter(typeof(OptionJsonConverter<MdocName>))]
     Option<MdocName> Name,
-    [property: JsonProperty(MdocDisplayJsonKeys.BackgroundColor)]
-    [property: JsonConverter(typeof(OptionJsonConverter<Color>))]
     Option<Color> BackgroundColor,
-    [property: JsonProperty(MdocDisplayJsonKeys.TextColor)]
-    [property: JsonConverter(typeof(OptionJsonConverter<Color>))]
     Option<Color> TextColor,
-    [property: JsonProperty(MdocDisplayJsonKeys.Locale)]
-    [property: JsonConverter(typeof(OptionJsonConverter<Locale>))]
     Option<Locale> Locale,
-    [property: JsonProperty(MdocDisplayJsonKeys.ClaimsDisplays)]
-    [property: JsonConverter(typeof(OptionJsonConverter<Dictionary<NameSpace, Dictionary<ElementIdentifier, List<ClaimDisplay>>>>))]
     Option<Dictionary<NameSpace, Dictionary<ElementIdentifier, List<ClaimDisplay>>>> ClaimsDisplays);
-
-public static class MdocDisplayJsonKeys
-{
-    public const string Logo = "logo";
-    public const string Name = "name";
-    public const string BackgroundColor = "background_color";
-    public const string TextColor = "text_color";
-    public const string Locale = "locale";
-    public const string ClaimsDisplays = "claims_displays";
-}
 
 public static class MdocDisplayFun
 {
+    private const string LogoJsonKey = "logo";
+    private const string NameJsonKey = "name";
+    private const string BackgroundColorJsonKey = "background_color";
+    private const string TextColorJsonKey = "text_color";
+    private const string LocaleJsonKey = "locale";
+    private const string ClaimsDisplaysJsonKey = "claims_displays";
+    
     public static Option<MdocDisplay> GetByLocale(this List<MdocDisplay> displays, Locale locale)
     {
         var dict = new Dictionary<Locale, MdocDisplay>();
@@ -71,6 +54,48 @@ public static class MdocDisplayFun
             return Option<MdocDisplay>.None;
         }
     }
+
+    public static JObject EncodeToJson(this MdocDisplay display)
+    {
+        var result = new JObject();
+        
+        display.Logo.IfSome(logo => result.Add(LogoJsonKey, logo.ToString()));
+        display.Name.IfSome(name => result.Add(NameJsonKey, name.ToString()));
+        display.BackgroundColor.IfSome(color => result.Add(BackgroundColorJsonKey, color.ToString()));
+        display.TextColor.IfSome(color => result.Add(TextColorJsonKey, color.ToString()));
+        display.Locale.IfSome(locale => result.Add(LocaleJsonKey, locale.ToString()));
+        display.ClaimsDisplays.IfSome(claimsDisplays =>
+        {
+            var claimsDict = new JObject();
+            foreach (var (nameSpace, elementDict) in claimsDisplays)
+            {
+                var elements = new JObject();
+                foreach (var (elementId, claimDisplays) in elementDict)
+                {
+                    var displays = new JArray();
+                    foreach (var claimDisplay in claimDisplays)
+                    {
+                        var claimDisplayJson = new JObject();
+                        
+                        claimDisplay.Name.IfSome(
+                            name => claimDisplayJson.Add(ClaimDisplayJsonKeys.ClaimName, name.ToString())
+                        );
+                        
+                        claimDisplay.Locale.IfSome(
+                            locale => claimDisplayJson.Add(ClaimDisplayJsonKeys.Locale, locale.ToString())
+                        );
+                        
+                        displays.Add(claimDisplayJson);
+                    }
+                    elements.Add(elementId.ToString(), displays);
+                }
+                claimsDict.Add(nameSpace.ToString(), elements);
+            }
+            result.Add(ClaimsDisplaysJsonKey, claimsDict);
+        });
+
+        return result;
+    }
     
     public static Option<List<MdocDisplay>> DecodeFromJson(JArray array)
     {
@@ -87,32 +112,32 @@ public static class MdocDisplayFun
     private static MdocDisplay DecodeFromJson(JObject display)
     {
         var logo =
-            from jToken in display.GetByKey(MdocDisplayJsonKeys.Logo).ToOption()
+            from jToken in display.GetByKey(LogoJsonKey).ToOption()
             let uri = new Uri(jToken.ToString())
             select new MdocLogo(uri);
         
         var mdocName =
-            from jToken in display.GetByKey(MdocDisplayJsonKeys.Name).ToOption()
+            from jToken in display.GetByKey(NameJsonKey).ToOption()
             from name in MdocName.OptionMdocName(jToken.ToString())
             select name;
 
         var backgroundColor =
-            from jToken in display.GetByKey(MdocDisplayJsonKeys.BackgroundColor).ToOption()
+            from jToken in display.GetByKey(BackgroundColorJsonKey).ToOption()
             from color in Color.OptionColor(jToken.ToString())
             select color;
         
         var textColor =
-            from jToken in display.GetByKey(MdocDisplayJsonKeys.TextColor).ToOption()
+            from jToken in display.GetByKey(TextColorJsonKey).ToOption()
             from color in Color.OptionColor(jToken.ToString())
             select color;
         
         var locale =
-            from jToken in display.GetByKey(MdocDisplayJsonKeys.Locale).ToOption()
+            from jToken in display.GetByKey(LocaleJsonKey).ToOption()
             from l in Locale.OptionLocale(jToken.ToString())
             select l;
 
         var claimsDisplays =
-            from jToken in display.GetByKey(MdocDisplayJsonKeys.ClaimsDisplays).ToOption()
+            from jToken in display.GetByKey(ClaimsDisplaysJsonKey).ToOption()
             from claimsJson in jToken.ToJObject().ToOption()
             from displays in DecodeClaimsDisplaysFromJson(claimsJson)
             select displays;

@@ -1,9 +1,7 @@
 using LanguageExt;
-using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using WalletFramework.Core.Functional;
 using WalletFramework.Core.Json;
-using WalletFramework.Core.Json.Converters;
 using static WalletFramework.Core.Functional.ValidationFun;
 using static WalletFramework.Oid4Vc.Oid4Vci.CredConfiguration.Models.Format;
 using static WalletFramework.Oid4Vc.Oid4Vci.CredConfiguration.Models.Scope;
@@ -12,6 +10,7 @@ using static WalletFramework.Oid4Vc.Oid4Vci.CredConfiguration.Models.Cryptograhi
 using static WalletFramework.Oid4Vc.Oid4Vci.CredConfiguration.Models.ProofTypeId;
 using static WalletFramework.Oid4Vc.Oid4Vci.CredConfiguration.Models.ProofTypeMetadata;
 using static WalletFramework.Oid4Vc.Oid4Vci.CredConfiguration.Models.CredentialDisplay;
+using static WalletFramework.Oid4Vc.Oid4Vci.CredConfiguration.Models.CredentialConfigurationFun;
 
 namespace WalletFramework.Oid4Vc.Oid4Vci.CredConfiguration.Models;
 
@@ -23,44 +22,33 @@ public record CredentialConfiguration
     /// <summary>
     ///     Gets the identifier for the format of the credential.
     /// </summary>
-    [JsonProperty(FormatJsonKey)]
     public Format Format { get; }
         
     /// <summary>
     ///     Gets a string indicating the credential that can be issued.
     /// </summary>
-    [JsonProperty(ScopeJsonKey)]
-    [JsonConverter(typeof(OptionJsonConverter<Scope>))]
     public Option<Scope> Scope { get; set; }
 
     /// <summary>
     ///     Gets list of methods that identify how the Credential is bound to the identifier of the End-User who
     ///     possesses the Credential.
     /// </summary>
-    [JsonProperty(CryptographicBindingMethodsSupportedJsonKey)]
-    [JsonConverter(typeof(OptionJsonConverter<List<CryptographicBindingMethod>>))]
     public Option<List<CryptographicBindingMethod>> CryptographicBindingMethodsSupported { get; }
 
     /// <summary>
     ///     Gets a list of identifiers for the signing algorithms that are supported by the issuer and used
     ///     to sign credentials.
     /// </summary>
-    [JsonProperty(CredentialSigningAlgValuesSupportedJsonKey)]
-    [JsonConverter(typeof(OptionJsonConverter<List<CryptograhicSigningAlgValue>>))]
     public Option<List<CryptograhicSigningAlgValue>> CredentialSigningAlgValuesSupported { get; }
         
     /// <summary>
     ///     Gets a dictionary which maps a credential type to its supported signing algorithms for key proofs.
     /// </summary>
-    [JsonProperty(ProofTypesSupportedJsonKey)]
-    [JsonConverter(typeof(OptionJsonConverter<Dictionary<ProofTypeId, ProofTypeMetadata>>))]
     public Option<Dictionary<ProofTypeId, ProofTypeMetadata>> ProofTypesSupported { get; }
 
     /// <summary>
     ///     Gets a list of display properties of the supported credential for different languages.
     /// </summary>
-    [JsonProperty(DisplayJsonKey)]
-    [JsonConverter(typeof(OptionJsonConverter<List<CredentialDisplay>>))]
     public Option<List<CredentialDisplay>> Display { get; }
 
     private CredentialConfiguration(
@@ -122,11 +110,65 @@ public record CredentialConfiguration
             .Apply(credentialMetadata.GetByKey(ProofTypesSupportedJsonKey).OnSuccess(validProofTypes).ToOption())
             .Apply(credentialMetadata.GetByKey(DisplayJsonKey).ToOption().OnSome(optionalCredentialDisplays));
     }
+}
 
-    private const string FormatJsonKey = "format";
-    private const string ScopeJsonKey = "scope";
-    private const string CryptographicBindingMethodsSupportedJsonKey = "cryptographic_binding_methods_supported";
-    private const string CredentialSigningAlgValuesSupportedJsonKey = "credential_signing_alg_values_supported";
-    private const string ProofTypesSupportedJsonKey = "proof_types_supported";
-    private const string DisplayJsonKey = "display";
+public static class CredentialConfigurationFun
+{
+    public const string FormatJsonKey = "format";
+    public const string ScopeJsonKey = "scope";
+    public const string CryptographicBindingMethodsSupportedJsonKey = "cryptographic_binding_methods_supported";
+    public const string CredentialSigningAlgValuesSupportedJsonKey = "credential_signing_alg_values_supported";
+    public const string ProofTypesSupportedJsonKey = "proof_types_supported";
+    public const string DisplayJsonKey = "display";
+    
+    public static JObject EncodeToJson(this CredentialConfiguration config)
+    {
+        var result = new JObject();
+
+        result.Add(FormatJsonKey, config.Format.ToString());
+        
+        config.Scope.IfSome(scope => result.Add(ScopeJsonKey, scope.ToString()));
+
+        config.CryptographicBindingMethodsSupported.IfSome(list =>
+        {
+            var bindingMethods = new JArray();
+            foreach (var method in list)
+            {
+                bindingMethods.Add(method.ToString());
+            }
+            result.Add(CryptographicBindingMethodsSupportedJsonKey, bindingMethods);
+        });
+        
+        config.CredentialSigningAlgValuesSupported.IfSome(list =>
+        {
+            var signingAlgValues = new JArray();
+            foreach (var value in list)
+            {
+                signingAlgValues.Add(value.ToString());
+            }
+            result.Add(CredentialSigningAlgValuesSupportedJsonKey, signingAlgValues);
+        });
+        
+        config.ProofTypesSupported.IfSome(dict =>
+        {
+            var proofTypes = new JObject();
+            foreach (var (key, value) in dict)
+            {
+                proofTypes.Add(key.ToString(), value.EncodeToJson());
+            }
+            result.Add(ProofTypesSupportedJsonKey, proofTypes);
+        });
+        
+        config.Display.IfSome(displays =>
+        {
+            var displayArray = new JArray();
+            foreach (var display in displays)
+            {
+                displayArray.Add(display.EncodeToJson());
+            }
+            result.Add(DisplayJsonKey, displayArray);
+        });
+        
+        return result;
+    }
 }

@@ -1,11 +1,8 @@
 using System.Drawing;
 using LanguageExt;
-using Newtonsoft.Json;
-using WalletFramework.Core.Json.Converters;
 
 namespace WalletFramework.Core.Colors;
 
-[JsonConverter(typeof(ValueTypeJsonConverter<Color>))]
 public readonly struct Color
 {
     private System.Drawing.Color Value { get; }

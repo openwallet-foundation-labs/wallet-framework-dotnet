@@ -1,15 +1,12 @@
 using System.Globalization;
-using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using WalletFramework.Core.Functional;
 using WalletFramework.Core.Json;
-using WalletFramework.Core.Json.Converters;
 using WalletFramework.Core.Uri;
 using WalletFramework.Oid4Vc.Oid4Vci.Authorization.Errors;
 
 namespace WalletFramework.Oid4Vc.Oid4Vci.Authorization.Models;
 
-[JsonConverter(typeof(ValueTypeJsonConverter<AuthorizationServerId>))]
 public readonly struct AuthorizationServerId
 {
     private Uri Value { get; }

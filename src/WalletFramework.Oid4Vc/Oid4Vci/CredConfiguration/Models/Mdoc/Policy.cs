@@ -1,23 +1,19 @@
 using LanguageExt;
-using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using WalletFramework.Core.Functional;
 using WalletFramework.Core.Json;
-using WalletFramework.Core.Json.Converters;
 using WalletFramework.Core.Json.Errors;
 using WalletFramework.MdocLib.Common;
 using WalletFramework.MdocVc.Common;
 using WalletFramework.Oid4Vc.Oid4Vci.CredConfiguration.Errors;
+using static WalletFramework.Oid4Vc.Oid4Vci.CredConfiguration.Models.Mdoc.PolicyFun;
 
 namespace WalletFramework.Oid4Vc.Oid4Vci.CredConfiguration.Models.Mdoc;
 
 public record Policy
 {
-    [JsonProperty("one_time_use")]
     public bool OneTimeUse { get; }
     
-    [JsonProperty("batch_size")]
-    [JsonConverter(typeof(OptionJsonConverter<uint>))]
     public Option<uint> BatchSize { get; }
     
     private Policy(bool oneTimeUse, Option<uint> batchSize)
@@ -41,13 +37,13 @@ public record Policy
         }
 
         var oneTimeUse = jObject
-            .GetByKey("one_time_use")
+            .GetByKey(OneTimeUseJsonKey)
             .OnSuccess(token =>
             {
                 var str = token.ToString();
                 if (string.IsNullOrWhiteSpace(str))
                 {
-                    return new FieldValueIsNullOrEmptyError("one_time_use").ToInvalid<bool>();
+                    return new FieldValueIsNullOrEmptyError(OneTimeUseJsonKey).ToInvalid<bool>();
                 }
                 else
                 {
@@ -63,7 +59,7 @@ public record Policy
             });
         
         var batchSize = jObject
-            .GetByKey("batch_size")
+            .GetByKey(BatchSizeJsonKey)
             .OnSuccess(token =>
             {
                 try
@@ -81,5 +77,25 @@ public record Policy
         return ValidationFun.Valid(Create)
             .Apply(oneTimeUse)
             .Apply(batchSize);
+    }
+}
+
+public static class PolicyFun
+{
+    public const string OneTimeUseJsonKey = "one_time_use";
+    public const string BatchSizeJsonKey = "batch_size";
+
+    public static JObject EncodeToJson(this Policy policy)
+    {
+        var policyJson = new JObject
+        {
+            { OneTimeUseJsonKey, policy.OneTimeUse }
+        };
+
+        policy.BatchSize.IfSome(batchSize =>
+            policyJson.Add(BatchSizeJsonKey, batchSize)
+        );
+
+        return policyJson;
     }
 }

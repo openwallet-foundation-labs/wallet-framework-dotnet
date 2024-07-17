@@ -1,9 +1,9 @@
 using LanguageExt;
-using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using WalletFramework.Core.Functional;
 using WalletFramework.Core.Json;
-using WalletFramework.Core.Json.Converters;
+using WalletFramework.Core.Uri;
+using static WalletFramework.Oid4Vc.Oid4Vci.CredConfiguration.Models.CredentialLogoJsonExtensions;
 
 namespace WalletFramework.Oid4Vc.Oid4Vci.CredConfiguration.Models;
 
@@ -15,15 +15,11 @@ public record CredentialLogo
     /// <summary>
     ///     Gets the alternate text that describes the logo image. This is typically used for accessibility purposes.
     /// </summary>
-    [JsonProperty("alt_text")]
-    [JsonConverter(typeof(OptionJsonConverter<string>))]
     public Option<string> AltText { get; }
 
     /// <summary>
     ///     Gets the URL of the logo image.
     /// </summary>
-    [JsonProperty("uri")]
-    [JsonConverter(typeof(OptionJsonConverter<Uri>))]
     public Option<Uri> Uri { get; }
     
     private CredentialLogo(Option<string> altText, Option<Uri> uri)
@@ -34,7 +30,7 @@ public record CredentialLogo
 
     public static Option<CredentialLogo> OptionalCredentialLogo(JToken logo)
     {
-        var altText = logo.GetByKey("alt_text").ToOption().OnSome(text =>
+        var altText = logo.GetByKey(AltTextJsonKey).ToOption().OnSome(text =>
         {
             var str = text.ToString();
             if (string.IsNullOrWhiteSpace(str))
@@ -43,7 +39,7 @@ public record CredentialLogo
             return str;
         });
         
-        var imageUri = logo.GetByKey("uri").ToOption().OnSome(uri =>
+        var imageUri = logo.GetByKey(UriJsonKey).ToOption().OnSome(uri =>
         {
             try
             {
@@ -61,5 +57,28 @@ public record CredentialLogo
             return Option<CredentialLogo>.None;
         
         return new CredentialLogo(altText, imageUri);
+    }
+}
+
+public static class CredentialLogoJsonExtensions
+{
+    public const string AltTextJsonKey = "alt_text";
+    public static string UriJsonKey => "uri";
+    
+    public static JObject EncodeToJson(this CredentialLogo logo)
+    {
+        var result = new JObject();
+
+        logo.AltText.IfSome(altText =>
+        {
+            result.Add(AltTextJsonKey, altText);
+        });
+
+        logo.Uri.IfSome(uri =>
+        {
+            result.Add(UriJsonKey, uri.ToStringWithoutTrail());
+        });
+
+        return result;
     }
 }

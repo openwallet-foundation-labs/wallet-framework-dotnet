@@ -1,15 +1,12 @@
 using System.Globalization;
-using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using WalletFramework.Core.Functional;
 using WalletFramework.Core.Functional.Errors;
 using WalletFramework.Core.Json;
-using WalletFramework.Core.Json.Converters;
 using static WalletFramework.Core.Functional.ValidationFun;
 
 namespace WalletFramework.Oid4Vc.Oid4Vci.CredConfiguration.Models;
 
-[JsonConverter(typeof(ValueTypeJsonConverter<CryptograhicSigningAlgValue>))]
 public readonly struct CryptograhicSigningAlgValue
 {
     private string Value { get; }

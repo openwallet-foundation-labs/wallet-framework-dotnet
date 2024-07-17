@@ -1,13 +1,10 @@
-using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using PeterO.Cbor;
 using WalletFramework.Core.Functional;
-using WalletFramework.Core.Json.Converters;
 using WalletFramework.MdocLib.Common;
 
 namespace WalletFramework.MdocLib;
 
-[JsonConverter(typeof(ValueTypeJsonConverter<NameSpace>))]
 public readonly struct NameSpace
 {
     public string Value { get; }

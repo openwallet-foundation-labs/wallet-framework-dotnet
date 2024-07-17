@@ -1,6 +1,5 @@
 using Hyperledger.Aries.Agents;
 using Hyperledger.Aries.Storage;
-using LanguageExt;
 using WalletFramework.Oid4Vc.Oid4Vci.AuthFlow.Abstractions;
 using WalletFramework.Oid4Vc.Oid4Vci.AuthFlow.Models;
 using WalletFramework.Oid4Vc.Oid4Vci.AuthFlow.Records;
@@ -34,7 +33,7 @@ public class AuthFlowSessionStorage : IAuthFlowSessionStorage
             authorizationCodeParameters,
             sessionId);
 
-        await _recordService.AddAsync(agentContext.Wallet, record);
+        await _recordService.AddAsync(agentContext.Wallet, record, AuthFlowSessionRecordFun.EncodeToJson);
             
         return record.Id;
     }
@@ -42,7 +41,7 @@ public class AuthFlowSessionStorage : IAuthFlowSessionStorage
     /// <inheritdoc />
     public async Task<AuthFlowSessionRecord> GetAsync(IAgentContext context, VciSessionId sessionId)
     {
-        var record = await _recordService.GetAsync<AuthFlowSessionRecord>(context.Wallet, sessionId);
+        var record = await _recordService.GetAsync(context.Wallet, sessionId, AuthFlowSessionRecordFun.DecodeFromJson);
         return record!;
     }
         

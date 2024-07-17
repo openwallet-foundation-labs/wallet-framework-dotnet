@@ -48,9 +48,9 @@ public class IssuerMetadataTests
     [Fact]
     public void Can_Encode_To_Json()
     {
-        var decoded = IssuerMetadataSample.Decoded;
+        var issuerMetadata = IssuerMetadataSample.Decoded;
 
-        var sut = JObject.FromObject(decoded).RemoveNulls().ToObject<JObject>();
+        var sut = issuerMetadata.EncodeToJson();
 
         sut.Should().BeEquivalentTo(IssuerMetadataSample.EncodedAsJson);
     }
@@ -64,21 +64,11 @@ public class IssuerMetadataTests
         // Act
         ValidIssuerMetadata(sample).Match(
             // Assert
-            sut =>
+            issuerMetadata =>
             {
-                var encoded = JObject.FromObject(sut).RemoveNulls().ToObject<JObject>();
-                encoded.Should().BeEquivalentTo(sample);
+                var sut = issuerMetadata.EncodeToJson();
+                sut.Should().BeEquivalentTo(sample);
             },
             _ => Assert.Fail("IssuerMetadata must be valid"));
-    }
-
-    [Fact]
-    public void Can_Decode_From_Persisted_Json()
-    {
-        var sample = IssuerMetadataSample.EncodedAsJson;
-
-        var sut = JsonConvert.DeserializeObject<IssuerMetadata>(sample.ToString())!;
-
-        sut.CredentialIssuer.ToString().Should().Be(IssuerMetadataSample.CredentialIssuer.ToStringWithoutTrail());
     }
 }

@@ -1,5 +1,4 @@
 using LanguageExt;
-using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using WalletFramework.Core.Functional;
 using WalletFramework.Core.Json;
@@ -9,7 +8,6 @@ using static WalletFramework.Oid4Vc.Oid4Vci.CredConfiguration.Models.Mdoc.Elemen
 
 namespace WalletFramework.Oid4Vc.Oid4Vci.CredConfiguration.Models.Mdoc;
 
-[JsonConverter(typeof(ClaimsMetadataJsonConverter))]
 public readonly struct ClaimsMetadata
 {
     public Dictionary<NameSpace, Dictionary<ElementIdentifier, ElementMetadata>> Value { get; }
@@ -22,28 +20,26 @@ public readonly struct ClaimsMetadata
         .OnSuccess(dictionary => new ClaimsMetadata(dictionary));
 }
 
-public class ClaimsMetadataJsonConverter : JsonConverter<ClaimsMetadata>
-{
-    public override bool CanRead => false;
-    
-    public override void WriteJson(JsonWriter writer, ClaimsMetadata claimsMetadata, JsonSerializer serializer)
-    {
-        writer.WriteStartObject();
-
-        var value = JObject.FromObject(claimsMetadata.Value, serializer);
-        foreach (var property in value.Properties())
-        {
-            property.WriteTo(writer);
-        }
-    }
-
-    public override ClaimsMetadata ReadJson(JsonReader reader, Type objectType, ClaimsMetadata existingValue, bool hasExistingValue,
-        JsonSerializer serializer) =>
-        throw new NotImplementedException();
-}
-
 public static class ClaimsMetadataFun
 {
+    public static JObject EncodeToJson(this ClaimsMetadata metadata)
+    {
+        var result = new JObject();
+
+        foreach (var (key, elementMetadatas) in metadata.Value)
+        {
+            var elementsJson = new JObject();
+            foreach (var (elementIdentifier, elementMetadata) in elementMetadatas)
+            {
+                elementsJson.Add(elementIdentifier, elementMetadata.EncodeToJson());
+            }
+            
+            result.Add(key.ToString(), elementsJson);
+        }
+
+        return result;
+    }
+    
     public static Option<Dictionary<NameSpace, Dictionary<ElementIdentifier, List<ClaimDisplay>>>> ToClaimsDisplays(
         this ClaimsMetadata claimsMetadata)
     {

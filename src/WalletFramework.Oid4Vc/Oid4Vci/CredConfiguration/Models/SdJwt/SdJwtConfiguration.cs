@@ -9,7 +9,6 @@ using static WalletFramework.Oid4Vc.Oid4Vci.CredConfiguration.Models.SdJwt.SdJwt
 
 namespace WalletFramework.Oid4Vc.Oid4Vci.CredConfiguration.Models.SdJwt;
 
-[JsonConverter(typeof(SdJwtConfigurationJsonConverter))]
 public record SdJwtConfiguration
 {
     public CredentialConfiguration CredentialConfiguration { get; }
@@ -65,33 +64,24 @@ public record SdJwtConfiguration
     }
 }
 
-public class SdJwtConfigurationJsonConverter : JsonConverter<SdJwtConfiguration>
+public static class SdJwtConfigurationFun
 {
-    public override bool CanRead => false;
-
-    public override void WriteJson(JsonWriter writer, SdJwtConfiguration? sdJwtConfig, JsonSerializer serializer)
+    public static JObject EncodeToJson(this SdJwtConfiguration config)
     {
-        writer.WriteStartObject();
+        var credentialConfig = config.CredentialConfiguration.EncodeToJson();
+        
+        credentialConfig.Add(VctJsonName, config.Vct.ToString());
 
-        var credentialConfig = JObject.FromObject(sdJwtConfig!.CredentialConfiguration, serializer);
-        foreach (var property in credentialConfig.Properties())
+        if (config.Claims is not null)
         {
-            property.WriteTo(writer);
+            credentialConfig.Add(ClaimsJsonName, JObject.FromObject(config.Claims));
         }
 
-        writer.WritePropertyName(ClaimsJsonName);
-        serializer.Serialize(writer, sdJwtConfig.Claims);
+        if (config.Order is not null)
+        {
+            credentialConfig.Add(OrderJsonName, JArray.FromObject(config.Order));
+        }
         
-        writer.WritePropertyName(OrderJsonName);
-        serializer.Serialize(writer, sdJwtConfig.Order);
-        
-        writer.WritePropertyName(VctJsonName);
-        serializer.Serialize(writer, sdJwtConfig.Vct);
-
-        writer.WriteEndObject(); 
+        return credentialConfig;
     }
-
-    public override SdJwtConfiguration ReadJson(JsonReader reader, Type objectType, SdJwtConfiguration? existingValue,
-        bool hasExistingValue, JsonSerializer serializer) =>
-        throw new NotImplementedException();
 }

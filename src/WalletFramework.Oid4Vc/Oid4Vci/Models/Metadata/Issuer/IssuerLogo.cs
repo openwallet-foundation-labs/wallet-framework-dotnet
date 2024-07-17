@@ -1,9 +1,9 @@
 using LanguageExt;
-using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using WalletFramework.Core.Functional;
 using WalletFramework.Core.Json;
-using WalletFramework.Core.Json.Converters;
+using WalletFramework.Core.Uri;
+using static WalletFramework.Oid4Vc.Oid4Vci.Models.Metadata.Issuer.IssuerLogoFun;
 
 namespace WalletFramework.Oid4Vc.Oid4Vci.Models.Metadata.Issuer;
 
@@ -15,15 +15,11 @@ public record IssuerLogo
     /// <summary>
     ///     Gets the alternate text that describes the logo image. This is typically used for accessibility purposes.
     /// </summary>
-    [JsonProperty("alt_text")]
-    [JsonConverter(typeof(OptionJsonConverter<string>))]
     public Option<string> AltText { get; }
 
     /// <summary>
     ///     Gets the URL of the logo image.
     /// </summary>
-    [JsonProperty("uri")]
-    [JsonConverter(typeof(OptionJsonConverter<Uri>))]
     public Option<Uri> Uri { get; }
     
     private IssuerLogo(
@@ -36,7 +32,7 @@ public record IssuerLogo
 
     public static Option<IssuerLogo> OptionalIssuerLogo(JToken logo) => logo.ToJObject().ToOption().OnSome(jObject =>
     {
-        var altText = jObject.GetByKey("alt_text").ToOption().OnSome(text =>
+        var altText = jObject.GetByKey(AltTextJsonKey).ToOption().OnSome(text =>
         {
             var str = text.ToString();
             if (string.IsNullOrWhiteSpace(str))
@@ -45,7 +41,7 @@ public record IssuerLogo
             return str;
         });
         
-        var imageUri = jObject.GetByKey("uri").ToOption().OnSome(uri =>
+        var imageUri = jObject.GetByKey(UriJsonKey).ToOption().OnSome(uri =>
         {
             try
             {
@@ -64,4 +60,18 @@ public record IssuerLogo
             
         return new IssuerLogo(altText, imageUri);
     });
+}
+
+public static class IssuerLogoFun
+{
+    public const string AltTextJsonKey = "alt_text";
+    public const string UriJsonKey = "uri";
+    
+    public static JObject EncodeToJson(this IssuerLogo logo)
+    {
+        var json = new JObject();
+        logo.AltText.IfSome(altText => json.Add(AltTextJsonKey, altText));
+        logo.Uri.IfSome(uri => json.Add(UriJsonKey, uri.ToStringWithoutTrail()));
+        return json;
+    }
 }

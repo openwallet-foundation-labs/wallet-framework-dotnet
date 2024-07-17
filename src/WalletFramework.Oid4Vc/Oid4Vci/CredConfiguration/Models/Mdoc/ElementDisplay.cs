@@ -1,21 +1,16 @@
 using LanguageExt;
-using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using WalletFramework.Core.Functional;
 using WalletFramework.Core.Json;
-using WalletFramework.Core.Json.Converters;
 using WalletFramework.Core.Localization;
+using static WalletFramework.Oid4Vc.Oid4Vci.CredConfiguration.Models.Mdoc.ElementDisplayFun;
 
 namespace WalletFramework.Oid4Vc.Oid4Vci.CredConfiguration.Models.Mdoc;
 
 public record ElementDisplay
 {
-    [JsonProperty("locale")]
-    [JsonConverter(typeof(OptionJsonConverter<Locale>))]
     public Option<Locale> Locale { get; }
     
-    [JsonProperty("name")]
-    [JsonConverter(typeof(OptionJsonConverter<ElementName>))]
     public Option<ElementName> Name { get; }
 
     private ElementDisplay(Option<ElementName> name, Option<Locale> locale)
@@ -26,11 +21,11 @@ public record ElementDisplay
 
     public static Option<ElementDisplay> OptionalElementDisplay(JObject display)
     {
-        var name = display.GetByKey("name").Match(
+        var name = display.GetByKey(NameJsonKey).Match(
             ElementName.OptionalElementName,
             _ => Option<ElementName>.None);
         
-        var locale = display.GetByKey("locale").Match(
+        var locale = display.GetByKey(LocaleJsonKey).Match(
             Core.Localization.Locale.OptionLocale,
             _ => Option<Locale>.None);
         
@@ -40,5 +35,21 @@ public record ElementDisplay
         }
 
         return new ElementDisplay(name, locale);
+    }
+}
+
+public static class ElementDisplayFun
+{
+    public const string LocaleJsonKey = "locale";
+    public const string NameJsonKey = "name";
+
+    public static JObject EncodeToJson(this ElementDisplay display)
+    {
+        var result = new JObject();
+        
+        display.Locale.IfSome(locale => result.Add(LocaleJsonKey, locale.ToString()));
+        display.Name.IfSome(name => result.Add(NameJsonKey, name.ToString()));
+
+        return result;
     }
 }

@@ -2,7 +2,6 @@ using FluentAssertions;
 using Hyperledger.Aries.Storage;
 using LanguageExt;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 using WalletFramework.Core.Functional;
 using WalletFramework.MdocLib;
 using Xunit;
@@ -18,10 +17,10 @@ public class MdocRecordTests
         var mdoc = Mdoc.ValidMdoc(encodedMdoc).UnwrapOrThrow(new InvalidOperationException("Mdoc sample is corrupt"));
         var record = mdoc.ToRecord(Option<List<MdocDisplay>>.None);
 
-        var sut = JObject.FromObject(record);
+        var sut = record.EncodeToJson();
 
         sut[nameof(RecordBase.Id)]!.ToString().Should().Be(record.Id);
-        sut[MdocRecordJsonKeys.MdocJsonKey]!.ToString().Should().Be(encodedMdoc);
+        sut[MdocRecordFun.MdocJsonKey]!.ToString().Should().Be(encodedMdoc);
     }
 
     [Fact]
@@ -29,7 +28,7 @@ public class MdocRecordTests
     {
         var json = MdocVcSamples.MdocRecordJson;
 
-        var sut = JsonConvert.DeserializeObject<MdocRecord>(json.ToString())!;
+        var sut = MdocRecordFun.DecodeFromJson(json);
 
         sut.Mdoc.DocType.ToString().Should().Be(MdocLib.Tests.Samples.DocType);
     }

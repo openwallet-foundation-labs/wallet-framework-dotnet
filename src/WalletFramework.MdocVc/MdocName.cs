@@ -1,10 +1,7 @@
 using LanguageExt;
-using Newtonsoft.Json;
-using WalletFramework.Core.Json.Converters;
 
 namespace WalletFramework.MdocVc;
 
-[JsonConverter(typeof(ValueTypeJsonConverter<MdocName>))]
 public readonly struct MdocName
 {
     private string Value { get; }

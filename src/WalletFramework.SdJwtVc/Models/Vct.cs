@@ -1,14 +1,11 @@
 using System.Globalization;
-using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using WalletFramework.Core.Functional;
 using WalletFramework.Core.Functional.Errors;
 using WalletFramework.Core.Json;
-using WalletFramework.Core.Json.Converters;
 
 namespace WalletFramework.SdJwtVc.Models;
 
-[JsonConverter(typeof(ValueTypeJsonConverter<Vct>))]
 public readonly struct Vct
 {
     private string Value { get; }

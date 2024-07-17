@@ -1,10 +1,7 @@
-using Newtonsoft.Json;
-using WalletFramework.Core.Json.Converters;
 using WalletFramework.Core.Uri;
 
 namespace WalletFramework.MdocVc;
 
-[JsonConverter(typeof(ValueTypeJsonConverter<MdocLogo>))]
 public readonly struct MdocLogo
 {
     public MdocLogo(Uri value)

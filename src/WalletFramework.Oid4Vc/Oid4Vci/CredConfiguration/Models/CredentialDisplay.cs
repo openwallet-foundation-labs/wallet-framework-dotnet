@@ -1,16 +1,13 @@
-using System.Drawing;
 using LanguageExt;
-using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using WalletFramework.Core.Colors;
 using WalletFramework.Core.Functional;
 using WalletFramework.Core.Json;
-using WalletFramework.Core.Json.Converters;
 using WalletFramework.Core.Localization;
 using WalletFramework.SdJwtVc.Models.Credential;
 using static WalletFramework.Oid4Vc.Oid4Vci.CredConfiguration.Models.CredentialName;
 using static WalletFramework.Core.Localization.Locale;
 using static WalletFramework.Oid4Vc.Oid4Vci.CredConfiguration.Models.CredentialLogo;
+using static WalletFramework.Oid4Vc.Oid4Vci.CredConfiguration.Models.CredentialDisplayJsonExtensions;
 using Color = WalletFramework.Core.Colors.Color;
 
 namespace WalletFramework.Oid4Vc.Oid4Vci.CredConfiguration.Models;
@@ -23,36 +20,26 @@ public record CredentialDisplay
     /// <summary>
     ///     Gets the logo associated with this Credential.
     /// </summary>
-    [JsonProperty("logo")]
-    [JsonConverter(typeof(OptionJsonConverter<CredentialLogo>))]
     public Option<CredentialLogo> Logo { get; }
 
     /// <summary>
     ///     Gets the name of the Credential.
     /// </summary>
-    [JsonProperty("name")]
-    [JsonConverter(typeof(OptionJsonConverter<CredentialName>))]
     public Option<CredentialName> Name { get; }
 
     /// <summary>
     ///     Gets the background color for the Credential.
     /// </summary>
-    [JsonProperty("background_color")]
-    [JsonConverter(typeof(OptionJsonConverter<Color>))]
     public Option<Color> BackgroundColor { get; }
 
     /// <summary>
     ///     Gets the locale, which represents the specific culture or region.
     /// </summary>
-    [JsonProperty("locale")]
-    [JsonConverter(typeof(OptionJsonConverter<Locale>))]
     public Option<Locale> Locale { get; }
 
     /// <summary>
     ///     Gets the text color for the Credential.
     /// </summary>
-    [JsonProperty("text_color")]
-    [JsonConverter(typeof(OptionJsonConverter<Color>))]
     public Option<Color> TextColor { get; }
     
     private CredentialDisplay(
@@ -75,18 +62,18 @@ public record CredentialDisplay
         .OnSome(jObject =>
         {
             var backgroundColor = jObject
-                .GetByKey("background_color")
+                .GetByKey(BackgroundColorJsonKey)
                 .ToOption()
                 .OnSome(color => Color.OptionColor(color.ToString()));
             
             var textColor = jObject
-                .GetByKey("text_color")
+                .GetByKey(TextColorJsonKey)
                 .ToOption()
                 .OnSome(color => Color.OptionColor(color.ToString()));
             
-            var name = jObject.GetByKey("name").ToOption().OnSome(OptionalCredentialName);
-            var logo = jObject.GetByKey("logo").ToOption().OnSome(OptionalCredentialLogo);
-            var locale = jObject.GetByKey("locale").OnSuccess(ValidLocale).ToOption();
+            var name = jObject.GetByKey(NameJsonKey).ToOption().OnSome(OptionalCredentialName);
+            var logo = jObject.GetByKey(LogoJsonKey).ToOption().OnSome(OptionalCredentialLogo);
+            var locale = jObject.GetByKey(LocaleJsonKey).OnSuccess(ValidLocale).ToOption();
 
             if (name.IsNone && logo.IsNone && backgroundColor.IsNone && locale.IsNone && textColor.IsNone)
                 return Option<CredentialDisplay>.None;
@@ -114,5 +101,46 @@ public static class CredentialDisplayFun
             Locale = credentialDisplay.Locale.ToNullable()?.ToString(),
             TextColor = credentialDisplay.TextColor.ToNullable()
         };
+    }
+}
+
+public static class CredentialDisplayJsonExtensions
+{
+    public const string LogoJsonKey = "logo";
+    public const string NameJsonKey = "name";
+    public const string BackgroundColorJsonKey = "background_color";
+    public const string LocaleJsonKey = "locale";
+    public const string TextColorJsonKey = "text_color";
+    
+    public static JObject EncodeToJson(this CredentialDisplay display)
+    {
+        var result = new JObject();
+
+        display.Logo.IfSome(logo =>
+        {
+            result.Add(LogoJsonKey, logo.EncodeToJson());
+        });
+        
+        display.Name.IfSome(name =>
+        {
+            result.Add(NameJsonKey, name.ToString());
+        });
+        
+        display.BackgroundColor.IfSome(color =>
+        {
+            result.Add(BackgroundColorJsonKey, color.ToString());
+        });
+        
+        display.Locale.IfSome(locale =>
+        {
+            result.Add(LocaleJsonKey, locale.ToString());
+        });
+        
+        display.TextColor.IfSome(color =>
+        {
+            result.Add(TextColorJsonKey, color.ToString());
+        });
+
+        return result;
     }
 }

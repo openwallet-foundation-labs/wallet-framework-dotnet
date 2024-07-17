@@ -1,12 +1,9 @@
-using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using WalletFramework.Core.Functional;
-using WalletFramework.Core.Json.Converters;
 using WalletFramework.MdocLib;
 
 namespace WalletFramework.Oid4Vc.Oid4Vci.CredConfiguration.Models.Mdoc;
 
-[JsonConverter(typeof(ValueTypeJsonConverter<CryptographicCurve>))]
 public readonly struct CryptographicCurve
 {
     public CoseLabel Value { get; }

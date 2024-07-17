@@ -1,11 +1,8 @@
 using LanguageExt;
-using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using WalletFramework.Core.Json.Converters;
 
 namespace WalletFramework.Oid4Vc.Oid4Vci.CredConfiguration.Models.Mdoc;
 
-[JsonConverter(typeof(ValueTypeJsonConverter<ElementName>))]
 public readonly struct ElementName
 {
     private string Value { get; }

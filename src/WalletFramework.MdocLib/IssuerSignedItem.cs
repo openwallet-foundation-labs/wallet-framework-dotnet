@@ -1,9 +1,7 @@
-using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using OneOf;
 using PeterO.Cbor;
 using WalletFramework.Core.Functional;
-using WalletFramework.Core.Json.Converters;
 using WalletFramework.MdocLib.Common;
 using static WalletFramework.MdocLib.ElementArray;
 using static WalletFramework.MdocLib.ElementMap;
@@ -65,7 +63,6 @@ public record IssuerSignedItem
         });
 }
 
-[JsonConverter(typeof(ValueTypeJsonConverter<ElementIdentifier>))]
 public readonly struct ElementIdentifier
 {
     public string Value { get; }

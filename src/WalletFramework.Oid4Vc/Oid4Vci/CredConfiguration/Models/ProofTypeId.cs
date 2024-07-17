@@ -1,14 +1,11 @@
 using System.Globalization;
-using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using WalletFramework.Core.Functional;
 using WalletFramework.Core.Json;
-using WalletFramework.Core.Json.Converters;
 using WalletFramework.Oid4Vc.Oid4Vci.CredConfiguration.Errors;
 
 namespace WalletFramework.Oid4Vc.Oid4Vci.CredConfiguration.Models;
 
-[JsonConverter(typeof(ValueTypeJsonConverter<ProofTypeId>))]
 public readonly struct ProofTypeId
 {
     private string Value { get; }

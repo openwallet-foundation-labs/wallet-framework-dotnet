@@ -53,7 +53,7 @@ public class AuthFlowSessionRecordTests
         var record = new AuthFlowSessionRecord(authorizationData, authorizationCodeParameters, sessionId);
         
         // Act
-        var recordSut = JObject.FromObject(record);
+        var recordSut = record.EncodeToJson();
         var tagsSut = JObject.FromObject(record.Tags);
         
         // Assert
@@ -68,7 +68,7 @@ public class AuthFlowSessionRecordTests
         var json = AuthFlowSamples.AuthFlowSessionRecordJson;
         
         // Act
-        var record = JsonConvert.DeserializeObject<AuthFlowSessionRecord>(json.ToString());
+        var record = AuthFlowSessionRecordFun.DecodeFromJson(json);
         
         // Assert
         record.Should().NotBeNull();

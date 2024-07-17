@@ -22,7 +22,7 @@ public class MdocStorage : IMdocStorage
     public async Task<Unit> Add(MdocRecord record)
     {
         var context = await _agentProvider.GetContextAsync();
-        await _recordService.AddAsync(context.Wallet, record);
+        await _recordService.AddAsync(context.Wallet, record, MdocRecordFun.EncodeToJson);
         return Unit.Default;
     }
 
@@ -55,7 +55,7 @@ public class MdocStorage : IMdocStorage
     public async Task<Unit> Update(MdocRecord record)
     {
         var context = await _agentProvider.GetContextAsync();
-        await _recordService.Update(context.Wallet, record);
+        await _recordService.Update(context.Wallet, record, MdocRecordFun.EncodeToJson);
         return Unit.Default;
     }
 

@@ -1,21 +1,16 @@
 using LanguageExt;
-using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using WalletFramework.Core.Functional;
 using WalletFramework.Core.Json;
-using WalletFramework.Core.Json.Converters;
 using WalletFramework.MdocLib;
+using static WalletFramework.Oid4Vc.Oid4Vci.CredConfiguration.Models.Mdoc.ElementMetadataFun;
 
 namespace WalletFramework.Oid4Vc.Oid4Vci.CredConfiguration.Models.Mdoc;
 
 public record ElementMetadata
 {
-    [JsonProperty("mandatory")]
-    [JsonConverter(typeof(OptionJsonConverter<bool>))]
     public Option<bool> Mandatory { get; }
 
-    [JsonProperty("display")]
-    [JsonConverter(typeof(OptionJsonConverter<List<ElementDisplay>>))]
     public Option<List<ElementDisplay>> Display { get; }
 
     private ElementMetadata(Option<bool> mandatory, Option<List<ElementDisplay>> display)
@@ -24,9 +19,9 @@ public record ElementMetadata
         Display = display;
     }
 
-    public static ElementMetadata CreateElementMetadata(JToken metadata)
+    private static ElementMetadata CreateElementMetadata(JToken metadata)
     {
-        var mandatory = metadata.GetByKey("mandatory").Match(
+        var mandatory = metadata.GetByKey(MandatoryJsonKey).Match(
             jToken =>
             {
                 var str = jToken.ToString();
@@ -35,7 +30,7 @@ public record ElementMetadata
             _ => Option<bool>.None);
 
         var validDisplay =
-            from token in metadata.GetByKey("display")
+            from token in metadata.GetByKey(DisplayJsonKey)
             from array in token.ToJArray()
             select array;
 
@@ -59,5 +54,32 @@ public record ElementMetadata
         .ToJObject()
         .OnSuccess(o => o.ToValidDictionaryAll(
             ElementIdentifier.ValidElementIdentifier,
-            token => ValidationFun.Valid(ElementMetadata.CreateElementMetadata(token))));
+            token => ValidationFun.Valid(CreateElementMetadata(token))));
+}
+
+public static class ElementMetadataFun
+{
+    public const string MandatoryJsonKey = "mandatory";
+    public const string DisplayJsonKey = "display";
+    
+    public static JObject EncodeToJson(this ElementMetadata metadata)
+    {
+        var result = new JObject();
+
+        metadata.Mandatory.IfSome(
+            mandatory => result.Add(MandatoryJsonKey, mandatory)
+        );
+
+        metadata.Display.IfSome(displays =>
+        {
+            var jArray = new JArray();
+            foreach (var display in displays)
+            {
+                jArray.Add(display.EncodeToJson());
+            }
+            result.Add(DisplayJsonKey, jArray);
+        });
+
+        return result;
+    }
 }

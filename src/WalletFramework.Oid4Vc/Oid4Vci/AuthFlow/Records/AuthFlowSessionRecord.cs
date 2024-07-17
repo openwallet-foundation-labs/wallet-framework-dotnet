@@ -9,7 +9,6 @@ namespace WalletFramework.Oid4Vc.Oid4Vci.AuthFlow.Records;
 /// <summary>
 ///   Represents the authorization session record. Used during the VCI Authorization Code Flow to hold session relevant information.
 /// </summary>
-[JsonConverter(typeof(AuthFlowSessionRecordJsonConverter))]
 public sealed class AuthFlowSessionRecord : RecordBase
 {
     /// <summary>
@@ -70,31 +69,35 @@ public sealed class AuthFlowSessionRecord : RecordBase
     }
 }
 
-public sealed class AuthFlowSessionRecordJsonConverter : JsonConverter<AuthFlowSessionRecord>
+public static class AuthFlowSessionRecordFun
 {
-    public override bool CanWrite => false;
+    private const string AuthorizationDataJsonKey = "authorization_data";
+    private const string AuthorizationCodeParametersJsonKey = "authorization_code_parameters";
 
-    public override void WriteJson(JsonWriter writer, AuthFlowSessionRecord? record, JsonSerializer serializer) 
-        => throw new NotImplementedException();
-
-    public override AuthFlowSessionRecord ReadJson(
-        JsonReader reader,
-        Type objectType,
-        AuthFlowSessionRecord? existingValue,
-        bool hasExistingValue,
-        JsonSerializer serializer)
+    public static JObject EncodeToJson(this AuthFlowSessionRecord record)
     {
-        var json = JObject.Load(reader);
+        var authorizationData = record.AuthorizationData.EncodeToJson();
+        var authorizationCodeParameters = JObject.FromObject(record.AuthorizationCodeParameters);
 
-        var id = VciSessionIdFun.DecodeFromJson(json[nameof(RecordBase.Id)]!.ToObject<JValue>()!);
-        
+        return new JObject
+        {
+            { nameof(RecordBase.Id), record.Id },
+            { AuthorizationDataJsonKey, authorizationData },
+            { AuthorizationCodeParametersJsonKey, authorizationCodeParameters }
+        };
+    }
+
+    public static AuthFlowSessionRecord DecodeFromJson(JObject json)
+    {
+        var idJson = json[nameof(RecordBase.Id)]!.ToObject<JValue>()!;
+        var id = VciSessionIdFun.DecodeFromJson(idJson);
+
         var authCodeParameters = JsonConvert.DeserializeObject<AuthorizationCodeParameters>(
-            json[nameof(AuthorizationCodeParameters)]!.ToString()
+            json[AuthorizationCodeParametersJsonKey]!.ToString()
         );
-        
-        var authorizationData = JsonConvert.DeserializeObject<AuthorizationData>(
-            json[nameof(AuthorizationData)]!.ToString()
-        )!;
+
+        var authorizationData = AuthorizationDataFun
+            .DecodeFromJson(json[AuthorizationDataJsonKey]!.ToObject<JObject>()!);
 
         var result = new AuthFlowSessionRecord(authorizationData, authCodeParameters!, id);
 

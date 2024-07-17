@@ -2,16 +2,15 @@ using Hyperledger.Aries.Storage;
 using Hyperledger.Aries.Storage.Models;
 using Hyperledger.Aries.Storage.Models.Interfaces;
 using LanguageExt;
-using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using WalletFramework.Core.Credentials;
 using WalletFramework.Core.Functional;
 using WalletFramework.Core.Json;
 using WalletFramework.MdocLib;
+using static WalletFramework.MdocVc.MdocRecordFun;
 
 namespace WalletFramework.MdocVc;
 
-[JsonConverter(typeof(MdocRecordJsonConverter))]
 public sealed class MdocRecord : RecordBase, ICredential
 {
     public CredentialId CredentialId
@@ -47,25 +46,43 @@ public sealed class MdocRecord : RecordBase, ICredential
     public static implicit operator Mdoc(MdocRecord record) => record.Mdoc;
 }
 
-public static class MdocRecordJsonKeys
-{
-    public const string MdocJsonKey = "mdoc";
-    public const string MdocDisplaysKey = "displays";
-}
-
 public static class MdocRecordFun
 {
+    public const string MdocJsonKey = "mdoc";
+    private const string MdocDisplaysJsonKey = "displays";
+    
+    public static JObject EncodeToJson(this MdocRecord record)
+    {
+        var result = new JObject
+        {
+            {nameof(RecordBase.Id), record.Id},
+            {MdocJsonKey, record.Mdoc.Encode()}
+        };
+
+        record.Displays.IfSome(displays =>
+        {
+            var displaysJson = new JArray();
+            foreach (var display in displays)
+            {
+                displaysJson.Add(display.EncodeToJson());
+            }
+            result.Add(MdocDisplaysJsonKey, displaysJson);
+        });
+
+        return result;
+    }
+    
     public static MdocRecord DecodeFromJson(JObject json)
     {
         var id = json[nameof(RecordBase.Id)]!.ToString();
         
-        var mdocStr = json[MdocRecordJsonKeys.MdocJsonKey]!.ToString();
+        var mdocStr = json[MdocJsonKey]!.ToString();
         var mdoc = Mdoc
             .ValidMdoc(mdocStr)
             .UnwrapOrThrow(new InvalidOperationException($"The MdocRecord with ID: {id} is corrupt"));
 
         var displays =
-            from jToken in json.GetByKey(MdocRecordJsonKeys.MdocDisplaysKey).ToOption()
+            from jToken in json.GetByKey(MdocDisplaysJsonKey).ToOption()
             from jArray in jToken.ToJArray().ToOption()
             from mdocDisplays in MdocDisplayFun.DecodeFromJson(jArray)
             select mdocDisplays;
@@ -79,45 +96,4 @@ public static class MdocRecordFun
     }
 
     public static MdocRecord ToRecord(this Mdoc mdoc, Option<List<MdocDisplay>> displays) => new(mdoc, displays);
-}
-
-public sealed class MdocRecordJsonConverter : JsonConverter<MdocRecord>
-{
-    public override void WriteJson(JsonWriter writer, MdocRecord? record, JsonSerializer serializer)
-    {
-        writer.WriteStartObject();
-        
-        writer.WritePropertyName(nameof(RecordBase.Id));
-        writer.WriteValue(record!.Id);
-        
-        writer.WritePropertyName(MdocRecordJsonKeys.MdocJsonKey);
-        writer.WriteValue(record.Mdoc.Encode());
-        
-        writer.WritePropertyName(MdocRecordJsonKeys.MdocDisplaysKey);
-        record.Displays.Match(
-            list =>
-            {
-                writer.WriteStartArray();
-                foreach (var display in list)
-                {
-                    serializer.Serialize(writer, display);
-                }
-                writer.WriteEndArray();
-            },
-            () => {}
-        );
-        
-        writer.WriteEndObject();
-    }
-
-    public override MdocRecord ReadJson(
-        JsonReader reader,
-        Type objectType,
-        MdocRecord? existingValue,
-        bool hasExistingValue,
-        JsonSerializer serializer)
-    {
-        var json = JObject.Load(reader);
-        return MdocRecordFun.DecodeFromJson(json);
-    }
 }

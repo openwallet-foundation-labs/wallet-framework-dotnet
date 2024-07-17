@@ -271,6 +271,9 @@ public static class ValidationFun
             t => t,
             _ => throw e);
 
+    public static T UnwrapOrThrow<T>(this Validation<T> validation) =>
+        validation.UnwrapOrThrow(new InvalidOperationException($"Value of Type `{typeof(T)}` is corrupt"));
+
     public static Validator<T> AggregateValidators<T>(this IEnumerable<Validator<T>> validators) => t =>
     {
         var errors = validators

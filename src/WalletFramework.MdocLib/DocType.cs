@@ -1,14 +1,11 @@
-using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using PeterO.Cbor;
 using WalletFramework.Core.Functional;
-using WalletFramework.Core.Json.Converters;
 using WalletFramework.MdocLib.Common;
 using static WalletFramework.MdocLib.Common.Constants;
 
 namespace WalletFramework.MdocLib;
 
-[JsonConverter(typeof(ValueTypeJsonConverter<DocType>))]
 public readonly struct DocType
 {
     private string Value { get; }

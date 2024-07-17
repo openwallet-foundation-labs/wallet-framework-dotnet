@@ -29,3 +29,20 @@ public record ProofTypeMetadata
         from algValues in jArray.TraverseAny(ValidCryptograhicSigningAlgValue)
         select new ProofTypeMetadata(algValues.ToList());
 }
+
+public static class ProofTypeMetadataFun
+{
+    public static JObject EncodeToJson(this ProofTypeMetadata proofTypeMetadata)
+    {
+        var result = new JObject();
+
+        var jArray = new JArray();
+        foreach (var algValue in proofTypeMetadata.ProofSigningAlgValuesSupported)
+        {
+            jArray.Add(algValue.ToString());
+        }
+        result.Add("proof_signing_alg_values_supported", jArray);
+
+        return result;
+    }
+}

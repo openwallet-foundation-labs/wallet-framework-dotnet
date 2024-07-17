@@ -1,8 +1,5 @@
 using System.Globalization;
-using System.Runtime.Serialization.Formatters.Binary;
-using Hyperledger.Aries.Extensions;
 using LanguageExt;
-using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using WalletFramework.Oid4Vc.Oid4Vci.Authorization.Models;
 using WalletFramework.Oid4Vc.Oid4Vci.CredConfiguration.Models.Mdoc;
@@ -12,48 +9,40 @@ using WalletFramework.Oid4Vc.Oid4Vci.Issuer.Errors;
 using WalletFramework.Oid4Vc.Oid4Vci.Models.Metadata.Issuer;
 using WalletFramework.Core.Functional;
 using WalletFramework.Core.Json;
-using WalletFramework.Core.Json.Converters;
+using WalletFramework.Core.Uri;
 using WalletFramework.Oid4Vc.Oid4Vci.CredConfiguration.Models;
 using static WalletFramework.Core.Functional.ValidationFun;
 using static WalletFramework.Oid4Vc.Oid4Vci.Authorization.Models.AuthorizationServerId;
 using static WalletFramework.Oid4Vc.Oid4Vci.Issuer.Models.CredentialIssuerId;
 using static WalletFramework.Oid4Vc.Oid4Vci.CredOffer.Models.CredentialConfigurationId;
 using static WalletFramework.Oid4Vc.Oid4Vci.Models.Metadata.Issuer.IssuerDisplay;
+using static WalletFramework.Oid4Vc.Oid4Vci.Issuer.Models.IssuerMetadataJsonExtensions;
 
 namespace WalletFramework.Oid4Vc.Oid4Vci.Issuer.Models;
 
 /// <summary>
 ///     Represents the metadata of an OpenID4VCI Credential Issuer.
 /// </summary>
-[JsonConverter(typeof(IssuerMetadataJsonConverter))]
 public record IssuerMetadata
 {
-    // Do not change the order of this property (must be last) otherwise the JSON serialization will not
-    // work properly...
     /// <summary>
     ///     Gets a dictionary which maps a CredentialConfigurationId to its credential metadata.
     /// </summary>
-    [JsonProperty(CredentialConfigsSupportedJsonKey)]
-    [JsonConverter(typeof(DictJsonConverter<CredentialConfigurationId, SupportedCredentialConfiguration>))]
     public Dictionary<CredentialConfigurationId, SupportedCredentialConfiguration> CredentialConfigurationsSupported { get; }
     
     /// <summary>
     ///     Gets a list of display properties of a Credential Issuer for different languages.
     /// </summary>
-    [JsonProperty(DisplayJsonKey)]
-    [JsonConverter(typeof(OptionJsonConverter<List<IssuerDisplay>>))]
     public Option<List<IssuerDisplay>> Display { get; }
 
     /// <summary>
     ///     Gets the URL of the Credential Issuer's Credential Endpoint.
     /// </summary>
-    [JsonProperty(CredentialEndpointJsonKey)]
     public Uri CredentialEndpoint { get; }
 
     /// <summary>
     ///     Gets the identifier of the Credential Issuer.
     /// </summary>
-    [JsonProperty(CredentialIssuerJsonKey)]
     public CredentialIssuerId CredentialIssuer { get; }
 
     /// <summary>
@@ -63,10 +52,8 @@ public record IssuerMetadata
     ///     identifier is used as the OAuth 2.0 Issuer value to obtain the Authorization Server
     ///     metadata.
     /// </summary>
-    [JsonProperty(AuthorizationServersJsonKey)]
-    [JsonConverter(typeof(OptionJsonConverter<IEnumerable<AuthorizationServerId>>))]
     public Option<IEnumerable<AuthorizationServerId>> AuthorizationServers { get; }
-        
+    
     private IssuerMetadata(
         Dictionary<CredentialConfigurationId, SupportedCredentialConfiguration> credentialConfigurationsSupported,
         Option<List<IssuerDisplay>> display,
@@ -165,37 +152,55 @@ public record IssuerMetadata
             .Apply(credentialIssuerId)
             .Apply(authServers);
     }
-
-    private const string CredentialConfigsSupportedJsonKey = "credential_configurations_supported";
-    private const string DisplayJsonKey = "display";
-    private const string CredentialEndpointJsonKey = "credential_endpoint";
-    private const string CredentialIssuerJsonKey = "credential_issuer";
-    private const string AuthorizationServersJsonKey = "authorization_servers";
 }
 
-public sealed class IssuerMetadataJsonConverter : JsonConverter<IssuerMetadata>
+public static class IssuerMetadataJsonExtensions
 {
-    public override bool CanWrite => false;
-
-    public override void WriteJson(JsonWriter writer, IssuerMetadata? value, JsonSerializer serializer) => 
-        throw new NotImplementedException();
-
-    public override IssuerMetadata ReadJson(
-        JsonReader reader,
-        Type objectType, 
-        IssuerMetadata? existingValue,
-        bool hasExistingValue,
-        JsonSerializer serializer)
+    public const string CredentialConfigsSupportedJsonKey = "credential_configurations_supported";
+    public const string DisplayJsonKey = "display";
+    public const string CredentialEndpointJsonKey = "credential_endpoint";
+    public const string CredentialIssuerJsonKey = "credential_issuer";
+    public const string AuthorizationServersJsonKey = "authorization_servers";
+    
+    public static JObject EncodeToJson(this IssuerMetadata issuerMetadata)
     {
-        var json = JObject.Load(reader);
+        var result = new JObject();
         
-        var result = IssuerMetadata
-            .ValidIssuerMetadata(json)
-            .Match(
-                metadata => metadata,
-                errors => 
-                    throw new InvalidOperationException($"IssuerMetadata is corrupt. Errors: {errors}")
+        var configsJson = new JObject();
+        foreach (var (key, config) in issuerMetadata.CredentialConfigurationsSupported)
+        {
+            var configJson = config.Match(
+                sdJwt => sdJwt.EncodeToJson(),
+                mdoc => mdoc.EncodeToJson()
             );
+
+            configsJson.Add(key.ToString(), configJson);
+        }
+        result.Add(CredentialConfigsSupportedJsonKey, configsJson);
+
+        issuerMetadata.Display.IfSome(displays =>
+        {
+            var displaysJson = new JArray();
+            foreach (var display in displays)
+            {
+                displaysJson.Add(display.EncodeToJson());
+            }
+            result.Add(DisplayJsonKey, displaysJson);
+        });
+        
+        // TODO: ValueTypeEncodeFunc?
+        result.Add(CredentialEndpointJsonKey, issuerMetadata.CredentialEndpoint.ToStringWithoutTrail());
+        result.Add(CredentialIssuerJsonKey, issuerMetadata.CredentialIssuer.ToString());
+        
+        var authServersJson = new JArray();
+        issuerMetadata.AuthorizationServers.IfSome(servers =>
+        {
+            foreach (var server in servers)
+            {
+                authServersJson.Add(server.ToString());
+            }
+        });
+        result.Add(AuthorizationServersJsonKey, authServersJson);
         
         return result;
     }

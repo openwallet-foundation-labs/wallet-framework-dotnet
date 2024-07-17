@@ -1,6 +1,5 @@
 using LanguageExt;
 using Newtonsoft.Json;
-using WalletFramework.Core.Json.Converters;
 using WalletFramework.Oid4Vc.Oid4Vci.CredConfiguration.Models;
 
 namespace WalletFramework.Oid4Vc.Oid4Vci.CredRequest.Models;
@@ -16,7 +15,6 @@ public record CredentialRequest(Option<ProofOfPossession> Proof, Format Format)
     ///     Gets the proof of possession of the key material the issued credential shall be bound to.
     /// </summary>
     [JsonProperty("proof")]
-    [JsonConverter(typeof(OptionJsonConverter<ProofOfPossession>))]
     public Option<ProofOfPossession> Proof { get; } = Proof;
 
     /// <summary>

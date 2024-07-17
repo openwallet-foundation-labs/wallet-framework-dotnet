@@ -5,7 +5,6 @@ using Newtonsoft.Json.Linq;
 using WalletFramework.Core.Functional;
 using WalletFramework.Core.Functional.Errors;
 using WalletFramework.Core.Json;
-using WalletFramework.Core.Json.Converters;
 using WalletFramework.Oid4Vc.Oid4Vci.Errors;
 
 namespace WalletFramework.Core.Localization;
@@ -15,7 +14,6 @@ namespace WalletFramework.Core.Localization;
 ///     ("en-US"). These are based on RFC 4646: https://www.rfc-editor.org/rfc/rfc4646.html.
 ///     <remarks>Locales are case-sensitive.</remarks>
 /// </summary>
-[JsonConverter(typeof(ValueTypeJsonConverter<Locale>))]
 public readonly struct Locale
 {
     private CultureInfo Value { get; }

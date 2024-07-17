@@ -7,16 +7,16 @@ public static class AuthFlowSamples
 {
     public static JObject AuthFlowSessionRecordJson => new()
     {
-        ["AuthorizationData"] = new JObject
+        ["authorization_data"] = new JObject
         {
-            ["ClientOptions"] = new JObject
+            ["client_options"] = new JObject
             {
                 ["ClientId"] = "https://test-issuer.com/redirect",
                 ["WalletIssuer"] = "i can write anything",
                 ["RedirectUri"] = "https://test-issuer.com/redirect"
             },
-            ["IssuerMetadata"] = IssuerMetadataSample.EncodedAsJson,
-            ["AuthorizationServerMetadata"] = new JObject
+            ["issuer_metadata"] = IssuerMetadataSample.EncodedAsJson,
+            ["authorization_server_metadata"] = new JObject
             {
                 ["issuer"] = "i can write anything",
                 ["token_endpoint"] = "i can write anything",
@@ -24,9 +24,9 @@ public static class AuthFlowSamples
                 ["authorization_endpoint"] = "i can write anything",
                 ["response_types_supported"] = new JArray("i can write anything"),
             },
-            ["CredentialConfigurationIds"] = new JArray("org.iso.18013.5.1.mDL")
+            ["credential_configuration_ids"] = new JArray("org.iso.18013.5.1.mDL")
         },
-        ["AuthorizationCodeParameters"] = new JObject
+        ["authorization_code_parameters"] = new JObject
         {
             ["Challenge"] = "hello",
             ["CodeChallengeMethod"] = "S256",

@@ -1,14 +1,11 @@
 using System.Globalization;
-using System.Text.Json.Serialization;
 using Newtonsoft.Json.Linq;
 using WalletFramework.Core.Functional;
 using WalletFramework.Core.Functional.Errors;
 using WalletFramework.Core.Json;
-using WalletFramework.Core.Json.Converters;
 
 namespace WalletFramework.Oid4Vc.Oid4Vci.CredConfiguration.Models.Mdoc;
 
-[JsonConverter(typeof(ValueTypeJsonConverter<CryptographicSuite>))]
 public readonly struct CryptographicSuite
 {
     // TODO: Validate if Value is part of IANA Registry
