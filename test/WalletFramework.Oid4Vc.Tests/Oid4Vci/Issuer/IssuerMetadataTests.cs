@@ -50,8 +50,8 @@ public class IssuerMetadataTests
     {
         var decoded = IssuerMetadataSample.Decoded;
 
-        var sut = JObject.FromObject(decoded).RemoveNulls();
-        
+        var sut = JObject.FromObject(decoded).RemoveNulls().ToObject<JObject>();
+
         sut.Should().BeEquivalentTo(IssuerMetadataSample.EncodedAsJson);
     }
 
@@ -66,7 +66,7 @@ public class IssuerMetadataTests
             // Assert
             sut =>
             {
-                var encoded = JObject.FromObject(sut).RemoveNulls();
+                var encoded = JObject.FromObject(sut).RemoveNulls().ToObject<JObject>();
                 encoded.Should().BeEquivalentTo(sample);
             },
             _ => Assert.Fail("IssuerMetadata must be valid"));

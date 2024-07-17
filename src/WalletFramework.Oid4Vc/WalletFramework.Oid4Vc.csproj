@@ -10,6 +10,9 @@
         <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
             <_Parameter1>WalletFramework.Oid4Vc.Tests</_Parameter1>
         </AssemblyAttribute>
+        <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
+            <_Parameter1>WalletFramework.Integration.Tests</_Parameter1>
+        </AssemblyAttribute>
     </ItemGroup>
 
   <ItemGroup>
