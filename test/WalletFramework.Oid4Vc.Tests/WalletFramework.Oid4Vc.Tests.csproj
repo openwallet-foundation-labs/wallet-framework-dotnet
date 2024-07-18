@@ -37,9 +37,4 @@
     <ProjectReference Include="..\..\src\WalletFramework.SdJwtVc\WalletFramework.SdJwtVc.csproj" />
   </ItemGroup>
 
-
-  <ItemGroup>
-    <Folder Include="Oid4Vci\CredRequest\" />
-  </ItemGroup>
-
 </Project>

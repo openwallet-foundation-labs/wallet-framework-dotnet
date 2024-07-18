@@ -1,10 +1,10 @@
 using FluentAssertions;
 using WalletFramework.Core.Functional;
 using WalletFramework.Core.Json.Errors;
-using WalletFramework.Oid4Vc.Tests.Oid4Vci.Samples.Mdoc;
+using WalletFramework.Oid4Vc.Tests.Oid4Vci.CredConfiguration.Mdoc.Samples;
 using static WalletFramework.Oid4Vc.Oid4Vci.CredConfiguration.Models.Mdoc.MdocConfiguration;
 
-namespace WalletFramework.Oid4Vc.Tests.Oid4Vci.CredConfiguration;
+namespace WalletFramework.Oid4Vc.Tests.Oid4Vci.CredConfiguration.Mdoc;
 
 public class MdocConfigurationTests
 {

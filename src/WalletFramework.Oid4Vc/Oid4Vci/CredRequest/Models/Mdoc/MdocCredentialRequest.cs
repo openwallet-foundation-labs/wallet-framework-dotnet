@@ -27,16 +27,9 @@ public static class MdocCredentialRequestFun
 {
     public static string AsJson(this MdocCredentialRequest request)
     {
-        var json = new JObject();
-
-        var vciRequest = JObject.FromObject(request.VciRequest);
-        foreach (var property in vciRequest.Properties())
-        {
-            json.Add(property);
-        }
+        var json = request.VciRequest.EncodeToJson();
         
-        var vct = JToken.FromObject(request.DocType);
-        json.Add("doctype", vct);
+        json.Add("doctype", request.DocType.ToString());
 
         return json.ToString();
     }

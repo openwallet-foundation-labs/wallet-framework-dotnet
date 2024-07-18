@@ -1,5 +1,5 @@
 using Newtonsoft.Json.Linq;
-using WalletFramework.Oid4Vc.Tests.Oid4Vci.Samples;
+using WalletFramework.Oid4Vc.Tests.Oid4Vci.Issuer.Samples;
 
 namespace WalletFramework.Oid4Vc.Tests.Oid4Vci.AuthFlow.Samples;
 

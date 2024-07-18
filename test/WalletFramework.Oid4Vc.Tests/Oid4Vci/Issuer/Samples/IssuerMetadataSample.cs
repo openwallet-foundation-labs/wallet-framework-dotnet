@@ -3,10 +3,10 @@ using WalletFramework.Core.Functional;
 using WalletFramework.Core.Uri;
 using WalletFramework.Oid4Vc.Oid4Vci.CredOffer.Models;
 using WalletFramework.Oid4Vc.Oid4Vci.Issuer.Models;
-using WalletFramework.Oid4Vc.Tests.Oid4Vci.Samples.Mdoc;
-using WalletFramework.Oid4Vc.Tests.Oid4Vci.Samples.SdJwt;
+using WalletFramework.Oid4Vc.Tests.Oid4Vci.CredConfiguration.Mdoc.Samples;
+using WalletFramework.Oid4Vc.Tests.Oid4Vci.CredConfiguration.SdJwt.Samples;
 
-namespace WalletFramework.Oid4Vc.Tests.Oid4Vci.Samples;
+namespace WalletFramework.Oid4Vc.Tests.Oid4Vci.Issuer.Samples;
 
 public static class IssuerMetadataSample
 {

@@ -9,7 +9,7 @@ using WalletFramework.Oid4Vc.Oid4Vci.AuthFlow.Records;
 using WalletFramework.Oid4Vc.Oid4Vci.Authorization.Models;
 using WalletFramework.Oid4Vc.Oid4Vci.CredOffer.Models;
 using WalletFramework.Oid4Vc.Tests.Oid4Vci.AuthFlow.Samples;
-using WalletFramework.Oid4Vc.Tests.Oid4Vci.Samples;
+using WalletFramework.Oid4Vc.Tests.Oid4Vci.Issuer.Samples;
 
 namespace WalletFramework.Oid4Vc.Tests.Oid4Vci.AuthFlow;
 

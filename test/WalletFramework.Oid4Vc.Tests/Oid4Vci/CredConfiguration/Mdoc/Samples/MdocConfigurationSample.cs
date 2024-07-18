@@ -13,7 +13,7 @@ using static WalletFramework.MdocLib.DocType;
 using static WalletFramework.Oid4Vc.Oid4Vci.CredConfiguration.Models.Format;
 using static WalletFramework.MdocLib.NameSpace;
 
-namespace WalletFramework.Oid4Vc.Tests.Oid4Vci.Samples.Mdoc;
+namespace WalletFramework.Oid4Vc.Tests.Oid4Vci.CredConfiguration.Mdoc.Samples;
 
 public static class MdocConfigurationSample
 {

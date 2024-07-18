@@ -1,6 +1,6 @@
 using Newtonsoft.Json.Linq;
 
-namespace WalletFramework.Oid4Vc.Tests.Oid4Vci.Samples;
+namespace WalletFramework.Oid4Vc.Tests.Oid4Vci.CredOffer.Samples;
 
 public static class CredentialOfferSample
 {

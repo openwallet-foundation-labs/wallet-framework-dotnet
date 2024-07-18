@@ -3,7 +3,7 @@ using WalletFramework.Core.Functional;
 using WalletFramework.Oid4Vc.Oid4Vci.CredConfiguration.Models;
 using WalletFramework.SdJwtVc.Models;
 
-namespace WalletFramework.Oid4Vc.Tests.Oid4Vci.Samples.SdJwt;
+namespace WalletFramework.Oid4Vc.Tests.Oid4Vci.CredConfiguration.SdJwt.Samples;
 
 public static class SdJwtConfigurationSample
 {

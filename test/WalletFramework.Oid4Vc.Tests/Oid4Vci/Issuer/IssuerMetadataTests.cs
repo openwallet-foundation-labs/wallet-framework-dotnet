@@ -5,9 +5,9 @@ using WalletFramework.Core.Functional;
 using WalletFramework.Core.Json;
 using WalletFramework.Core.Uri;
 using WalletFramework.Oid4Vc.Oid4Vci.Issuer.Models;
-using WalletFramework.Oid4Vc.Tests.Oid4Vci.Samples;
-using WalletFramework.Oid4Vc.Tests.Oid4Vci.Samples.Mdoc;
-using WalletFramework.Oid4Vc.Tests.Oid4Vci.Samples.SdJwt;
+using WalletFramework.Oid4Vc.Tests.Oid4Vci.CredConfiguration.Mdoc.Samples;
+using WalletFramework.Oid4Vc.Tests.Oid4Vci.CredConfiguration.SdJwt.Samples;
+using WalletFramework.Oid4Vc.Tests.Oid4Vci.Issuer.Samples;
 using static WalletFramework.Oid4Vc.Oid4Vci.Issuer.Models.IssuerMetadata;
 
 namespace WalletFramework.Oid4Vc.Tests.Oid4Vci.Issuer;

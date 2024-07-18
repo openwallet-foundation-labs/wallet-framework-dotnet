@@ -86,7 +86,7 @@ public class CredentialRequestService : ICredentialRequestService
                     clientOptions);
                 
                 var result = new SdJwtCredentialRequest(vciRequest, sdJwt.Vct);
-                return result.AsJson();
+                return result.EncodeToJson();
             },
             async mdoc =>
             {

@@ -5,7 +5,7 @@ using WalletFramework.Core.Functional.Errors;
 using WalletFramework.Oid4Vc.Oid4Vci.CredOffer.Errors;
 using WalletFramework.Oid4Vc.Oid4Vci.CredOffer.Models;
 using static WalletFramework.Oid4Vc.Oid4Vci.CredOffer.Models.CredentialOffer;
-using static WalletFramework.Oid4Vc.Tests.Oid4Vci.Samples.CredentialOfferSample;
+using static WalletFramework.Oid4Vc.Tests.Oid4Vci.CredOffer.Samples.CredentialOfferSample;
 
 namespace WalletFramework.Oid4Vc.Tests.Oid4Vci.CredOffer;
 
