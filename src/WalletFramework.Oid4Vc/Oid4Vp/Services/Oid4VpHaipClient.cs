@@ -49,9 +49,10 @@ internal class Oid4VpHaipClient : IOid4VpHaipClient
             descriptorMaps.Add(descriptorMap);
         }
 
-        var presentationSubmission =
-            await _pexService.CreatePresentationSubmission(authorizationRequest.PresentationDefinition,
-                descriptorMaps.ToArray());
+        var presentationSubmission = await _pexService.CreatePresentationSubmission(
+            authorizationRequest.PresentationDefinition,
+            descriptorMaps.ToArray()
+        );
 
         return new AuthorizationResponse
         {
@@ -68,12 +69,12 @@ internal class Oid4VpHaipClient : IOid4VpHaipClient
         var httpClient = _httpClientFactory.CreateClient();
         httpClient.DefaultRequestHeaders.Clear();
             
-        var requestObject =
-            CreateRequestObject(
-                await httpClient.GetStringAsync(haipAuthorizationRequestUri.RequestUri)
-            );
-            
-        var clientMetadata = await FetchClientMetadata(requestObject.ToAuthorizationRequest());
+        var requestObject = CreateRequestObject(
+            await httpClient.GetStringAsync(haipAuthorizationRequestUri.RequestUri)
+        );
+
+        var authRequest = requestObject.ToAuthorizationRequest();
+        var clientMetadata = await FetchClientMetadata(authRequest);
 
         return
             requestObject.ClientIdScheme.Value switch

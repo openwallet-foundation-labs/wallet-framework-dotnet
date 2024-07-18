@@ -15,6 +15,7 @@ public class Oid4VpClientService : IOid4VpClientService
     /// <summary>
     ///     Initializes a new instance of the <see cref="Oid4VpClientService" /> class.
     /// </summary>
+    /// <param name="agentProvider">The agent provider</param>
     /// <param name="httpClientFactory">The http client factory to create http clients.</param>
     /// <param name="sdJwtVcHolderService">The service responsible for SD-JWT related operations.</param>
     /// <param name="pexService">The Presentation Exchange service.</param>
@@ -22,38 +23,43 @@ public class Oid4VpClientService : IOid4VpClientService
     /// <param name="logger">The ILogger.</param>
     /// <param name="oid4VpRecordService">The service responsible for OidPresentationRecord related operations.</param>
     public Oid4VpClientService(
+        IAgentProvider agentProvider,
         IHttpClientFactory httpClientFactory,
-        ISdJwtVcHolderService sdJwtVcHolderService,
-        IPexService pexService,
-        IOid4VpHaipClient oid4VpHaipClient,
         ILogger<Oid4VpClientService> logger,
-        IOid4VpRecordService oid4VpRecordService)
+        IOid4VpHaipClient oid4VpHaipClient,
+        IOid4VpRecordService oid4VpRecordService,
+        IPexService pexService,
+        ISdJwtVcHolderService sdJwtVcHolderService)
     {
+        _agentProvider = agentProvider;
         _httpClientFactory = httpClientFactory;
-        _sdJwtVcHolderService = sdJwtVcHolderService;
-        _oid4VpHaipClient = oid4VpHaipClient;
         _logger = logger;
+        _oid4VpHaipClient = oid4VpHaipClient;
         _oid4VpRecordService = oid4VpRecordService;
         _pexService = pexService;
+        _sdJwtVcHolderService = sdJwtVcHolderService;
     }
 
+    private readonly IAgentProvider _agentProvider;
     private readonly IHttpClientFactory _httpClientFactory;
-    private readonly IOid4VpHaipClient _oid4VpHaipClient;
     private readonly ILogger<Oid4VpClientService> _logger;
+    private readonly IOid4VpHaipClient _oid4VpHaipClient;
     private readonly IOid4VpRecordService _oid4VpRecordService;
-    private readonly ISdJwtVcHolderService _sdJwtVcHolderService;
     private readonly IPexService _pexService;
+    private readonly ISdJwtVcHolderService _sdJwtVcHolderService;
 
     /// <inheritdoc />
-    public async Task<(AuthorizationRequest, CredentialCandidates[])> ProcessAuthorizationRequestAsync(
-        IAgentContext agentContext, Uri authorizationRequestUri)
+    public async Task<(AuthorizationRequest, IEnumerable<CredentialCandidates>)> ProcessAuthorizationRequestAsync(
+        Uri authorizationRequestUri)
     {
         var haipAuthorizationRequestUri = HaipAuthorizationRequestUri.FromUri(authorizationRequestUri);
 
-        var authorizationRequest =
-            await _oid4VpHaipClient.ProcessAuthorizationRequestAsync(haipAuthorizationRequestUri);
+        var authorizationRequest = await _oid4VpHaipClient.ProcessAuthorizationRequestAsync(
+            haipAuthorizationRequestUri
+        );
 
-        var credentials = await _sdJwtVcHolderService.ListAsync(agentContext);
+        var context = await _agentProvider.GetContextAsync();
+        var credentials = await _sdJwtVcHolderService.ListAsync(context);
             
         var credentialCandidates = await _pexService.FindCredentialCandidates(
             credentials.ToArray(),
@@ -65,9 +71,8 @@ public class Oid4VpClientService : IOid4VpClientService
 
     /// <inheritdoc />
     public async Task<Uri?> SendAuthorizationResponseAsync(
-        IAgentContext agentContext,
         AuthorizationRequest authorizationRequest,
-        SelectedCredential[] selectedCredentials)
+        IEnumerable<SelectedCredential> selectedCredentials)
     {
         var createPresentationMaps =
             from credential in selectedCredentials
@@ -77,6 +82,7 @@ public class Oid4VpClientService : IOid4VpClientService
                 .Constraints
                 .Fields?
                 .SelectMany(field => field.Path.Select(path => path.TrimStart('$', '.')))
+            // TODO: MdocPresentation
             let createPresentation = _sdJwtVcHolderService.CreatePresentation(
                 (SdJwtRecord)credential.Credential,
                 disclosedClaims.ToArray(),
@@ -99,21 +105,20 @@ public class Oid4VpClientService : IOid4VpClientService
         var httpClient = _httpClientFactory.CreateClient();
         httpClient.DefaultRequestHeaders.Clear();
             
-        var responseMessage =
-            await httpClient.SendAsync(
-                new HttpRequestMessage
-                {
-                    RequestUri = new Uri(authorizationRequest.ResponseUri),
-                    Method = HttpMethod.Post,
-                    Content = new FormUrlEncodedContent(
-                        DeserializeObject<Dictionary<string, string>>(
-                                SerializeObject(authorizationResponse)
-                            )?
-                            .ToList()
-                        ?? throw new InvalidOperationException("Authorization Response could not be parsed")
-                    )
-                }
-            );
+        var responseMessage = await httpClient.SendAsync(
+            new HttpRequestMessage
+            {
+                RequestUri = new Uri(authorizationRequest.ResponseUri),
+                Method = HttpMethod.Post,
+                Content = new FormUrlEncodedContent(
+                    DeserializeObject<Dictionary<string, string>>(
+                            SerializeObject(authorizationResponse)
+                        )?
+                        .ToList()
+                    ?? throw new InvalidOperationException("Authorization Response could not be parsed")
+                )
+            }
+        );
 
         if (!responseMessage.IsSuccessStatusCode)
             throw new InvalidOperationException("Authorization Response could not be sent");
@@ -157,13 +162,14 @@ public class Oid4VpClientService : IOid4VpClientService
                 };
             });
 
+        var context = await _agentProvider.GetContextAsync();
+
         await _oid4VpRecordService.StoreAsync(
-            agentContext,
+            context,
             authorizationRequest.ClientId,
             authorizationRequest.ClientMetadata,
             authorizationRequest.PresentationDefinition.Name,
-            presentedCredentials.ToArray()
-        );
+            presentedCredentials.ToArray());
 
         var redirectUriJson = await responseMessage.Content.ReadAsStringAsync();
 
