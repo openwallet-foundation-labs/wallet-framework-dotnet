@@ -12,13 +12,13 @@ namespace WalletFramework.Oid4Vc.Oid4Vci.AuthFlow.Records;
 public sealed class AuthFlowSessionRecord : RecordBase
 {
     /// <summary>
-    ///     The session specific id.
+    ///     The session specific state id.
     /// </summary>
     [JsonIgnore]
-    public VciSessionId SessionId
+    public VciSessionState VciSessionState
     {
-        get => VciSessionId
-            .ValidSessionId(Id)
+        get => VciSessionState
+            .ValidVciSessionState(Id)
             .UnwrapOrThrow(new InvalidOperationException("SessionId is corrupt"));
         set
         {
@@ -56,13 +56,13 @@ public sealed class AuthFlowSessionRecord : RecordBase
     /// </summary>
     /// <param name="authorizationData"></param>
     /// <param name="authorizationCodeParameters"></param>
-    /// <param name="sessionId"></param>
+    /// <param name="vciSessionState"></param>
     public AuthFlowSessionRecord(
         AuthorizationData authorizationData,
         AuthorizationCodeParameters authorizationCodeParameters,
-        VciSessionId sessionId)
+        VciSessionState vciSessionState)
     {
-        SessionId = sessionId;
+        VciSessionState = vciSessionState;
         RecordVersion = 1;
         AuthorizationCodeParameters = authorizationCodeParameters;
         AuthorizationData = authorizationData;
@@ -90,7 +90,7 @@ public static class AuthFlowSessionRecordFun
     public static AuthFlowSessionRecord DecodeFromJson(JObject json)
     {
         var idJson = json[nameof(RecordBase.Id)]!.ToObject<JValue>()!;
-        var id = VciSessionIdFun.DecodeFromJson(idJson);
+        var id = VciSessionStateFun.DecodeFromJson(idJson);
 
         var authCodeParameters = JsonConvert.DeserializeObject<AuthorizationCodeParameters>(
             json[AuthorizationCodeParametersJsonKey]!.ToString()

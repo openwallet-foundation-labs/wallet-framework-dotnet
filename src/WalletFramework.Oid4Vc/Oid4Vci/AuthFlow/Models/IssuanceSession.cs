@@ -11,14 +11,14 @@ public record IssuanceSession
     /// <summary>
     ///   Gets the session identifier.
     /// </summary>
-    public VciSessionId SessionId { get; }
+    public VciSessionState VciSessionState { get; }
         
     /// <summary>
     ///  Gets the actual authorization code that is received from the authorization server upon successful authorization.
     /// </summary>
     public string Code { get; }
         
-    private IssuanceSession(VciSessionId sessionId, string code) => (SessionId, Code) = (sessionId, code);
+    private IssuanceSession(VciSessionState vciSessionState, string code) => (VciSessionState, Code) = (vciSessionState, code);
         
     /// <summary>
     ///    Creates a new instance of <see cref="IssuanceSession"/> from the given <see cref="Uri"/>.
@@ -36,9 +36,9 @@ public record IssuanceSession
             throw new InvalidOperationException("Query parameter 'code' is missing");
         }
         
-        var sessionIdParam = queryParams.Get("session");
-        var sessionId = VciSessionId.ValidSessionId(sessionIdParam).Fallback(VciSessionId.CreateSessionId());
+        var sessionStateParam = queryParams.Get("state");
+        var vciSessionState = VciSessionState.ValidVciSessionState(sessionStateParam).Fallback(VciSessionState.CreateVciSessionState());
 
-        return new IssuanceSession(sessionId, code);
+        return new IssuanceSession(vciSessionState, code);
     }
 }

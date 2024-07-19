@@ -14,17 +14,17 @@ public interface IAuthFlowSessionStorage
     ///     Deletes the authorization session record by the session identifier.
     /// </summary>
     /// <param name="context">Agent Context</param>
-    /// <param name="sessionId">Session Identifier of a Authorization Code Flow session</param>
+    /// <param name="vciSessionState">Session State Identifier of a Authorization Code Flow session</param>
     /// <returns></returns>
-    Task<bool> DeleteAsync(IAgentContext context, VciSessionId sessionId);
+    Task<bool> DeleteAsync(IAgentContext context, VciSessionState vciSessionState);
 
     /// <summary>
     ///     Retrieves the authorization session record by the session identifier.
     /// </summary>
     /// <param name="context">Agent Context</param>
-    /// <param name="sessionId">Session Identifier of a Authorization Code Flow session</param>
+    /// <param name="vciSessionState">Session State Identifier of a Authorization Code Flow session</param>
     /// <returns></returns>
-    Task<AuthFlowSessionRecord> GetAsync(IAgentContext context, VciSessionId sessionId);
+    Task<AuthFlowSessionRecord> GetAsync(IAgentContext context, VciSessionState vciSessionState);
 
     /// <summary>
     ///     Stores the authorization session record.
@@ -35,11 +35,11 @@ public interface IAuthFlowSessionStorage
     ///     Parameters required for the authorization during the VCI authorization code
     ///     flow.
     /// </param>
-    /// <param name="sessionId"></param>
+    /// <param name="vciSessionState">Session State Identifier of a Authorization Code Flow session</param>
     /// <returns></returns>
     Task<string> StoreAsync(
         IAgentContext agentContext,
         AuthorizationData authorizationData,
         AuthorizationCodeParameters authorizationCodeParameters,
-        VciSessionId sessionId);
+        VciSessionState vciSessionState);
 }
