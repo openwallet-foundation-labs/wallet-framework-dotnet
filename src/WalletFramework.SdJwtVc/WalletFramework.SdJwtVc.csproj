@@ -8,10 +8,10 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Hyperledger.Aries\Hyperledger.Aries.csproj" />
+    <ProjectReference Include="..\WalletFramework.Core\WalletFramework.Core.csproj" />
   </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="SD-JWT" Version="0.1.0-rc.59" />
   </ItemGroup>
-
 </Project>
