@@ -34,7 +34,7 @@ namespace Hyperledger.Aries.Storage
         /// <summary>Gets or sets the tags.</summary>
         /// <value>The tags.</value>
         [JsonIgnore]
-        protected internal Dictionary<string, string> Tags { get; set; } = new();
+        public Dictionary<string, string> Tags { get; set; } = new();
 
         /// <summary>
         ///     Get and set the schema version of a wallet record

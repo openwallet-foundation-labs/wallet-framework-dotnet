@@ -1,13 +1,14 @@
 using FluentAssertions;
 using Hyperledger.Aries.Storage.Models.Interfaces;
-using Hyperledger.Aries.Tests.Extensions;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using SD_JWT.Roles.Implementation;
+using WalletFramework.Core.Cryptography.Models;
 using WalletFramework.Oid4Vc.Oid4Vp.Exceptions;
 using WalletFramework.Oid4Vc.Oid4Vp.Models;
 using WalletFramework.Oid4Vc.Oid4Vp.PresentationExchange.Models;
 using WalletFramework.Oid4Vc.Oid4Vp.PresentationExchange.Services;
+using WalletFramework.Oid4Vc.Tests.Extensions;
 using WalletFramework.Oid4Vc.Tests.PresentationExchange.Models;
 using WalletFramework.SdJwtVc.Models.Credential;
 using WalletFramework.SdJwtVc.Models.Credential.Attributes;
@@ -17,7 +18,7 @@ namespace WalletFramework.Oid4Vc.Tests.PresentationExchange.Services
 {
     public class PexServiceTests
     {
-        private readonly PexService _pexService = new PexService();
+        private readonly PexService _pexService = new();
 
         [Fact]
         public async Task Can_Create_Presentation_Submission()
@@ -58,6 +59,7 @@ namespace WalletFramework.Oid4Vc.Tests.PresentationExchange.Services
         [Fact]
         public async Task Can_Get_Credential_Candidates_For_Input_Descriptors()
         {
+            // Arrange
             var driverLicenseCredential = CreateCredential(CredentialExamples.DriverCredential);
             var driverLicenseCredentialClone = CreateCredential(CredentialExamples.DriverCredential);
             var universityCredential = CreateCredential(CredentialExamples.UniversityCredential);
@@ -84,17 +86,19 @@ namespace WalletFramework.Oid4Vc.Tests.PresentationExchange.Services
 
             var expected = new List<CredentialCandidates>
             {
-                new CredentialCandidates(
-                    driverLicenseInputDescriptor.Id,
-                    new List<ICredential> { driverLicenseCredential, driverLicenseCredentialClone }),
-                new CredentialCandidates(
-                    universityInputDescriptor.Id, new List<ICredential> { universityCredential })
+                new(driverLicenseInputDescriptor.Id, 
+                    new List<ICredential>
+                    {
+                        driverLicenseCredential,
+                        driverLicenseCredentialClone
+                    }),
+                new(universityInputDescriptor.Id, new List<ICredential> { universityCredential })
             };
 
-            var sdJwtVcHolderService = CreatePexService();
+            var pexService = CreatePexService();
 
             // Act
-            var credentialCandidatesArray = await sdJwtVcHolderService.FindCredentialCandidates(
+            var credentialCandidatesArray = await pexService.FindCredentialCandidates(
                 new[]
                 {
                     driverLicenseCredential, driverLicenseCredentialClone, universityCredential
@@ -267,13 +271,18 @@ namespace WalletFramework.Oid4Vc.Tests.PresentationExchange.Services
         
         private static SdJwtRecord CreateCredential(JObject payload)
         {
+            // Arrange
             const string jwk = "{\"kty\":\"EC\",\"d\":\"1_2Dagk1gvTIOX-DLPe7GHNsGLJMc7biySNA-so7TXE\",\"use\":\"sig\",\"crv\":\"P-256\",\"x\":\"X6sZhH_kFp_oKYiPXW-LvUyAv9mHp1xYcpAK3yy0wGY\",\"y\":\"p0URU7tgWbh42miznti0NVKM36fpJBbIfnF8ZCYGryE\",\"alg\":\"ES256\"}";
-
             var issuedSdJwt = new Issuer().IssueCredential(payload, jwk);
-            
-            var record = new SdJwtRecord(issuedSdJwt.IssuanceFormat, new Dictionary<string, ClaimMetadata>(),
-                new List<CredentialDisplayMetadata>(), new Dictionary<string, string>(), "0");
+            var keyId = KeyId.CreateKeyId();
 
+            var record = new SdJwtRecord(
+                issuedSdJwt.IssuanceFormat,
+                new Dictionary<string, ClaimMetadata>(),
+                new List<SdJwtDisplay>(), 
+                new Dictionary<string, string>(),
+                keyId);
+            
             return record;
         }
         
