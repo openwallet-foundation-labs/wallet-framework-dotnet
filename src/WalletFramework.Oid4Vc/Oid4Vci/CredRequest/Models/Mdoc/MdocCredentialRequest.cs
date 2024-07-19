@@ -1,5 +1,4 @@
 using LanguageExt;
-using Newtonsoft.Json.Linq;
 using WalletFramework.MdocLib;
 using WalletFramework.Oid4Vc.Oid4Vci.CredConfiguration.Models.Mdoc;
 

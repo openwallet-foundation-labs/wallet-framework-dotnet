@@ -1,5 +1,4 @@
 using Newtonsoft.Json;
-using WalletFramework.Oid4Vc.Oid4Vci.AuthFlow;
 using WalletFramework.Oid4Vc.Oid4Vci.AuthFlow.Models;
 
 namespace WalletFramework.Oid4Vc.Oid4Vci.Authorization.Models;
