@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using FluentAssertions;
 using Hyperledger.Aries.Agents;
@@ -9,6 +10,7 @@ using Hyperledger.Aries.Storage;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Moq;
+using Newtonsoft.Json.Linq;
 using Xunit;
 
 namespace Hyperledger.Aries.Tests.Routing
@@ -46,7 +48,7 @@ namespace Hyperledger.Aries.Tests.Routing
             CreateInboxResponseMessage agentMessage = (CreateInboxResponseMessage)await routingInboxHandler.ProcessAsync(agentContext.Object, unpackedMessage);
 
             walletService.Verify(w => w.CreateWalletAsync(It.Is<WalletConfiguration>(wc => wc.Id == agentMessage.InboxId), It.Is<WalletCredentials>(wc => wc.Key == agentMessage.InboxKey)));
-            recordService.Verify(m => m.AddAsync(agentContext.Object.Wallet, It.Is<InboxRecord>(i => i.Tags.Count == 0)), Times.Once());
+            recordService.Verify(m => m.AddAsync(agentContext.Object.Wallet, It.Is<InboxRecord>(i => i.Tags.Count == 0), It.IsAny<Func<InboxRecord,JObject>?>()), Times.Once());
             recordService.Verify(m => m.UpdateAsync(agentContext.Object.Wallet, It.Is<ConnectionRecord>(c => c.GetTag("InboxId") == agentMessage.InboxId)));
         }
 
@@ -72,7 +74,7 @@ namespace Hyperledger.Aries.Tests.Routing
 
             agentMessage.InboxKey.Should().HaveLength(44);
             walletService.Verify(w => w.CreateWalletAsync(It.Is<WalletConfiguration>(wc => wc.Id == agentMessage.InboxId), It.Is<WalletCredentials>(wc => wc.Key == agentMessage.InboxKey)));
-            recordService.Verify(m => m.AddAsync(agentContext.Object.Wallet, It.Is<InboxRecord>(i => i.GetTag(key) == value)), Times.Once());
+            recordService.Verify(m => m.AddAsync(agentContext.Object.Wallet, It.Is<InboxRecord>(i => i.GetTag(key) == value), It.IsAny<Func<InboxRecord,JObject>?>()), Times.Once());
             recordService.Verify(m => m.UpdateAsync(agentContext.Object.Wallet, It.Is<ConnectionRecord>(c => c.GetTag("InboxId") == agentMessage.InboxId)));
         }
 

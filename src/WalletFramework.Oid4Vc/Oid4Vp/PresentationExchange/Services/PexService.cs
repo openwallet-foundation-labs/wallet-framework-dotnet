@@ -6,103 +6,102 @@ using WalletFramework.Oid4Vc.Oid4Vp.Models;
 using WalletFramework.Oid4Vc.Oid4Vp.PresentationExchange.Models;
 using WalletFramework.SdJwtVc.Models.Records;
 
-namespace WalletFramework.Oid4Vc.Oid4Vp.PresentationExchange.Services
+namespace WalletFramework.Oid4Vc.Oid4Vp.PresentationExchange.Services;
+
+/// <inheritdoc />
+public class PexService : IPexService
 {
     /// <inheritdoc />
-    public class PexService : IPexService
+    public Task<PresentationSubmission> CreatePresentationSubmission(PresentationDefinition presentationDefinition, DescriptorMap[] descriptorMaps)
     {
-        /// <inheritdoc />
-        public Task<PresentationSubmission> CreatePresentationSubmission(PresentationDefinition presentationDefinition, DescriptorMap[] descriptorMaps)
+        var inputDescriptorIds = presentationDefinition.InputDescriptors.Select(x => x.Id);
+        if (!descriptorMaps.Select(x => x.Id).All(inputDescriptorIds.Contains))
+            throw new ArgumentException("Missing descriptors for given input descriptors in presentation definition.", nameof(descriptorMaps));
+            
+        var presentationSubmission = new PresentationSubmission
         {
-            var inputDescriptorIds = presentationDefinition.InputDescriptors.Select(x => x.Id);
-            if (!descriptorMaps.Select(x => x.Id).All(inputDescriptorIds.Contains))
-                throw new ArgumentException("Missing descriptors for given input descriptors in presentation definition.", nameof(descriptorMaps));
+            Id = Guid.NewGuid().ToString(),
+            DefinitionId = presentationDefinition.Id,
+            DescriptorMap = descriptorMaps.Cast<DescriptorMap>().ToArray()
+        };
             
-            var presentationSubmission = new PresentationSubmission
-            {
-                Id = Guid.NewGuid().ToString(),
-                DefinitionId = presentationDefinition.Id,
-                DescriptorMap = descriptorMaps.Cast<DescriptorMap>().ToArray()
-            };
-            
-            return Task.FromResult(presentationSubmission);
-        }
+        return Task.FromResult(presentationSubmission);
+    }
 
-        /// <inheritdoc />
-        public virtual Task<CredentialCandidates[]> FindCredentialCandidates(SdJwtRecord[] credentials,
-            InputDescriptor[] inputDescriptors)
+    /// <inheritdoc />
+    public virtual Task<CredentialCandidates[]> FindCredentialCandidates(SdJwtRecord[] credentials,
+        InputDescriptor[] inputDescriptors)
+    {
+        var result = new List<CredentialCandidates>();
+
+        foreach (var inputDescriptor in inputDescriptors)
         {
-            var result = new List<CredentialCandidates>();
-
-            foreach (var inputDescriptor in inputDescriptors)
+            if (!inputDescriptor.Formats.Keys.Contains("vc+sd-jwt"))
             {
-                if (!inputDescriptor.Formats.Keys.Contains("vc+sd-jwt"))
-                {
-                    throw new NotSupportedException("Only vc+sd-jwt format is supported");
-                }
-
-                if (inputDescriptor.Constraints.Fields == null || inputDescriptor.Constraints.Fields.Length == 0)
-                {
-                    throw new InvalidOperationException("Fields cannot be null or empty");
-                }
-
-                var matchingCredentials =
-                    _filterMatchingCredentialsForFields(credentials, inputDescriptor.Constraints.Fields);
-                if (matchingCredentials.Length == 0)
-                {
-                    continue;
-                }
-
-                var limitDisclosuresRequired = string.Equals(inputDescriptor.Constraints.LimitDisclosure, "required");
-
-                var credentialCandidates = new CredentialCandidates(inputDescriptor.Id,
-                    matchingCredentials, limitDisclosuresRequired);
-
-                result.Add(credentialCandidates);
-            }
-            
-            if (result.IsNullOrEmpty())
-            {
-                throw new Oid4VpNoCredentialCandidateException();
+                throw new NotSupportedException("Only vc+sd-jwt format is supported");
             }
 
-            return Task.FromResult(result.ToArray());
+            if (inputDescriptor.Constraints.Fields == null || inputDescriptor.Constraints.Fields.Length == 0)
+            {
+                throw new InvalidOperationException("Fields cannot be null or empty");
+            }
+
+            var matchingCredentials =
+                _filterMatchingCredentialsForFields(credentials, inputDescriptor.Constraints.Fields);
+            if (matchingCredentials.Length == 0)
+            {
+                continue;
+            }
+
+            var limitDisclosuresRequired = string.Equals(inputDescriptor.Constraints.LimitDisclosure, "required");
+
+            var credentialCandidates = new CredentialCandidates(inputDescriptor.Id,
+                matchingCredentials, limitDisclosuresRequired);
+
+            result.Add(credentialCandidates);
+        }
+            
+        if (result.IsNullOrEmpty())
+        {
+            throw new Oid4VpNoCredentialCandidateException();
         }
 
-        private static SdJwtRecord[] _filterMatchingCredentialsForFields(SdJwtRecord[] records, Field[] fields) 
+        return Task.FromResult(result.ToArray());
+    }
+
+    private static SdJwtRecord[] _filterMatchingCredentialsForFields(SdJwtRecord[] records, Field[] fields) 
+    {
+        var candidateRecords = new List<SdJwtRecord>();
+        foreach (var record in records)
         {
-            var candidateRecords = new List<SdJwtRecord>();
-            foreach (var record in records)
+            var doc = _toSdJwtDoc(record);
+            var isAMatch = fields.All(field =>
             {
-                var doc = _toSdJwtDoc(record);
-                bool isAMatch = fields.All(field =>
+                try
                 {
-                    try
+                    if (doc.UnsecuredPayload.SelectToken(field.Path.First(), true) is JValue value && field.Filter?.Const != null)
                     {
-                        if (doc.UnsecuredPayload.SelectToken(field.Path.First(), true) is JValue value && field.Filter?.Const != null)
-                        {
-                            return field.Filter?.Const == value.Value?.ToString();
-                        }
-
-                        return true;
+                        return field.Filter?.Const == value.Value?.ToString();
                     }
-                    catch (Exception)
-                    {
-                        return false;
-                    }
-                });
 
-                if (isAMatch)
-                    candidateRecords.Add(record);
-            }
+                    return true;
+                }
+                catch (Exception)
+                {
+                    return false;
+                }
+            });
 
-            return candidateRecords.ToArray();
+            if (isAMatch)
+                candidateRecords.Add(record);
         }
 
+        return candidateRecords.ToArray();
+    }
 
-        private static SdJwtDoc _toSdJwtDoc(SdJwtRecord record)
-        {
-            return new SdJwtDoc(record.EncodedIssuerSignedJwt + "~" + string.Join("~", record.Disclosures) + "~");
-        }
+
+    private static SdJwtDoc _toSdJwtDoc(SdJwtRecord record)
+    {
+        return new SdJwtDoc(record.EncodedIssuerSignedJwt + "~" + string.Join("~", record.Disclosures) + "~");
     }
 }

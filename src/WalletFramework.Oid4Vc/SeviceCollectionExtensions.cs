@@ -1,8 +1,21 @@
 using Microsoft.Extensions.DependencyInjection;
-using WalletFramework.Oid4Vc.Oid4Vci.Services;
-using WalletFramework.Oid4Vc.Oid4Vci.Services.Oid4VciClientService;
+using WalletFramework.Oid4Vc.Oid4Vci.Abstractions;
+using WalletFramework.Oid4Vc.Oid4Vci.AuthFlow.Abstractions;
+using WalletFramework.Oid4Vc.Oid4Vci.AuthFlow.Implementations;
+using WalletFramework.Oid4Vc.Oid4Vci.Authorization.Abstractions;
+using WalletFramework.Oid4Vc.Oid4Vci.Authorization.DPop.Abstractions;
+using WalletFramework.Oid4Vc.Oid4Vci.Authorization.DPop.Implementations;
+using WalletFramework.Oid4Vc.Oid4Vci.Authorization.Implementations;
+using WalletFramework.Oid4Vc.Oid4Vci.CredOffer.Abstractions;
+using WalletFramework.Oid4Vc.Oid4Vci.CredOffer.Implementations;
+using WalletFramework.Oid4Vc.Oid4Vci.CredRequest.Abstractions;
+using WalletFramework.Oid4Vc.Oid4Vci.CredRequest.Implementations;
+using WalletFramework.Oid4Vc.Oid4Vci.Implementations;
+using WalletFramework.Oid4Vc.Oid4Vci.Issuer.Abstractions;
+using WalletFramework.Oid4Vc.Oid4Vci.Issuer.Implementations;
 using WalletFramework.Oid4Vc.Oid4Vp.PresentationExchange.Services;
 using WalletFramework.Oid4Vc.Oid4Vp.Services;
+using WalletFramework.SdJwtVc;
 
 namespace WalletFramework.Oid4Vc;
 
@@ -12,15 +25,23 @@ public static class SeviceCollectionExtensions
     /// Adds the default OpenID services.
     /// </summary>
     /// <param name="builder"> The builder. </param>
-    public static IServiceCollection AddOpenIdDefaultServices(this IServiceCollection builder)
+    public static IServiceCollection AddOpenIdServices(this IServiceCollection builder)
     {
-        builder.AddSingleton<IPexService, PexService>();
+        builder.AddSingleton<IAuthFlowSessionStorage, AuthFlowSessionStorage>();
+        builder.AddSingleton<ICredentialOfferService, CredentialOfferService>();
+        builder.AddSingleton<ICredentialRequestService, CredentialRequestService>();
+        builder.AddSingleton<IDPopHttpClient, DPopHttpClient>();
+        builder.AddSingleton<IIssuerMetadataService, IssuerMetadataService>();
+        builder.AddSingleton<IMdocStorage, MdocStorage>();
         builder.AddSingleton<IOid4VciClientService, Oid4VciClientService>();
         builder.AddSingleton<IOid4VpClientService, Oid4VpClientService>();
         builder.AddSingleton<IOid4VpHaipClient, Oid4VpHaipClient>();
         builder.AddSingleton<IOid4VpRecordService, Oid4VpRecordService>();
-        builder.AddSingleton<ISessionRecordService, SessionRecordService>();
-            
+        builder.AddSingleton<IPexService, PexService>();
+        builder.AddSingleton<ITokenService, TokenService>();
+
+        builder.AddSdJwtVcServices();
+        
         return builder;
     }
     
