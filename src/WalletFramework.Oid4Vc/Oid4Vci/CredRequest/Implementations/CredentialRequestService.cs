@@ -98,7 +98,7 @@ public class CredentialRequestService : ICredentialRequestService
                     clientOptions);
                 
                 var result = new MdocCredentialRequest(vciRequest, mdoc);
-                return result.AsJson();
+                return result.EncodeToJson();
             }
         );
 
@@ -121,8 +121,8 @@ public class CredentialRequestService : ICredentialRequestService
 
                 var dPopResponse = await _dPopHttpClient.Post(
                     issuerMetadata.CredentialEndpoint,
-                    content,
-                    config);
+                    config,
+                    () => content);
 
                 return dPopResponse.ResponseMessage;
             });

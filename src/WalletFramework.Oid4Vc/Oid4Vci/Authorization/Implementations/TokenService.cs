@@ -38,8 +38,8 @@ internal class TokenService : ITokenService
             
             var result = await _dPopHttpClient.Post(
                 uri,
-                tokenRequest.ToFormUrlEncoded(),
-                config);
+                config,
+                tokenRequest.ToFormUrlEncoded);
             
             var token = DeserializeObject<OAuthToken>(await result.ResponseMessage.Content.ReadAsStringAsync()) 
                         ?? throw new InvalidOperationException("Failed to deserialize the token response");
