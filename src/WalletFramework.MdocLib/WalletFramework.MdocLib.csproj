@@ -14,7 +14,7 @@
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="Microsoft.IdentityModel.Tokens" Version="7.5.2"/>
+        <PackageReference Include="Microsoft.IdentityModel.Tokens" Version="8.0.0"/>
         <PackageReference Include="PeterO.Cbor" Version="4.5.3"/>
     </ItemGroup>
 
