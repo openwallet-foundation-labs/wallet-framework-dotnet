@@ -2,8 +2,6 @@ using WalletFramework.Core.Functional;
 using WalletFramework.Core.Localization;
 using WalletFramework.Oid4Vc.Oid4Vci.Issuer.Abstractions;
 using WalletFramework.Oid4Vc.Oid4Vci.Issuer.Models;
-using WalletFramework.Oid4Vc.Oid4Vci.Models;
-using WalletFramework.Oid4Vc.Oid4Vci.Models.Metadata.Issuer;
 using static WalletFramework.Core.Json.JsonFun;
 using static WalletFramework.Oid4Vc.Oid4Vci.Issuer.Models.IssuerMetadata;
 

@@ -1,6 +1,5 @@
 using WalletFramework.Oid4Vc.Oid4Vci.Authorization.Models;
 using WalletFramework.Oid4Vc.Oid4Vci.Issuer.Models;
-using WalletFramework.Oid4Vc.Oid4Vci.Models.Metadata.Issuer;
 
 namespace WalletFramework.Oid4Vc.Oid4Vci.Models.Metadata;
 

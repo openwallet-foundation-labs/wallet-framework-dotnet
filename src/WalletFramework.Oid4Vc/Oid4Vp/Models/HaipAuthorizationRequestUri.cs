@@ -1,21 +1,21 @@
 using Hyperledger.Aries.Utils;
 
-namespace WalletFramework.Oid4Vc.Oid4Vp.Models
+namespace WalletFramework.Oid4Vc.Oid4Vp.Models;
+
+/// <summary>
+///    This class represents a haip conform OpenID4VP Authorization Request Uri.
+/// </summary>
+public class HaipAuthorizationRequestUri
 {
     /// <summary>
-    ///    This class represents a haip conform OpenID4VP Authorization Request Uri.
+    ///     Gets or sets the uri of the request.
     /// </summary>
-    public class HaipAuthorizationRequestUri
-    {
-        /// <summary>
-        ///     Gets or sets the uri of the request.
-        /// </summary>
-        public Uri Uri { get; set; } = null!;
+    public Uri Uri { get; set; } = null!;
         
-        /// <summary>
-        ///     Gets or sets the value of the request_uri parameter.
-        /// </summary>
-        public string RequestUri { get; set; } = null!;
+    /// <summary>
+    ///     Gets or sets the value of the request_uri parameter.
+    /// </summary>
+    public string RequestUri { get; set; } = null!;
         
         /// <summary>
         ///    Validates the hap conformity of an uri and returns a HaipAuthorizationRequestUri.
@@ -29,11 +29,10 @@ namespace WalletFramework.Oid4Vc.Oid4Vp.Models
             if (string.IsNullOrEmpty(request))
                 throw new InvalidOperationException("HAIP requires request_uri parameter");
 
-            return new HaipAuthorizationRequestUri()
-            {
-                RequestUri = request,
-                Uri = uri
-            };
-        }
+        return new HaipAuthorizationRequestUri()
+        {
+            RequestUri = request,
+            Uri = uri
+        };
     }
 }

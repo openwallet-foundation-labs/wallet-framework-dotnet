@@ -16,7 +16,6 @@ using WalletFramework.Oid4Vc.Oid4Vci.Issuer.Implementations;
 using WalletFramework.Oid4Vc.Oid4Vp.PresentationExchange.Services;
 using WalletFramework.Oid4Vc.Oid4Vp.Services;
 using WalletFramework.SdJwtVc;
-using WalletFramework.SdJwtVc.Services.SdJwtVcHolderService;
 
 namespace WalletFramework.Oid4Vc;
 
