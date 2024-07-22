@@ -31,8 +31,8 @@ public class DPopHttpClient : IDPopHttpClient
 
     public async Task<DPopHttpResponse> Post(
         Uri requestUri,
-        HttpContent content,
-        DPopConfig config)
+        DPopConfig config,
+        Func<HttpContent> getContent)
     {
         var dPop = await _keyStore.GenerateDPopProofOfPossessionAsync(
             config.KeyId,
@@ -44,9 +44,7 @@ public class DPopHttpClient : IDPopHttpClient
             token => _httpClient.WithDPopHeader(dPop).WithAuthorizationHeader(token),
             () => _httpClient.WithDPopHeader(dPop));
         
-        var response = await httpClient.PostAsync(
-            requestUri,
-            content);
+        var response = await httpClient.PostAsync(requestUri, getContent());
         
         await ThrowIfInvalidGrantError(response);
             
@@ -63,7 +61,7 @@ public class DPopHttpClient : IDPopHttpClient
             
             httpClient.WithDPopHeader(newDpop);
             
-            response = await httpClient.PostAsync(requestUri, content);
+            response = await httpClient.PostAsync(requestUri, getContent());
         }
             
         await ThrowIfInvalidGrantError(response);

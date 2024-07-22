@@ -24,7 +24,7 @@ public record MdocCredentialRequest
 
 public static class MdocCredentialRequestFun
 {
-    public static string AsJson(this MdocCredentialRequest request)
+    public static string EncodeToJson(this MdocCredentialRequest request)
     {
         var json = request.VciRequest.EncodeToJson();
         
