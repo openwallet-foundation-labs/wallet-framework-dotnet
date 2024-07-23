@@ -46,9 +46,6 @@ public record AuthorizationCode
             .GetByKey("authorization_server")
             .OnSuccess(token => token.ToString())
             .ToOption();
-
-        if (issuerState.IsNone && authServer.IsNone)
-            return Option<AuthorizationCode>.None;
         
         return new AuthorizationCode(issuerState, authServer);
     }

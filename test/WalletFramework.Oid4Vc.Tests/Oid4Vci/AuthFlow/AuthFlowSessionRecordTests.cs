@@ -49,7 +49,7 @@ public class AuthFlowSessionRecordTests
         
         var authorizationCodeParameters = new AuthorizationCodeParameters("hello", "world");
         
-        var sessionId = VciSessionId.CreateSessionId();
+        var sessionId = AuthFlowSessionState.CreateAuthFlowSessionState();
         var record = new AuthFlowSessionRecord(authorizationData, authorizationCodeParameters, sessionId);
         
         // Act
@@ -58,7 +58,7 @@ public class AuthFlowSessionRecordTests
         
         // Assert
         recordSut[nameof(RecordBase.Id)]!.ToString().Should().Be(record.Id);
-        tagsSut[nameof(AuthFlowSessionRecord.SessionId)] = record.SessionId.ToString();
+        tagsSut[nameof(AuthFlowSessionRecord.AuthFlowSessionState)] = record.AuthFlowSessionState.ToString();
     }
 
     [Fact]

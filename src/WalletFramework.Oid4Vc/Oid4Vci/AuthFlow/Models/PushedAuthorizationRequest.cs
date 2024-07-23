@@ -19,6 +19,9 @@ internal record PushedAuthorizationRequest
         
     [JsonProperty("code_challenge_method")]
     public string CodeChallengeMethod { get; }
+    
+    [JsonProperty("state", NullValueHandling = NullValueHandling.Ignore)]
+    public string AuthFlowSessionState { get; }
         
     [JsonProperty("authorization_details", NullValueHandling = NullValueHandling.Ignore)]
     public AuthorizationDetails[]? AuthorizationDetails { get; }
@@ -39,7 +42,7 @@ internal record PushedAuthorizationRequest
     public string? Resource { get; }
 
     public PushedAuthorizationRequest(
-        VciSessionId sessionId,
+        AuthFlowSessionState authFlowSessionState,
         ClientOptions clientOptions,
         AuthorizationCodeParameters authorizationCodeParameters,
         AuthorizationDetails[]? authorizationDetails, 
@@ -49,10 +52,11 @@ internal record PushedAuthorizationRequest
         string? resource)
     {
         ClientId = clientOptions.ClientId;
-        RedirectUri = clientOptions.RedirectUri + "?session=" + sessionId;
+        RedirectUri = clientOptions.RedirectUri;
         WalletIssuer = clientOptions.WalletIssuer;
         CodeChallenge = authorizationCodeParameters.Challenge;
         CodeChallengeMethod = authorizationCodeParameters.CodeChallengeMethod;
+        AuthFlowSessionState = authFlowSessionState;
         AuthorizationDetails = authorizationDetails;
         IssuerState = issuerState;
         UserHint = userHint;
@@ -79,6 +83,9 @@ internal record PushedAuthorizationRequest
         if (!string.IsNullOrEmpty(CodeChallengeMethod))
             keyValuePairs.Add(new KeyValuePair<string, string>("code_challenge_method", CodeChallengeMethod));
             
+        if (!string.IsNullOrEmpty(AuthFlowSessionState))
+            keyValuePairs.Add(new KeyValuePair<string, string>("state", AuthFlowSessionState));
+        
         if (AuthorizationDetails != null)
             keyValuePairs.Add(new KeyValuePair<string, string>("authorization_details", SerializeObject(AuthorizationDetails)));
             

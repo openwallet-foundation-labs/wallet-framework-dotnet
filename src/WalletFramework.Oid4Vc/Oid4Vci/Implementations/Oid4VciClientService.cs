@@ -80,7 +80,7 @@ public class Oid4VciClientService : IOid4VciClientService
     public async Task<Uri> InitiateAuthFlow(CredentialOfferMetadata offer, ClientOptions clientOptions)
     {
         var authorizationCodeParameters = CreateAndStoreCodeChallenge();
-        var sessionId = VciSessionId.CreateSessionId();
+        var sessionId = AuthFlowSessionState.CreateAuthFlowSessionState();
         var issuerMetadata = offer.IssuerMetadata;
             
         var scopes = offer
@@ -241,7 +241,7 @@ public class Oid4VciClientService : IOid4VciClientService
     {
         var context = await _agentProvider.GetContextAsync();
         
-        var session = await _authFlowSessionStorage.GetAsync(context, issuanceSession.SessionId);
+        var session = await _authFlowSessionStorage.GetAsync(context, issuanceSession.AuthFlowSessionState);
         
         var credConfiguration = session
             .AuthorizationData
@@ -254,7 +254,7 @@ public class Oid4VciClientService : IOid4VciClientService
         var tokenRequest = new TokenRequest
         {
             GrantType = AuthorizationCodeGrantTypeIdentifier,
-            RedirectUri = session.AuthorizationData.ClientOptions.RedirectUri + "?session=" + session.SessionId,
+            RedirectUri = session.AuthorizationData.ClientOptions.RedirectUri,
             CodeVerifier = session.AuthorizationCodeParameters.Verifier,
             Code = issuanceSession.Code,
             ClientId = session.AuthorizationData.ClientOptions.ClientId
@@ -270,7 +270,7 @@ public class Oid4VciClientService : IOid4VciClientService
             token,
             session.AuthorizationData.ClientOptions);
         
-        await _authFlowSessionStorage.DeleteAsync(context, session.SessionId);
+        await _authFlowSessionStorage.DeleteAsync(context, session.AuthFlowSessionState);
         
         var result =
             from response in validResponse
