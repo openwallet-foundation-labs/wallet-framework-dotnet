@@ -11,14 +11,14 @@ public record IssuanceSession
     /// <summary>
     ///   Gets the session identifier.
     /// </summary>
-    public VciSessionState VciSessionState { get; }
+    public AuthFlowSessionState AuthFlowSessionState { get; }
         
     /// <summary>
     ///  Gets the actual authorization code that is received from the authorization server upon successful authorization.
     /// </summary>
     public string Code { get; }
         
-    private IssuanceSession(VciSessionState vciSessionState, string code) => (VciSessionState, Code) = (vciSessionState, code);
+    private IssuanceSession(AuthFlowSessionState authFlowSessionState, string code) => (AuthFlowSessionState, Code) = (authFlowSessionState, code);
         
     /// <summary>
     ///    Creates a new instance of <see cref="IssuanceSession"/> from the given <see cref="Uri"/>.
@@ -37,8 +37,8 @@ public record IssuanceSession
         }
         
         var sessionStateParam = queryParams.Get("state");
-        var vciSessionState = VciSessionState.ValidVciSessionState(sessionStateParam).Fallback(VciSessionState.CreateVciSessionState());
+        var authFlowSessionState = AuthFlowSessionState.ValidAuthFlowSessionState(sessionStateParam).Fallback(AuthFlowSessionState.CreateAuthFlowSessionState());
 
-        return new IssuanceSession(vciSessionState, code);
+        return new IssuanceSession(authFlowSessionState, code);
     }
 }

@@ -26,12 +26,12 @@ public class AuthFlowSessionStorage : IAuthFlowSessionStorage
         IAgentContext agentContext,
         AuthorizationData authorizationData,
         AuthorizationCodeParameters authorizationCodeParameters,
-        VciSessionState vciSessionState)
+        AuthFlowSessionState authFlowSessionState)
     {
         var record = new AuthFlowSessionRecord(
             authorizationData,
             authorizationCodeParameters,
-            vciSessionState);
+            authFlowSessionState);
 
         await _recordService.AddAsync(agentContext.Wallet, record, AuthFlowSessionRecordFun.EncodeToJson);
             
@@ -39,13 +39,13 @@ public class AuthFlowSessionStorage : IAuthFlowSessionStorage
     }
         
     /// <inheritdoc />
-    public async Task<AuthFlowSessionRecord> GetAsync(IAgentContext context, VciSessionState vciSessionState)
+    public async Task<AuthFlowSessionRecord> GetAsync(IAgentContext context, AuthFlowSessionState authFlowSessionState)
     {
-        var record = await _recordService.GetAsync(context.Wallet, vciSessionState, AuthFlowSessionRecordFun.DecodeFromJson);
+        var record = await _recordService.GetAsync(context.Wallet, authFlowSessionState, AuthFlowSessionRecordFun.DecodeFromJson);
         return record!;
     }
         
     /// <inheritdoc />
-    public async Task<bool> DeleteAsync(IAgentContext context, VciSessionState vciSessionState) => 
-        await _recordService.DeleteAsync<AuthFlowSessionRecord>(context.Wallet, vciSessionState);
+    public async Task<bool> DeleteAsync(IAgentContext context, AuthFlowSessionState authFlowSessionState) => 
+        await _recordService.DeleteAsync<AuthFlowSessionRecord>(context.Wallet, authFlowSessionState);
 }

@@ -14,17 +14,17 @@ public interface IAuthFlowSessionStorage
     ///     Deletes the authorization session record by the session identifier.
     /// </summary>
     /// <param name="context">Agent Context</param>
-    /// <param name="vciSessionState">Session State Identifier of a Authorization Code Flow session</param>
+    /// <param name="authFlowSessionState">Session State Identifier of a Authorization Code Flow session</param>
     /// <returns></returns>
-    Task<bool> DeleteAsync(IAgentContext context, VciSessionState vciSessionState);
+    Task<bool> DeleteAsync(IAgentContext context, AuthFlowSessionState authFlowSessionState);
 
     /// <summary>
     ///     Retrieves the authorization session record by the session identifier.
     /// </summary>
     /// <param name="context">Agent Context</param>
-    /// <param name="vciSessionState">Session State Identifier of a Authorization Code Flow session</param>
+    /// <param name="authFlowSessionState">Session State Identifier of a Authorization Code Flow session</param>
     /// <returns></returns>
-    Task<AuthFlowSessionRecord> GetAsync(IAgentContext context, VciSessionState vciSessionState);
+    Task<AuthFlowSessionRecord> GetAsync(IAgentContext context, AuthFlowSessionState authFlowSessionState);
 
     /// <summary>
     ///     Stores the authorization session record.
@@ -35,11 +35,11 @@ public interface IAuthFlowSessionStorage
     ///     Parameters required for the authorization during the VCI authorization code
     ///     flow.
     /// </param>
-    /// <param name="vciSessionState">Session State Identifier of a Authorization Code Flow session</param>
+    /// <param name="authFlowSessionState">Session State Identifier of a Authorization Code Flow session</param>
     /// <returns></returns>
     Task<string> StoreAsync(
         IAgentContext agentContext,
         AuthorizationData authorizationData,
         AuthorizationCodeParameters authorizationCodeParameters,
-        VciSessionState vciSessionState);
+        AuthFlowSessionState authFlowSessionState);
 }

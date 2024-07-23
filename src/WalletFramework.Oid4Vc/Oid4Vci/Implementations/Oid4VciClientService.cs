@@ -80,7 +80,7 @@ public class Oid4VciClientService : IOid4VciClientService
     public async Task<Uri> InitiateAuthFlow(CredentialOfferMetadata offer, ClientOptions clientOptions)
     {
         var authorizationCodeParameters = CreateAndStoreCodeChallenge();
-        var sessionId = VciSessionState.CreateVciSessionState();
+        var sessionId = AuthFlowSessionState.CreateAuthFlowSessionState();
         var issuerMetadata = offer.IssuerMetadata;
             
         var scopes = offer
@@ -241,7 +241,7 @@ public class Oid4VciClientService : IOid4VciClientService
     {
         var context = await _agentProvider.GetContextAsync();
         
-        var session = await _authFlowSessionStorage.GetAsync(context, issuanceSession.VciSessionState);
+        var session = await _authFlowSessionStorage.GetAsync(context, issuanceSession.AuthFlowSessionState);
         
         var credConfiguration = session
             .AuthorizationData
@@ -270,7 +270,7 @@ public class Oid4VciClientService : IOid4VciClientService
             token,
             session.AuthorizationData.ClientOptions);
         
-        await _authFlowSessionStorage.DeleteAsync(context, session.VciSessionState);
+        await _authFlowSessionStorage.DeleteAsync(context, session.AuthFlowSessionState);
         
         var result =
             from response in validResponse

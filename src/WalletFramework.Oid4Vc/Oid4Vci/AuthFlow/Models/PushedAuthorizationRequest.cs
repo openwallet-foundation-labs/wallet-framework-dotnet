@@ -21,7 +21,7 @@ internal record PushedAuthorizationRequest
     public string CodeChallengeMethod { get; }
     
     [JsonProperty("state", NullValueHandling = NullValueHandling.Ignore)]
-    public string VciSessionState { get; }
+    public string AuthFlowSessionState { get; }
         
     [JsonProperty("authorization_details", NullValueHandling = NullValueHandling.Ignore)]
     public AuthorizationDetails[]? AuthorizationDetails { get; }
@@ -42,7 +42,7 @@ internal record PushedAuthorizationRequest
     public string? Resource { get; }
 
     public PushedAuthorizationRequest(
-        VciSessionState vciSessionState,
+        AuthFlowSessionState authFlowSessionState,
         ClientOptions clientOptions,
         AuthorizationCodeParameters authorizationCodeParameters,
         AuthorizationDetails[]? authorizationDetails, 
@@ -56,7 +56,7 @@ internal record PushedAuthorizationRequest
         WalletIssuer = clientOptions.WalletIssuer;
         CodeChallenge = authorizationCodeParameters.Challenge;
         CodeChallengeMethod = authorizationCodeParameters.CodeChallengeMethod;
-        VciSessionState = vciSessionState;
+        AuthFlowSessionState = authFlowSessionState;
         AuthorizationDetails = authorizationDetails;
         IssuerState = issuerState;
         UserHint = userHint;
@@ -83,8 +83,8 @@ internal record PushedAuthorizationRequest
         if (!string.IsNullOrEmpty(CodeChallengeMethod))
             keyValuePairs.Add(new KeyValuePair<string, string>("code_challenge_method", CodeChallengeMethod));
             
-        if (!string.IsNullOrEmpty(VciSessionState))
-            keyValuePairs.Add(new KeyValuePair<string, string>("state", VciSessionState));
+        if (!string.IsNullOrEmpty(AuthFlowSessionState))
+            keyValuePairs.Add(new KeyValuePair<string, string>("state", AuthFlowSessionState));
         
         if (AuthorizationDetails != null)
             keyValuePairs.Add(new KeyValuePair<string, string>("authorization_details", SerializeObject(AuthorizationDetails)));
