@@ -1,11 +1,17 @@
+using System.Security.Cryptography;
+using System.Text;
 using Microsoft.Extensions.Logging;
+using Microsoft.IdentityModel.Tokens;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using WalletFramework.Core.Cryptography.Abstractions;
+using WalletFramework.Core.Cryptography.Models;
 using WalletFramework.Core.Functional;
 using WalletFramework.Oid4Vc.Oid4Vci.Authorization.DPop.Abstractions;
 using WalletFramework.Oid4Vc.Oid4Vci.Authorization.DPop.Models;
 using WalletFramework.Oid4Vc.Oid4Vci.Exceptions;
 using WalletFramework.Oid4Vc.Oid4Vci.Extensions;
+using WalletFramework.SdJwtVc.Services.SdJwtVcHolderService;
 
 namespace WalletFramework.Oid4Vc.Oid4Vci.Authorization.DPop.Implementations;
 
@@ -18,14 +24,17 @@ public class DPopHttpClient : IDPopHttpClient
     public DPopHttpClient(
         IHttpClientFactory httpClientFactory,
         IKeyStore keyStore,
+        ISdJwtSignerService sdJwtSignerService,
         ILogger<DPopHttpClient> logger)
     {
         _keyStore = keyStore;
+        _sdJwtSignerService = sdJwtSignerService;
         _httpClient = httpClientFactory.CreateClient();
         _logger = logger;
     }
 
     private readonly IKeyStore _keyStore;
+    private readonly ISdJwtSignerService _sdJwtSignerService;
     private readonly ILogger<DPopHttpClient> _logger;
     private readonly HttpClient _httpClient; 
 
@@ -34,7 +43,7 @@ public class DPopHttpClient : IDPopHttpClient
         HttpContent content,
         DPopConfig config)
     {
-        var dPop = await _keyStore.GenerateDPopProofOfPossessionAsync(
+        var dPop = await GenerateDPopAsync(
             config.KeyId,
             config.Audience,
             config.Nonce.ToNullable(),
@@ -55,7 +64,7 @@ public class DPopHttpClient : IDPopHttpClient
         {
             config = config with { Nonce = new DPopNonce(nonceStr) };
             
-            var newDpop = await _keyStore.GenerateDPopProofOfPossessionAsync(
+            var newDpop = await GenerateDPopAsync(
                 config.KeyId, 
                 config.Audience, 
                 config.Nonce.ToNullable(), 
@@ -107,5 +116,40 @@ public class DPopHttpClient : IDPopHttpClient
         }
 
         return null;
+    }
+    
+    private async Task<string> GenerateDPopAsync(KeyId keyId, string audience, string? nonce, string? accessToken)
+    {
+        var header = new Dictionary<string, object>
+        {
+            { "alg", "ES256" },
+            { "typ", "dpop+jwt" }
+        };
+            
+        var jwkSerialized = await _keyStore.LoadKey(keyId);
+        var jwkDeserialized = JsonConvert.DeserializeObject(jwkSerialized);
+        if (jwkDeserialized != null)
+        {
+            header["jwk"] = jwkDeserialized;
+        }
+
+        string? ath = null;
+        if (!string.IsNullOrEmpty(accessToken))
+        {
+            var sha256 = SHA256.Create();
+            ath = Base64UrlEncoder.Encode(sha256.ComputeHash(Encoding.UTF8.GetBytes(accessToken)));
+        }
+            
+        var dPopPayload = new
+        {
+            jti = Guid.NewGuid().ToString(),
+            htm = "POST",
+            iat = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
+            htu = new Uri(audience).GetLeftPart(UriPartial.Path),
+            nonce,
+            ath
+        };
+            
+        return await _sdJwtSignerService.CreateSignedJwt(header, dPopPayload, keyId);
     }
 }

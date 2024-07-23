@@ -36,7 +36,7 @@ public class Oid4VpClientServiceTests : IAsyncLifetime
         var walletRecordService = new DefaultWalletRecordService();
         var pexService = new PexService();
        
-        _sdJwtVcHolderService = new SdJwtVcHolderService(holder, _keyStoreMock.Object, walletRecordService);
+        _sdJwtVcHolderService = new SdJwtVcHolderService(holder, _sdJwtSignerService.Object, walletRecordService);
         var oid4VpHaipClient = new Oid4VpHaipClient(_httpClientFactoryMock.Object, pexService);
         _oid4VpRecordService = new Oid4VpRecordService(walletRecordService);
 
@@ -49,7 +49,7 @@ public class Oid4VpClientServiceTests : IAsyncLifetime
             _oid4VpRecordService
         );
 
-        _keyStoreMock.Setup(keyStore =>
+        _sdJwtSignerService.Setup(keyStore =>
                 keyStore.GenerateKbProofOfPossessionAsync(
                     It.IsAny<KeyId>(),
                     It.IsAny<string>(),
@@ -64,7 +64,7 @@ public class Oid4VpClientServiceTests : IAsyncLifetime
 
     private readonly Mock<HttpMessageHandler> _httpMessageHandlerMock = new();
     private readonly Mock<IHttpClientFactory> _httpClientFactoryMock = new();
-    private readonly Mock<IKeyStore> _keyStoreMock = new();
+    private readonly Mock<ISdJwtSignerService> _sdJwtSignerService = new();
     private readonly Mock<ILogger<Oid4VpClientService>> _loggerMock = new();
     private readonly MockAgentRouter _router = new();
     private readonly Oid4VpClientService _oid4VpClientService;

@@ -20,9 +20,9 @@ public class SdJwtVcHolderServiceTests
     {
         // Mock with moq IKestore and IWalletRecordService
         IHolder holder = new Holder();
-        IKeyStore keyStoreMock = new Mock<IKeyStore>().Object;
+        ISdJwtSignerService sdJwtSignerServiceMock = new Mock<ISdJwtSignerService>().Object;
         IWalletRecordService walletRecordServiceMock = new Mock<IWalletRecordService>().Object;
-        _service = new SdJwtVcHolderService(holder, keyStoreMock, walletRecordServiceMock);
+        _service = new SdJwtVcHolderService(holder, sdJwtSignerServiceMock, walletRecordServiceMock);
     }
     
     // https://www.ietf.org/archive/id/draft-ietf-oauth-selective-disclosure-jwt-08.html#appendix-A.3-4
