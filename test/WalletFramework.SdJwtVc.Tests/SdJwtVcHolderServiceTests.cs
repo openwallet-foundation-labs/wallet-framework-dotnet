@@ -3,7 +3,6 @@ using Moq;
 using SD_JWT.Models;
 using SD_JWT.Roles;
 using SD_JWT.Roles.Implementation;
-using WalletFramework.Core.Cryptography.Abstractions;
 using WalletFramework.Core.Cryptography.Models;
 using WalletFramework.SdJwtVc.Models.Credential;
 using WalletFramework.SdJwtVc.Models.Credential.Attributes;

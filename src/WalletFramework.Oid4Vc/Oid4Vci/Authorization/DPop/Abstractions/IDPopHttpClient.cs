@@ -6,6 +6,6 @@ public interface IDPopHttpClient
 {
     internal Task<DPopHttpResponse> Post(
         Uri requestUri,
-        HttpContent content,
-        DPopConfig config);
+        DPopConfig config,
+        Func<HttpContent> getContent);
 }

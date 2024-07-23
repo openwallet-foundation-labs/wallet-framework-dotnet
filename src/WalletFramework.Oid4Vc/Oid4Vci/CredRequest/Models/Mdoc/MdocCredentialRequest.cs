@@ -1,5 +1,4 @@
 using LanguageExt;
-using Newtonsoft.Json.Linq;
 using WalletFramework.MdocLib;
 using WalletFramework.Oid4Vc.Oid4Vci.CredConfiguration.Models.Mdoc;
 
@@ -25,7 +24,7 @@ public record MdocCredentialRequest
 
 public static class MdocCredentialRequestFun
 {
-    public static string AsJson(this MdocCredentialRequest request)
+    public static string EncodeToJson(this MdocCredentialRequest request)
     {
         var json = request.VciRequest.EncodeToJson();
         

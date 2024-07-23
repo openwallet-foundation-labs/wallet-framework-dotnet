@@ -40,10 +40,10 @@ public class DPopHttpClient : IDPopHttpClient
 
     public async Task<DPopHttpResponse> Post(
         Uri requestUri,
-        HttpContent content,
-        DPopConfig config)
+        DPopConfig config,
+        Func<HttpContent> getContent)
     {
-        var dPop = await GenerateDPopAsync(
+        var dPop = await GenerateDPopHeaderAsync(
             config.KeyId,
             config.Audience,
             config.Nonce.ToNullable(),
@@ -53,9 +53,7 @@ public class DPopHttpClient : IDPopHttpClient
             token => _httpClient.WithDPopHeader(dPop).WithAuthorizationHeader(token),
             () => _httpClient.WithDPopHeader(dPop));
         
-        var response = await httpClient.PostAsync(
-            requestUri,
-            content);
+        var response = await httpClient.PostAsync(requestUri, getContent());
         
         await ThrowIfInvalidGrantError(response);
             
@@ -64,7 +62,7 @@ public class DPopHttpClient : IDPopHttpClient
         {
             config = config with { Nonce = new DPopNonce(nonceStr) };
             
-            var newDpop = await GenerateDPopAsync(
+            var newDpop = await GenerateDPopHeaderAsync(
                 config.KeyId, 
                 config.Audience, 
                 config.Nonce.ToNullable(), 
@@ -72,7 +70,7 @@ public class DPopHttpClient : IDPopHttpClient
             
             httpClient.WithDPopHeader(newDpop);
             
-            response = await httpClient.PostAsync(requestUri, content);
+            response = await httpClient.PostAsync(requestUri, getContent());
         }
             
         await ThrowIfInvalidGrantError(response);
@@ -118,7 +116,7 @@ public class DPopHttpClient : IDPopHttpClient
         return null;
     }
     
-    private async Task<string> GenerateDPopAsync(KeyId keyId, string audience, string? nonce, string? accessToken)
+    private async Task<string> GenerateDPopHeaderAsync(KeyId keyId, string audience, string? nonce, string? accessToken)
     {
         var header = new Dictionary<string, object>
         {
