@@ -1,3 +1,4 @@
+// ReSharper disable once CheckNamespace
 namespace System.Runtime.CompilerServices;
 
 // This is needed for the init property setter.

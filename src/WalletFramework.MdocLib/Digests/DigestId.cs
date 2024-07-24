@@ -1,7 +1,7 @@
 using PeterO.Cbor;
 using WalletFramework.Core.Functional;
 
-namespace WalletFramework.MdocLib;
+namespace WalletFramework.MdocLib.Digests;
 
 public readonly struct DigestId
 {

@@ -1,8 +1,7 @@
 using PeterO.Cbor;
 using WalletFramework.Core.Functional;
-using WalletFramework.MdocLib.Common;
 
-namespace WalletFramework.MdocLib;
+namespace WalletFramework.MdocLib.Cbor;
 
 /// <summary>
 ///     A CBOR object which is a byte string which is either CBOR or hex encoded.

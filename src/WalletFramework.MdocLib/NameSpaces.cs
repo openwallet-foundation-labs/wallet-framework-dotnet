@@ -1,6 +1,8 @@
 using PeterO.Cbor;
 using WalletFramework.Core.Functional;
-using static WalletFramework.MdocLib.Common.Constants;
+using WalletFramework.MdocLib.Cbor;
+using WalletFramework.MdocLib.Issuer;
+using static WalletFramework.MdocLib.Constants;
 using static WalletFramework.MdocLib.NameSpace;
 
 namespace WalletFramework.MdocLib;

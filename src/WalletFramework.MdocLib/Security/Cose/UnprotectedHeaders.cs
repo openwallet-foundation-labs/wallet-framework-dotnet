@@ -1,12 +1,12 @@
 using System.Security.Cryptography.X509Certificates;
 using PeterO.Cbor;
 using WalletFramework.Core.Functional;
-using WalletFramework.MdocLib.Common;
-using static WalletFramework.MdocLib.CoseLabel;
+using WalletFramework.MdocLib.Cbor;
+using static WalletFramework.MdocLib.Security.Cose.CoseLabel;
 using static WalletFramework.Core.Functional.ValidationFun;
-using static WalletFramework.MdocLib.Common.Constants;
+using static WalletFramework.MdocLib.Constants;
 
-namespace WalletFramework.MdocLib;
+namespace WalletFramework.MdocLib.Security.Cose;
 
 public readonly struct UnprotectedHeaders
 {

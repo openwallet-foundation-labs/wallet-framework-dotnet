@@ -1,10 +1,10 @@
 using PeterO.Cbor;
 using WalletFramework.Core.Functional;
-using WalletFramework.MdocLib.Common;
-using static WalletFramework.MdocLib.ProtectedHeaders.Alg;
-using static WalletFramework.MdocLib.CborByteString;
+using WalletFramework.MdocLib.Cbor;
+using static WalletFramework.MdocLib.Security.Cose.ProtectedHeaders.Alg;
+using static WalletFramework.MdocLib.Cbor.CborByteString;
 
-namespace WalletFramework.MdocLib;
+namespace WalletFramework.MdocLib.Security.Cose;
 
 public readonly struct ProtectedHeaders
 {

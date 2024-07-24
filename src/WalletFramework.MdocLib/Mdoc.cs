@@ -3,11 +3,13 @@ using LanguageExt;
 using Microsoft.IdentityModel.Tokens;
 using PeterO.Cbor;
 using WalletFramework.Core.Functional;
-using WalletFramework.MdocLib.Common;
+using WalletFramework.MdocLib.Digests;
+using WalletFramework.MdocLib.Elements;
+using WalletFramework.MdocLib.Issuer;
 using static WalletFramework.MdocLib.DocType;
-using static WalletFramework.MdocLib.IssuerSigned;
+using static WalletFramework.MdocLib.Issuer.IssuerSigned;
 using static WalletFramework.Core.Functional.ValidationFun;
-using static WalletFramework.MdocLib.Common.Constants;
+using static WalletFramework.MdocLib.Constants;
 
 namespace WalletFramework.MdocLib;
 

@@ -3,7 +3,7 @@ using Newtonsoft.Json.Linq;
 using WalletFramework.Core.Functional;
 using WalletFramework.Core.Json;
 using WalletFramework.Core.Json.Errors;
-using WalletFramework.MdocLib.Common;
+using WalletFramework.MdocLib;
 using WalletFramework.MdocVc.Common;
 using WalletFramework.Oid4Vc.Oid4Vci.CredConfiguration.Errors;
 using static WalletFramework.Oid4Vc.Oid4Vci.CredConfiguration.Models.Mdoc.PolicyFun;

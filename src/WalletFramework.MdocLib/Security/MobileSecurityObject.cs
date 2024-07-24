@@ -1,14 +1,15 @@
 using PeterO.Cbor;
 using WalletFramework.Core.Functional;
-using WalletFramework.MdocLib.Common;
-using static WalletFramework.MdocLib.DigestAlgorithm;
+using WalletFramework.MdocLib.Cbor;
+using WalletFramework.MdocLib.Digests;
+using static WalletFramework.MdocLib.Digests.DigestAlgorithm;
 using static WalletFramework.MdocLib.DocType;
-using static WalletFramework.MdocLib.ValidityInfo;
-using static WalletFramework.MdocLib.CborByteString;
-using static WalletFramework.MdocLib.ValueDigests;
+using static WalletFramework.MdocLib.Security.ValidityInfo;
+using static WalletFramework.MdocLib.Cbor.CborByteString;
+using static WalletFramework.MdocLib.Digests.ValueDigests;
 using static WalletFramework.Core.Functional.ValidationFun;
 
-namespace WalletFramework.MdocLib;
+namespace WalletFramework.MdocLib.Security;
 
 public record MobileSecurityObject
 {

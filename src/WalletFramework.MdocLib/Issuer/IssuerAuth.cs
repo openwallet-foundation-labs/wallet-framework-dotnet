@@ -1,13 +1,16 @@
 using PeterO.Cbor;
 using WalletFramework.Core.Functional;
-using static WalletFramework.MdocLib.Common.Constants;
-using static WalletFramework.MdocLib.ProtectedHeaders;
-using static WalletFramework.MdocLib.UnprotectedHeaders;
-using static WalletFramework.MdocLib.MobileSecurityObject;
-using static WalletFramework.MdocLib.CoseSignature;
+using WalletFramework.MdocLib.Cbor;
+using WalletFramework.MdocLib.Security;
+using WalletFramework.MdocLib.Security.Cose;
+using static WalletFramework.MdocLib.Constants;
+using static WalletFramework.MdocLib.Security.Cose.ProtectedHeaders;
+using static WalletFramework.MdocLib.Security.Cose.UnprotectedHeaders;
+using static WalletFramework.MdocLib.Security.MobileSecurityObject;
+using static WalletFramework.MdocLib.Security.Cose.CoseSignature;
 using static WalletFramework.Core.Functional.ValidationFun;
 
-namespace WalletFramework.MdocLib;
+namespace WalletFramework.MdocLib.Issuer;
 
 public record IssuerAuth
 {

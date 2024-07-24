@@ -1,4 +1,4 @@
-namespace WalletFramework.MdocLib.Common;
+namespace WalletFramework.MdocLib;
 
 internal static class Constants
 {
