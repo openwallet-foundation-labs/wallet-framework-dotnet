@@ -1,10 +1,10 @@
 using LanguageExt;
 using PeterO.Cbor;
 using WalletFramework.Core.Functional;
-using WalletFramework.MdocLib.Common;
+using WalletFramework.MdocLib.Cbor;
 using static WalletFramework.Core.Functional.ValidationFun;
 
-namespace WalletFramework.MdocLib;
+namespace WalletFramework.MdocLib.Security;
 
 public struct ValidityInfo
 {

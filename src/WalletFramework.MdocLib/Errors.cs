@@ -1,6 +1,7 @@
 using WalletFramework.Core.Functional;
+using WalletFramework.MdocLib.Digests;
 
-namespace WalletFramework.MdocLib.Common;
+namespace WalletFramework.MdocLib;
 
 public record InvalidCborByteStringError(string Name, Exception E)
     : Error($"The value of *{Name}* is not a valid CBOR object encoded as a byte string", E);

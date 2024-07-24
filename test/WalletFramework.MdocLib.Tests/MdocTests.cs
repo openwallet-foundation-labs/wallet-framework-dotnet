@@ -2,10 +2,13 @@ using FluentAssertions;
 using Microsoft.IdentityModel.Tokens;
 using PeterO.Cbor;
 using WalletFramework.Core.Functional;
-using WalletFramework.MdocLib.Common;
+using WalletFramework.MdocLib.Digests;
+using WalletFramework.MdocLib.Elements;
+using WalletFramework.MdocLib.Issuer;
+using WalletFramework.MdocLib.Security.Cose;
 using Xunit;
 using static WalletFramework.MdocLib.Mdoc;
-using static WalletFramework.MdocLib.Common.Constants;
+using static WalletFramework.MdocLib.Constants;
 
 namespace WalletFramework.MdocLib.Tests;
 
@@ -49,22 +52,22 @@ public class MdocTests
                 var issuerSignedItems = sut.IssuerSigned.NameSpaces[Samples.MdlIsoNameSpace];
 
                 issuerSignedItems[0].ElementId.Value.Should().Be("issue_date");
-                issuerSignedItems[0].ElementValue.Value.AsT0.Value.Should().Be("2024-01-12");
+                issuerSignedItems[0].Element.Value.AsT0.Value.Should().Be("2024-01-12");
                 issuerSignedItems[1].ElementId.Value.Should().Be("expiry_date");
-                issuerSignedItems[1].ElementValue.Value.AsT0.Value.Should().Be("2025-01-12");
+                issuerSignedItems[1].Element.Value.AsT0.Value.Should().Be("2025-01-12");
                 issuerSignedItems[2].ElementId.Value.Should().Be("family_name");
-                issuerSignedItems[2].ElementValue.Value.AsT0.Value.Should().Be("Silverstone");
+                issuerSignedItems[2].Element.Value.AsT0.Value.Should().Be("Silverstone");
                 issuerSignedItems[3].ElementId.Value.Should().Be("given_name");
-                issuerSignedItems[3].ElementValue.Value.AsT0.Value.Should().Be("Inga");
+                issuerSignedItems[3].Element.Value.AsT0.Value.Should().Be("Inga");
                 issuerSignedItems[4].ElementId.Value.Should().Be("birth_date");
-                issuerSignedItems[4].ElementValue.Value.AsT0.Value.Should().Be("1991-11-06");
+                issuerSignedItems[4].Element.Value.AsT0.Value.Should().Be("1991-11-06");
                 issuerSignedItems[5].ElementId.Value.Should().Be("issuing_country");
-                issuerSignedItems[5].ElementValue.Value.AsT0.Value.Should().Be("US");
+                issuerSignedItems[5].Element.Value.AsT0.Value.Should().Be("US");
                 issuerSignedItems[6].ElementId.Value.Should().Be("document_number");
-                issuerSignedItems[6].ElementValue.Value.AsT0.Value.Should().Be("12345678");
+                issuerSignedItems[6].Element.Value.AsT0.Value.Should().Be("12345678");
                 issuerSignedItems[7].ElementId.Value.Should().Be("driving_privileges");
 
-                var privileges = issuerSignedItems[7].ElementValue.Value.AsT1[0].Value.AsT2.Value;
+                var privileges = issuerSignedItems[7].Element.Value.AsT1[0].Value.AsT2.Value;
 
                 privileges[Samples.VehicleCategoryCodeIdentifier].Value.AsT0.Value.Should().Be("A");
                 privileges[Samples.IssueDateIdentifier].Value.AsT0.Value.Should().Be("2023-01-01");

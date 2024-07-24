@@ -1,7 +1,8 @@
 using PeterO.Cbor;
 using WalletFramework.Core.Functional;
+using WalletFramework.MdocLib.Cbor;
 
-namespace WalletFramework.MdocLib;
+namespace WalletFramework.MdocLib.Security.Cose;
 
 public readonly struct CoseSignature
 {

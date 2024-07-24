@@ -1,9 +1,8 @@
 using Newtonsoft.Json.Linq;
 using PeterO.Cbor;
 using WalletFramework.Core.Functional;
-using WalletFramework.MdocLib.Common;
 
-namespace WalletFramework.MdocLib;
+namespace WalletFramework.MdocLib.Security.Cose;
 
 public readonly struct CoseLabel
 {

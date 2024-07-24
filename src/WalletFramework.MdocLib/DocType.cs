@@ -1,8 +1,8 @@
 using Newtonsoft.Json.Linq;
 using PeterO.Cbor;
 using WalletFramework.Core.Functional;
-using WalletFramework.MdocLib.Common;
-using static WalletFramework.MdocLib.Common.Constants;
+using WalletFramework.MdocLib.Cbor;
+using static WalletFramework.MdocLib.Constants;
 
 namespace WalletFramework.MdocLib;
 

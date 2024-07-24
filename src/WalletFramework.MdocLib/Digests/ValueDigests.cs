@@ -1,10 +1,11 @@
 using PeterO.Cbor;
 using WalletFramework.Core.Functional;
-using static WalletFramework.MdocLib.Digest;
-using static WalletFramework.MdocLib.DigestId;
+using WalletFramework.MdocLib.Cbor;
+using static WalletFramework.MdocLib.Digests.Digest;
+using static WalletFramework.MdocLib.Digests.DigestId;
 using static WalletFramework.MdocLib.NameSpace;
 
-namespace WalletFramework.MdocLib;
+namespace WalletFramework.MdocLib.Digests;
 
 public readonly struct ValueDigests
 {
