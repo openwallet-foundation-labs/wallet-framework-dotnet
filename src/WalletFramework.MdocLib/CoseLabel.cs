@@ -7,16 +7,23 @@ namespace WalletFramework.MdocLib;
 
 public readonly struct CoseLabel
 {
+    public CBORObject AsCbor => CBORObject.FromObject(Value);
+    
     private int Id { get; }
 
     public string Value => Id.ToString();
 
-    private CoseLabel(int id)
+    public CoseLabel(int id)
     {
         Id = id;
     }
+
+    public static implicit operator int(CoseLabel label) => int.Parse(label.Value);
     
     public static implicit operator string(CoseLabel label) => label.Value;
+
+    public static implicit operator CBORObject(CoseLabel label) => label.AsCbor;
+    
     public override string ToString() => Value;
 
     internal static Validation<CoseLabel> ValidCoseLabel(CBORObject cbor)

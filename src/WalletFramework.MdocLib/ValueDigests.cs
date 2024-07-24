@@ -8,7 +8,7 @@ namespace WalletFramework.MdocLib;
 
 public readonly struct ValueDigests
 {
-    public Dictionary<NameSpace, Dictionary<DigestId, Digest>> Value { get; }
+    private Dictionary<NameSpace, Dictionary<DigestId, Digest>> Value { get; }
 
     private ValueDigests(Dictionary<NameSpace, Dictionary<DigestId, Digest>> value) => Value = value;
     

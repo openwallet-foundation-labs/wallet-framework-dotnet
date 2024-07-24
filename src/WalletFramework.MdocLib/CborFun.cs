@@ -7,8 +7,8 @@ namespace WalletFramework.MdocLib;
 internal static class CborFun
 {
     public static bool IsNull(this CBORObject? cborObject) => cborObject is null || cborObject.IsNull;
-
-    public static Validation<CBORObject> GetByLabel(this CBORObject cborObject, string label)
+    
+    public static Validation<CBORObject> GetByLabel(this CBORObject cborObject, CBORObject label)
     {
         CBORObject value;
         try
@@ -17,15 +17,30 @@ internal static class CborFun
         }
         catch (Exception e)
         {
-            return new CborIsNotAMapOrAnArrayError(cborObject.ToString(), label, e);
+            return new CborIsNotAMapOrAnArrayError(cborObject.ToString(), label.ToString(), e);
         }
         
         if (value.IsNull())
         {
-            return new CborFieldNotFoundError(label);
+            return new CborFieldNotFoundError(label.ToString());
         }
 
         return value;
+    }
+
+    public static Validation<CBORObject> GetByLabel(this CBORObject cborObject, string label)
+    {
+        CBORObject value;
+        try
+        {
+            value = CBORObject.FromObject(label);
+        }
+        catch (Exception e)
+        {
+            return new CborIsNotATextStringError(label, e);
+        }
+
+        return cborObject.GetByLabel(value);
     }
 
     public static Validation<CBORObject> GetByIndex(this CBORObject cbor, uint index)

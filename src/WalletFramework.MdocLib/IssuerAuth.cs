@@ -1,13 +1,16 @@
 using PeterO.Cbor;
 using WalletFramework.Core.Functional;
-using static WalletFramework.MdocLib.Common.Constants;
-using static WalletFramework.MdocLib.ProtectedHeaders;
-using static WalletFramework.MdocLib.UnprotectedHeaders;
-using static WalletFramework.MdocLib.MobileSecurityObject;
-using static WalletFramework.MdocLib.CoseSignature;
+using WalletFramework.MdocLib.Cbor;
+using WalletFramework.MdocLib.Security;
+using WalletFramework.MdocLib.Security.Cose;
+using static WalletFramework.MdocLib.Constants;
+using static WalletFramework.MdocLib.Security.Cose.ProtectedHeaders;
+using static WalletFramework.MdocLib.Security.Cose.UnprotectedHeaders;
+using static WalletFramework.MdocLib.Security.MobileSecurityObject;
+using static WalletFramework.MdocLib.Security.Cose.CoseSignature;
 using static WalletFramework.Core.Functional.ValidationFun;
 
-namespace WalletFramework.MdocLib;
+namespace WalletFramework.MdocLib.Issuer;
 
 public record IssuerAuth
 {
@@ -15,7 +18,7 @@ public record IssuerAuth
 
     public UnprotectedHeaders UnprotectedHeaders { get; }
 
-    public MobileSecurityObject Payload { get; }
+    public MobileSecurityObject Payload { get; init; }
 
     public CoseSignature Signature { get; }
 
@@ -38,23 +41,23 @@ public record IssuerAuth
         CoseSignature signature) =>
         new(protectedHeaders, unprotectedHeaders, payload, signature);
 
-    internal static Validation<IssuerAuth> ValidIssuerAuth(CBORObject issuerSigned) =>
-        issuerSigned.GetByLabel(IssuerAuthLabel).OnSuccess(issuerAuth => 
-                Valid(Create)
-                    .Apply(ValidProtectedHeaders(issuerAuth))
-                    .Apply(ValidUnprotectedHeaders(issuerAuth))
-                    .Apply(ValidMobileSecurityObject(issuerAuth))
-                    .Apply(ValidCoseSignature(issuerAuth))
-        );
+    internal static Validation<IssuerAuth> ValidIssuerAuth(CBORObject issuerSigned) => issuerSigned
+        .GetByLabel(IssuerAuthLabel)
+        .OnSuccess(issuerAuth => 
+            Valid(Create)
+                .Apply(ValidProtectedHeaders(issuerAuth))
+                .Apply(ValidUnprotectedHeaders(issuerAuth))
+                .Apply(ValidMobileSecurityObject(issuerAuth))
+                .Apply(ValidCoseSignature(issuerAuth)));
 
-    public CBORObject Encode()
+    public CBORObject ToCbor()
     {
-        
         var cbor = CBORObject.NewArray();
-        cbor.Add(ProtectedHeaders.ByteString);
+        
+        cbor.Add(ProtectedHeaders.AsCborByteString);
         cbor.Add(UnprotectedHeaders.Encode());
         cbor.Add(Payload.ByteString);
-        cbor.Add(CBORObject.FromObject(Signature.Value));
+        cbor.Add(CBORObject.FromObject(Signature.AsByteArray));
 
         return cbor;
     }

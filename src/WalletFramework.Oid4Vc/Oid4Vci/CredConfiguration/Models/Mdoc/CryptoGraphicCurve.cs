@@ -1,6 +1,6 @@
 using Newtonsoft.Json.Linq;
 using WalletFramework.Core.Functional;
-using WalletFramework.MdocLib;
+using WalletFramework.MdocLib.Security.Cose;
 
 namespace WalletFramework.Oid4Vc.Oid4Vci.CredConfiguration.Models.Mdoc;
 

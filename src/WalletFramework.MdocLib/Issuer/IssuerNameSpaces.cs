@@ -5,19 +5,19 @@ using static WalletFramework.MdocLib.NameSpace;
 
 namespace WalletFramework.MdocLib;
 
-public readonly struct NameSpaces
+public record IssuerNameSpaces
 {
     public Dictionary<NameSpace, List<IssuerSignedItem>> Value { get; }
 
     public List<IssuerSignedItem> this[NameSpace key] => Value[key];
     
-    public static implicit operator NameSpaces(Dictionary<NameSpace, IEnumerable<IssuerSignedItem>> value) =>
+    public static implicit operator IssuerNameSpaces(Dictionary<NameSpace, IEnumerable<IssuerSignedItem>> value) =>
         new(value);
 
-    private NameSpaces(Dictionary<NameSpace, IEnumerable<IssuerSignedItem>> value) =>
+    private IssuerNameSpaces(Dictionary<NameSpace, IEnumerable<IssuerSignedItem>> value) =>
         Value = value.ToDictionary(pair => pair.Key, pair => pair.Value.ToList());
 
-    internal static Validation<NameSpaces> ValidNameSpaces(CBORObject issuerSigned) =>
+    internal static Validation<IssuerNameSpaces> ValidNameSpaces(CBORObject issuerSigned) =>
         issuerSigned.GetByLabel(NameSpacesLabel).OnSuccess(nameSpaces =>
         {
             var validDict = nameSpaces
@@ -28,13 +28,16 @@ public readonly struct NameSpaces
 
             return
                 from dict in validDict
-                select new NameSpaces(dict);
+                select new IssuerNameSpaces(dict);
         });
+}
 
-    public CBORObject Encode()
+public static class NameSpacesFun
+{
+    public static CBORObject ToCbor(this IssuerNameSpaces issuerNameSpaces)
     {
         var cbor = CBORObject.NewMap();
-        foreach (var (key, items) in Value)
+        foreach (var (key, items) in issuerNameSpaces.Value)
         {
             var array = CBORObject.NewArray();
             foreach (var item in items)

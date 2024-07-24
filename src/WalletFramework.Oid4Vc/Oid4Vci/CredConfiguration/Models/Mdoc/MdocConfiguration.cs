@@ -17,7 +17,6 @@ public record MdocConfiguration
     
     public DocType DocType { get; }
     
-    // TODO: This is actually required, but BDR doesnt use it
     public Option<Policy> Policy { get; }
     
     public Option<List<CryptographicSuite>> CryptographicSuitesSupported { get; }

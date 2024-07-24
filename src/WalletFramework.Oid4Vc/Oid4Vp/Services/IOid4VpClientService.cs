@@ -1,4 +1,3 @@
-using Hyperledger.Aries.Agents;
 using WalletFramework.Oid4Vc.Oid4Vp.Models;
 
 namespace WalletFramework.Oid4Vc.Oid4Vp.Services;
