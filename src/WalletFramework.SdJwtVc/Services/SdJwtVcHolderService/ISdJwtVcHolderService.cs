@@ -27,12 +27,12 @@ public interface ISdJwtVcHolderService
     ///     The SD-JWT is created using the provided SD-JWT credential and the provided claims are disclosed
     /// </remarks>
     /// <param name="disclosedClaimPaths">The claims to disclose</param>
-    /// <param name="credential">The SD-JWT credential</param>
+    /// <param name="sdJwt">The SD-JWT credential</param>
     /// <param name="audience">The targeted audience</param>
     /// <param name="nonce">The nonce</param>
     /// <returns>The SD-JWT in presentation format</returns>
     Task<string> CreatePresentation(
-        SdJwtRecord credential,
+        SdJwtRecord sdJwt,
         string[] disclosedClaimPaths,
         string? audience = null,
         string? nonce = null);

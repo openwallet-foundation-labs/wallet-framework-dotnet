@@ -1,4 +1,4 @@
-using Hyperledger.Aries.Storage.Models.Interfaces;
+using WalletFramework.Core.Credentials.Abstractions;
 
 namespace WalletFramework.Oid4Vc.Oid4Vp.Models;
 

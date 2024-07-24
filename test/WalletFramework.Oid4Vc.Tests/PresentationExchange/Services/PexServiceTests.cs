@@ -1,8 +1,8 @@
 using FluentAssertions;
-using Hyperledger.Aries.Storage.Models.Interfaces;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using SD_JWT.Roles.Implementation;
+using WalletFramework.Core.Credentials.Abstractions;
 using WalletFramework.Core.Cryptography.Models;
 using WalletFramework.Oid4Vc.Oid4Vp.Exceptions;
 using WalletFramework.Oid4Vc.Oid4Vp.Models;

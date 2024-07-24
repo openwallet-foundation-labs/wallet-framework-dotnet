@@ -1,14 +1,13 @@
 using Hyperledger.Aries.Storage;
 using Hyperledger.Aries.Storage.Models;
-using Hyperledger.Aries.Storage.Models.Interfaces;
 using LanguageExt;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using WalletFramework.Core.Credentials;
+using WalletFramework.Core.Credentials.Abstractions;
 using WalletFramework.Core.Functional;
 using WalletFramework.Core.Json;
 using WalletFramework.MdocLib;
-using static WalletFramework.MdocVc.MdocRecordFun;
 
 namespace WalletFramework.MdocVc;
 
@@ -43,6 +42,8 @@ public sealed class MdocRecord : RecordBase, ICredential
     {
     }
 #pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
+
+    public CredentialId GetId() => CredentialId;
 
     public static implicit operator Mdoc(MdocRecord record) => record.Mdoc;
 }

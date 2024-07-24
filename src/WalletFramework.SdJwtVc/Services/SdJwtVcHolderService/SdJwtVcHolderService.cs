@@ -34,12 +34,13 @@ public class SdJwtVcHolderService : ISdJwtVcHolderService
 
     /// <inheritdoc />
     public async Task<string> CreatePresentation(
-        SdJwtRecord credential,
+        SdJwtRecord sdJwt,
         string[] disclosedClaimPaths,
         string? audience = null,
         string? nonce = null)
     {
-        var sdJwtDoc = credential.ToSdJwtDoc();
+        var sdJwtDoc = sdJwt.ToSdJwtDoc();
+        
         var disclosures = new List<Disclosure>();
         foreach (var disclosure in sdJwtDoc.Disclosures)
         {
@@ -49,17 +50,17 @@ public class SdJwtVcHolderService : ISdJwtVcHolderService
             }
         }
     
-        var presentationFormat =
-            _holder.CreatePresentationFormat(credential.EncodedIssuerSignedJwt, disclosures.ToArray());
+        var presentationFormat = _holder.CreatePresentationFormat(
+            sdJwt.EncodedIssuerSignedJwt,
+            disclosures.ToArray()
+        );
     
-        if (!string.IsNullOrEmpty(credential.KeyId) 
+        if (!string.IsNullOrEmpty(sdJwt.KeyId) 
             && !string.IsNullOrEmpty(nonce) 
             && !string.IsNullOrEmpty(audience))
         {
-            
-            
             var keybindingJwt = await _keyStore.GenerateKbProofOfPossessionAsync(
-                credential.KeyId,
+                sdJwt.KeyId,
                 audience,
                 nonce,
                 "kb+jwt",
