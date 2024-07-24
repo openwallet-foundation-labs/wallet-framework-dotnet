@@ -22,14 +22,14 @@ public class MdocStorage : IMdocStorage
     public async Task<Unit> Add(MdocRecord record)
     {
         var context = await _agentProvider.GetContextAsync();
-        await _recordService.AddAsync(context.Wallet, record, MdocRecordFun.EncodeToJson);
+        await _recordService.AddAsync(context.Wallet, record);
         return Unit.Default;
     }
 
     public async Task<Option<MdocRecord>> Get(CredentialId id)
     {
         var context = await _agentProvider.GetContextAsync();
-        return await _recordService.GetAsync(context.Wallet, id, MdocRecordFun.DecodeFromJson);
+        return await _recordService.GetAsync<MdocRecord>(context.Wallet, id);
     }
 
     public async Task<Option<IEnumerable<MdocRecord>>> List(
@@ -38,13 +38,12 @@ public class MdocStorage : IMdocStorage
         int skip = 0)
     {
         var context = await _agentProvider.GetContextAsync();
-        var list = await _recordService.SearchAsync(
+        var list = await _recordService.SearchAsync<MdocRecord>(
             context.Wallet, 
             query.ToNullable(),
             null,
             count, 
-            skip,
-            MdocRecordFun.DecodeFromJson);
+            skip);
 
         if (list.Count == 0)
             return Option<IEnumerable<MdocRecord>>.None;
@@ -55,7 +54,7 @@ public class MdocStorage : IMdocStorage
     public async Task<Unit> Update(MdocRecord record)
     {
         var context = await _agentProvider.GetContextAsync();
-        await _recordService.Update(context.Wallet, record, MdocRecordFun.EncodeToJson);
+        await _recordService.Update(context.Wallet, record);
         return Unit.Default;
     }
 

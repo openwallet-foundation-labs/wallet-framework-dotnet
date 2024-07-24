@@ -1,6 +1,5 @@
 using FluentAssertions;
 using Hyperledger.Aries.Storage;
-using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using WalletFramework.Core.Functional;
 using WalletFramework.Core.Uri;
@@ -53,7 +52,7 @@ public class AuthFlowSessionRecordTests
         var record = new AuthFlowSessionRecord(authorizationData, authorizationCodeParameters, sessionId);
         
         // Act
-        var recordSut = record.EncodeToJson();
+        var recordSut = JObject.FromObject(record);
         var tagsSut = JObject.FromObject(record.Tags);
         
         // Assert
@@ -68,7 +67,7 @@ public class AuthFlowSessionRecordTests
         var json = AuthFlowSamples.AuthFlowSessionRecordJson;
         
         // Act
-        var record = AuthFlowSessionRecordFun.DecodeFromJson(json);
+        var record = json.ToObject<AuthFlowSessionRecord>();
         
         // Assert
         record.Should().NotBeNull();

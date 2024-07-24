@@ -9,6 +9,7 @@ namespace WalletFramework.Oid4Vc.Oid4Vci.AuthFlow.Records;
 /// <summary>
 ///   Represents the authorization session record. Used during the VCI Authorization Code Flow to hold session relevant information.
 /// </summary>
+[JsonConverter(typeof(AuthFlowSessionRecordConverter))]
 public sealed class AuthFlowSessionRecord : RecordBase
 {
     /// <summary>
@@ -66,6 +67,26 @@ public sealed class AuthFlowSessionRecord : RecordBase
         RecordVersion = 1;
         AuthorizationCodeParameters = authorizationCodeParameters;
         AuthorizationData = authorizationData;
+    }
+}
+
+public class AuthFlowSessionRecordConverter : JsonConverter<AuthFlowSessionRecord>
+{
+    public override void WriteJson(JsonWriter writer, AuthFlowSessionRecord? value, JsonSerializer serializer)
+    {
+        var json = value!.EncodeToJson();
+        json.WriteTo(writer);
+    }
+
+    public override AuthFlowSessionRecord ReadJson(
+        JsonReader reader,
+        Type objectType,
+        AuthFlowSessionRecord? existingValue,
+        bool hasExistingValue,
+        JsonSerializer serializer)
+    {
+        var json = JObject.Load(reader);
+        return AuthFlowSessionRecordFun.DecodeFromJson(json);
     }
 }
 

@@ -10,7 +10,6 @@ using Hyperledger.Aries.Storage.Models;
 using Hyperledger.Indy.NonSecretsApi;
 using Hyperledger.Indy.WalletApi;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 
 namespace Hyperledger.Aries.Storage
 {
@@ -34,7 +33,7 @@ namespace Hyperledger.Aries.Storage
         }
 
         /// <inheritdoc />
-        public virtual Task AddAsync<T>(Wallet wallet, T record, Func<T, JObject>? encode = null) where T : RecordBase, new()
+        public virtual Task AddAsync<T>(Wallet wallet, T record) where T : RecordBase, new()
         {
             record.CreatedAtUtc = DateTime.UtcNow;
             
@@ -49,9 +48,7 @@ namespace Hyperledger.Aries.Storage
                 record.SetTag(property.Name, value.ToString(), false);
             }
 
-            var recordJson = encode is null 
-                ? record.ToJson(_jsonSettings) 
-                : encode(record).ToString();
+            var recordJson = record.ToJson(_jsonSettings);
 
             return NonSecrets.AddRecordAsync(wallet,
                 record.TypeName,
@@ -66,8 +63,7 @@ namespace Hyperledger.Aries.Storage
             ISearchQuery? query = null,
             SearchOptions? options = null,
             int count = 10,
-            int skip = 0,
-            Func<JObject, T>? decode = null) where T : RecordBase, new()
+            int skip = 0) where T : RecordBase, new()
         {
             using var search = await NonSecrets.OpenSearchAsync(
                 wallet,
@@ -90,16 +86,7 @@ namespace Hyperledger.Aries.Storage
 
             var records = searchResult.Records.Select(searchItem =>
             {
-                T record;
-                if (decode is null)
-                {
-                    record = JsonConvert.DeserializeObject<T>(searchItem.Value, _jsonSettings)!;
-                }
-                else
-                {
-                    var json = JObject.Parse(searchItem.Value);
-                    record = decode(json);
-                }
+                var record = JsonConvert.DeserializeObject<T>(searchItem.Value, _jsonSettings)!;
 
                 foreach (var tag in searchItem.Tags)
                     record.Tags[tag.Key] = tag.Value;
@@ -126,13 +113,11 @@ namespace Hyperledger.Aries.Storage
                 record.Tags.ToJson(_jsonSettings));
         }
 
-        public async Task Update<T>(Wallet wallet, T record, Func<T, JObject>? encode = null) where T : RecordBase
+        public async Task Update<T>(Wallet wallet, T record) where T : RecordBase
         {
             record.UpdatedAtUtc = DateTime.UtcNow;
 
-            var recordJson = encode is null 
-                ? record.ToJson(_jsonSettings) 
-                : encode(record).ToString();
+            var recordJson = record.ToJson(_jsonSettings);
 
             await NonSecrets.UpdateRecordValueAsync(wallet,
                 record.TypeName,
@@ -146,7 +131,7 @@ namespace Hyperledger.Aries.Storage
         }
 
         /// <inheritdoc />
-        public async Task<T?> GetAsync<T>(Wallet wallet, string id, Func<JObject, T>? decode = null) where T : RecordBase, new()
+        public async Task<T?> GetAsync<T>(Wallet wallet, string id) where T : RecordBase, new()
         {
             try
             {
@@ -162,16 +147,7 @@ namespace Hyperledger.Aries.Storage
 
                 var item = JsonConvert.DeserializeObject<SearchItem>(searchItemJson, _jsonSettings)!;
 
-                T record;
-                if (decode is null)
-                {
-                    record = JsonConvert.DeserializeObject<T>(item.Value, _jsonSettings)!;
-                }
-                else
-                {
-                    var json = JObject.Parse(item.Value);
-                    record = decode(json);
-                }
+                var record = JsonConvert.DeserializeObject<T>(item.Value, _jsonSettings)!;
 
                 foreach (var tag in item.Tags)
                     record.Tags[tag.Key] = tag.Value;
@@ -190,7 +166,7 @@ namespace Hyperledger.Aries.Storage
             try
             {
                 var record = await GetAsync<T>(wallet, id);
-                var typeName = record.TypeName;
+                var typeName = record!.TypeName;
 
                 await NonSecrets.DeleteRecordTagsAsync(
                     wallet: wallet,
