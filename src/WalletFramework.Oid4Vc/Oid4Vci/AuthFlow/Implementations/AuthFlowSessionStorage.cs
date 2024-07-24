@@ -33,7 +33,7 @@ public class AuthFlowSessionStorage : IAuthFlowSessionStorage
             authorizationCodeParameters,
             authFlowSessionState);
 
-        await _recordService.AddAsync(agentContext.Wallet, record, AuthFlowSessionRecordFun.EncodeToJson);
+        await _recordService.AddAsync(agentContext.Wallet, record);
             
         return record.Id;
     }
@@ -41,7 +41,7 @@ public class AuthFlowSessionStorage : IAuthFlowSessionStorage
     /// <inheritdoc />
     public async Task<AuthFlowSessionRecord> GetAsync(IAgentContext context, AuthFlowSessionState authFlowSessionState)
     {
-        var record = await _recordService.GetAsync(context.Wallet, authFlowSessionState, AuthFlowSessionRecordFun.DecodeFromJson);
+        var record = await _recordService.GetAsync<AuthFlowSessionRecord>(context.Wallet, authFlowSessionState);
         return record!;
     }
         

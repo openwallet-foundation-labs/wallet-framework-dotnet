@@ -1,8 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Threading.Tasks;
 using Hyperledger.Indy.WalletApi;
-using Newtonsoft.Json.Linq;
 
 namespace Hyperledger.Aries.Storage
 {
@@ -17,9 +15,8 @@ namespace Hyperledger.Aries.Storage
         /// <returns>The record async.</returns>
         /// <param name="wallet">Wallet.</param>
         /// <param name="record">Record.</param>
-        /// <param name="encode">The func for encoding the record to JSON format</param>
         /// <typeparam name="T">The 1st type parameter.</typeparam>
-        Task AddAsync<T>(Wallet wallet, T record, Func<T, JObject>? encode = null) where T : RecordBase, new();
+        Task AddAsync<T>(Wallet wallet, T record) where T : RecordBase, new();
         
         /// <summary>
         /// Searches the records async.
@@ -30,15 +27,13 @@ namespace Hyperledger.Aries.Storage
         /// <param name="options">Options.</param>
         /// <param name="count">The number of items to return</param>
         /// <param name="skip">The number of items to skip</param>
-        /// <param name="decode">Func for decoding the JSON to the record</param>
         /// <typeparam name="T">The 1st type parameter.</typeparam>
         Task<List<T>> SearchAsync<T>(
             Wallet wallet,
             ISearchQuery? query = null,
             SearchOptions? options = null,
             int count = 10,
-            int skip = 0,
-            Func<JObject, T>? decode = null) where T : RecordBase, new();
+            int skip = 0) where T : RecordBase, new();
 
         /// <summary>
         /// Updates the record async.
@@ -54,8 +49,7 @@ namespace Hyperledger.Aries.Storage
         /// <returns>The record async.</returns>
         /// <param name="wallet">Wallet.</param>
         /// <param name="record">Credential record.</param>
-        /// <param name="encode">The func for encoding the record to JSON format</param>
-        Task Update<T>(Wallet wallet, T record, Func<T, JObject>? encode = null) where T : RecordBase;
+        Task Update<T>(Wallet wallet, T record) where T : RecordBase;
 
         /// <summary>
         /// Gets the record async.
@@ -63,9 +57,8 @@ namespace Hyperledger.Aries.Storage
         /// <returns>The record async.</returns>
         /// <param name="wallet">Wallet.</param>
         /// <param name="id">Identifier.</param>
-        /// <param name="decode">Func for decoding the JSON to the record</param>
         /// <typeparam name="T">The 1st type parameter.</typeparam>
-        Task<T?> GetAsync<T>(Wallet wallet, string id, Func<JObject, T>? decode = null) where T : RecordBase, new();
+        Task<T?> GetAsync<T>(Wallet wallet, string id) where T : RecordBase, new();
 
         /// <summary>
         /// Deletes the record async.
