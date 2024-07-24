@@ -47,9 +47,6 @@ public record Grants
             .ToOption()
             .OnSome(OptionalPreAuthorizedCode);
 
-        if (authorizationCode.IsNone && preAuthorizedCode.IsNone)
-            return Option<Grants>.None;
-        
         return new Grants(authorizationCode, preAuthorizedCode);
     }
 }

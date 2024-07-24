@@ -2,7 +2,6 @@ using System.Security.Cryptography.X509Certificates;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using WalletFramework.Oid4Vc.Oid4Vp.PresentationExchange.Models;
-using static WalletFramework.Oid4Vc.Oid4Vp.Models.ClientIdScheme;
 
 namespace WalletFramework.Oid4Vc.Oid4Vp.Models;
 
@@ -11,10 +10,6 @@ namespace WalletFramework.Oid4Vc.Oid4Vp.Models;
 /// </summary>
 public record AuthorizationRequest
 {
-    private const string DirectPost = "direct_post";
-
-    private const string VpToken = "vp_token";
-
     /// <summary>
     ///     Gets the client id scheme.
     /// </summary>
@@ -72,11 +67,13 @@ public record AuthorizationRequest
     /// <summary>
     ///     The X509 certificate of the verifier, this property is only set when ClientIDScheme is X509SanDNS.
     /// </summary>
+    [JsonIgnore]
     public X509Certificate2? X509Certificate { get; init; }
 
     /// <summary>
     ///     The trust chain of the verifier, this property is only set when ClientIDScheme is X509SanDNS.
     /// </summary>
+    [JsonIgnore]
     public X509Chain? X509TrustChain { get; init; }
 
     [JsonConstructor]
@@ -112,30 +109,8 @@ public record AuthorizationRequest
         => CreateAuthorizationRequest(JObject.Parse(authorizationRequestJson));
 
     private static AuthorizationRequest CreateAuthorizationRequest(JObject authorizationRequestJson) =>
-        IsHaipConform(authorizationRequestJson)
-            ? authorizationRequestJson.ToObject<AuthorizationRequest>()
-              ?? throw new InvalidOperationException("Could not parse the Authorization Request")
-            : throw new InvalidOperationException(
-                "Invalid Authorization Request. The request does not match the HAIP"
-            );
-
-    private static bool IsHaipConform(JObject authorizationRequestJson)
-    {
-        var responseType = authorizationRequestJson["response_type"]!.ToString();
-        var responseUri = authorizationRequestJson["response_uri"]!.ToString();
-        var responseMode = authorizationRequestJson["response_mode"]!.ToString();
-        var redirectUri = authorizationRequestJson["redirect_uri"];
-        var clientIdScheme = authorizationRequestJson["client_id_scheme"]!.ToString();
-        var clientId = authorizationRequestJson["client_id"]!.ToString();
-
-        return
-            responseType == VpToken
-            && responseMode == DirectPost
-            && !string.IsNullOrEmpty(responseUri)
-            && redirectUri is null
-            && (clientIdScheme is X509SanDnsScheme or VerifierAttestationScheme
-                || (clientIdScheme is RedirectUriScheme && clientId == responseUri));
-    }
+        authorizationRequestJson.ToObject<AuthorizationRequest>() 
+        ?? throw new InvalidOperationException("Could not parse the Authorization Request");
 }
 
 internal static class AuthorizationRequestExtensions
