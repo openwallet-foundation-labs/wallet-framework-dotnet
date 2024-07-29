@@ -1,11 +1,10 @@
 using PeterO.Cbor;
 using WalletFramework.Core.Functional;
 using WalletFramework.MdocLib.Cbor;
-using WalletFramework.MdocLib.Issuer;
 using static WalletFramework.MdocLib.Constants;
 using static WalletFramework.MdocLib.NameSpace;
 
-namespace WalletFramework.MdocLib;
+namespace WalletFramework.MdocLib.Issuer;
 
 public record IssuerNameSpaces
 {
