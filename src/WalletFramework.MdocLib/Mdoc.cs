@@ -102,9 +102,9 @@ public static class MdocFun
     {
         var potentialErrors = mdoc
             .IssuerSigned
-            .NameSpaces
+            .IssuerNameSpaces
             .Value
-            .SelectMany(pair => mdoc.IssuerSigned.NameSpaces[pair.Key].Select(item => (pair.Key, item)))
+            .SelectMany(pair => mdoc.IssuerSigned.IssuerNameSpaces[pair.Key].Select(item => (pair.Key, item)))
             .Select(nameSpaceAndItem =>
             {
                 var nameSpace = nameSpaceAndItem.Key;
@@ -174,11 +174,11 @@ public static class MdocFun
     {
         var disclosures = mdoc
             .IssuerSigned
-            .NameSpaces[nameSpace]
+            .IssuerNameSpaces[nameSpace]
             .Filter(item => elementsToDisclose.Contains(item.ElementId))
             .ToList();
 
-        var nameSpaces = mdoc.IssuerSigned.NameSpaces;
+        var nameSpaces = mdoc.IssuerSigned.IssuerNameSpaces;
         nameSpaces.Value[nameSpace] = disclosures;
 
         return Unit.Default;

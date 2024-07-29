@@ -49,7 +49,7 @@ public class MdocTests
                 // Assert
                 sut.DocType.ToString().Should().Be(Samples.DocType);
 
-                var issuerSignedItems = sut.IssuerSigned.NameSpaces[Samples.MdlIsoNameSpace];
+                var issuerSignedItems = sut.IssuerSigned.IssuerNameSpaces[Samples.MdlIsoNameSpace];
 
                 issuerSignedItems[0].ElementId.Value.Should().Be("issue_date");
                 issuerSignedItems[0].Element.Value.AsT0.Value.Should().Be("2024-01-12");
@@ -112,7 +112,7 @@ public class MdocTests
                 sut.SelectivelyDisclose(Samples.MdlIsoNameSpace, disclosures);
 
                 // Assert
-                var items = sut.IssuerSigned.NameSpaces.Value[Samples.MdlIsoNameSpace];
+                var items = sut.IssuerSigned.IssuerNameSpaces.Value[Samples.MdlIsoNameSpace];
                 items.Count.Should().Be(disclosures.Count);
                 items.Should().Contain(item => item.ElementId.Value == Samples.GivenName);
                 items.Should().Contain(item => item.ElementId.Value == Samples.FamilyName);

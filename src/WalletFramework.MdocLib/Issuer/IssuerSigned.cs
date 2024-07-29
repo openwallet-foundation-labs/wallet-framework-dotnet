@@ -2,7 +2,7 @@ using PeterO.Cbor;
 using WalletFramework.Core.Functional;
 using WalletFramework.MdocLib.Cbor;
 using static WalletFramework.MdocLib.Constants;
-using static WalletFramework.MdocLib.NameSpaces;
+using static WalletFramework.MdocLib.Issuer.IssuerNameSpaces;
 using static WalletFramework.MdocLib.Issuer.IssuerAuth;
 using static WalletFramework.Core.Functional.ValidationFun;
 
@@ -10,18 +10,18 @@ namespace WalletFramework.MdocLib.Issuer;
 
 public record IssuerSigned
 {
-    public NameSpaces NameSpaces { get; init; }
+    public IssuerNameSpaces IssuerNameSpaces { get; init; }
 
     public IssuerAuth IssuerAuth { get; }
 
-    private IssuerSigned(NameSpaces nameSpaces, IssuerAuth issuerAuth)
+    private IssuerSigned(IssuerNameSpaces issuerNameSpaces, IssuerAuth issuerAuth)
     {
-        NameSpaces = nameSpaces;
+        IssuerNameSpaces = issuerNameSpaces;
         IssuerAuth = issuerAuth;
     }
 
-    private static IssuerSigned Create(NameSpaces nameSpaces, IssuerAuth issuerAuth) =>
-        new(nameSpaces, issuerAuth);
+    private static IssuerSigned Create(IssuerNameSpaces issuerNameSpaces, IssuerAuth issuerAuth) =>
+        new(issuerNameSpaces, issuerAuth);
 
     internal static Validation<IssuerSigned> ValidIssuerSigned(CBORObject mdoc) =>
         mdoc.GetByLabel(IssuerSignedLabel).OnSuccess(issuerSigned =>
@@ -34,7 +34,7 @@ public record IssuerSigned
     {
         var cbor = CBORObject.NewMap();
         
-        cbor[NameSpacesLabel] = NameSpaces.Encode();
+        cbor[NameSpacesLabel] = IssuerNameSpaces.ToCbor();
         cbor[IssuerAuthLabel] = IssuerAuth.Encode();
 
         return cbor;
