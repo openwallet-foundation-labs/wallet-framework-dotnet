@@ -167,6 +167,71 @@ public class Oid4VciClientService : IOid4VciClientService
         return authorizationRequestUri;
     }
 
+    public async Task<Uri> InitiateAuthFlow(Uri uri, ClientOptions clientOptions, Option<Locale> language)
+    {
+        var locale = language.Match(
+            some => some,
+            () => Constants.DefaultLocale);
+        
+        var issuerMetadata = _issuerMetadataService.ProcessMetadata(uri, locale);
+        
+        return await issuerMetadata.Match(
+            async validIssuerMetadata =>
+            {
+                var sessionId = AuthFlowSessionState.CreateAuthFlowSessionState();
+                var authorizationCodeParameters = CreateAndStoreCodeChallenge();
+
+                var scope = validIssuerMetadata.CredentialConfigurationsSupported.First().Value.Match(
+                    sdJwtConfig => sdJwtConfig.CredentialConfiguration.Scope.OnSome(scope => scope.ToString()),
+                    mdDocConfig => mdDocConfig.CredentialConfiguration.Scope.OnSome(scope => scope.ToString())
+                );
+                
+                var par = new PushedAuthorizationRequest(
+                    sessionId,
+                    clientOptions,
+                    authorizationCodeParameters,
+                    null,
+                    scope.ToNullable(),
+                    null,
+                    null,
+                    null);
+                
+                var authServerMetadata = 
+                    await FetchAuthorizationServerMetadataAsync(validIssuerMetadata);
+            
+                _httpClient.DefaultRequestHeaders.Clear();
+                var response = await _httpClient.PostAsync(
+                    authServerMetadata.PushedAuthorizationRequestEndpoint,
+                    par.ToFormUrlEncoded()
+                );
+
+                var parResponse = DeserializeObject<PushedAuthorizationRequestResponse>(await response.Content.ReadAsStringAsync()) 
+                                  ?? throw new InvalidOperationException("Failed to deserialize the PAR response.");
+            
+                var authorizationRequestUri = new Uri(authServerMetadata.AuthorizationEndpoint 
+                                                      + "?client_id=" + par.ClientId 
+                                                      + "&request_uri=" + System.Net.WebUtility.UrlEncode(parResponse.RequestUri.ToString()));
+
+                //TODO: Select multiple configurationIds
+                var authorizationData = new AuthorizationData(
+                    clientOptions,
+                    validIssuerMetadata,
+                    authServerMetadata,
+                    new List<CredentialConfigurationId>(){validIssuerMetadata.CredentialConfigurationsSupported.Keys.First()});
+
+                var context = await _agentProvider.GetContextAsync();
+                await _authFlowSessionStorage.StoreAsync(
+                    context,
+                    authorizationData,
+                    authorizationCodeParameters,
+                    sessionId);
+            
+                return authorizationRequestUri;
+            },
+            _ => throw new Exception("Fetching Issuer metadata failed")
+            );
+    }
+
     public async Task<Validation<OneOf<SdJwtRecord, MdocRecord>>> AcceptOffer(CredentialOfferMetadata credentialOfferMetadata, string? transactionCode)
     {
         var issuerMetadata = credentialOfferMetadata.IssuerMetadata;
@@ -251,12 +316,20 @@ public class Oid4VciClientService : IOid4VciClientService
             .Select(pair => pair.Value)
             .First();
         
+        var scope = session
+            .AuthorizationData
+            .IssuerMetadata
+            .CredentialConfigurationsSupported.First().Value.Match(
+                sdJwtConfig => sdJwtConfig.CredentialConfiguration.Scope.OnSome(scope => scope.ToString()), 
+                mdDocConfig => mdDocConfig.CredentialConfiguration.Scope.OnSome(scope => scope.ToString()));
+        
         var tokenRequest = new TokenRequest
         {
             GrantType = AuthorizationCodeGrantTypeIdentifier,
             RedirectUri = session.AuthorizationData.ClientOptions.RedirectUri,
             CodeVerifier = session.AuthorizationCodeParameters.Verifier,
             Code = issuanceSession.Code,
+            Scope = scope.ToNullable(),
             ClientId = session.AuthorizationData.ClientOptions.ClientId
         };
         
