@@ -25,7 +25,7 @@ public record EncodedMdoc
         var str = mdoc.ToString(CultureInfo.InvariantCulture);
         
         return MdocLib.Mdoc
-            .ValidMdoc(str)
+            .FromIssuerSigned(str)
             .OnSuccess(mdoc1 => new EncodedMdoc(str, mdoc1));
     }
 }

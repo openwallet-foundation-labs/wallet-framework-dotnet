@@ -22,12 +22,10 @@ public record IssuerSigned
     private static IssuerSigned Create(NameSpaces nameSpaces, IssuerAuth issuerAuth) =>
         new(nameSpaces, issuerAuth);
 
-    internal static Validation<IssuerSigned> ValidIssuerSigned(CBORObject mdoc) =>
-        mdoc.GetByLabel(IssuerSignedLabel).OnSuccess(issuerSigned =>
-            Valid(Create)
-                .Apply(ValidNameSpaces(issuerSigned))
-                .Apply(ValidIssuerAuth(issuerSigned))
-            );
+    public static Validation<IssuerSigned> ValidIssuerSigned(CBORObject issuerSigned) => 
+        Valid(Create)
+            .Apply(ValidNameSpaces(issuerSigned))
+            .Apply(ValidIssuerAuth(issuerSigned));
 
     public CBORObject Encode()
     {
@@ -37,5 +35,15 @@ public record IssuerSigned
         cbor[IssuerAuthLabel] = IssuerAuth.Encode();
 
         return cbor;
+    }
+}
+
+public static class IssuerSignedFun
+{
+    // TODO: This is only a hack currently, the doctype of the mdoc and the mso must be validated normally
+    public static Mdoc ToMdoc(this IssuerSigned issuerSigned)
+    {
+        var docType = issuerSigned.IssuerAuth.Payload.DocType;
+        return new Mdoc(docType, issuerSigned);
     }
 }

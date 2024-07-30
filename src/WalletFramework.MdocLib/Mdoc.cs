@@ -20,7 +20,7 @@ public record Mdoc
     // TODO: mdoc authentication
     // public DeviceSigned DeviceSigned { get; }
 
-    private Mdoc(DocType docType, IssuerSigned issuerSigned)
+    public Mdoc(DocType docType, IssuerSigned issuerSigned)
     {
         DocType = docType;
         IssuerSigned = issuerSigned;
@@ -68,10 +68,53 @@ public record Mdoc
         return 
             from bytes in decodeBase64Url(base64UrlencodedCborByteString)
             from cbor in parseCborByteString(bytes)
+            from issuerSigned in cbor.GetByLabel(IssuerSignedLabel)
             from mdoc in Valid(Create)
                 .Apply(ValidDoctype(cbor))
-                .Apply(ValidIssuerSigned(cbor))
+                .Apply(ValidIssuerSigned(issuerSigned))
             from validMdoc in validateIntegrity(mdoc)
+            select validMdoc;
+    }
+    
+    //TODO: Workaround because PId Issuer only implemented issuer signed, Delete this overload when PID Issuer is fixed!!
+    public static Validation<Mdoc> FromIssuerSigned(string base64UrlencodedCborByteString)
+    {
+        var decodeBase64Url = new Func<string, Validation<byte[]>>(str =>
+        {
+            try
+            {
+                return Base64UrlEncoder.DecodeBytes(str)!;
+            }
+            catch (Exception e)
+            {
+                return new InvalidBase64UrlEncodingError(e);
+            }
+        });
+
+        var parseCborByteString = new Func<byte[], Validation<CBORObject>>(bytes =>
+        {
+            try
+            {
+                return CBORObject.DecodeFromBytes(bytes);
+            }
+            catch (Exception e)
+            {
+                return new InvalidCborByteStringError("mdocResponse", e);
+            }
+        });
+        
+        var validateIntegrity = new List<Validator<Mdoc>>
+            {
+                MdocFun.DocTypeMatches,
+                MdocFun.DigestsMatch
+            }
+            .AggregateValidators();
+
+        return 
+            from bytes in decodeBase64Url(base64UrlencodedCborByteString)
+            from cbor in parseCborByteString(bytes)
+            from issuerSigned in ValidIssuerSigned(cbor)
+            from validMdoc in validateIntegrity(issuerSigned.ToMdoc())
             select validMdoc;
     }
 

@@ -75,12 +75,12 @@ public static class MdocRecordFun
     public static MdocRecord DecodeFromJson(JObject json)
     {
         var id = json[nameof(RecordBase.Id)]!.ToString();
-
+        
         var mdocStr = json[MdocJsonKey]!.ToString();
         var mdoc = Mdoc
             .ValidMdoc(mdocStr)
             .UnwrapOrThrow(new InvalidOperationException($"The MdocRecord with ID: {id} is corrupt"));
-
+        
         var displays =
             from jToken in json.GetByKey(MdocDisplaysJsonKey).ToOption()
             from jArray in jToken.ToJArray().ToOption()
