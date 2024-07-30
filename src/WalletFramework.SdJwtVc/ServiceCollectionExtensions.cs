@@ -11,6 +11,7 @@ public static class ServiceCollectionExtensions
     {
         builder.AddSingleton<IHolder, Holder>();
         builder.AddSingleton<ISdJwtVcHolderService, SdJwtVcHolderService>();
+        builder.AddSingleton<ISdJwtSignerService, SdJwtSignerService>();
         return builder;
     }
     

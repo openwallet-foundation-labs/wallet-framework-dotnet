@@ -4,7 +4,6 @@ using Hyperledger.Aries.Storage;
 using Hyperledger.Indy.WalletApi;
 using SD_JWT.Models;
 using SD_JWT.Roles;
-using WalletFramework.Core.Cryptography.Abstractions;
 using WalletFramework.SdJwtVc.Models.Records;
 
 namespace WalletFramework.SdJwtVc.Services.SdJwtVcHolderService;
@@ -15,21 +14,21 @@ public class SdJwtVcHolderService : ISdJwtVcHolderService
     /// <summary>
     ///     Initializes a new instance of the <see cref="SdJwtVcHolderService" /> class.
     /// </summary>
-    /// <param name="keyStore">The key store responsible for key operations.</param>
+    /// <param name="sdJwtSignerService">The service responsible for SD-JWT signature related operations.</param>
     /// <param name="recordService">The service responsible for wallet record operations.</param>
     /// <param name="holder">The service responsible for holder operations.</param>
     public SdJwtVcHolderService(
         IHolder holder,
-        IKeyStore keyStore,
+        ISdJwtSignerService sdJwtSignerService,
         IWalletRecordService recordService)
     {
         _holder = holder;
-        _keyStore = keyStore;
+        _sdJwtSignerService = sdJwtSignerService;
         _recordService = recordService;
     }
 
     private readonly IHolder _holder;
-    private readonly IKeyStore _keyStore;
+    private readonly ISdJwtSignerService _sdJwtSignerService;
     private readonly IWalletRecordService _recordService;
 
     /// <inheritdoc />
@@ -56,14 +55,13 @@ public class SdJwtVcHolderService : ISdJwtVcHolderService
             && !string.IsNullOrEmpty(nonce) 
             && !string.IsNullOrEmpty(audience))
         {
-            
-            
-            var keybindingJwt = await _keyStore.GenerateKbProofOfPossessionAsync(
+            var keybindingJwt = await _sdJwtSignerService.GenerateKbProofOfPossessionAsync(
                 credential.KeyId,
                 audience,
                 nonce,
                 "kb+jwt",
-                presentationFormat.ToSdHash());
+                presentationFormat.ToSdHash(),
+                null);
             
             return presentationFormat.AddKeyBindingJwt(keybindingJwt);
         }

@@ -20,6 +20,7 @@ using WalletFramework.Oid4Vc.Oid4Vci.Extensions;
 using WalletFramework.Oid4Vc.Oid4Vci.Issuer.Models;
 using WalletFramework.Oid4Vc.Oid4Vci.CredRequest.Models.SdJwt;
 using WalletFramework.Oid4Vc.Oid4Vci.CredResponse;
+using WalletFramework.SdJwtVc.Services.SdJwtVcHolderService;
 
 namespace WalletFramework.Oid4Vc.Oid4Vci.CredRequest.Implementations;
 
@@ -28,15 +29,18 @@ public class CredentialRequestService : ICredentialRequestService
     public CredentialRequestService(
         HttpClient httpClient,
         IDPopHttpClient dPopHttpClient,
+        ISdJwtSignerService sdJwtSignerService,
         IKeyStore keyStore)
     {
         _dPopHttpClient = dPopHttpClient;
-        _httpClient = httpClient;
+        _sdJwtSignerService = sdJwtSignerService;
         _keyStore = keyStore;
+        _httpClient = httpClient;
     }
 
     private readonly HttpClient _httpClient;
     private readonly IDPopHttpClient _dPopHttpClient;
+    private readonly ISdJwtSignerService _sdJwtSignerService;
     private readonly IKeyStore _keyStore;
 
     private async Task<CredentialRequest> CreateCredentialRequest(
@@ -50,7 +54,7 @@ public class CredentialRequestService : ICredentialRequestService
             oauthToken => oauthToken.CNonce,
             dPopToken => dPopToken.Token.CNonce);
 
-        var keyBindingJwt = await _keyStore.GenerateKbProofOfPossessionAsync(
+        var keyBindingJwt = await _sdJwtSignerService.GenerateKbProofOfPossessionAsync(
             keyId,
             issuerMetadata.CredentialIssuer.ToString(),
             cNonce,

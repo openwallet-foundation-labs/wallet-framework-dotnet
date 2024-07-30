@@ -17,45 +17,6 @@ public interface IKeyStore
     Task<KeyId> GenerateKey(string alg = "ES256");
 
     /// <summary>
-    ///     Asynchronously creates a proof of possession for a specific key, based on the provided audience and nonce.
-    /// </summary>
-    /// <param name="keyId">The identifier of the key to be used in creating the proof of possession.</param>
-    /// <param name="audience">The intended recipient of the proof. Typically represents the entity that will verify it.</param>
-    /// <param name="nonce">
-    ///     A unique token, typically used to prevent replay attacks by ensuring that the proof is only used once.
-    /// </param>
-    /// <param name="type">The type of the proof. (For example "openid4vci-proof+jwt")</param>
-    /// <param name="sdHash">Base64url-encoded hash digest over the Issuer-signed JWT and the selected Disclosures for integrity protection</param>
-    /// <returns>
-    ///     A <see cref="Task{TResult}" /> representing the asynchronous operation. When evaluated, the task's result contains
-    ///     the proof.
-    /// </returns>
-    Task<string> GenerateKbProofOfPossessionAsync(
-        KeyId keyId,
-        string audience,
-        string nonce,
-        string type,
-        string? sdHash = null,
-        string? clientId = null);
-        
-    /// <summary>
-    ///     Asynchronously creates a DPoP Proof JWT for a specific key, based on the provided audience, nonce and access token.
-    /// </summary>
-    /// <param name="keyId">The identifier of the key to be used in creating the proof of possession.</param>
-    /// <param name="audience">The intended recipient of the proof. Typically represents the entity that will verify it.</param>
-    /// <param name="nonce">A unique token, typically used to prevent replay attacks by ensuring that the proof is only used once.</param>
-    /// <param name="accessToken">The access token, that the DPoP Proof JWT is bound to</param>
-    /// <returns>
-    ///     A <see cref="Task{TResult}" /> representing the asynchronous operation. When evaluated, the task's result contains
-    ///     the DPoP Proof JWT.
-    /// </returns>
-    Task<string> GenerateDPopProofOfPossessionAsync(
-        KeyId keyId,
-        string audience,
-        string? nonce,
-        string? accessToken);
-
-    /// <summary>
     ///     Asynchronously loads a key by its identifier and returns it as a JSON Web Key (JWK) containing the public key
     ///     information.
     /// </summary>
