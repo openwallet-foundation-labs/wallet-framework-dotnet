@@ -46,3 +46,8 @@ public readonly struct Base64UrlString
     }
 }    
 
+public static class Base64UrlStringFun
+{
+    public static byte[] ToByteString(this Base64UrlString base64UrlString) => 
+        Base64UrlEncoder.DecodeBytes(base64UrlString);
+}
