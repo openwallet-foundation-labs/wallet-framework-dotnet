@@ -66,10 +66,18 @@ public interface ISdJwtVcHolderService
         int skip = 0);
 
     /// <summary>
-    ///     Stores or updates a SD-JWT record.
+    ///     Updates a SD-JWT record.
     /// </summary>
     /// <param name="context">The agent context.</param>
     /// <param name="record">The SD-JWT record to be saved</param>
     /// <returns>A task representing the asynchronous operation. The task result contains the ID of the stored JWT record.</returns>
-    Task SaveAsync(IAgentContext context, SdJwtRecord record);
+    Task UpdateAsync(IAgentContext context, SdJwtRecord record);
+    
+    /// <summary>
+    ///     Adds a SD-JWT record.
+    /// </summary>
+    /// <param name="context">The agent context.</param>
+    /// <param name="record">The SD-JWT record to be saved</param>
+    /// <returns>A task representing the asynchronous operation. The task result contains the ID of the stored JWT record.</returns>
+    Task AddAsync(IAgentContext context, SdJwtRecord record);
 }

@@ -83,7 +83,7 @@ public class Oid4VpClientServiceTests : IAsyncLifetime
 
         var sdJwt = new SdJwtRecord();
             
-        await _sdJwtVcHolderService.SaveAsync(_agent1!.Context, sdJwt);
+        await _sdJwtVcHolderService.AddAsync(_agent1!.Context, sdJwt);
         
         //Act
         var (authorizationRequest, credentials) =

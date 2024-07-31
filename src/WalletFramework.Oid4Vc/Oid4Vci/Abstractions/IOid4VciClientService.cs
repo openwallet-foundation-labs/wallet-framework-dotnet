@@ -38,7 +38,7 @@ public interface IOid4VciClientService
     /// <returns>
     /// A list of credentials.
     /// </returns>
-    Task<Validation<OneOf<SdJwtRecord, MdocRecord>>> RequestCredential(IssuanceSession issuanceSession);
+    Task<Validation<List<OneOf<SdJwtRecord, MdocRecord>>>> RequestCredential(IssuanceSession issuanceSession);
     
     /// <summary>
     ///     Processes a credential offer

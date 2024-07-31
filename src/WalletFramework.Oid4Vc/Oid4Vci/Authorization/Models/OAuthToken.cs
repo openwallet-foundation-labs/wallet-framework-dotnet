@@ -7,7 +7,7 @@ namespace WalletFramework.Oid4Vc.Oid4Vci.Authorization.Models;
 ///     Represents a successful response from the OAuth 2.0 Authorization Server containing
 ///     the issued access token and related information.
 /// </summary>
-public class OAuthToken
+public record OAuthToken
 {
     /// <summary>
     ///     Indicates if the Token Request is still pending as the Credential Issuer
