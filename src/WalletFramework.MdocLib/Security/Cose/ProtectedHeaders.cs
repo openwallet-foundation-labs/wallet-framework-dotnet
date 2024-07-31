@@ -10,29 +10,28 @@ public readonly struct ProtectedHeaders
 {
     public Dictionary<CoseLabel, Alg> Value { get; }
 
-    public CborByteString ByteString { get; }
+    public CborByteString AsCborByteString { get; }
 
     public Alg this[CoseLabel key] => Value[key];
 
-    private ProtectedHeaders(Dictionary<CoseLabel, Alg> value, CborByteString byteString)
+    private ProtectedHeaders(Dictionary<CoseLabel, Alg> value, CborByteString asCborByteString)
     {
         Value = value;
-        ByteString = byteString;
+        AsCborByteString = asCborByteString;
     }
 
-    internal static Validation<ProtectedHeaders> ValidProtectedHeaders(CBORObject issuerAuth) =>
-        issuerAuth
-            .GetByIndex(0)
-            .OnSuccess(ValidCborByteString)
-            .OnSuccess(byteString =>
-            {
-                var decoded = byteString.Decode();
-                return decoded.Values.Count > 1
-                    ? new ProtectedHeadersMustOnlyContainOneElementError()
-                    : decoded.ToDictionary(ValidAlgLabel, ValidAlg).OnSuccess(algs =>
-                        new ProtectedHeaders(algs, byteString)
-                    );
-            });
+    internal static Validation<ProtectedHeaders> ValidProtectedHeaders(CBORObject issuerAuth) => issuerAuth
+        .GetByIndex(0)
+        .OnSuccess(ValidCborByteString)
+        .OnSuccess(byteString =>
+        {
+            var decoded = byteString.Decode();
+            return decoded.Values.Count > 1
+                ? new ProtectedHeadersMustOnlyContainOneElementError()
+                : decoded.ToDictionary(ValidAlgLabel, ValidAlg).OnSuccess(algs =>
+                    new ProtectedHeaders(algs, byteString)
+                );
+        });
 
     private static Validation<CoseLabel> ValidAlgLabel(CBORObject cbor)
     {
@@ -55,6 +54,21 @@ public readonly struct ProtectedHeaders
         return result.Flatten();
     }
 
+    public static ProtectedHeaders BuildProtectedHeaders(AlgValue algValue = AlgValue.Es256)
+    {
+        var cbor = CBORObject.NewMap();
+    
+        var algLabel = new CoseLabel(1);
+        var algValueCbor = CBORObject.FromObject(algValue.ToString());
+        
+        cbor.Add(algLabel, algValueCbor);
+    
+        var alg = new Alg(algValue);
+        var dict = new Dictionary<CoseLabel, Alg> { { algLabel, alg } };
+
+        return new ProtectedHeaders(dict, cbor.ToCborByteString());
+    }
+
     public record ProtectedHeadersMustOnlyContainOneElementError()
         : Error("ProtectedHeaders must only contain one element which is the alg element");
 
@@ -64,7 +78,7 @@ public readonly struct ProtectedHeaders
     {
         public AlgValue Value { get; }
 
-        private Alg(AlgValue str) => Value = str;
+        public Alg(AlgValue str) => Value = str;
 
         internal static Validation<Alg> ValidAlg(CBORObject cbor)
         {

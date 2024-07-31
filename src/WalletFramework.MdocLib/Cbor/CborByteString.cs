@@ -4,16 +4,16 @@ using WalletFramework.Core.Functional;
 namespace WalletFramework.MdocLib.Cbor;
 
 /// <summary>
-///     A CBOR object which is a byte string which is either CBOR or hex encoded.
+///     A CBOR object which is a byte string which is additionally CBOR encoded.
 /// </summary>
 public readonly struct CborByteString
 {
-    public CBORObject Value { get; }
+    private CBORObject Value { get; }
 
     public byte[] EncodedBytes => Value.EncodeToBytes();
 
-    public byte[] DecodedBytes => Value.GetByteString();
-    
+    private byte[] DecodedBytes => Value.GetByteString();
+
     private CborByteString(CBORObject value) => Value = value;
 
     public CBORObject Decode() => CBORObject.DecodeFromBytes(DecodedBytes);
@@ -32,5 +32,18 @@ public readonly struct CborByteString
         {
             return new InvalidCborByteStringError(cbor.ToString(), e);
         }
+    }
+}
+
+public static class CborByteStringFun
+{
+    public static CborByteString ToCborByteString(this CBORObject cbor)
+    {
+        var byteString = cbor.EncodeToBytes();
+        var encodedByteString = CBORObject.FromObject(byteString);
+
+        return CborByteString
+            .ValidCborByteString(encodedByteString)
+            .UnwrapOrThrow(new InvalidOperationException("CborByteString implementation is corrupt"));
     }
 }

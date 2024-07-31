@@ -18,7 +18,7 @@ public record IssuerAuth
 
     public UnprotectedHeaders UnprotectedHeaders { get; }
 
-    public MobileSecurityObject Payload { get; }
+    public MobileSecurityObject Payload { get; init; }
 
     public CoseSignature Signature { get; }
 
@@ -52,12 +52,12 @@ public record IssuerAuth
 
     public CBORObject Encode()
     {
-        
         var cbor = CBORObject.NewArray();
-        cbor.Add(ProtectedHeaders.ByteString);
+        
+        cbor.Add(ProtectedHeaders.AsCborByteString);
         cbor.Add(UnprotectedHeaders.Encode());
         cbor.Add(Payload.ByteString);
-        cbor.Add(CBORObject.FromObject(Signature.Value));
+        cbor.Add(CBORObject.FromObject(Signature.AsByteString));
 
         return cbor;
     }

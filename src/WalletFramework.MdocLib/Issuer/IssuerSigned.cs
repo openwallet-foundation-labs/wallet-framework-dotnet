@@ -1,6 +1,7 @@
 using PeterO.Cbor;
 using WalletFramework.Core.Functional;
 using WalletFramework.MdocLib.Cbor;
+using WalletFramework.MdocLib.Device;
 using static WalletFramework.MdocLib.Constants;
 using static WalletFramework.MdocLib.Issuer.IssuerNameSpaces;
 using static WalletFramework.MdocLib.Issuer.IssuerAuth;
@@ -10,9 +11,9 @@ namespace WalletFramework.MdocLib.Issuer;
 
 public record IssuerSigned
 {
-    public IssuerNameSpaces IssuerNameSpaces { get; init; }
+    public IssuerNameSpaces IssuerNameSpaces { get; }
 
-    public IssuerAuth IssuerAuth { get; }
+    public IssuerAuth IssuerAuth { get; init; }
 
     private IssuerSigned(IssuerNameSpaces issuerNameSpaces, IssuerAuth issuerAuth)
     {
@@ -29,14 +30,30 @@ public record IssuerSigned
                 .Apply(ValidNameSpaces(issuerSigned))
                 .Apply(ValidIssuerAuth(issuerSigned))
             );
+}
 
-    public CBORObject Encode()
+public static class IssuerSignedFun
+{
+    public static CBORObject ToCbor(this IssuerSigned issuerSigned)
     {
         var cbor = CBORObject.NewMap();
         
-        cbor[NameSpacesLabel] = IssuerNameSpaces.ToCbor();
-        cbor[IssuerAuthLabel] = IssuerAuth.Encode();
+        cbor[NameSpacesLabel] = issuerSigned.IssuerNameSpaces.ToCbor();
+        cbor[IssuerAuthLabel] = issuerSigned.IssuerAuth.Encode();
 
         return cbor;
     }
+
+    public static IssuerSigned WithDeviceKey(
+        this IssuerSigned issuerSigned,
+        DeviceKeyInfo deviceKeyInfo) => issuerSigned with
+    {
+        IssuerAuth = issuerSigned.IssuerAuth with
+        {
+            Payload = issuerSigned.IssuerAuth.Payload with
+            {
+                DeviceKeyInfo = deviceKeyInfo
+            }
+        }
+    };
 }
