@@ -1,7 +1,6 @@
 using System.Text;
 using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json;
-using Org.BouncyCastle.Asn1;
 using WalletFramework.Core.Cryptography.Abstractions;
 using WalletFramework.Core.Cryptography.Models;
 
@@ -23,12 +22,8 @@ public class SdJwtSignerService : ISdJwtSignerService
 
         if (string.Equals(type, "openid4vci-proof+jwt", StringComparison.OrdinalIgnoreCase))
         {
-            var jwkSerialized = await _keyStore.LoadKey(keyId);
-            var jwkDeserialized = JsonConvert.DeserializeObject(jwkSerialized);
-            if (jwkDeserialized != null)
-            {
-                header["jwk"] = jwkDeserialized;
-            }
+            var publicKey = await _keyStore.GetPublicKey(keyId);
+            header["jwk"] = publicKey.ToJwkObj();
         }
 
         var payload = new
@@ -49,23 +44,9 @@ public class SdJwtSignerService : ISdJwtSignerService
         var encodedPayload = Base64UrlEncoder.Encode(JsonConvert.SerializeObject(payload));
 
         var dataToSign = encodedHeader + "." + encodedPayload;
-        var signedData = await _keyStore.Sign(keyId, Encoding.UTF8.GetBytes(dataToSign));
-        var rawSignature = ConvertDerToRawFormat(signedData);
+        var signature = await _keyStore.Sign(keyId, Encoding.UTF8.GetBytes(dataToSign));
 
-        var encodedSignature = Base64UrlEncoder.Encode(rawSignature);
+        var encodedSignature = Base64UrlEncoder.Encode(signature);
         return encodedHeader + "." + encodedPayload + "." + encodedSignature;
-    }
-    
-    private static byte[] ConvertDerToRawFormat(byte[]? derSignature)
-    {
-        var seq = (Asn1Sequence)Asn1Object.FromByteArray(derSignature);
-        var r = ((DerInteger)seq[0]).Value;
-        var s = ((DerInteger)seq[1]).Value;
-        var rawSignature = new byte[64];
-        var rBytes = r.ToByteArrayUnsigned();
-        var sBytes = s.ToByteArrayUnsigned();
-        Array.Copy(rBytes, Math.Max(0, rBytes.Length - 32), rawSignature, 0, Math.Min(32, rBytes.Length));
-        Array.Copy(sBytes, Math.Max(0, sBytes.Length - 32), rawSignature, 32, Math.Min(32, sBytes.Length));
-        return rawSignature;
     }
 }

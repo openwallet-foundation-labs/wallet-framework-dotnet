@@ -128,12 +128,8 @@ public class DPopHttpClient : IDPopHttpClient
             { "typ", "dpop+jwt" }
         };
             
-        var jwkSerialized = await _keyStore.LoadKey(keyId);
-        var jwkDeserialized = JsonConvert.DeserializeObject(jwkSerialized);
-        if (jwkDeserialized != null)
-        {
-            header["jwk"] = jwkDeserialized;
-        }
+        var publicKey = await _keyStore.GetPublicKey(keyId);
+        header["jwk"] = publicKey.ToJwkObj();
 
         string? ath = null;
         if (!string.IsNullOrEmpty(accessToken))

@@ -17,12 +17,13 @@ public interface IKeyStore
     Task<KeyId> GenerateKey(string alg = "ES256");
 
     /// <summary>
-    ///     Asynchronously loads a key by its identifier and returns it as a JSON Web Key (JWK) containing the public key
-    ///     information.
+    ///     Gets the public key of the pair 
     /// </summary>
-    /// <param name="keyId">The identifier of the key to load.</param>
-    /// <returns>A <see cref="Task{TResult}" /> representing the loaded key as a JWK string.</returns>
-    Task<string> LoadKey(KeyId keyId);
+    /// <param name="keyId">The identifier of the key pair.</param>
+    /// <returns>
+    ///     The public key
+    /// </returns>
+    Task<PublicKey> GetPublicKey(KeyId keyId);
 
     /// <summary>
     ///     Asynchronously signs the given payload using the key identified by the provided key ID.
