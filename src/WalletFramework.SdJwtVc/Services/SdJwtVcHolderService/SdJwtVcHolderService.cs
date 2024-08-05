@@ -91,17 +91,13 @@ public class SdJwtVcHolderService : ISdJwtVcHolderService
         int skip = 0) => _recordService.SearchAsync<SdJwtRecord>(context.Wallet, query, null, count, skip);
 
     /// <inheritdoc />
-    public virtual async Task SaveAsync(IAgentContext context, SdJwtRecord record)
-    {
-        try
-        {
+    public virtual async Task AddAsync(IAgentContext context, SdJwtRecord record) => 
             await _recordService.AddAsync(context.Wallet, record);
-        }
-        catch (WalletItemAlreadyExistsException)
-        {
-            await _recordService.UpdateAsync(context.Wallet, record);
-        }
-    }
+    
+    /// <inheritdoc />
+    public virtual async Task UpdateAsync(IAgentContext context, SdJwtRecord record) => 
+        await _recordService.UpdateAsync(context.Wallet, record);
+        
 }
 
 internal static class SdJwtRecordExtensions

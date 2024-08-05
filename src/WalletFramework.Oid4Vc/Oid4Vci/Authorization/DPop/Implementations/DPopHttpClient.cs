@@ -71,6 +71,10 @@ public class DPopHttpClient : IDPopHttpClient
             httpClient.WithDPopHeader(newDpop);
             
             response = await httpClient.PostAsync(requestUri, getContent());
+            
+            config = response.Headers.TryGetValues("DPoP-Nonce", out var refreshedDpopNonce)
+                ? config with { Nonce = new DPopNonce(refreshedDpopNonce?.First()!)}
+                : config;
         }
             
         await ThrowIfInvalidGrantError(response);

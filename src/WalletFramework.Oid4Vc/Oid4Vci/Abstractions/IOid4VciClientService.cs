@@ -15,12 +15,21 @@ namespace WalletFramework.Oid4Vc.Oid4Vci.Abstractions;
 public interface IOid4VciClientService
 {
     /// <summary>
-    ///    Initiates the authorization process of the VCI authorization code flow.
+    ///    Initiates the issuer initiated authorization process of the VCI authorization code flow.
     /// </summary>
     /// <param name="offer">The offer metadata</param>
     /// <param name="clientOptions">The client options</param>
     /// <returns></returns>
     Task<Uri> InitiateAuthFlow(CredentialOfferMetadata offer, ClientOptions clientOptions);
+    
+    /// <summary>
+    ///    Initiates the wallet initiate authorization process of the VCI authorization code flow.
+    /// </summary>
+    /// <param name="uri">The issuers uri</param>
+    /// <param name="clientOptions">The client options</param>
+    /// <param name="language">Optional language tag</param>
+    /// <returns></returns>
+    Task<Uri> InitiateAuthFlow(Uri uri, ClientOptions clientOptions, Option<Locale> language);
         
     /// <summary>
     ///     Requests a verifiable credential using the authorization code flow.
@@ -29,7 +38,7 @@ public interface IOid4VciClientService
     /// <returns>
     /// A list of credentials.
     /// </returns>
-    Task<Validation<OneOf<SdJwtRecord, MdocRecord>>> RequestCredential(IssuanceSession issuanceSession);
+    Task<Validation<List<OneOf<SdJwtRecord, MdocRecord>>>> RequestCredential(IssuanceSession issuanceSession);
     
     /// <summary>
     ///     Processes a credential offer
