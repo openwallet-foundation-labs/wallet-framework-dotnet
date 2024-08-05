@@ -212,7 +212,7 @@ public class Oid4VciClientService : IOid4VciClientService
                     async mdoc =>
                     {
                         var displays = MdocFun.CreateMdocDisplays(configuration.AsT1);
-                        var record = mdoc.Decoded.ToRecord(displays);
+                        var record = mdoc.Decoded.ToRecord(displays, response.KeyId);
                         await _mdocStorage.Add(record);
                         return record;
                     }),
@@ -286,7 +286,7 @@ public class Oid4VciClientService : IOid4VciClientService
                     async mdoc =>
                     {
                         var displays = MdocFun.CreateMdocDisplays(credConfiguration.AsT1);
-                        var record = mdoc.Decoded.ToRecord(displays);
+                        var record = mdoc.Decoded.ToRecord(displays, response.KeyId);
                         await _mdocStorage.Add(record);
                         return record;
                     }),

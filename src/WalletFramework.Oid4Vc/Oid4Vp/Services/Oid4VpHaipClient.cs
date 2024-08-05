@@ -41,7 +41,9 @@ internal class Oid4VpHaipClient : IOid4VpHaipClient
 
             var descriptorMap = new DescriptorMap
             {
-                Format = "vc+sd-jwt",
+                // TODO: Fix this
+                // Format = "vc+sd-jwt",
+                Format = "mso_mdoc",
                 Path = presentationMap.Length > 1 ? "$[" + index + "]" : "$",
                 Id = presentationMap[index].inputDescriptorId,
                 PathNested = null
@@ -68,10 +70,9 @@ internal class Oid4VpHaipClient : IOid4VpHaipClient
     {
         var httpClient = _httpClientFactory.CreateClient();
         httpClient.DefaultRequestHeaders.Clear();
-            
-        var requestObject = CreateRequestObject(
-            await httpClient.GetStringAsync(haipAuthorizationRequestUri.RequestUri)
-        );
+
+        var requestObjectJson = await httpClient.GetStringAsync(haipAuthorizationRequestUri.RequestUri);
+        var requestObject = CreateRequestObject(requestObjectJson);
 
         var authRequest = requestObject.ToAuthorizationRequest();
         var clientMetadata = await FetchClientMetadata(authRequest);
@@ -79,24 +80,20 @@ internal class Oid4VpHaipClient : IOid4VpHaipClient
         return
             requestObject.ClientIdScheme.Value switch
             {
-                X509SanDns =>
-                    requestObject
-                        .ValidateJwt()
-                        .ValidateTrustChain()
-                        .ValidateSanName()
-                        .ToAuthorizationRequest()
-                        .WithX509(requestObject)
-                        .WithClientMetadata(clientMetadata),
-                RedirectUri =>
-                    requestObject
-                        .ToAuthorizationRequest()
-                        .WithClientMetadata(clientMetadata),
+                X509SanDns => requestObject
+                    .ValidateJwt()
+                    .ValidateTrustChain()
+                    .ValidateSanName()
+                    .ToAuthorizationRequest()
+                    .WithX509(requestObject)
+                    .WithClientMetadata(clientMetadata),
+                RedirectUri => requestObject
+                    .ToAuthorizationRequest()
+                    .WithClientMetadata(clientMetadata),
                 VerifierAttestation =>
                     throw new NotImplementedException("Verifier Attestation not yet implemented"),
-                _ =>
-                    throw new InvalidOperationException(
-                        $"Client ID Scheme {requestObject.ClientIdScheme} not supported"
-                    )
+                _ => throw new InvalidOperationException(
+                    $"Client ID Scheme {requestObject.ClientIdScheme} not supported")
             };
     }
         

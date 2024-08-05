@@ -26,3 +26,24 @@ public readonly struct ValueDigests
             select new ValueDigests(dict);
     }
 }
+
+public static class ValueDigestsFun
+{
+    public static CBORObject ToCbor(this ValueDigests valueDigests)
+    {
+        var cbor = CBORObject.NewMap();
+
+        foreach (var (key, digests) in valueDigests.Value)
+        {
+            var digestsCbor = CBORObject.NewMap();
+            foreach (var (digestId, digest) in digests)
+            {
+                digestsCbor.Add(digestId.Value, digest.Value);
+            }
+
+            cbor.Add(key.ToString(), digestsCbor);
+        }
+
+        return cbor;
+    }
+}

@@ -1,3 +1,4 @@
+using System.Text.Json.Serialization;
 using LanguageExt;
 using Newtonsoft.Json.Linq;
 using WalletFramework.Oid4Vc.Oid4Vci.CredConfiguration.Models;

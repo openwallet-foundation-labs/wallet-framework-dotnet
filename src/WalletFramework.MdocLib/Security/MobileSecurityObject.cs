@@ -1,5 +1,9 @@
+using System.Security.Cryptography;
+using Microsoft.IdentityModel.Tokens;
 using PeterO.Cbor;
+using WalletFramework.Core.Base64Url;
 using WalletFramework.Core.Functional;
+using WalletFramework.Core.Versioning;
 using WalletFramework.MdocLib.Cbor;
 using WalletFramework.MdocLib.Digests;
 using static WalletFramework.MdocLib.Digests.DigestAlgorithm;
@@ -21,12 +25,12 @@ public record MobileSecurityObject
 
     public ValueDigests ValueDigests { get; }
 
-    // TODO: mdoc authentication
-    // public DeviceKeyInfo DeviceKeyInfo { get; }
-
     public DocType DocType { get; }
 
     public ValidityInfo ValidityInfo { get; }
+
+    // TODO: Implement DeviceKeyInfo
+    // public DeviceKeyInfo DeviceKeyInfo { get; init; }
 
     private MobileSecurityObject(
         CborByteString byteString,
@@ -93,4 +97,58 @@ public record MobileSecurityObject
 
     public record InvalidVersionStringError(string Value, Exception E)
         : Error($"Invalid version string. Actual value is: {Value}", E);
+    
+    // TODO: Delete this
+    public CBORObject Encode()
+    {
+        var result = CBORObject.NewMap();
+
+        var version = CBORObject.FromObject(Version.ToMajorMinorString());
+        result.Add("version", version);
+
+        var digestAlgorithm = CBORObject.FromObject(DigestAlgorithm.ToString());
+        result.Add("digestAlgorithm", digestAlgorithm);
+
+        var valueDigests = ValueDigests.ToCbor();
+        result.Add("valueDigests", valueDigests);
+
+        var docType = DocType.Encode();
+        result.Add("docType", docType);
+
+        var validityInfo = ValidityInfo.ToCbor();
+        result.Add("validityInfo", validityInfo);
+
+        var deviceKeyInfo = CBORObject.NewMap();
+        
+        var deviceKey = CBORObject.NewMap();
+        var kty = CBORObject.FromObject(1);
+        var ktyV = CBORObject.FromObject(2);
+        deviceKey.Add(kty, ktyV);
+        var crv = CBORObject.FromObject(-1);
+        var crvV = CBORObject.FromObject(1);
+        deviceKey.Add(crv, crvV);
+        var x = CBORObject.FromObject(-2);
+        var byteString = CBORObject.FromObject(Bla());
+        deviceKey.Add(x, byteString);
+        var y = CBORObject.FromObject(-3);
+        var byteString2 = CBORObject.FromObject(Bla());
+        deviceKey.Add(y, byteString2);
+        deviceKeyInfo.Add("deviceKey", deviceKey);
+        
+        result.Add("deviceKeyInfo", deviceKeyInfo);
+
+        return result;
+    }
+    
+    public static byte[] Bla()
+    {
+        const int nonceLength = 32;
+        var nonceBytes = new byte[nonceLength];
+        using (var rng = new RNGCryptoServiceProvider())
+        {
+            rng.GetBytes(nonceBytes);
+        }
+
+        return nonceBytes;
+    }
 }

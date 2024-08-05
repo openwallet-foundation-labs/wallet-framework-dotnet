@@ -5,9 +5,11 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using WalletFramework.Core.Credentials;
 using WalletFramework.Core.Credentials.Abstractions;
+using WalletFramework.Core.Cryptography.Models;
 using WalletFramework.Core.Functional;
 using WalletFramework.Core.Json;
 using WalletFramework.MdocLib;
+using static WalletFramework.MdocVc.MdocRecordFun;
 
 namespace WalletFramework.MdocVc;
 
@@ -22,19 +24,23 @@ public sealed class MdocRecord : RecordBase, ICredential
         private set => Id = value;
     }
 
-    [RecordTag] public DocType DocType => Mdoc.DocType;
-
+    [RecordTag] 
+    public DocType DocType => Mdoc.DocType;
+    
     public Mdoc Mdoc { get; }
 
     public Option<List<MdocDisplay>> Displays { get; }
+    
+    public KeyId KeyId { get; }
 
     public override string TypeName => "WF.MdocRecord";
 
-    public MdocRecord(Mdoc mdoc, Option<List<MdocDisplay>> displays)
+    public MdocRecord(Mdoc mdoc, Option<List<MdocDisplay>> displays, KeyId keyId)
     {
         CredentialId = CredentialId.CreateCredentialId();
         Mdoc = mdoc;
         Displays = displays;
+        KeyId = keyId;
     }
 
 #pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
@@ -71,16 +77,20 @@ public class MdocRecordJsonConverter : JsonConverter<MdocRecord>
 public static class MdocRecordFun
 {
     private const string MdocDisplaysJsonKey = "displays";
-    public const string MdocJsonKey = "mdoc";
+    private const string MdocJsonKey = "mdoc";
+    private const string KeyIdJsonKey = "keyId";
 
     public static MdocRecord DecodeFromJson(JObject json)
     {
         var id = json[nameof(RecordBase.Id)]!.ToString();
 
         var mdocStr = json[MdocJsonKey]!.ToString();
-        var mdoc = Mdoc
-            .ValidMdoc(mdocStr)
-            .UnwrapOrThrow(new InvalidOperationException($"The MdocRecord with ID: {id} is corrupt"));
+        // TODO: Fix this
+        var mdoc2 = Mdoc
+            .ValidMdoc(mdocStr);
+            // .UnwrapOrThrow(new InvalidOperationException($"The MdocRecord with ID: {id} is corrupt"));
+
+        var mdoc = mdoc2.UnwrapOrThrow();
 
         var displays =
             from jToken in json.GetByKey(MdocDisplaysJsonKey).ToOption()
@@ -88,7 +98,11 @@ public static class MdocRecordFun
             from mdocDisplays in MdocDisplayFun.DecodeFromJson(jArray)
             select mdocDisplays;
 
-        var result = new MdocRecord(mdoc, displays)
+        var keyId = KeyId
+            .ValidKeyId(json[KeyIdJsonKey]!.ToString())
+            .UnwrapOrThrow();
+
+        var result = new MdocRecord(mdoc, displays, keyId)
         {
             Id = id
         };
@@ -101,7 +115,8 @@ public static class MdocRecordFun
         var result = new JObject
         {
             { nameof(RecordBase.Id), record.Id },
-            { MdocJsonKey, record.Mdoc.Encode() }
+            { MdocJsonKey, record.Mdoc.Encode() },
+            { KeyIdJsonKey, record.KeyId.ToString()}
         };
 
         record.Displays.IfSome(displays =>
@@ -114,9 +129,10 @@ public static class MdocRecordFun
 
             result.Add(MdocDisplaysJsonKey, displaysJson);
         });
-
+        
         return result;
     }
 
-    public static MdocRecord ToRecord(this Mdoc mdoc, Option<List<MdocDisplay>> displays) => new(mdoc, displays);
+    public static MdocRecord ToRecord(this Mdoc mdoc, Option<List<MdocDisplay>> displays, KeyId keyId) => 
+        new(mdoc, displays, keyId);
 }

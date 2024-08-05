@@ -10,6 +10,7 @@ public readonly struct ProtectedHeaders
 {
     public Dictionary<CoseLabel, Alg> Value { get; }
 
+    // TODO: this should be a normal bytestring
     public CborByteString AsCborByteString { get; }
 
     public Alg this[CoseLabel key] => Value[key];
@@ -59,9 +60,14 @@ public readonly struct ProtectedHeaders
         var cbor = CBORObject.NewMap();
     
         var algLabel = new CoseLabel(1);
-        var algValueCbor = CBORObject.FromObject(algValue.ToString());
+        // TODO: Fix this
+        CBORObject x = algLabel;
+        // TODO: string and number
+        var algValueCbor = CBORObject.FromObject(-7);
+
+        var a = CBORObject.FromObject(1);
         
-        cbor.Add(algLabel, algValueCbor);
+        cbor.Add(a, algValueCbor);
     
         var alg = new Alg(algValue);
         var dict = new Dictionary<CoseLabel, Alg> { { algLabel, alg } };

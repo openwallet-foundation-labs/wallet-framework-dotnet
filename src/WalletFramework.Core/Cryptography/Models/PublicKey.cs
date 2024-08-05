@@ -6,9 +6,9 @@ namespace WalletFramework.Core.Cryptography.Models;
 
 public record PublicKey(Base64UrlString X, Base64UrlString Y)
 {
-    public static string KeyType => "EC";
+    public string KeyType => "EC";
 
-    public static string Curve => "P-256";
+    public string Curve => "P-256";
 
     public static Validation<PublicKey> ValidPublicKey(string x, string y)
     {

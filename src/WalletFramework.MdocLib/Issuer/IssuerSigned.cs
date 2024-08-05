@@ -1,7 +1,6 @@
 using PeterO.Cbor;
 using WalletFramework.Core.Functional;
 using WalletFramework.MdocLib.Cbor;
-using WalletFramework.MdocLib.Device;
 using static WalletFramework.MdocLib.Constants;
 using static WalletFramework.MdocLib.Issuer.IssuerNameSpaces;
 using static WalletFramework.MdocLib.Issuer.IssuerAuth;
@@ -43,17 +42,4 @@ public static class IssuerSignedFun
 
         return cbor;
     }
-
-    public static IssuerSigned WithDeviceKey(
-        this IssuerSigned issuerSigned,
-        DeviceKeyInfo deviceKeyInfo) => issuerSigned with
-    {
-        IssuerAuth = issuerSigned.IssuerAuth with
-        {
-            Payload = issuerSigned.IssuerAuth.Payload with
-            {
-                DeviceKeyInfo = deviceKeyInfo
-            }
-        }
-    };
 }

@@ -10,7 +10,6 @@ public record SdJwtDisplay
     /// <summary>
     ///     Gets or sets the logo associated with this Credential.
     /// </summary>
-    [JsonProperty("logo", NullValueHandling = NullValueHandling.Ignore)]
     public SdJwtLogo? Logo { get; set; }
 
     /// <summary>

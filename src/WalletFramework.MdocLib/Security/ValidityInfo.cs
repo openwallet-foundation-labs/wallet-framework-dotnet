@@ -92,3 +92,27 @@ public struct ValidityInfo
         }
     }
 }
+
+public static class ValidityInfoFun
+{
+    public static CBORObject ToCbor(this ValidityInfo validityInfo)
+    {
+        var cbor = CBORObject.NewMap();
+        
+        var signed = CBORObject.FromObject(validityInfo.Signed);
+        cbor.Add("signed", signed);
+        
+        var validFrom = CBORObject.FromObject(validityInfo.ValidFrom);
+        cbor.Add("validFrom", validFrom);
+        
+        var validUntil = CBORObject.FromObject(validityInfo.ValidUntil);
+        cbor.Add("validUntil", validUntil);
+
+        validityInfo.ExpectedUpdate.IfSome(expectedUpdate =>
+        {
+            cbor.Add("expectedUpdate", expectedUpdate);
+        });
+
+        return cbor;
+    }
+}

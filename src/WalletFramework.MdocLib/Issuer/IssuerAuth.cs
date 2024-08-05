@@ -41,14 +41,14 @@ public record IssuerAuth
         CoseSignature signature) =>
         new(protectedHeaders, unprotectedHeaders, payload, signature);
 
-    internal static Validation<IssuerAuth> ValidIssuerAuth(CBORObject issuerSigned) =>
-        issuerSigned.GetByLabel(IssuerAuthLabel).OnSuccess(issuerAuth => 
-                Valid(Create)
-                    .Apply(ValidProtectedHeaders(issuerAuth))
-                    .Apply(ValidUnprotectedHeaders(issuerAuth))
-                    .Apply(ValidMobileSecurityObject(issuerAuth))
-                    .Apply(ValidCoseSignature(issuerAuth))
-        );
+    internal static Validation<IssuerAuth> ValidIssuerAuth(CBORObject issuerSigned) => issuerSigned
+        .GetByLabel(IssuerAuthLabel)
+        .OnSuccess(issuerAuth => 
+            Valid(Create)
+                .Apply(ValidProtectedHeaders(issuerAuth))
+                .Apply(ValidUnprotectedHeaders(issuerAuth))
+                .Apply(ValidMobileSecurityObject(issuerAuth))
+                .Apply(ValidCoseSignature(issuerAuth)));
 
     public CBORObject Encode()
     {
@@ -56,7 +56,15 @@ public record IssuerAuth
         
         cbor.Add(ProtectedHeaders.AsCborByteString);
         cbor.Add(UnprotectedHeaders.Encode());
-        cbor.Add(Payload.ByteString);
+
+        // TODO: Delete this
+        var x = Payload.Encode().ToCborByteString();
+        // cbor.Add(Payload.ToCborByteString());
+        var x2 = ((CBORObject)x).EncodeToBytes();
+        var y = CBORObject.FromObject(x2);
+        cbor.Add(y);
+        
+        // cbor.Add(Payload.ByteString);
         cbor.Add(CBORObject.FromObject(Signature.AsByteString));
 
         return cbor;

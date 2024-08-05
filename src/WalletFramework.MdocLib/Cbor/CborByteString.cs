@@ -19,7 +19,7 @@ public readonly struct CborByteString
     public CBORObject Decode() => CBORObject.DecodeFromBytes(DecodedBytes);
 
     public static implicit operator CBORObject(CborByteString cborByteString) => cborByteString.Value;
-
+    
     public static Validation<CborByteString> ValidCborByteString(CBORObject cbor)
     {
         try
@@ -40,7 +40,8 @@ public static class CborByteStringFun
     public static CborByteString ToCborByteString(this CBORObject cbor)
     {
         var byteString = cbor.EncodeToBytes();
-        var encodedByteString = CBORObject.FromObject(byteString);
+        var hexString = BitConverter.ToString(byteString).Replace("-", string.Empty);
+        var encodedByteString = CBORObject.FromObjectAndTag(byteString, 24);
 
         return CborByteString
             .ValidCborByteString(encodedByteString)

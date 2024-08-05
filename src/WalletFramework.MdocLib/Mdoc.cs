@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Security.Cryptography;
 using LanguageExt;
 using Microsoft.IdentityModel.Tokens;
@@ -18,9 +19,6 @@ public record Mdoc
     public DocType DocType { get; }
 
     public IssuerSigned IssuerSigned { get; init; }
-
-    // TODO: mdoc authentication
-    // public DeviceSigned DeviceSigned { get; }
 
     private Mdoc(DocType docType, IssuerSigned issuerSigned)
     {
@@ -48,7 +46,10 @@ public record Mdoc
         {
             try
             {
-                return CBORObject.DecodeFromBytes(bytes);
+                var result = CBORObject.DecodeFromBytes(bytes);
+                // TODO: Fix this
+                Debug.WriteLine($"Mdoc: {result} at {DateTime.Now:H:mm:ss:fff}");
+                return result;
             }
             catch (Exception e)
             {
@@ -92,7 +93,7 @@ public static class MdocFun
         var cbor = CBORObject.NewMap();
         
         cbor[DocTypeLabel] = mdoc.DocType.Encode();
-        cbor[IssuerSignedLabel] = mdoc.IssuerSigned.Encode();
+        cbor[IssuerSignedLabel] = mdoc.IssuerSigned.ToCbor();
 
         var bytes = cbor.EncodeToBytes();
         return Base64UrlEncoder.Encode(bytes);
@@ -167,6 +168,7 @@ public static class MdocFun
         }
     }
 
+    // TODO: Unpure, this can throw an exception when the namespace is not found
     public static Unit SelectivelyDisclose(
         this Mdoc mdoc,
         NameSpace nameSpace,
