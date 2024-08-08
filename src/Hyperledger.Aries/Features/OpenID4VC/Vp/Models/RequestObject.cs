@@ -92,7 +92,7 @@ namespace Hyperledger.Aries.Features.OpenId4Vc.Vp.Models
                 requestObject.GetLeafCertificate().GetEncoded()
             );
             
-            return GetSanDnsNames(x509Certificate).Any(sanDnsName => sanDnsName == requestObject.ClientId)
+            return GetSanDnsNames(x509Certificate).Any(sanDnsName => requestObject.ClientId.EndsWith(sanDnsName.Split("*").Last()))
                 ? requestObject
                 : throw new InvalidOperationException("SAN does not match Client ID");
         }
@@ -110,7 +110,7 @@ namespace Hyperledger.Aries.Features.OpenId4Vc.Vp.Models
                 var sanExtension = (AsnEncodedData)extension;
                 var sanData = sanExtension.Format(true);
 
-                foreach (var line in sanData.Split(new[] { "\r\n", "\n" }, StringSplitOptions.RemoveEmptyEntries))
+                foreach (var line in sanData.Split(new[] { "\r\n", "\n", "," }, StringSplitOptions.RemoveEmptyEntries))
                 {
                     sanNames.Add(line.Split(':', '=').Last().Trim());
                 }

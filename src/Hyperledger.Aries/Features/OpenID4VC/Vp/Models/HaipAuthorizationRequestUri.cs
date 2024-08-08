@@ -26,9 +26,6 @@ namespace Hyperledger.Aries.Features.OpenId4Vc.Vp.Models
         /// <exception cref="InvalidOperationException"></exception>
         public static HaipAuthorizationRequestUri FromUri(Uri uri)
         {
-            if (!(uri.Scheme == "haip" | uri.Scheme == "openid4vp"))
-                throw new InvalidOperationException("Invalid Scheme. Must be haip or openid4vp");
-            
             var request = uri.GetQueryParam("request_uri");
             if (string.IsNullOrEmpty(request))
                 throw new InvalidOperationException("HAIP requires request_uri parameter");
