@@ -406,21 +406,8 @@ public class Oid4VciClientService : IOid4VciClientService
         Uri credentialIssuer = issuerMetadata.CredentialIssuer;
 
         var authServerUrl = issuerMetadata.AuthorizationServers.Match(
-            servers =>
-            {
-                Uri first = servers.First();
-                return first;
-            },
-            () =>
-            {
-                string result;
-                if (string.IsNullOrWhiteSpace(credentialIssuer.AbsolutePath) || credentialIssuer.AbsolutePath == "/")
-                    result = $"{credentialIssuer.GetLeftPart(UriPartial.Authority)}/.well-known/oauth-authorization-server";
-                else
-                    result = $"{credentialIssuer.GetLeftPart(UriPartial.Authority)}/.well-known/oauth-authorization-server" + credentialIssuer.AbsolutePath.TrimEnd('/');
-
-                return new Uri(result);
-            });
+            servers => CreateAuthorizationServerMetadataUri(servers.First()),
+            () => CreateAuthorizationServerMetadataUri(credentialIssuer));
 
         var getAuthServerResponse = await _httpClient.GetAsync(authServerUrl);
 
@@ -436,5 +423,15 @@ public class Oid4VciClientService : IOid4VciClientService
                              "Failed to deserialize the authorization server metadata.");
 
         return authServer;
+    }
+    
+    private static Uri CreateAuthorizationServerMetadataUri(Uri authorizationServerUri)
+    {
+        string result;
+        if (string.IsNullOrWhiteSpace(authorizationServerUri.AbsolutePath) || authorizationServerUri.AbsolutePath == "/")
+            result = $"{authorizationServerUri.GetLeftPart(UriPartial.Authority)}/.well-known/oauth-authorization-server";
+        else
+            result = $"{authorizationServerUri.GetLeftPart(UriPartial.Authority)}/.well-known/oauth-authorization-server" + authorizationServerUri.AbsolutePath.TrimEnd('/');
+        return new Uri(result);
     }
 }
