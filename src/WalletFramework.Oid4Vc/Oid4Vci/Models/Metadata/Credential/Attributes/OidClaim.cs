@@ -1,4 +1,5 @@
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace WalletFramework.Oid4Vc.Oid4Vci.Models.Metadata.Credential.Attributes;
 
@@ -30,4 +31,8 @@ public class OidClaim
     /// </summary>
     [JsonProperty("mandatory", NullValueHandling = NullValueHandling.Ignore)]
     public string? Mandatory { get; set; }
+    
+    [JsonProperty("nested_claims", NullValueHandling = NullValueHandling.Ignore)]
+    [JsonExtensionData]
+    public Dictionary<string, JToken>? NestedClaims { get; set; }
 }
