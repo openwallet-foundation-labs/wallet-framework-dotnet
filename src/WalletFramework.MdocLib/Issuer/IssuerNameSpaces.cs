@@ -1,3 +1,4 @@
+using Newtonsoft.Json.Linq;
 using PeterO.Cbor;
 using WalletFramework.Core.Functional;
 using WalletFramework.MdocLib.Cbor;
@@ -50,5 +51,23 @@ public static class NameSpacesFun
         }
 
         return cbor;
+    }
+
+    public static JObject ToJObject(this IssuerNameSpaces issuerNameSpaces)
+    {
+        var result = new JObject();
+
+        foreach (var (nameSpace, items) in issuerNameSpaces.Value)
+        {
+            var itemsJObj = new JObject();
+            foreach (var item in items)
+            {
+                itemsJObj.Add(item.ElementId.ToString(), item.Element.ToString());
+            }
+            
+            result.Add(nameSpace.ToString(), itemsJObj);
+        }
+
+        return result;
     }
 }

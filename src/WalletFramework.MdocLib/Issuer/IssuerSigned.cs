@@ -11,7 +11,7 @@ public record IssuerSigned
 {
     public IssuerNameSpaces IssuerNameSpaces { get; }
 
-    public IssuerAuth IssuerAuth { get; init; }
+    public IssuerAuth IssuerAuth { get; }
 
     private IssuerSigned(IssuerNameSpaces issuerNameSpaces, IssuerAuth issuerAuth)
     {

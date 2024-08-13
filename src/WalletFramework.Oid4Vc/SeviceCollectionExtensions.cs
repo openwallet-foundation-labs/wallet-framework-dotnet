@@ -1,4 +1,8 @@
 using Microsoft.Extensions.DependencyInjection;
+using WalletFramework.MdocLib.Device.Abstractions;
+using WalletFramework.MdocLib.Device.Implementations;
+using WalletFramework.MdocLib.Security.Cose.Abstractions;
+using WalletFramework.MdocLib.Security.Cose.Implementations;
 using WalletFramework.Oid4Vc.Oid4Vci.Abstractions;
 using WalletFramework.Oid4Vc.Oid4Vci.AuthFlow.Abstractions;
 using WalletFramework.Oid4Vc.Oid4Vci.AuthFlow.Implementations;
@@ -28,10 +32,12 @@ public static class SeviceCollectionExtensions
     public static IServiceCollection AddOpenIdServices(this IServiceCollection builder)
     {
         builder.AddSingleton<IAuthFlowSessionStorage, AuthFlowSessionStorage>();
+        builder.AddSingleton<ICoseSign1Signer, CoseSign1Signer>();
         builder.AddSingleton<ICredentialOfferService, CredentialOfferService>();
         builder.AddSingleton<ICredentialRequestService, CredentialRequestService>();
         builder.AddSingleton<IDPopHttpClient, DPopHttpClient>();
         builder.AddSingleton<IIssuerMetadataService, IssuerMetadataService>();
+        builder.AddSingleton<IMdocAuthenticationService, MdocAuthenticationService>();
         builder.AddSingleton<IMdocStorage, MdocStorage>();
         builder.AddSingleton<IOid4VciClientService, Oid4VciClientService>();
         builder.AddSingleton<IOid4VpClientService, Oid4VpClientService>();

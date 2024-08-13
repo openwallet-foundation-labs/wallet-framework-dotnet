@@ -207,23 +207,23 @@ public static class MdocFun
             return new DocTypeInMdocDoesNotMatchWithDocTypeInMsoError(mdocDocType, msoDocType);
         }
     }
-
-    // TODO: Unpure, this can throw an exception when the namespace is not found
-    public static Unit SelectivelyDisclose(
+    
+    // TODO: Unpure, this can throw an exception when the namespace is not found, also mutates the dictionary
+    public static Mdoc SelectivelyDisclose(
         this Mdoc mdoc,
-        NameSpace nameSpace,
-        IEnumerable<ElementIdentifier> elementsToDisclose)
+        Dictionary<NameSpace, List<ElementIdentifier>> elementsToDisclose)
     {
-        var disclosures = mdoc
-            .IssuerSigned
-            .IssuerNameSpaces[nameSpace]
-            .Filter(item => elementsToDisclose.Contains(item.ElementId))
-            .ToList();
-
         var nameSpaces = mdoc.IssuerSigned.IssuerNameSpaces;
-        nameSpaces.Value[nameSpace] = disclosures;
+        foreach (var (nameSpace, elements) in elementsToDisclose)
+        {
+            var disclosures = nameSpaces[nameSpace]
+                .Filter(item => elements.Contains(item.ElementId))
+                .ToList();
+            
+            nameSpaces.Value[nameSpace] = disclosures;
+        }
 
-        return Unit.Default;
+        return mdoc;
     }
 
     // TODO: Implement this, if needed
