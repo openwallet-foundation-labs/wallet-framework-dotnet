@@ -22,7 +22,11 @@ namespace WalletFramework.Oid4Vc.Tests.Oid4Vp.Services
                 {
                     ["logo_uri"] = "https://some.de/logo",
                     ["client_name"] = "Some Verifier",
-                    ["redirect_uris"] = new JArray("https://verifier.com/redirect-uri")
+                    ["client_uri"] = "https://some.de",
+                    ["contacts"] = new JArray("Any contact"),
+                    ["redirect_uris"] = new JArray("https://verifier.com/redirect-uri"),
+                    ["policy_uri"] = "https://some.de/policy",
+                    ["tos_uri"] = "https://some.de/tos",
                 }
                 .ToString();
         
@@ -62,7 +66,11 @@ namespace WalletFramework.Oid4Vc.Tests.Oid4Vp.Services
             authorizationRequest.Nonce.Should().Be("87554784260280280442092184171274132458");
             authorizationRequest.PresentationDefinition.Id.Should().Be("4dd1c26a-2f46-43ae-a711-70888c93fb4f");
             authorizationRequest.ClientMetadata.ClientName.Should().Be("Some Verifier");
+            authorizationRequest.ClientMetadata.ClientUri.Should().Be("https://some.de");
+            authorizationRequest.ClientMetadata.Contacts.First().Should().Be("Any contact");
             authorizationRequest.ClientMetadata.LogoUri.Should().Be("https://some.de/logo");
+            authorizationRequest.ClientMetadata.PolicyUri.Should().Be("https://some.de/policy");
+            authorizationRequest.ClientMetadata.TosUri.Should().Be("https://some.de/tos");
             authorizationRequest.ClientMetadata.RedirectUris.First().Should().Be("https://verifier.com/redirect-uri");
 
             var inputDescriptor = authorizationRequest.PresentationDefinition.InputDescriptors.First();
