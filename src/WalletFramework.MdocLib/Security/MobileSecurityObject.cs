@@ -1,6 +1,7 @@
 using PeterO.Cbor;
 using WalletFramework.Core.Functional;
 using WalletFramework.MdocLib.Cbor;
+using WalletFramework.MdocLib.Device;
 using WalletFramework.MdocLib.Digests;
 using static WalletFramework.MdocLib.Digests.DigestAlgorithm;
 using static WalletFramework.MdocLib.DocType;
@@ -8,6 +9,7 @@ using static WalletFramework.MdocLib.Security.ValidityInfo;
 using static WalletFramework.MdocLib.Cbor.CborByteString;
 using static WalletFramework.MdocLib.Digests.ValueDigests;
 using static WalletFramework.Core.Functional.ValidationFun;
+using static WalletFramework.MdocLib.Device.DeviceKeyInfo;
 
 namespace WalletFramework.MdocLib.Security;
 
@@ -21,12 +23,11 @@ public record MobileSecurityObject
 
     public ValueDigests ValueDigests { get; }
 
-    // TODO: mdoc authentication
-    // public DeviceKeyInfo DeviceKeyInfo { get; }
-
     public DocType DocType { get; }
 
     public ValidityInfo ValidityInfo { get; }
+
+    public DeviceKeyInfo DeviceKeyInfo { get; init; }
 
     private MobileSecurityObject(
         CborByteString byteString,
@@ -34,7 +35,8 @@ public record MobileSecurityObject
         DigestAlgorithm digestAlgorithm,
         ValueDigests valueDigests,
         DocType docType,
-        ValidityInfo validityInfo)
+        ValidityInfo validityInfo, 
+        DeviceKeyInfo deviceKeyInfo)
     {
         ByteString = byteString;
         Version = version;
@@ -42,6 +44,7 @@ public record MobileSecurityObject
         ValueDigests = valueDigests;
         DocType = docType;
         ValidityInfo = validityInfo;
+        DeviceKeyInfo = deviceKeyInfo;
     }
 
     private static MobileSecurityObject Create(
@@ -50,22 +53,23 @@ public record MobileSecurityObject
         DigestAlgorithm digestAlgorithm,
         ValueDigests valueDigests,
         DocType docType,
-        ValidityInfo validityInfo) =>
-        new(byteString, version, digestAlgorithm, valueDigests, docType, validityInfo);
+        ValidityInfo validityInfo,
+        DeviceKeyInfo deviceKeyInfo) =>
+        new(byteString, version, digestAlgorithm, valueDigests, docType, validityInfo, deviceKeyInfo);
 
     internal static Validation<MobileSecurityObject> ValidMobileSecurityObject(CBORObject issuerAuth) =>
-        from payloadEncoded in issuerAuth.GetByIndex(2)
-        from payloadEncodedByteString in ValidCborByteString(payloadEncoded)
-        let payloadDecoded = payloadEncodedByteString.Decode()
-        from taggedByteString in ValidCborByteString(payloadDecoded)
-        let mso = taggedByteString.Decode()
+        from msoWrapped in issuerAuth.GetByIndex(2)
+        from msoWrappedByteString in ValidCborByteString(msoWrapped)
+        from msoByteString in ValidCborByteString(msoWrappedByteString.Decode())
+        let mso = msoByteString.Decode()
         from result in Valid(Create)
-            .Apply(payloadEncodedByteString)
+            .Apply(msoWrappedByteString)
             .Apply(ValidMsoVersion(mso))
             .Apply(ValidDigestAlgorithm(mso))
             .Apply(mso.GetByLabel("valueDigests").OnSuccess(ValidValueDigests))
             .Apply(ValidDoctype(mso))
             .Apply(ValidValidityInfo(mso))
+            .Apply(mso.GetByLabel("deviceKeyInfo").OnSuccess(ValidDeviceKeyInfo))
         select result;
 
     private static Validation<Version> ValidMsoVersion(CBORObject issuerAuth) =>

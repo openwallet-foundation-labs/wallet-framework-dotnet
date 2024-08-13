@@ -19,6 +19,13 @@ public record InvalidDateTimeStringError(string Name, Exception E)
 public record CborIsNotAByteStringError(string Name, Exception E)
     : Error($"The value of *{Name}* is not byte String", E);
 
+public record CborIsNotANumberError : Error
+{
+    public CborIsNotANumberError(string cborStr, Exception e) : base($"CBOR Value is not a number. Actual value is: {cborStr}", e)
+    {
+    }
+}
+
 public record CborIsNotAMapOrAnArrayError : Error
 {
     public CborIsNotAMapOrAnArrayError(

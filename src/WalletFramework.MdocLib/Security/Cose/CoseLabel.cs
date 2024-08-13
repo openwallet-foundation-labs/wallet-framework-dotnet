@@ -6,7 +6,7 @@ namespace WalletFramework.MdocLib.Security.Cose;
 
 public readonly struct CoseLabel
 {
-    public CBORObject AsCbor => CBORObject.FromObject(Value);
+    public CBORObject AsCbor => CBORObject.FromObject(Id);
     
     private int Id { get; }
 

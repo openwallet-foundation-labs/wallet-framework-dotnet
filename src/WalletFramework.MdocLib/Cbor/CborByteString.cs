@@ -4,9 +4,8 @@ using WalletFramework.Core.Functional;
 namespace WalletFramework.MdocLib.Cbor;
 
 /// <summary>
-///     A CBOR object which is a byte string which is additionally CBOR encoded.
+///     A CBOR encoded byte string which can be tagged or untagged
 /// </summary>
-// TODO: Refactor into tagged (wrapped) byte string and untagged (non-wrapped) 
 public readonly struct CborByteString
 {
     private CBORObject Value { get; }
@@ -18,6 +17,8 @@ public readonly struct CborByteString
     private CborByteString(CBORObject value) => Value = value;
 
     public CBORObject Decode() => CBORObject.DecodeFromBytes(DecodedBytes);
+
+    public CBORObject AsCbor => Value;
 
     public static implicit operator CBORObject(CborByteString cborByteString) => cborByteString.Value;
     
@@ -40,9 +41,7 @@ public static class CborByteStringFun
 {
     public static CborByteString ToCborByteString(this CBORObject cbor)
     {
-        var byteString = cbor.EncodeToBytes();
-        var encodedByteString = CBORObject.FromObject(byteString);
-
+        var encodedByteString = CBORObject.FromObject(cbor.EncodeToBytes());
         return CborByteString
             .ValidCborByteString(encodedByteString)
             .UnwrapOrThrow(new InvalidOperationException("CborByteString implementation is corrupt"));
@@ -50,9 +49,7 @@ public static class CborByteStringFun
     
     public static CborByteString ToTaggedCborByteString(this CBORObject cbor)
     {
-        CBORObject encodedByteString = cbor.ToCborByteString();
-        var wrappedByteString = CBORObject.FromObjectAndTag(encodedByteString.EncodeToBytes(), 24);
-
+        var wrappedByteString = CBORObject.FromObjectAndTag(cbor.EncodeToBytes(), 24);
         return CborByteString
             .ValidCborByteString(wrappedByteString)
             .UnwrapOrThrow(new InvalidOperationException("CborByteString implementation is corrupt"));

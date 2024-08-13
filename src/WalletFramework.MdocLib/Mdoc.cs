@@ -132,7 +132,7 @@ public static class MdocFun
     {
         var cbor = CBORObject.NewMap();
         
-        cbor[DocTypeLabel] = mdoc.DocType.Encode();
+        cbor[DocTypeLabel] = mdoc.DocType.ToCbor();
         cbor[IssuerSignedLabel] = mdoc.IssuerSigned.ToCbor();
 
         var bytes = cbor.EncodeToBytes();

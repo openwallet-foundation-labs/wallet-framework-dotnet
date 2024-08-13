@@ -43,5 +43,5 @@ public readonly struct DocType
         }
     }
 
-    public CBORObject Encode() => CBORObject.FromObject(Value);
+    public CBORObject ToCbor() => CBORObject.FromObject(Value);
 }
