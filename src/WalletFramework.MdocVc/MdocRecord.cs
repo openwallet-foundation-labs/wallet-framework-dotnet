@@ -77,8 +77,8 @@ public class MdocRecordJsonConverter : JsonConverter<MdocRecord>
 public static class MdocRecordFun
 {
     private const string MdocDisplaysJsonKey = "displays";
-    private const string MdocJsonKey = "mdoc";
-    private const string KeyIdJsonKey = "keyId";
+    public const string MdocJsonKey = "mdoc";
+    public const string KeyIdJsonKey = "keyId";
 
     public static MdocRecord DecodeFromJson(JObject json)
     {

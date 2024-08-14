@@ -2,14 +2,12 @@ using Newtonsoft.Json.Linq;
 using WalletFramework.Core.Functional;
 using WalletFramework.MdocLib;
 using WalletFramework.MdocLib.Elements;
-using WalletFramework.MdocLib.Issuer;
 using WalletFramework.Oid4Vc.Oid4Vci.CredConfiguration.Models;
 using WalletFramework.Oid4Vc.Oid4Vci.CredConfiguration.Models.Mdoc;
 using WalletFramework.Oid4Vc.Tests.Oid4Vci.Localization.Samples;
 using static WalletFramework.Oid4Vc.Oid4Vci.CredConfiguration.Models.Mdoc.CryptographicCurve;
 using static WalletFramework.Oid4Vc.Oid4Vci.CredConfiguration.Models.Mdoc.CryptographicSuite;
 using static WalletFramework.Oid4Vc.Oid4Vci.CredConfiguration.Models.Mdoc.ElementDisplay;
-using static WalletFramework.MdocLib.Issuer.ElementIdentifier;
 using static WalletFramework.Oid4Vc.Oid4Vci.CredConfiguration.Models.Mdoc.ElementName;
 using static WalletFramework.MdocLib.DocType;
 using static WalletFramework.Oid4Vc.Oid4Vci.CredConfiguration.Models.Format;
@@ -39,7 +37,7 @@ public static class MdocConfigurationSample
                                                     throw new InvalidOperationException();
 
     public static ElementIdentifier GivenName =>
-        ValidElementIdentifier("given_name").UnwrapOrThrow(new InvalidOperationException());
+        ElementIdentifier.ValidElementIdentifier("given_name").UnwrapOrThrow(new InvalidOperationException());
 
     public static Format Format => ValidFormat("mso_mdoc").UnwrapOrThrow(new InvalidOperationException());
 
