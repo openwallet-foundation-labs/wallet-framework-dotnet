@@ -15,6 +15,7 @@ public record DeviceResponse(
 
 public static class DeviceResponseFun
 {
+    // TODO: Currently only supports one document
     public static DeviceResponse BuildDeviceResponse(this Document document)
     {
         // TODO: Error handling if no suited mdoc could be found
@@ -26,12 +27,11 @@ public static class DeviceResponseFun
         return new DeviceResponse(version, documents, documentErrors, statusCode);
     }
 
-    public static CBORObject ToCbor(this DeviceResponse deviceResponse)
+    private static CBORObject ToCbor(this DeviceResponse deviceResponse)
     {
         var cbor = CBORObject.NewMap();
 
-        var versionLabel = CBORObject.FromObject("version");
-        cbor.Add(versionLabel, deviceResponse.Version.ToMajorMinorString());
+        cbor.Add("version", deviceResponse.Version.ToMajorMinorString());
 
         deviceResponse.Documents.IfSome(documents =>
         {
@@ -39,8 +39,7 @@ public static class DeviceResponseFun
             foreach (var document in documents) 
                 documentsArray.Add(document.ToCbor());
             
-            var documentsLabel = CBORObject.FromObject("documents");
-            cbor.Add(documentsLabel, documentsArray);
+            cbor.Add("documents", documentsArray);
         });
         
         // TODO: Encode documentErrors, when its implemented

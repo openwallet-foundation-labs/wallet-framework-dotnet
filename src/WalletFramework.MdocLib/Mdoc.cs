@@ -152,7 +152,7 @@ public static class MdocFun
                 var issuerSignedItem = nameSpaceAndItem.item;
                     
                 byte[] digest = mdoc.IssuerSigned.IssuerAuth.Payload.ValueDigests[nameSpace][issuerSignedItem.DigestId];
-                byte[] bytes = issuerSignedItem.ByteString.EncodedBytes;
+                byte[] bytes = issuerSignedItem.ByteString.AsCbor.EncodeToBytes();
                 
                 DigestAlgorithmValue algorithm = mdoc.IssuerSigned.IssuerAuth.Payload.DigestAlgorithm;
                 HashAlgorithm hashAlgorithm = algorithm switch

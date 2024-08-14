@@ -9,6 +9,7 @@ using static WalletFramework.Core.Functional.ValidationFun;
 using static WalletFramework.MdocLib.Security.Random;
 using static WalletFramework.MdocLib.Elements.ElementIdentifier;
 using static WalletFramework.MdocLib.Elements.Element;
+using Random = WalletFramework.MdocLib.Security.Random;
 
 namespace WalletFramework.MdocLib.Issuer;
 
@@ -16,7 +17,7 @@ public record IssuerSignedItem
 {
     public CborByteString ByteString { get; }
 
-    public Security.Random RandomValue { get; }
+    public Random RandomValue { get; }
 
     public ElementIdentifier ElementId { get; }
 
@@ -27,7 +28,7 @@ public record IssuerSignedItem
     private IssuerSignedItem(
         CborByteString byteString,
         DigestId digestId,
-        Security.Random randomValue,
+        Random randomValue,
         ElementIdentifier elementId,
         Element element)
     {
@@ -41,7 +42,7 @@ public record IssuerSignedItem
     private static IssuerSignedItem Create(
         CborByteString byteString,
         DigestId digestId,
-        Security.Random randomValue,
+        Random randomValue,
         ElementIdentifier elementId,
         Element value) =>
         new(byteString, digestId, randomValue, elementId, value);

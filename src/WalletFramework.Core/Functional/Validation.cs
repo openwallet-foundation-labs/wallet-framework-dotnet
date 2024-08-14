@@ -218,7 +218,7 @@ public static class ValidationFun
     
     public static Validation<Unit> OnSuccess<T1>(this Validation<T1> validation, Func<T1, Validation<Unit>> onSucc) =>
         from t1 in validation
-        from r in  onSucc(t1)
+        from r in onSucc(t1)
         select r;
 
     public static Task<Validation<Unit>> OnSuccess<T1>(this Validation<T1> validation, Func<T1, Task> onSucc)

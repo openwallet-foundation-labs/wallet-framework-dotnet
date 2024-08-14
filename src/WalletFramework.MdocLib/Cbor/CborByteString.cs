@@ -10,13 +10,9 @@ public readonly struct CborByteString
 {
     private CBORObject Value { get; }
 
-    public byte[] EncodedBytes => Value.EncodeToBytes();
-
-    private byte[] DecodedBytes => Value.GetByteString();
-
     private CborByteString(CBORObject value) => Value = value;
 
-    public CBORObject Decode() => CBORObject.DecodeFromBytes(DecodedBytes);
+    public CBORObject Decode() => CBORObject.DecodeFromBytes(Value.GetByteString());
 
     public CBORObject AsCbor => Value;
 

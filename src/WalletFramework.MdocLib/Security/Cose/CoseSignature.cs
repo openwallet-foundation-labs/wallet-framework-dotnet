@@ -6,11 +6,13 @@ namespace WalletFramework.MdocLib.Security.Cose;
 
 public readonly struct CoseSignature
 {
-    public byte[] AsByteArray { get; }
+    private byte[] Value { get; }
+
+    public byte[] AsByteArray => Value;
 
     public CBORObject AsCbor => CBORObject.FromObject(AsByteArray);
     
-    public CoseSignature(byte[] byteArray) => AsByteArray = byteArray;
+    public CoseSignature(byte[] byteArray) => Value = byteArray;
 
     internal static Validation<CoseSignature> ValidCoseSignature(CBORObject issuerAuth) => issuerAuth
         .GetByIndex(3)

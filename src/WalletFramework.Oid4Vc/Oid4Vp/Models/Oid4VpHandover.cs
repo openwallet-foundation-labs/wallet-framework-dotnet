@@ -17,8 +17,8 @@ public record Oid4VpHandover(
     {
         var result = CBORObject.NewArray();
         
-        result.Add(ClientIdSha256Hash.AsByteString);
-        result.Add(ResponseUriSha256Hash.AsByteString);
+        result.Add(ClientIdSha256Hash.AsBytes);
+        result.Add(ResponseUriSha256Hash.AsBytes);
         result.Add(Nonce);
 
         return result;

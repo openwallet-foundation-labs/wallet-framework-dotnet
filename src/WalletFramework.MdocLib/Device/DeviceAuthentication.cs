@@ -22,7 +22,7 @@ public static class DeviceAuthenticationFun
         var sessionTranscript = deviceAuthentication.SessionTranscript.ToCbor();
         result.Add(sessionTranscript);
 
-        var docType = CBORObject.FromObject(deviceAuthentication.DocType.ToString());
+        var docType = deviceAuthentication.DocType.ToCbor();
         result.Add(docType);
 
         var nameSpaces = deviceAuthentication.DeviceNameSpaces.ToCborByteString();
