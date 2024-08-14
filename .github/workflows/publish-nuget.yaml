@@ -38,7 +38,7 @@ jobs:
                 echo "APP_VERSION=$VERSION$SUFFIX" >> $GITHUB_ENV
 
             - name: Setup NuGet
-              uses: NuGet/setup-nuget@v6.11.0
+              uses: NuGet/setup-nuget@v6.10.2
 
             - name: Restore dependencies
               run: nuget restore $SOLUTION
