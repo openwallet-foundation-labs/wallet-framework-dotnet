@@ -24,7 +24,7 @@ public static class SdJwtRecordExtensions
             {
                 var claimMetadatas = new Dictionary<string, ClaimMetadata> { { claimMetadata.Key, claimMetadata.Value } };
 
-                if (!claimMetadata.Value.NestedClaims.IsNullOrEmpty())
+                if (!(claimMetadata.Value.NestedClaims == null || claimMetadata.Value.NestedClaims.Count == 0))
                 {
                     foreach (var nested in claimMetadata.Value.NestedClaims!)
                     {
