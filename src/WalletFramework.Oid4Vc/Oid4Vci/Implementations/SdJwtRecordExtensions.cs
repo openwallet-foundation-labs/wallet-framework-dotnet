@@ -5,6 +5,7 @@ using WalletFramework.Core.Functional;
 using WalletFramework.Oid4Vc.Oid4Vci.CredConfiguration.Models.SdJwt;
 using WalletFramework.Oid4Vc.Oid4Vci.Issuer.Models;
 using WalletFramework.SdJwtVc.Models.Credential;
+using WalletFramework.SdJwtVc.Models.Credential.Attributes;
 using WalletFramework.SdJwtVc.Models.Records;
 
 namespace WalletFramework.Oid4Vc.Oid4Vci.Implementations;
@@ -19,9 +20,22 @@ public static class SdJwtRecordExtensions
     {
         var claims = configuration
             .Claims?
-            .Select(pair => (pair.Key, pair.Value))
-            .ToDictionary(pair => pair.Key, pair => pair.Value);
+            .SelectMany(claimMetadata => 
+            {
+                var claimMetadatas = new Dictionary<string, ClaimMetadata> { { claimMetadata.Key, claimMetadata.Value } };
 
+                if (!claimMetadata.Value.NestedClaims.IsNullOrEmpty())
+                {
+                    foreach (var nested in claimMetadata.Value.NestedClaims!)
+                    {
+                        claimMetadatas.Add(claimMetadata.Key + "." + nested.Key, nested.Value?.ToObject<ClaimMetadata>()!);
+                    }
+                }
+                
+                return claimMetadatas;
+            })
+            .ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
+        
         var display = 
             from displays in configuration.CredentialConfiguration.Display
             select displays.Select(credentialDisplay =>
@@ -49,7 +63,7 @@ public static class SdJwtRecordExtensions
             .ToDictionary(
                  issuerDisplay => issuerDisplay.Locale.ToNullable()?.ToString(),
                  issuerDisplay => issuerDisplay.Name.ToNullable()?.ToString());
-
+        
         var record = new SdJwtRecord(
             sdJwtDoc,
             claims!,
