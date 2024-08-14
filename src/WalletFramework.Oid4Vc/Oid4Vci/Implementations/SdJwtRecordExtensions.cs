@@ -22,15 +22,13 @@ public static class SdJwtRecordExtensions
             .Select(pair => (pair.Key, pair.Value))
             .ToDictionary(pair => pair.Key, pair => pair.Value);
 
-        var display = configuration
-            .CredentialConfiguration
-            .Display
-            .ToNullable()?
-            .Select(credentialDisplay =>
+        var display = 
+            from displays in configuration.CredentialConfiguration.Display
+            select displays.Select(credentialDisplay =>
             {
                 var backgroundColor = credentialDisplay.BackgroundColor.ToNullable() ?? Color.White;
                 var textColor = credentialDisplay.TextColor.ToNullable() ?? Color.Black;
-
+            
                 return new SdJwtDisplay
                 {
                     Logo = new SdJwtDisplay.SdJwtLogo
@@ -43,8 +41,7 @@ public static class SdJwtRecordExtensions
                     Locale = credentialDisplay.Locale.ToNullable(),
                     TextColor = textColor
                 };
-            })
-            .ToList();
+            }).ToList();
 
         var issuerName = issuerMetadata
             .Display
@@ -56,7 +53,7 @@ public static class SdJwtRecordExtensions
         var record = new SdJwtRecord(
             sdJwtDoc,
             claims!,
-            display!,
+            display.Fallback(new List<SdJwtDisplay>()),
             issuerName!,
             keyId);
 
