@@ -13,8 +13,9 @@ public interface IKeyStore
     ///     Asynchronously generates a key for the specified algorithm and returns the key identifier.
     /// </summary>
     /// <param name="alg">The algorithm for key generation (default is "ES256").</param>
+    /// <param name="isPermanent">If false creates an ephemeral key.</param>
     /// <returns>A <see cref="Task{TResult}" /> representing the generated key's identifier as a string.</returns>
-    Task<KeyId> GenerateKey(string alg = "ES256");
+    Task<KeyId> GenerateKey(string alg = "ES256", bool isPermanent = true);
 
     /// <summary>
     ///     Asynchronously loads a key by its identifier and returns it as a JSON Web Key (JWK) containing the public key
