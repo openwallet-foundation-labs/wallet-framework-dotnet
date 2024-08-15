@@ -34,11 +34,6 @@ public sealed class SdJwtRecord : RecordBase, ICredential
     public Dictionary<string, string> Claims { get; set; }
 
     /// <summary>
-    ///     Gets or sets the name of the issuer in different languages.
-    /// </summary>
-    public Dictionary<string, string>? IssuerName { get; set; }
-
-    /// <summary>
     ///     Gets the disclosures.
     /// </summary>
     public ImmutableArray<string> Disclosures { get; set; }
@@ -110,7 +105,6 @@ public sealed class SdJwtRecord : RecordBase, ICredential
     /// </summary>
     /// <param name="displayedAttributes">The attributes that should be displayed.</param>
     /// <param name="claims">The claims made.</param>
-    /// <param name="issuerName">The name of the issuer in different languages.</param>
     /// <param name="disclosures">The disclosures.</param>
     /// <param name="display">The display of the credential.</param>
     /// <param name="issuerId"></param>
@@ -119,7 +113,6 @@ public sealed class SdJwtRecord : RecordBase, ICredential
     public SdJwtRecord(
         Dictionary<string, ClaimMetadata> displayedAttributes,
         Dictionary<string, string> claims,
-        Dictionary<string, string> issuerName,
         ImmutableArray<string> disclosures,
         List<SdJwtDisplay> display,
         string issuerId,
@@ -132,8 +125,6 @@ public sealed class SdJwtRecord : RecordBase, ICredential
         DisplayedAttributes = displayedAttributes;
             
         EncodedIssuerSignedJwt = encodedIssuerSignedJwt;
-            
-        IssuerName = issuerName;
 
         IssuerId = issuerId;
     }
@@ -142,7 +133,6 @@ public sealed class SdJwtRecord : RecordBase, ICredential
         string serializedSdJwtWithDisclosures,
         Dictionary<string, ClaimMetadata> displayedAttributes,
         List<SdJwtDisplay> display,
-        Dictionary<string, string> issuerName,
         KeyId keyId)
     {
         Id = Guid.NewGuid().ToString();
@@ -153,8 +143,6 @@ public sealed class SdJwtRecord : RecordBase, ICredential
         Claims = sdJwtDoc.GetAllSubjectClaims();
         Display = display;
         DisplayedAttributes = displayedAttributes;
-            
-        IssuerName = issuerName;
             
         KeyId = keyId;
         IssuerId = sdJwtDoc.UnsecuredPayload.SelectToken("iss")?.Value<string>() 
@@ -167,7 +155,6 @@ public sealed class SdJwtRecord : RecordBase, ICredential
         SdJwtDoc sdJwtDoc,
         Dictionary<string, ClaimMetadata> displayedAttributes,
         List<SdJwtDisplay> display,
-        Dictionary<string, string> issuerName,
         KeyId keyId)
     {
         Id = Guid.NewGuid().ToString();
@@ -177,8 +164,6 @@ public sealed class SdJwtRecord : RecordBase, ICredential
         Claims = sdJwtDoc.GetAllSubjectClaims();
         Display = display;
         DisplayedAttributes = displayedAttributes;
-            
-        IssuerName = issuerName;
             
         KeyId = keyId;
         IssuerId = sdJwtDoc.UnsecuredPayload.SelectToken("iss")?.Value<string>() 

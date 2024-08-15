@@ -279,8 +279,7 @@ namespace WalletFramework.Oid4Vc.Tests.PresentationExchange.Services
             var record = new SdJwtRecord(
                 issuedSdJwt.IssuanceFormat,
                 new Dictionary<string, ClaimMetadata>(),
-                new List<SdJwtDisplay>(), 
-                new Dictionary<string, string>(),
+                new List<SdJwtDisplay>(),
                 keyId);
             
             return record;

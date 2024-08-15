@@ -60,19 +60,11 @@ public static class SdJwtRecordExtensions
                 };
             })
             .ToList();
-
-        var issuerName = issuerMetadata
-            .Display
-            .ToNullable()?
-            .ToDictionary(
-                 issuerDisplay => issuerDisplay.Locale.ToNullable()?.ToString(),
-                 issuerDisplay => issuerDisplay.Name.ToNullable()?.ToString());
         
         var record = new SdJwtRecord(
             sdJwtDoc,
             claims!,
             display!,
-            issuerName!,
             keyId);
 
         return record;
