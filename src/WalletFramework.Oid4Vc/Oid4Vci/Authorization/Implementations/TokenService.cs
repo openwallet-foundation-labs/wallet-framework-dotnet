@@ -30,7 +30,7 @@ internal class TokenService : ITokenService
     {
         if (metadata.IsDPoPSupported)
         {
-            var keyId = await _keyStore.GenerateKey();
+            var keyId = await _keyStore.GenerateKey(isPermanent: false);
             
             var config = new DPopConfig(keyId, metadata.TokenEndpoint);
 
