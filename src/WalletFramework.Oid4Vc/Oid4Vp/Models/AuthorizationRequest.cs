@@ -12,6 +12,7 @@ namespace WalletFramework.Oid4Vc.Oid4Vp.Models;
 public record AuthorizationRequest
 {
     private const string DirectPost = "direct_post";
+    private const string DirectPostJwt = "direct_post.jwt";
 
     private const string VpToken = "vp_token";
 
@@ -130,7 +131,7 @@ public record AuthorizationRequest
 
         return
             responseType == VpToken
-            && responseMode == DirectPost
+            && responseMode == DirectPost || responseMode == DirectPostJwt
             && !string.IsNullOrEmpty(responseUri)
             && redirectUri is null
             && (clientIdScheme is X509SanDnsScheme or VerifierAttestationScheme
