@@ -31,7 +31,7 @@ public interface IKeyStore
     /// <param name="keyId">The identifier of the key to use for signing.</param>
     /// <param name="payload">The payload to sign.</param>
     /// <returns>A <see cref="Task{TResult}" /> representing the signed payload as a byte array.</returns>
-    Task<byte[]> Sign(KeyId keyId, byte[] payload);
+    Task<RawSignature> Sign(KeyId keyId, byte[] payload);
         
     /// <summary>
     ///     Asynchronously deletes the key associated with the provided key ID.
