@@ -3,6 +3,7 @@ using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json;
 using WalletFramework.Core.Cryptography.Abstractions;
 using WalletFramework.Core.Cryptography.Models;
+using WalletFramework.Core.String;
 
 namespace WalletFramework.SdJwtVc.Services.SdJwtVcHolderService;
 
