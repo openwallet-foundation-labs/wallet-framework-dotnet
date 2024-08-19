@@ -1,6 +1,7 @@
 using Hyperledger.Aries.Agents;
 using Microsoft.Extensions.Logging;
 using SD_JWT.Models;
+using WalletFramework.Oid4Vc.ClientAttestation;
 using WalletFramework.Oid4Vc.Oid4Vp.Models;
 using WalletFramework.Oid4Vc.Oid4Vp.PresentationExchange.Services;
 using WalletFramework.SdJwtVc.Models.Records;
@@ -67,7 +68,8 @@ public class Oid4VpClientService : IOid4VpClientService
     public async Task<Uri?> SendAuthorizationResponseAsync(
         IAgentContext agentContext,
         AuthorizationRequest authorizationRequest,
-        SelectedCredential[] selectedCredentials)
+        SelectedCredential[] selectedCredentials,
+        CombinedWalletAttestation? clientAttestation = null)
     {
         var createPresentationMaps =
             from credential in selectedCredentials
@@ -98,6 +100,8 @@ public class Oid4VpClientService : IOid4VpClientService
 
         var httpClient = _httpClientFactory.CreateClient();
         httpClient.DefaultRequestHeaders.Clear();
+        if (clientAttestation is not null)
+            httpClient.AddClientAttestationPopHeader(clientAttestation);
             
         var responseMessage =
             await httpClient.SendAsync(

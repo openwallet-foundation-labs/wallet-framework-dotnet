@@ -1,4 +1,5 @@
 using Hyperledger.Aries.Agents;
+using WalletFramework.Oid4Vc.ClientAttestation;
 using WalletFramework.Oid4Vc.Oid4Vp.Models;
 
 namespace WalletFramework.Oid4Vc.Oid4Vp.Services;
@@ -22,11 +23,11 @@ public interface IOid4VpClientService
     ///     Prepares and sends an Authorization Response containing a Presentation Submission and the VP Token to the Redirect Uri.
     /// </summary>
     /// <param name="agentContext"></param>
-    /// /// <param name="responseUri"></param>
     /// <param name="authorizationRequest"></param>
     /// <param name="selectedCredentials"></param>
+    /// <param name="combinedWalletAttestation"></param>
     /// <returns>
     ///     A task representing the asynchronous operation. The task result contains the Callback Url of the Authorization Response if present.
     /// </returns>
-    Task<Uri?> SendAuthorizationResponseAsync(IAgentContext agentContext, AuthorizationRequest authorizationRequest, SelectedCredential[] selectedCredentials);
+    Task<Uri?> SendAuthorizationResponseAsync(IAgentContext agentContext, AuthorizationRequest authorizationRequest, SelectedCredential[] selectedCredentials, CombinedWalletAttestation? combinedWalletAttestation = null);
 }
