@@ -20,14 +20,18 @@ public class Oid4VpHaipClientTests
     private const string RequestUriResponse =
         "eyJhbGciOiJFUzI1NiJ9.eyJyZXNwb25zZV90eXBlIjoidnBfdG9rZW4iLCJyZXNwb25zZV9tb2RlIjoiZGlyZWN0X3Bvc3QiLCJjbGllbnRfaWRfc2NoZW1lIjoicmVkaXJlY3RfdXJpIiwiY2xpZW50X2lkIjoiaHR0cHM6Ly92ZXJpZmllci5jb20vcHJlc2VudGF0aW9uL2F1dGhvcml6YXRpb24tcmVzcG9uc2UiLCJjbGllbnRfbWV0YWRhdGFfdXJpIjoiaHR0cHM6Ly92ZXJpZmllci5jb20vbWV0YWRhdGEvMTIzNCIsInJlc3BvbnNlX3VyaSI6Imh0dHBzOi8vdmVyaWZpZXIuY29tL3ByZXNlbnRhdGlvbi9hdXRob3JpemF0aW9uLXJlc3BvbnNlIiwibm9uY2UiOiI4NzU1NDc4NDI2MDI4MDI4MDQ0MjA5MjE4NDE3MTI3NDEzMjQ1OCIsInByZXNlbnRhdGlvbl9kZWZpbml0aW9uIjp7ImlkIjoiNGRkMWMyNmEtMmY0Ni00M2FlLWE3MTEtNzA4ODhjOTNmYjRmIiwiaW5wdXRfZGVzY3JpcHRvcnMiOlt7ImlkIjoiTmV4dGNsb3VkQ3JlZGVudGlhbCIsImZvcm1hdCI6eyJ2YytzZC1qd3QiOnsicHJvb2ZfdHlwZSI6WyJKc29uV2ViU2lnbmF0dXJlMjAyMCJdfX0sImNvbnN0cmFpbnRzIjp7ImxpbWl0X2Rpc2Nsb3N1cmUiOiJyZXF1aXJlZCIsImZpZWxkcyI6W3sicGF0aCI6WyIkLnR5cGUiXSwiZmlsdGVyIjp7InR5cGUiOiJzdHJpbmciLCJjb25zdCI6IlZlcmlmaWVkRU1haWwifX0seyJwYXRoIjpbIiQuY3JlZGVudGlhbFN1YmplY3QuZW1haWwiXX1dfX1dfX0.";
 
-    private static string VerifierMetadataResponse =>
-        new JObject
-            {
-                ["logo_uri"] = "https://some.de/logo",
-                ["client_name"] = "Some Verifier",
-                ["redirect_uris"] = new JArray("https://verifier.com/redirect-uri")
-            }
-            .ToString();
+        private static string VerifierMetadataResponse =>
+            new JObject
+                {
+                    ["logo_uri"] = "https://some.de/logo",
+                    ["client_name"] = "Some Verifier",
+                    ["client_uri"] = "https://some.de",
+                    ["contacts"] = new JArray("Any contact"),
+                    ["redirect_uris"] = new JArray("https://verifier.com/redirect-uri"),
+                    ["policy_uri"] = "https://some.de/policy",
+                    ["tos_uri"] = "https://some.de/tos",
+                }
+                .ToString();
         
     private readonly Mock<IAgentProvider> _agentProviderMock = new();
     private readonly Mock<IMdocStorage> _mdocStorageMock = new();
@@ -65,14 +69,18 @@ public class Oid4VpHaipClientTests
             HaipAuthorizationRequestUri.FromUri(new Uri(AuthRequestWithRequestUri))
         );
 
-        // Assert
-        authorizationRequest.ClientId.Should().Be("https://verifier.com/presentation/authorization-response");
-        authorizationRequest.ResponseUri.Should().Be("https://verifier.com/presentation/authorization-response");
-        authorizationRequest.Nonce.Should().Be("87554784260280280442092184171274132458");
-        authorizationRequest.PresentationDefinition.Id.Should().Be("4dd1c26a-2f46-43ae-a711-70888c93fb4f");
-        authorizationRequest.ClientMetadata.ClientName.Should().Be("Some Verifier");
-        authorizationRequest.ClientMetadata.LogoUri.Should().Be("https://some.de/logo");
-        authorizationRequest.ClientMetadata.RedirectUris.First().Should().Be("https://verifier.com/redirect-uri");
+            // Assert
+            authorizationRequest.ClientId.Should().Be("https://verifier.com/presentation/authorization-response");
+            authorizationRequest.ResponseUri.Should().Be("https://verifier.com/presentation/authorization-response");
+            authorizationRequest.Nonce.Should().Be("87554784260280280442092184171274132458");
+            authorizationRequest.PresentationDefinition.Id.Should().Be("4dd1c26a-2f46-43ae-a711-70888c93fb4f");
+            authorizationRequest.ClientMetadata.ClientName.Should().Be("Some Verifier");
+            authorizationRequest.ClientMetadata.ClientUri.Should().Be("https://some.de");
+            authorizationRequest.ClientMetadata.Contacts.First().Should().Be("Any contact");
+            authorizationRequest.ClientMetadata.LogoUri.Should().Be("https://some.de/logo");
+            authorizationRequest.ClientMetadata.PolicyUri.Should().Be("https://some.de/policy");
+            authorizationRequest.ClientMetadata.TosUri.Should().Be("https://some.de/tos");
+            authorizationRequest.ClientMetadata.RedirectUris.First().Should().Be("https://verifier.com/redirect-uri");
 
         var inputDescriptor = authorizationRequest.PresentationDefinition.InputDescriptors.First();
 

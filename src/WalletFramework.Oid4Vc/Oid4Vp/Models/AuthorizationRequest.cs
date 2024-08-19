@@ -10,6 +10,11 @@ namespace WalletFramework.Oid4Vc.Oid4Vp.Models;
 /// </summary>
 public record AuthorizationRequest
 {
+    private const string DirectPost = "direct_post";
+    private const string DirectPostJwt = "direct_post.jwt";
+
+    private const string VpToken = "vp_token";
+
     /// <summary>
     ///     Gets the client id scheme.
     /// </summary>
@@ -109,8 +114,30 @@ public record AuthorizationRequest
         => CreateAuthorizationRequest(JObject.Parse(authorizationRequestJson));
 
     private static AuthorizationRequest CreateAuthorizationRequest(JObject authorizationRequestJson) =>
-        authorizationRequestJson.ToObject<AuthorizationRequest>() 
-        ?? throw new InvalidOperationException("Could not parse the Authorization Request");
+        IsHaipConform(authorizationRequestJson)
+            ? authorizationRequestJson.ToObject<AuthorizationRequest>()
+              ?? throw new InvalidOperationException("Could not parse the Authorization Request")
+            : throw new InvalidOperationException(
+                "Invalid Authorization Request. The request does not match the HAIP"
+            );
+
+    private static bool IsHaipConform(JObject authorizationRequestJson)
+    {
+        var responseType = authorizationRequestJson["response_type"]!.ToString();
+        var responseUri = authorizationRequestJson["response_uri"]!.ToString();
+        var responseMode = authorizationRequestJson["response_mode"]!.ToString();
+        var redirectUri = authorizationRequestJson["redirect_uri"];
+        var clientIdScheme = authorizationRequestJson["client_id_scheme"]!.ToString();
+        var clientId = authorizationRequestJson["client_id"]!.ToString();
+
+        return
+            responseType == VpToken
+            && responseMode == DirectPost || responseMode == DirectPostJwt
+            && !string.IsNullOrEmpty(responseUri)
+            && redirectUri is null
+            && (clientIdScheme is X509SanDnsScheme or VerifierAttestationScheme
+                || (clientIdScheme is RedirectUriScheme && clientId == responseUri));
+    }
 }
 
 internal static class AuthorizationRequestExtensions
