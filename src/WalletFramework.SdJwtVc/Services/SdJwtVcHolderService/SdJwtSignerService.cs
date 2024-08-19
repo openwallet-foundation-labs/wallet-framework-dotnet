@@ -31,14 +31,18 @@ public class SdJwtSignerService : ISdJwtSignerService
             }
         }
 
-        var payload = new
+        var payload = new Dictionary<string, object>
         {
-            aud = audience,
-            nonce,
-            iat = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
-            sd_hash = sdHash,
-            iss = clientId
+            { "aud", audience },
+            { "nonce", nonce },
+            { "iat" , DateTimeOffset.UtcNow.ToUnixTimeSeconds() }
         };
+
+        if (!sdHash.IsNullOrEmpty())
+            payload["sd_hash"] = sdHash!;
+        
+        if (!clientId.IsNullOrEmpty())
+            payload["iss"] = clientId!;
 
         return await CreateSignedJwt(header, payload, keyId);
     }
