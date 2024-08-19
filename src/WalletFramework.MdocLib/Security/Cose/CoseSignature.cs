@@ -1,4 +1,5 @@
 using PeterO.Cbor;
+using WalletFramework.Core.Cryptography.Models;
 using WalletFramework.Core.Functional;
 using WalletFramework.MdocLib.Cbor;
 
@@ -13,6 +14,8 @@ public readonly struct CoseSignature
     public CBORObject AsCbor => CBORObject.FromObject(AsByteArray);
     
     public CoseSignature(byte[] byteArray) => Value = byteArray;
+
+    public CoseSignature(RawSignature rawSignature) => Value = rawSignature.AsByteArray;
 
     internal static Validation<CoseSignature> ValidCoseSignature(CBORObject issuerAuth) => issuerAuth
         .GetByIndex(3)
