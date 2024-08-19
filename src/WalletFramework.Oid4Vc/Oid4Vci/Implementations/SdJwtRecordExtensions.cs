@@ -3,7 +3,6 @@ using SD_JWT.Models;
 using WalletFramework.Core.Cryptography.Models;
 using WalletFramework.Core.Functional;
 using WalletFramework.Oid4Vc.Oid4Vci.CredConfiguration.Models.SdJwt;
-using WalletFramework.Oid4Vc.Oid4Vci.Issuer.Models;
 using WalletFramework.SdJwtVc.Models.Credential;
 using WalletFramework.SdJwtVc.Models.Credential.Attributes;
 using WalletFramework.SdJwtVc.Models.Records;
@@ -15,7 +14,6 @@ public static class SdJwtRecordExtensions
     public static SdJwtRecord ToRecord(
         this SdJwtDoc sdJwtDoc,
         SdJwtConfiguration configuration,
-        IssuerMetadata issuerMetadata,
         KeyId keyId)
     {
         var claims = configuration
@@ -56,19 +54,11 @@ public static class SdJwtRecordExtensions
                     TextColor = textColor
                 };
             }).ToList();
-
-        var issuerName = issuerMetadata
-            .Display
-            .ToNullable()?
-            .ToDictionary(
-                 issuerDisplay => issuerDisplay.Locale.ToNullable()?.ToString(),
-                 issuerDisplay => issuerDisplay.Name.ToNullable()?.ToString());
         
         var record = new SdJwtRecord(
             sdJwtDoc,
             claims!,
             display.Fallback(new List<SdJwtDisplay>()),
-            issuerName!,
             keyId);
 
         return record;

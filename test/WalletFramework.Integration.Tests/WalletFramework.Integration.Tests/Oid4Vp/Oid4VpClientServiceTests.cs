@@ -7,7 +7,6 @@ using Microsoft.Extensions.Logging;
 using Moq;
 using Moq.Protected;
 using SD_JWT.Roles.Implementation;
-using WalletFramework.Core.Cryptography.Abstractions;
 using WalletFramework.Core.Cryptography.Models;
 using WalletFramework.MdocLib.Device.Abstractions;
 using WalletFramework.Oid4Vc.Oid4Vci.Abstractions;
@@ -72,7 +71,7 @@ public class Oid4VpClientServiceTests : IAsyncLifetime
     private readonly Mock<ILogger<Oid4VpClientService>> _loggerMock = new();
     private readonly Mock<IMdocAuthenticationService> _mdocAuthenticationService = new();
     private readonly Mock<IMdocStorage> _mdocStorageMock = new();
-    private readonly Mock<ISdJwtSignerService> _sdJwtSignerService = new();
+    private readonly Mock<ISdJwtSigner> _sdJwtSignerService = new();
     private readonly MockAgentRouter _router = new();
     private readonly Oid4VpClientService _oid4VpClientService;
     private readonly Oid4VpRecordService _oid4VpRecordService;
