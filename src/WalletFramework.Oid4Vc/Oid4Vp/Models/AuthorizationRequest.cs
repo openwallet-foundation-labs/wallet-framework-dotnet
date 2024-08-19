@@ -73,11 +73,13 @@ public record AuthorizationRequest
     /// <summary>
     ///     The X509 certificate of the verifier, this property is only set when ClientIDScheme is X509SanDNS.
     /// </summary>
+    [JsonIgnore]
     public X509Certificate2? X509Certificate { get; init; }
 
     /// <summary>
     ///     The trust chain of the verifier, this property is only set when ClientIDScheme is X509SanDNS.
     /// </summary>
+    [JsonIgnore]
     public X509Chain? X509TrustChain { get; init; }
 
     [JsonConstructor]

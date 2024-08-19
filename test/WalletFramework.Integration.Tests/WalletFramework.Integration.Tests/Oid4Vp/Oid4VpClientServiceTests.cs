@@ -1,13 +1,15 @@
 using System.Net;
 using FluentAssertions;
+using Hyperledger.Aries.Agents;
 using Hyperledger.Aries.Storage;
 using Hyperledger.TestHarness.Mock;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Moq.Protected;
 using SD_JWT.Roles.Implementation;
-using WalletFramework.Core.Cryptography.Abstractions;
 using WalletFramework.Core.Cryptography.Models;
+using WalletFramework.MdocLib.Device.Abstractions;
+using WalletFramework.Oid4Vc.Oid4Vci.Abstractions;
 using WalletFramework.Oid4Vc.Oid4Vp.Models;
 using WalletFramework.Oid4Vc.Oid4Vp.PresentationExchange.Services;
 using WalletFramework.Oid4Vc.Oid4Vp.Services;
@@ -34,20 +36,21 @@ public class Oid4VpClientServiceTests : IAsyncLifetime
     {
         var holder = new Holder();
         var walletRecordService = new DefaultWalletRecordService();
-        var pexService = new PexService();
+        var pexService = new PexService(_agentProviderMock.Object, _mdocStorageMock.Object, _sdJwtVcHolderService!);
        
         _sdJwtVcHolderService = new SdJwtVcHolderService(holder, _sdJwtSignerService.Object, walletRecordService);
         var oid4VpHaipClient = new Oid4VpHaipClient(_httpClientFactoryMock.Object, pexService);
         _oid4VpRecordService = new Oid4VpRecordService(walletRecordService);
-
+        
         _oid4VpClientService = new Oid4VpClientService(
+            _agentProviderMock.Object,
             _httpClientFactoryMock.Object,
-            _sdJwtVcHolderService,
-            pexService,
-            oid4VpHaipClient,
             _loggerMock.Object,
-            _oid4VpRecordService
-        );
+            _mdocAuthenticationService.Object,
+            oid4VpHaipClient,
+            _oid4VpRecordService,
+            pexService,
+            _sdJwtVcHolderService);
 
         _sdJwtSignerService.Setup(keyStore =>
                 keyStore.GenerateKbProofOfPossessionAsync(
@@ -62,10 +65,13 @@ public class Oid4VpClientServiceTests : IAsyncLifetime
             .ReturnsAsync(KeyBindingJwtMock);
     }
 
+    private readonly Mock<IAgentProvider> _agentProviderMock = new();
     private readonly Mock<HttpMessageHandler> _httpMessageHandlerMock = new();
     private readonly Mock<IHttpClientFactory> _httpClientFactoryMock = new();
-    private readonly Mock<ISdJwtSignerService> _sdJwtSignerService = new();
     private readonly Mock<ILogger<Oid4VpClientService>> _loggerMock = new();
+    private readonly Mock<IMdocAuthenticationService> _mdocAuthenticationService = new();
+    private readonly Mock<IMdocStorage> _mdocStorageMock = new();
+    private readonly Mock<ISdJwtSigner> _sdJwtSignerService = new();
     private readonly MockAgentRouter _router = new();
     private readonly Oid4VpClientService _oid4VpClientService;
     private readonly Oid4VpRecordService _oid4VpRecordService;
@@ -87,10 +93,7 @@ public class Oid4VpClientServiceTests : IAsyncLifetime
         
         //Act
         var (authorizationRequest, credentials) =
-            await _oid4VpClientService.ProcessAuthorizationRequestAsync(
-                _agent1.Context,
-                new Uri(AuthRequestWithRequestUri)
-            );
+            await _oid4VpClientService.ProcessAuthorizationRequestAsync(new Uri(AuthRequestWithRequestUri));
         
         var selectedCandidates = new SelectedCredential
         {
@@ -103,13 +106,11 @@ public class Oid4VpClientServiceTests : IAsyncLifetime
         );
         
         var response = await _oid4VpClientService.SendAuthorizationResponseAsync(
-            _agent1.Context,
             authorizationRequest,
-            new[] { selectedCandidates }
-        );
+            new[] { selectedCandidates });
         
         // Assert
-        credentials.Length.Should().Be(1);
+        credentials.Length().Should().Be(1);
             
         response.Should().BeEquivalentTo(new Uri(ExpectedRedirectUrl));
             

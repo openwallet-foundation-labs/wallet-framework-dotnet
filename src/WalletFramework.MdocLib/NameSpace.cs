@@ -1,7 +1,6 @@
 using Newtonsoft.Json.Linq;
 using PeterO.Cbor;
 using WalletFramework.Core.Functional;
-using WalletFramework.MdocLib.Common;
 
 namespace WalletFramework.MdocLib;
 
@@ -38,13 +37,18 @@ public readonly struct NameSpace
     public static Validation<NameSpace> ValidNameSpace(JToken nameSpace)
     {
         var str = nameSpace.ToString();
-        if (string.IsNullOrWhiteSpace(str))
+        return ValidNameSpace(str);
+    }
+    
+    public static Validation<NameSpace> ValidNameSpace(string nameSpace)
+    {
+        if (string.IsNullOrWhiteSpace(nameSpace))
         {
             return new NameSpaceIsNullOrEmptyError();
         }
         else
         {
-            return new NameSpace(str);
+            return new NameSpace(nameSpace);
         }
     }
 

@@ -1,5 +1,7 @@
 using PeterO.Cbor;
 using WalletFramework.Core.Functional;
+using WalletFramework.MdocLib.Elements;
+using WalletFramework.MdocLib.Security.Cose;
 
 namespace WalletFramework.MdocLib.Tests;
 

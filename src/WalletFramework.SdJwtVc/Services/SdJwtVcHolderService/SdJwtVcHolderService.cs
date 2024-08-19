@@ -14,21 +14,21 @@ public class SdJwtVcHolderService : ISdJwtVcHolderService
     /// <summary>
     ///     Initializes a new instance of the <see cref="SdJwtVcHolderService" /> class.
     /// </summary>
-    /// <param name="sdJwtSignerService">The service responsible for SD-JWT signature related operations.</param>
+    /// <param name="sdJwtSigner">The service responsible for SD-JWT signature related operations.</param>
     /// <param name="recordService">The service responsible for wallet record operations.</param>
     /// <param name="holder">The service responsible for holder operations.</param>
     public SdJwtVcHolderService(
         IHolder holder,
-        ISdJwtSignerService sdJwtSignerService,
+        ISdJwtSigner sdJwtSigner,
         IWalletRecordService recordService)
     {
         _holder = holder;
-        _sdJwtSignerService = sdJwtSignerService;
+        _sdJwtSigner = sdJwtSigner;
         _recordService = recordService;
     }
 
     private readonly IHolder _holder;
-    private readonly ISdJwtSignerService _sdJwtSignerService;
+    private readonly ISdJwtSigner _sdJwtSigner;
     private readonly IWalletRecordService _recordService;
 
     /// <inheritdoc />
@@ -55,7 +55,7 @@ public class SdJwtVcHolderService : ISdJwtVcHolderService
             && !string.IsNullOrEmpty(nonce) 
             && !string.IsNullOrEmpty(audience))
         {
-            var keybindingJwt = await _sdJwtSignerService.GenerateKbProofOfPossessionAsync(
+            var keybindingJwt = await _sdJwtSigner.GenerateKbProofOfPossessionAsync(
                 credential.KeyId,
                 audience,
                 nonce,

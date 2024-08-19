@@ -1,6 +1,17 @@
 using Hyperledger.Aries.Agents;
+using LanguageExt;
 using Microsoft.Extensions.Logging;
 using SD_JWT.Models;
+using WalletFramework.Core.Credentials.Abstractions;
+using WalletFramework.Core.Functional;
+using WalletFramework.MdocLib;
+using WalletFramework.MdocLib.Device.Abstractions;
+using WalletFramework.MdocLib.Device.Response;
+using WalletFramework.MdocLib.Elements;
+using WalletFramework.MdocLib.Security;
+using WalletFramework.MdocVc;
+using WalletFramework.Oid4Vc.Oid4Vci.Abstractions;
+using WalletFramework.Oid4Vc.Oid4Vci.CredConfiguration.Models;
 using WalletFramework.Oid4Vc.Oid4Vp.Models;
 using WalletFramework.Oid4Vc.Oid4Vp.PresentationExchange.Services;
 using WalletFramework.SdJwtVc.Models.Records;
@@ -15,166 +26,250 @@ public class Oid4VpClientService : IOid4VpClientService
     /// <summary>
     ///     Initializes a new instance of the <see cref="Oid4VpClientService" /> class.
     /// </summary>
+    /// <param name="agentProvider">The agent provider</param>
     /// <param name="httpClientFactory">The http client factory to create http clients.</param>
     /// <param name="sdJwtVcHolderService">The service responsible for SD-JWT related operations.</param>
     /// <param name="pexService">The Presentation Exchange service.</param>
+    /// <param name="mdocAuthenticationService">The mdoc authentication service.</param>
     /// <param name="oid4VpHaipClient">The service responsible for OpenId4VP related operations.</param>
     /// <param name="logger">The ILogger.</param>
     /// <param name="oid4VpRecordService">The service responsible for OidPresentationRecord related operations.</param>
     public Oid4VpClientService(
+        IAgentProvider agentProvider,
         IHttpClientFactory httpClientFactory,
-        ISdJwtVcHolderService sdJwtVcHolderService,
-        IPexService pexService,
-        IOid4VpHaipClient oid4VpHaipClient,
         ILogger<Oid4VpClientService> logger,
-        IOid4VpRecordService oid4VpRecordService)
+        IMdocAuthenticationService mdocAuthenticationService,
+        IOid4VpHaipClient oid4VpHaipClient,
+        IOid4VpRecordService oid4VpRecordService,
+        IPexService pexService,
+        ISdJwtVcHolderService sdJwtVcHolderService)
     {
+        _agentProvider = agentProvider;
         _httpClientFactory = httpClientFactory;
-        _sdJwtVcHolderService = sdJwtVcHolderService;
-        _oid4VpHaipClient = oid4VpHaipClient;
         _logger = logger;
+        _mdocAuthenticationService = mdocAuthenticationService;
+        _oid4VpHaipClient = oid4VpHaipClient;
         _oid4VpRecordService = oid4VpRecordService;
         _pexService = pexService;
+        _sdJwtVcHolderService = sdJwtVcHolderService;
     }
 
+    private readonly IAgentProvider _agentProvider;
     private readonly IHttpClientFactory _httpClientFactory;
-    private readonly IOid4VpHaipClient _oid4VpHaipClient;
     private readonly ILogger<Oid4VpClientService> _logger;
+    private readonly IMdocAuthenticationService _mdocAuthenticationService;
+    private readonly IOid4VpHaipClient _oid4VpHaipClient;
     private readonly IOid4VpRecordService _oid4VpRecordService;
-    private readonly ISdJwtVcHolderService _sdJwtVcHolderService;
     private readonly IPexService _pexService;
+    private readonly ISdJwtVcHolderService _sdJwtVcHolderService;
 
     /// <inheritdoc />
-    public async Task<(AuthorizationRequest, CredentialCandidates[])> ProcessAuthorizationRequestAsync(
-        IAgentContext agentContext, Uri authorizationRequestUri)
+    public async Task<(AuthorizationRequest, IEnumerable<CredentialCandidates>)> ProcessAuthorizationRequestAsync(
+        Uri authorizationRequestUri)
     {
         var haipAuthorizationRequestUri = HaipAuthorizationRequestUri.FromUri(authorizationRequestUri);
 
-        var authorizationRequest =
-            await _oid4VpHaipClient.ProcessAuthorizationRequestAsync(haipAuthorizationRequestUri);
-
-        var credentials = await _sdJwtVcHolderService.ListAsync(agentContext);
-            
-        var credentialCandidates = await _pexService.FindCredentialCandidates(
-            credentials.ToArray(),
-            authorizationRequest.PresentationDefinition.InputDescriptors
+        var authorizationRequest = await _oid4VpHaipClient.ProcessAuthorizationRequestAsync(
+            haipAuthorizationRequestUri
         );
+
+        var credentialCandidates = await _pexService.FindCredentialCandidates(
+            authorizationRequest.PresentationDefinition.InputDescriptors);
 
         return (authorizationRequest, credentialCandidates);
     }
 
     /// <inheritdoc />
     public async Task<Uri?> SendAuthorizationResponseAsync(
-        IAgentContext agentContext,
         AuthorizationRequest authorizationRequest,
-        SelectedCredential[] selectedCredentials)
+        IEnumerable<SelectedCredential> selectedCredentials)
     {
-        var createPresentationMaps =
-            from credential in selectedCredentials
-            from inputDescriptor in authorizationRequest.PresentationDefinition.InputDescriptors
-            where credential.InputDescriptorId == inputDescriptor.Id
-            let disclosedClaims = inputDescriptor
-                .Constraints
-                .Fields?
-                .SelectMany(field => field.Path.Select(path => path.TrimStart('$', '.')))
-            let createPresentation = _sdJwtVcHolderService.CreatePresentation(
-                (SdJwtRecord)credential.Credential,
-                disclosedClaims.ToArray(),
-                authorizationRequest.ClientId,
-                authorizationRequest.Nonce
-            )
-            select (inputDescriptor.Id, createPresentation);
+        var credentials = selectedCredentials.ToList();
+        
+        var inputDescriptors = authorizationRequest
+            .PresentationDefinition
+            .InputDescriptors;
+        
+        // TODO: This is only a hack until the encryption response is implemented
+        var mdocNonce = Option<Nonce>.None;
 
-        var presentationMaps = new List<(string, string)>();
-        foreach (var (inputDescriptorId, createPresentation) in createPresentationMaps)
+        var presentationMapTasks = credentials.Select(async credential =>
         {
-            presentationMaps.Add((inputDescriptorId, await createPresentation));
+            var inputDescriptor = inputDescriptors.Single(descriptor => 
+                descriptor.Id == credential.InputDescriptorId);
+
+            var claims =
+                from field in inputDescriptor.Constraints.Fields
+                from path in field.Path.Select(path => path.TrimStart('$', '.'))
+                select path;
+
+            Format format;
+            ICredential presentedCredential;
+
+            string presentation;
+            switch (credential.Credential)
+            {
+                case SdJwtRecord sdJwt:
+                    format = FormatFun.CreateSdJwtFormat();
+                    
+                    presentation = await _sdJwtVcHolderService.CreatePresentation(
+                        sdJwt,
+                        claims.ToArray(),
+                        authorizationRequest.ClientId,
+                        authorizationRequest.Nonce);
+
+                    presentedCredential = sdJwt;
+                    break;
+                case MdocRecord mdocRecord:
+                    format = FormatFun.CreateMdocFormat();
+                    
+                    var toDisclose = claims.Select(claim =>
+                    {
+                        var keys = claim.Split(new[] { "[", "]" }, StringSplitOptions.RemoveEmptyEntries);
+                        
+                        var nameSpace = NameSpace.ValidNameSpace(keys[0]).UnwrapOrThrow();
+                        var elementId = ElementIdentifier
+                            .ValidElementIdentifier(keys[1])
+                            .UnwrapOrThrow();
+
+                        return (NameSpace: nameSpace, ElementId: elementId);
+                    })
+                    .GroupBy(nameSpaceAndElementId => nameSpaceAndElementId.NameSpace, tuple => tuple.ElementId)
+                    .ToDictionary(group => group.Key, group => group.ToList());
+                    
+                    var mdoc = mdocRecord.Mdoc.SelectivelyDisclose(toDisclose);
+
+                    var handover = authorizationRequest.ToVpHandover();
+                    mdocNonce = handover.MdocGeneratedNonce;
+                    var sessionTranscript = handover.ToSessionTranscript();
+                    var authenticatedMdoc = await _mdocAuthenticationService.Authenticate(
+                        mdoc, sessionTranscript, mdocRecord.KeyId);
+                    
+                    presentation = new Document(authenticatedMdoc).BuildDeviceResponse().EncodeToBase64Url();
+
+                    presentedCredential = mdocRecord;
+                    
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(credential.Credential));
+            }
+
+            return (InputDescriptorId: inputDescriptor.Id, Presentation: presentation, Format: format, PresentedCredential: presentedCredential);
+        });
+
+        var presentationMaps = new List<(string InputDescriptorId, string Presentation, Format Format, ICredential PresentedCredential)>();
+        foreach (var task in presentationMapTasks)
+        {
+            var presentationMap = await task;
+            presentationMaps.Add(presentationMap);
         }
 
         var authorizationResponse = await _oid4VpHaipClient.CreateAuthorizationResponseAsync(
             authorizationRequest,
-            presentationMaps.ToArray()
+            presentationMaps.Select(tuple => (tuple.InputDescriptorId, tuple.Presentation, tuple.Format)).ToArray()
         );
 
         var httpClient = _httpClientFactory.CreateClient();
         httpClient.DefaultRequestHeaders.Clear();
+
+        var json = SerializeObject(authorizationResponse);
+        var nameValueCollection = DeserializeObject<Dictionary<string, string>>(json)!.ToList();
+        
+        // TODO: This is only a hack until the encryption response is implemented
+        mdocNonce.IfSome(nonce =>
+        {
+            var pair = new KeyValuePair<string, string>("apu", nonce.AsBase64Url.ToString());
+            nameValueCollection.Add(pair);
+        });
+        
+        var content = new FormUrlEncodedContent(nameValueCollection);
+
+        var message = new HttpRequestMessage
+        {
+            RequestUri = new Uri(authorizationRequest.ResponseUri),
+            Method = HttpMethod.Post,
+            Content = content
+        };
             
-        var responseMessage =
-            await httpClient.SendAsync(
-                new HttpRequestMessage
-                {
-                    RequestUri = new Uri(authorizationRequest.ResponseUri),
-                    Method = HttpMethod.Post,
-                    Content = new FormUrlEncodedContent(
-                        DeserializeObject<Dictionary<string, string>>(
-                                SerializeObject(authorizationResponse)
-                            )?
-                            .ToList()
-                        ?? throw new InvalidOperationException("Authorization Response could not be parsed")
-                    )
-                }
-            );
-
+        // TODO: Introduce timeout
+        var responseMessage = await httpClient.SendAsync(message);
         if (!responseMessage.IsSuccessStatusCode)
-            throw new InvalidOperationException("Authorization Response could not be sent");
-
-        var presentedCredentials = presentationMaps
-            .Join(
-                selectedCredentials,
-                presentation => presentation.Item1,
-                selectedCredential => selectedCredential.InputDescriptorId,
-                (presentation, selectedCredential) => new
-                {
-                    inputDescriptorId = presentation.Item1,
-                    presentationFormat = presentation.Item2,
-                    credential = selectedCredential.Credential
-                }
-            ).Select(presentationMapItem =>
+        {
+            var str = await responseMessage.Content.ReadAsStringAsync();
+            throw new InvalidOperationException($"Authorization Response could not be sent with message {str}");
+        }
+        
+        var presentedCredentials = presentationMaps.Select(presentationMap =>
+        {
+            PresentedCredential result;
+            
+            switch (presentationMap.PresentedCredential)
             {
-                var credentialRecord = (SdJwtRecord)presentationMapItem.credential;
-                var issuanceSdJwtDoc = credentialRecord.ToSdJwtDoc();
-                var presentationSdJwtDoc = new SdJwtDoc(presentationMapItem.presentationFormat);
-
-                var nonDisclosedDisclosure =
-                    from issuedDisclosures in issuanceSdJwtDoc.Disclosures
-                    let base64Encoded = issuedDisclosures.Base64UrlEncoded
-                    where presentationSdJwtDoc.Disclosures.All(itm => itm.Base64UrlEncoded != base64Encoded)
-                    select issuedDisclosures;
+                case SdJwtRecord sdJwtRecord:
+                    var issuanceSdJwtDoc = sdJwtRecord.ToSdJwtDoc();
+                    var presentation = new SdJwtDoc(presentationMap.Presentation);
                     
-                var presentedClaims = 
-                    from claim in credentialRecord.Claims
-                    where !nonDisclosedDisclosure.Any(nd => claim.Key.StartsWith(nd.Path ?? string.Empty))
-                    select new
+                    var nonDisclosed =
+                        from disclosure in issuanceSdJwtDoc.Disclosures
+                        let base64Encoded = disclosure.Base64UrlEncoded
+                        where presentation.Disclosures.All(itm => itm.Base64UrlEncoded != base64Encoded)
+                        select disclosure;
+                    
+                    var presentedClaims = 
+                        from claim in sdJwtRecord.Claims
+                        where !nonDisclosed.Any(nd => claim.Key.StartsWith(nd.Path ?? string.Empty))
+                        select new
+                        {
+                            key = claim.Key, 
+                            value = new PresentedClaim { Value = claim.Value }  
+                        };
+        
+                    result = new PresentedCredential
                     {
-                        key = claim.Key, 
-                        value = new PresentedClaim { Value = claim.Value }  
+                        CredentialId = sdJwtRecord.Id,
+                        PresentedClaims = presentedClaims.ToDictionary(itm => itm.key, itm => itm.value)
                     };
+                    break;
+                case MdocRecord mdocRecord:
+                    var claims = mdocRecord.Mdoc.IssuerSigned.IssuerNameSpaces.Value.SelectMany(pair => pair.Value);
 
-                return new PresentedCredential
-                {
-                    CredentialId = credentialRecord.Id,
-                    PresentedClaims = presentedClaims.ToDictionary(itm => itm.key, itm => itm.value)
-                };
-            });
+                    result = new PresentedCredential
+                    {
+                        CredentialId = mdocRecord.CredentialId,
+                        PresentedClaims = claims.ToDictionary(
+                            item => item.ElementId.ToString(),
+                            item => new PresentedClaim { Value = item.Element.ToString() }
+                        )
+                    };
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(presentationMap.PresentedCredential));
+            }
 
+            return result;
+        });
+
+        var context = await _agentProvider.GetContextAsync();
+        
         await _oid4VpRecordService.StoreAsync(
-            agentContext,
+            context,
             authorizationRequest.ClientId,
             authorizationRequest.ClientMetadata,
             authorizationRequest.PresentationDefinition.Name,
-            presentedCredentials.ToArray()
-        );
+            presentedCredentials.ToArray());
 
         var redirectUriJson = await responseMessage.Content.ReadAsStringAsync();
 
         try
         {
             return DeserializeObject<AuthorizationResponseCallback>(redirectUriJson);
-
         }
         catch (Exception e)
         {
-            _logger.LogWarning("Could not parse Redirect URI received from: {ResponseUri} due to exception: {Exception}", authorizationRequest.ResponseUri, e);
+            _logger.LogWarning(
+                e, 
+                "Could not parse Redirect URI received from: {ResponseUri}", authorizationRequest.ResponseUri);
+            
             return null;
         }
     }

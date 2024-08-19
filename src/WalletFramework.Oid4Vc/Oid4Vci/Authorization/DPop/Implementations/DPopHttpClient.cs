@@ -24,17 +24,17 @@ public class DPopHttpClient : IDPopHttpClient
     public DPopHttpClient(
         IHttpClientFactory httpClientFactory,
         IKeyStore keyStore,
-        ISdJwtSignerService sdJwtSignerService,
+        ISdJwtSigner sdJwtSigner,
         ILogger<DPopHttpClient> logger)
     {
         _keyStore = keyStore;
-        _sdJwtSignerService = sdJwtSignerService;
+        _sdJwtSigner = sdJwtSigner;
         _httpClient = httpClientFactory.CreateClient();
         _logger = logger;
     }
 
     private readonly IKeyStore _keyStore;
-    private readonly ISdJwtSignerService _sdJwtSignerService;
+    private readonly ISdJwtSigner _sdJwtSigner;
     private readonly ILogger<DPopHttpClient> _logger;
     private readonly HttpClient _httpClient; 
 
@@ -128,12 +128,8 @@ public class DPopHttpClient : IDPopHttpClient
             { "typ", "dpop+jwt" }
         };
             
-        var jwkSerialized = await _keyStore.LoadKey(keyId);
-        var jwkDeserialized = JsonConvert.DeserializeObject(jwkSerialized);
-        if (jwkDeserialized != null)
-        {
-            header["jwk"] = jwkDeserialized;
-        }
+        var publicKey = await _keyStore.GetPublicKey(keyId);
+        header["jwk"] = publicKey.ToJwkObj();
 
         string? ath = null;
         if (!string.IsNullOrEmpty(accessToken))
@@ -152,6 +148,6 @@ public class DPopHttpClient : IDPopHttpClient
             ath
         };
             
-        return await _sdJwtSignerService.CreateSignedJwt(header, dPopPayload, keyId);
+        return await _sdJwtSigner.CreateSignedJwt(header, dPopPayload, keyId);
     }
 }

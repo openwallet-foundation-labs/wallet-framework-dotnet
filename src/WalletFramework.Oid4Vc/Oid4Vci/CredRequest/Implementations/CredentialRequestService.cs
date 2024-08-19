@@ -29,18 +29,18 @@ public class CredentialRequestService : ICredentialRequestService
     public CredentialRequestService(
         HttpClient httpClient,
         IDPopHttpClient dPopHttpClient,
-        ISdJwtSignerService sdJwtSignerService,
+        ISdJwtSigner sdJwtSigner,
         IKeyStore keyStore)
     {
         _dPopHttpClient = dPopHttpClient;
-        _sdJwtSignerService = sdJwtSignerService;
+        _sdJwtSigner = sdJwtSigner;
         _keyStore = keyStore;
         _httpClient = httpClient;
     }
 
     private readonly HttpClient _httpClient;
     private readonly IDPopHttpClient _dPopHttpClient;
-    private readonly ISdJwtSignerService _sdJwtSignerService;
+    private readonly ISdJwtSigner _sdJwtSigner;
     private readonly IKeyStore _keyStore;
 
     private async Task<CredentialRequest> CreateCredentialRequest(
@@ -54,7 +54,7 @@ public class CredentialRequestService : ICredentialRequestService
             oauthToken => oauthToken.CNonce,
             dPopToken => dPopToken.Token.CNonce);
 
-        var keyBindingJwt = await _sdJwtSignerService.GenerateKbProofOfPossessionAsync(
+        var keyBindingJwt = await _sdJwtSigner.GenerateKbProofOfPossessionAsync(
             keyId,
             issuerMetadata.CredentialIssuer.ToString(),
             cNonce,

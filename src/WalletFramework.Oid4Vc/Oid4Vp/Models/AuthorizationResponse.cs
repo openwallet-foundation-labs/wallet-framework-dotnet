@@ -16,7 +16,7 @@ public class AuthorizationResponse
     /// <summary>
     ///   Gets or sets the Presentation Submission.
     /// </summary>
-    [JsonProperty ("presentation_submission"), ]
+    [JsonProperty ("presentation_submission")]
     public string PresentationSubmission { get; set; } = null!;
         
     /// <summary>

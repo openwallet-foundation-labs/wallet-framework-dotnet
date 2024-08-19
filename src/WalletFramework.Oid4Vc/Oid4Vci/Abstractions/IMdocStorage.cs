@@ -15,6 +15,8 @@ public interface IMdocStorage
         Option<ISearchQuery> query,
         int count = 100,
         int skip = 0);
+    
+    public Task<Option<IEnumerable<MdocRecord>>> List() => List(Option<ISearchQuery>.None);
 
     public Task<Unit> Update(MdocRecord record);
     
