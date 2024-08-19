@@ -6,11 +6,11 @@ using WalletFramework.Core.Cryptography.Models;
 
 namespace WalletFramework.SdJwtVc.Services.SdJwtVcHolderService;
 
-public class SdJwtSignerService : ISdJwtSignerService
+public class SdJwtSigner : ISdJwtSigner
 {
     private readonly IKeyStore _keyStore;
 
-    public SdJwtSignerService(IKeyStore keyStore) => _keyStore = keyStore;
+    public SdJwtSigner(IKeyStore keyStore) => _keyStore = keyStore;
 
     public async Task<string> GenerateKbProofOfPossessionAsync(KeyId keyId, string audience, string nonce, string type, string? sdHash, string? clientId)
     {

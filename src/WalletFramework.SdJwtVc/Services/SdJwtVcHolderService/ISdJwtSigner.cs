@@ -2,7 +2,7 @@ using WalletFramework.Core.Cryptography.Models;
 
 namespace WalletFramework.SdJwtVc.Services.SdJwtVcHolderService;
 
-public interface ISdJwtSignerService
+public interface ISdJwtSigner
 {
     Task<string> CreateSignedJwt(object header, object payload, KeyId keyId);
     
