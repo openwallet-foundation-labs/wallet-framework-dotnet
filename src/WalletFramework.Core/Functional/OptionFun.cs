@@ -88,7 +88,14 @@ public static class OptionFun
             return list.Any() ? list : Option<IEnumerable<TR>>.None;
         });
     }
-    
+
+    public static Option<IEnumerable<T>> AsOption<T>(this IEnumerable<T> enumerable) =>
+        // ReSharper disable once PossibleMultipleEnumeration
+        enumerable.IsEmpty()
+            ? Option<IEnumerable<T>>.None
+            // ReSharper disable once PossibleMultipleEnumeration
+            : Some(enumerable);
+
     public static T UnwrapOrThrow<T>(this Option<T> option, Exception e) =>
         option.Match(
             t => t,

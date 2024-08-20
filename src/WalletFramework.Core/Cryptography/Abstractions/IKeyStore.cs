@@ -18,12 +18,13 @@ public interface IKeyStore
     Task<KeyId> GenerateKey(string alg = "ES256", bool isPermanent = true);
 
     /// <summary>
-    ///     Asynchronously loads a key by its identifier and returns it as a JSON Web Key (JWK) containing the public key
-    ///     information.
+    ///     Gets the public key of the pair 
     /// </summary>
-    /// <param name="keyId">The identifier of the key to load.</param>
-    /// <returns>A <see cref="Task{TResult}" /> representing the loaded key as a JWK string.</returns>
-    Task<string> LoadKey(KeyId keyId);
+    /// <param name="keyId">The identifier of the key pair.</param>
+    /// <returns>
+    ///     The public key
+    /// </returns>
+    Task<PublicKey> GetPublicKey(KeyId keyId);
 
     /// <summary>
     ///     Asynchronously signs the given payload using the key identified by the provided key ID.
@@ -31,7 +32,7 @@ public interface IKeyStore
     /// <param name="keyId">The identifier of the key to use for signing.</param>
     /// <param name="payload">The payload to sign.</param>
     /// <returns>A <see cref="Task{TResult}" /> representing the signed payload as a byte array.</returns>
-    Task<byte[]> Sign(KeyId keyId, byte[] payload);
+    Task<RawSignature> Sign(KeyId keyId, byte[] payload);
         
     /// <summary>
     ///     Asynchronously deletes the key associated with the provided key ID.

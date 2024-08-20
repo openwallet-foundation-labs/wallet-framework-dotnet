@@ -5,6 +5,7 @@ using WalletFramework.Oid4Vc.Oid4Vp.PresentationExchange.Services;
 using static WalletFramework.Oid4Vc.Oid4Vp.Models.RequestObject;
 using static WalletFramework.Oid4Vc.Oid4Vp.Models.ClientIdScheme.ClientIdSchemeValue;
 using static Newtonsoft.Json.JsonConvert;
+using Format = WalletFramework.Oid4Vc.Oid4Vci.CredConfiguration.Models.Format;
 
 namespace WalletFramework.Oid4Vc.Oid4Vp.Services;
 
@@ -30,28 +31,28 @@ internal class Oid4VpHaipClient : IOid4VpHaipClient
     /// <inheritdoc />
     public async Task<AuthorizationResponse> CreateAuthorizationResponseAsync(
         AuthorizationRequest authorizationRequest,
-        (string inputDescriptorId, string presentation)[] presentationMap)
+        (string InputDescriptorId, string Presentation, Format Format)[] presentationMap)
     {
         var descriptorMaps = new List<DescriptorMap>();
         var vpToken = new List<string>();
             
         for (var index = 0; index < presentationMap.Length; index++)
         {
-            vpToken.Add(presentationMap[index].presentation);
+            vpToken.Add(presentationMap[index].Presentation);
 
             var descriptorMap = new DescriptorMap
             {
-                Format = "vc+sd-jwt",
+                Format = presentationMap[index].Format.ToString(),
                 Path = presentationMap.Length > 1 ? "$[" + index + "]" : "$",
-                Id = presentationMap[index].inputDescriptorId,
+                Id = presentationMap[index].InputDescriptorId,
                 PathNested = null
             };
             descriptorMaps.Add(descriptorMap);
         }
 
-        var presentationSubmission =
-            await _pexService.CreatePresentationSubmission(authorizationRequest.PresentationDefinition,
-                descriptorMaps.ToArray());
+        var presentationSubmission = await _pexService.CreatePresentationSubmission(
+            authorizationRequest.PresentationDefinition,
+            descriptorMaps.ToArray());
 
         return new AuthorizationResponse
         {
@@ -67,38 +68,33 @@ internal class Oid4VpHaipClient : IOid4VpHaipClient
     {
         var httpClient = _httpClientFactory.CreateClient();
         httpClient.DefaultRequestHeaders.Clear();
-            
-        var requestObject =
-            CreateRequestObject(
-                await httpClient.GetStringAsync(haipAuthorizationRequestUri.RequestUri)
-            );
-            
-        var clientMetadata = await FetchClientMetadata(requestObject.ToAuthorizationRequest());
+
+        var requestObjectJson = await httpClient.GetStringAsync(haipAuthorizationRequestUri.RequestUri);
+        var requestObject = CreateRequestObject(requestObjectJson);
+
+        var authRequest = requestObject.ToAuthorizationRequest();
+        var clientMetadata = await FetchClientMetadata(authRequest);
 
         return
             requestObject.ClientIdScheme.Value switch
             {
-                X509SanDns =>
-                    requestObject
-                        .ValidateJwt()
-                        .ValidateTrustChain()
-                        .ValidateSanName()
-                        .ToAuthorizationRequest()
-                        .WithX509(requestObject)
-                        .WithClientMetadata(clientMetadata),
-                RedirectUri =>
-                    requestObject
-                        .ToAuthorizationRequest()
-                        .WithClientMetadata(clientMetadata),
+                X509SanDns => requestObject
+                    .ValidateJwt()
+                    .ValidateTrustChain()
+                    .ValidateSanName()
+                    .ToAuthorizationRequest()
+                    .WithX509(requestObject)
+                    .WithClientMetadata(clientMetadata),
+                RedirectUri => requestObject
+                    .ToAuthorizationRequest()
+                    .WithClientMetadata(clientMetadata),
                 VerifierAttestation =>
                     throw new NotImplementedException("Verifier Attestation not yet implemented"),
-                _ =>
-                    throw new InvalidOperationException(
-                        $"Client ID Scheme {requestObject.ClientIdScheme} not supported"
-                    )
+                _ => throw new InvalidOperationException(
+                    $"Client ID Scheme {requestObject.ClientIdScheme} not supported")
             };
     }
-        
+
     private async Task<ClientMetadata?> FetchClientMetadata(AuthorizationRequest authorizationRequest)
     {
         var httpClient = _httpClientFactory.CreateClient();

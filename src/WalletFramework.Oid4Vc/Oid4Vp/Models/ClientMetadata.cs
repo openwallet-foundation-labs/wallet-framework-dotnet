@@ -5,6 +5,7 @@ namespace WalletFramework.Oid4Vc.Oid4Vp.Models;
 /// <summary>
 ///    Represents the metadata of a client (verifier).
 /// </summary>
+// TODO: Rename this to VerifierMetadata
 public record ClientMetadata
 {
     /// <summary>
@@ -36,6 +37,9 @@ public record ClientMetadata
     /// </summary>
     [JsonProperty("logo_uri")]
     public string? LogoUri { get; }
+    
+    // TODO: JWKs of the verifier
+    // public List<JWK> PublicKeys { get; }
     
     /// <summary>
     ///     The URI to a human-readable privacy policy document for the client (verifier).

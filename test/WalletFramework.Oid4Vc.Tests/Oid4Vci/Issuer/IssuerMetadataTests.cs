@@ -1,9 +1,5 @@
 using FluentAssertions;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 using WalletFramework.Core.Functional;
-using WalletFramework.Core.Json;
-using WalletFramework.Core.Uri;
 using WalletFramework.Oid4Vc.Oid4Vci.Issuer.Models;
 using WalletFramework.Oid4Vc.Tests.Oid4Vci.CredConfiguration.Mdoc.Samples;
 using WalletFramework.Oid4Vc.Tests.Oid4Vci.CredConfiguration.SdJwt.Samples;

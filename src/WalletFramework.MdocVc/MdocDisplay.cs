@@ -5,6 +5,7 @@ using WalletFramework.Core.Functional;
 using WalletFramework.Core.Json;
 using WalletFramework.Core.Localization;
 using WalletFramework.MdocLib;
+using WalletFramework.MdocLib.Elements;
 
 namespace WalletFramework.MdocVc;
 

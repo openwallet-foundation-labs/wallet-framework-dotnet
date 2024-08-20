@@ -188,7 +188,6 @@ public static class IssuerMetadataJsonExtensions
             result.Add(DisplayJsonKey, displaysJson);
         });
         
-        // TODO: ValueTypeEncodeFunc?
         result.Add(CredentialEndpointJsonKey, issuerMetadata.CredentialEndpoint.ToStringWithoutTrail());
         result.Add(CredentialIssuerJsonKey, issuerMetadata.CredentialIssuer.ToString());
         

@@ -1,10 +1,8 @@
 using System.Drawing;
-using Microsoft.IdentityModel.Tokens;
 using SD_JWT.Models;
 using WalletFramework.Core.Cryptography.Models;
 using WalletFramework.Core.Functional;
 using WalletFramework.Oid4Vc.Oid4Vci.CredConfiguration.Models.SdJwt;
-using WalletFramework.Oid4Vc.Oid4Vci.Issuer.Models;
 using WalletFramework.SdJwtVc.Models.Credential;
 using WalletFramework.SdJwtVc.Models.Credential.Attributes;
 using WalletFramework.SdJwtVc.Models.Records;
@@ -16,7 +14,6 @@ public static class SdJwtRecordExtensions
     public static SdJwtRecord ToRecord(
         this SdJwtDoc sdJwtDoc,
         SdJwtConfiguration configuration,
-        IssuerMetadata issuerMetadata,
         KeyId keyId)
     {
         var claims = configuration
@@ -25,7 +22,7 @@ public static class SdJwtRecordExtensions
             {
                 var claimMetadatas = new Dictionary<string, ClaimMetadata> { { claimMetadata.Key, claimMetadata.Value } };
 
-                if (!claimMetadata.Value.NestedClaims.IsNullOrEmpty())
+                if (!(claimMetadata.Value.NestedClaims == null || claimMetadata.Value.NestedClaims.Count == 0))
                 {
                     foreach (var nested in claimMetadata.Value.NestedClaims!)
                     {
@@ -37,15 +34,13 @@ public static class SdJwtRecordExtensions
             })
             .ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
         
-        var display = configuration
-            .CredentialConfiguration
-            .Display
-            .ToNullable()?
-            .Select(credentialDisplay =>
+        var display = 
+            from displays in configuration.CredentialConfiguration.Display
+            select displays.Select(credentialDisplay =>
             {
                 var backgroundColor = credentialDisplay.BackgroundColor.ToNullable() ?? Color.White;
                 var textColor = credentialDisplay.TextColor.ToNullable() ?? Color.Black;
-
+            
                 return new SdJwtDisplay
                 {
                     Logo = new SdJwtDisplay.SdJwtLogo
@@ -58,13 +53,12 @@ public static class SdJwtRecordExtensions
                     Locale = credentialDisplay.Locale.ToNullable(),
                     TextColor = textColor
                 };
-            })
-            .ToList();
+            }).ToList();
         
         var record = new SdJwtRecord(
             sdJwtDoc,
             claims!,
-            display!,
+            display.Fallback(new List<SdJwtDisplay>()),
             keyId);
 
         return record;

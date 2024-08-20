@@ -1,9 +1,10 @@
 using System.Collections.Immutable;
 using Hyperledger.Aries.Storage;
-using Hyperledger.Aries.Storage.Models.Interfaces;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using SD_JWT.Models;
+using WalletFramework.Core.Credentials;
+using WalletFramework.Core.Credentials.Abstractions;
 using WalletFramework.Core.Cryptography.Models;
 using WalletFramework.Core.Functional;
 using WalletFramework.SdJwtVc.Models.Credential;
@@ -170,6 +171,15 @@ public sealed class SdJwtRecord : RecordBase, ICredential
                    ?? throw new ArgumentNullException(nameof(IssuerId), "iss claim is missing or null");
         Vct = sdJwtDoc.UnsecuredPayload.SelectToken("vct")?.Value<string>() 
               ?? throw new ArgumentNullException(nameof(Vct), "vct claim is missing or null");
+    }
+
+    public CredentialId GetId()
+    {
+        var id = CredentialId
+            .ValidCredentialId(Id)
+            .UnwrapOrThrow(new InvalidOperationException("SD-JWT RecordId is corrupt"));
+
+        return id;
     }
 }
     

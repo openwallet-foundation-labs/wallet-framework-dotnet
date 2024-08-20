@@ -38,7 +38,9 @@ jobs:
                 echo "APP_VERSION=$VERSION$SUFFIX" >> $GITHUB_ENV
 
             - name: Setup NuGet
-              uses: NuGet/setup-nuget@v1.0.5
+              uses: NuGet/setup-nuget@v2
+              with:
+                nuget-version: 6.10.2
 
             - name: Restore dependencies
               run: nuget restore $SOLUTION
@@ -46,7 +48,7 @@ jobs:
             - name: Setup .NET
               uses: actions/setup-dotnet@v3
               with:
-                  dotnet-version: 3.1.*
+                  dotnet-version: 8.0.*
 
 #            - name: Install libindy library
 #              run: |

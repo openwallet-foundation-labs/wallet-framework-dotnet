@@ -1,6 +1,5 @@
 using WalletFramework.Oid4Vc.Oid4Vp.Models;
 using WalletFramework.Oid4Vc.Oid4Vp.PresentationExchange.Models;
-using WalletFramework.SdJwtVc.Models.Records;
 
 namespace WalletFramework.Oid4Vc.Oid4Vp.PresentationExchange.Services;
 
@@ -22,8 +21,7 @@ public interface IPexService
     /// <summary>
     ///     Finds the credential candidates based on the provided credentials and input descriptors.
     /// </summary>
-    /// <param name="credentials">An array of available credentials.</param>
     /// <param name="inputDescriptors">An array of input descriptors to be satisfied.</param>
     /// <returns>An array of credential candidates, each containing a list of credentials that match the input descriptors.</returns>
-    Task<CredentialCandidates[]> FindCredentialCandidates(SdJwtRecord[] credentials, InputDescriptor[] inputDescriptors);
+    Task<CredentialCandidates[]> FindCredentialCandidates(IEnumerable<InputDescriptor> inputDescriptors);
 }

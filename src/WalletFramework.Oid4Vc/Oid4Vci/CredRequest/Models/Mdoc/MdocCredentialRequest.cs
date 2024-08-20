@@ -16,8 +16,6 @@ public record MdocCredentialRequest
     {
         VciRequest = credentialRequest;
         DocType = configuration.DocType;
-        
-        // TODO: Decide if this should be true or false
         NamespacedData = false;
     }
 }

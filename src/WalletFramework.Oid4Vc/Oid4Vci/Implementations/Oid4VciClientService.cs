@@ -270,7 +270,7 @@ public class Oid4VciClientService : IOid4VciClientService
                 async credential => await credential.Value.Match<Task<OneOf<SdJwtRecord, MdocRecord>>>(
                     async sdJwt =>
                     {
-                        var record = sdJwt.Decoded.ToRecord(configuration.AsT0, issuerMetadata, response.KeyId);
+                        var record = sdJwt.Decoded.ToRecord(configuration.AsT0, response.KeyId);
                         var context = await _agentProvider.GetContextAsync();
                         await _sdJwtService.AddAsync(context, record);
                         return record;
@@ -278,7 +278,7 @@ public class Oid4VciClientService : IOid4VciClientService
                     async mdoc =>
                     {
                         var displays = MdocFun.CreateMdocDisplays(configuration.AsT1);
-                        var record = mdoc.Decoded.ToRecord(displays);
+                        var record = mdoc.Decoded.ToRecord(displays, response.KeyId);
                         await _mdocStorage.Add(record);
                         return record;
                     }),
@@ -359,7 +359,7 @@ public class Oid4VciClientService : IOid4VciClientService
                                 oAuth => oAuth with { CNonce = cNonce.ToNullable()},
                                 dPop => dPop with { Token = dPop.Token with {CNonce = cNonce.ToNullable()}});
                             
-                            var record = sdJwt.Decoded.ToRecord(configuration.AsT0, session.AuthorizationData.IssuerMetadata, response.KeyId);
+                            var record = sdJwt.Decoded.ToRecord(configuration.AsT0, response.KeyId);
                             await _sdJwtService.AddAsync(context, record);
                             return record;
                         },
@@ -370,7 +370,7 @@ public class Oid4VciClientService : IOid4VciClientService
                                 dPop => dPop with { Token = dPop.Token with {CNonce = cNonce.ToNullable()}});
                             
                             var displays = MdocFun.CreateMdocDisplays(configuration.AsT1);
-                            var record = mdoc.Decoded.ToRecord(displays);
+                            var record = mdoc.Decoded.ToRecord(displays, response.KeyId);
                             await _mdocStorage.Add(record);
                             return record;
                         }),

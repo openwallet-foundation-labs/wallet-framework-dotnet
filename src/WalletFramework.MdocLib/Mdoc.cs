@@ -3,11 +3,14 @@ using LanguageExt;
 using Microsoft.IdentityModel.Tokens;
 using PeterO.Cbor;
 using WalletFramework.Core.Functional;
-using WalletFramework.MdocLib.Common;
+using WalletFramework.MdocLib.Cbor;
+using WalletFramework.MdocLib.Digests;
+using WalletFramework.MdocLib.Elements;
+using WalletFramework.MdocLib.Issuer;
 using static WalletFramework.MdocLib.DocType;
-using static WalletFramework.MdocLib.IssuerSigned;
+using static WalletFramework.MdocLib.Issuer.IssuerSigned;
 using static WalletFramework.Core.Functional.ValidationFun;
-using static WalletFramework.MdocLib.Common.Constants;
+using static WalletFramework.MdocLib.Constants;
 
 namespace WalletFramework.MdocLib;
 
@@ -16,9 +19,6 @@ public record Mdoc
     public DocType DocType { get; }
 
     public IssuerSigned IssuerSigned { get; init; }
-
-    // TODO: mdoc authentication
-    // public DeviceSigned DeviceSigned { get; }
 
     public Mdoc(DocType docType, IssuerSigned issuerSigned)
     {
@@ -132,8 +132,8 @@ public static class MdocFun
     {
         var cbor = CBORObject.NewMap();
         
-        cbor[DocTypeLabel] = mdoc.DocType.Encode();
-        cbor[IssuerSignedLabel] = mdoc.IssuerSigned.Encode();
+        cbor[DocTypeLabel] = mdoc.DocType.ToCbor();
+        cbor[IssuerSignedLabel] = mdoc.IssuerSigned.ToCbor();
 
         var bytes = cbor.EncodeToBytes();
         return Base64UrlEncoder.Encode(bytes);
@@ -143,16 +143,16 @@ public static class MdocFun
     {
         var potentialErrors = mdoc
             .IssuerSigned
-            .NameSpaces
+            .IssuerNameSpaces
             .Value
-            .SelectMany(pair => mdoc.IssuerSigned.NameSpaces[pair.Key].Select(item => (pair.Key, item)))
+            .SelectMany(pair => mdoc.IssuerSigned.IssuerNameSpaces[pair.Key].Select(item => (pair.Key, item)))
             .Select(nameSpaceAndItem =>
             {
                 var nameSpace = nameSpaceAndItem.Key;
                 var issuerSignedItem = nameSpaceAndItem.item;
                     
                 byte[] digest = mdoc.IssuerSigned.IssuerAuth.Payload.ValueDigests[nameSpace][issuerSignedItem.DigestId];
-                byte[] bytes = issuerSignedItem.ByteString.EncodedBytes;
+                byte[] bytes = issuerSignedItem.ByteString.AsCbor.EncodeToBytes();
                 
                 DigestAlgorithmValue algorithm = mdoc.IssuerSigned.IssuerAuth.Payload.DigestAlgorithm;
                 HashAlgorithm hashAlgorithm = algorithm switch
@@ -207,22 +207,23 @@ public static class MdocFun
             return new DocTypeInMdocDoesNotMatchWithDocTypeInMsoError(mdocDocType, msoDocType);
         }
     }
-
-    public static Unit SelectivelyDisclose(
+    
+    // TODO: Unpure, this can throw an exception when the namespace is not found, also mutates the dictionary
+    public static Mdoc SelectivelyDisclose(
         this Mdoc mdoc,
-        NameSpace nameSpace,
-        IEnumerable<ElementIdentifier> elementsToDisclose)
+        Dictionary<NameSpace, List<ElementIdentifier>> elementsToDisclose)
     {
-        var disclosures = mdoc
-            .IssuerSigned
-            .NameSpaces[nameSpace]
-            .Filter(item => elementsToDisclose.Contains(item.ElementId))
-            .ToList();
+        var nameSpaces = mdoc.IssuerSigned.IssuerNameSpaces;
+        foreach (var (nameSpace, elements) in elementsToDisclose)
+        {
+            var disclosures = nameSpaces[nameSpace]
+                .Filter(item => elements.Contains(item.ElementId))
+                .ToList();
+            
+            nameSpaces.Value[nameSpace] = disclosures;
+        }
 
-        var nameSpaces = mdoc.IssuerSigned.NameSpaces;
-        nameSpaces.Value[nameSpace] = disclosures;
-
-        return Unit.Default;
+        return mdoc;
     }
 
     // TODO: Implement this, if needed
