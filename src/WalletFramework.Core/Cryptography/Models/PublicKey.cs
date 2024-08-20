@@ -11,7 +11,7 @@ public record PublicKey(Base64UrlString X, Base64UrlString Y)
 
 public static class PublicKeyFun
 {
-    public static object ToJwkObj(this PublicKey publicKey) => new
+    public static object ToObj(this PublicKey publicKey) => new
     {
         kty = publicKey.KeyType,
         crv = publicKey.Curve,

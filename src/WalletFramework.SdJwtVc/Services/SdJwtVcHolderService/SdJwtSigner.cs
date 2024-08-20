@@ -24,7 +24,7 @@ public class SdJwtSigner : ISdJwtSigner
         if (string.Equals(type, "openid4vci-proof+jwt", StringComparison.OrdinalIgnoreCase))
         {
             var publicKey = await _keyStore.GetPublicKey(keyId);
-            header["jwk"] = publicKey.ToJwkObj();
+            header["jwk"] = publicKey.ToObj();
         }
 
         var payload = new Dictionary<string, object>
