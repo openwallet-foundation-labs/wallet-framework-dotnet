@@ -129,7 +129,7 @@ public class DPopHttpClient : IDPopHttpClient
         };
             
         var publicKey = await _keyStore.GetPublicKey(keyId);
-        header["jwk"] = publicKey.ToJwkObj();
+        header["jwk"] = publicKey.ToObj();
 
         string? ath = null;
         if (!string.IsNullOrEmpty(accessToken))
