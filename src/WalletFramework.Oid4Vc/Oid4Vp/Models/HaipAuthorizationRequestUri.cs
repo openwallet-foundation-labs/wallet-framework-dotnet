@@ -25,9 +25,6 @@ public class HaipAuthorizationRequestUri
     /// <exception cref="InvalidOperationException"></exception>
     public static HaipAuthorizationRequestUri FromUri(Uri uri)
     {
-        if (uri.Scheme is not ("haip" or "openid4vp" or "mdoc-openid4vp"))
-            throw new InvalidOperationException("Invalid Scheme. Must be haip or openid4vp");
-            
         var request = uri.GetQueryParam("request_uri");
         if (string.IsNullOrEmpty(request))
             throw new InvalidOperationException("HAIP requires request_uri parameter");
