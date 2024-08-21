@@ -11,6 +11,7 @@ using WalletFramework.MdocLib.Device.Response;
 using WalletFramework.MdocLib.Elements;
 using WalletFramework.MdocLib.Security;
 using WalletFramework.MdocVc;
+using WalletFramework.Oid4Vc.Oid4Vci.AuthFlow.Models;
 using WalletFramework.Oid4Vc.Oid4Vci.CredConfiguration.Models;
 using WalletFramework.Oid4Vc.Oid4Vp.Models;
 using WalletFramework.Oid4Vc.Oid4Vp.PresentationExchange.Services;
@@ -164,6 +165,16 @@ public class Oid4VpClientService : IOid4VpClientService
             var presentationMap = await task;
             presentationMaps.Add(presentationMap);
         }
+        
+        
+        //
+        // if (issuerSignature)
+        // {
+        //     var stringe = presentationMaps.First().Presentation[..presentationMaps.First().Presentation.LastIndexOf('.')];
+        //     
+        //     var client = _httpClientFactory.CreateClient();
+        //     client.PostAsync(new Uri("https://demo.pid-issuer.bundesdruckerei.de/c2"), stringe)
+        // }
 
         var authorizationResponse = await _oid4VpHaipClient.CreateAuthorizationResponseAsync(
             authorizationRequest,
@@ -275,6 +286,12 @@ public class Oid4VpClientService : IOid4VpClientService
             
             return null;
         }
+    }
+
+    public Task<Uri?> SendAuthorizationResponseAsync(AuthorizationRequest authorizationRequest, IEnumerable<SelectedCredential> selectedCredentials,
+        IssuanceSession issuanceSession, CombinedWalletAttestation? combinedWalletAttestation = null)
+    {
+        throw new NotImplementedException();
     }
 }
     

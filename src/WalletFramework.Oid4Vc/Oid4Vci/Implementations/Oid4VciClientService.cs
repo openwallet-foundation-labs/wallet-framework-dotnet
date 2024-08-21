@@ -384,6 +384,88 @@ public class Oid4VciClientService : IOid4VciClientService
         
         return credentials;
     }
+    
+    /// <inheritdoc />
+    public async Task<Validation<List<OneOf<SdJwtRecord, MdocRecord>>>> RequestOnDemandCredential(IssuanceSession issuanceSession)
+    {
+        var context = await _agentProvider.GetContextAsync();
+        
+        var session = await _authFlowSessionStorage.GetAsync(context, issuanceSession.AuthFlowSessionState);
+        
+        var credConfiguration = session
+            .AuthorizationData
+            .IssuerMetadata
+            .CredentialConfigurationsSupported
+            .Where(config => session.AuthorizationData.CredentialConfigurationIds.Contains(config.Key))
+            .Select(pair => pair.Value);
+        
+        var scope = session
+            .AuthorizationData
+            .IssuerMetadata
+            .CredentialConfigurationsSupported.First().Value.Match(
+                sdJwtConfig => sdJwtConfig.CredentialConfiguration.Scope.OnSome(scope => scope.ToString()), 
+                mdDocConfig => mdDocConfig.CredentialConfiguration.Scope.OnSome(scope => scope.ToString()));
+        
+        var tokenRequest = new TokenRequest
+        {
+            GrantType = AuthorizationCodeGrantTypeIdentifier,
+            RedirectUri = session.AuthorizationData.ClientOptions.RedirectUri,
+            CodeVerifier = session.AuthorizationCodeParameters.Verifier,
+            Code = issuanceSession.Code,
+            Scope = scope.ToNullable(),
+            ClientId = session.AuthorizationData.ClientOptions.ClientId
+        };
+        
+        var token = await _tokenService.RequestToken(
+            tokenRequest,
+            session.AuthorizationData.AuthorizationServerMetadata);
+
+        List<OneOf<SdJwtRecord, MdocRecord>> credentials = new();
+        //TODO: Make sure that it does not always request all available credConfigurations
+        foreach (var configuration in credConfiguration)
+        {
+            var validResponse = await _credentialRequestService.RequestCredentials(
+                configuration,
+                session.AuthorizationData.IssuerMetadata,
+                token,
+                session.AuthorizationData.ClientOptions);
+            
+            var result =
+                from response in validResponse
+                let cNonce = response.CNonce
+                let credentialOrTransactionId = response.CredentialOrTransactionId
+                select credentialOrTransactionId.Match(
+                    async credential => await credential.Value.Match<Task<OneOf<SdJwtRecord, MdocRecord>>>(
+                        async sdJwt =>
+                        {
+                            token = token.Match<OneOf<OAuthToken, DPopToken>>(
+                                oAuth => oAuth with { CNonce = cNonce.ToNullable()},
+                                dPop => dPop with { Token = dPop.Token with {CNonce = cNonce.ToNullable()}});
+                            
+                            var record = sdJwt.Decoded.ToRecord(configuration.AsT0, response.KeyId);
+                            return record;
+                        },
+                        async mdoc =>
+                        {
+                            token = token.Match<OneOf<OAuthToken, DPopToken>>(
+                                oAuth => oAuth with { CNonce = cNonce.ToNullable()},
+                                dPop => dPop with { Token = dPop.Token with {CNonce = cNonce.ToNullable()}});
+                            
+                            var displays = MdocFun.CreateMdocDisplays(configuration.AsT1);
+                            var record = mdoc.Decoded.ToRecord(displays, response.KeyId);
+                            return record;
+                        }),
+                    // ReSharper disable once UnusedParameter.Local
+                    transactionId => throw new NotImplementedException());
+
+            await result.OnSuccess(async task => credentials.Add(await task));
+        }
+        
+        // await _authFlowSessionStorage.
+        await _authFlowSessionStorage.DeleteAsync(context, session.AuthFlowSessionState);
+        
+        return credentials;
+    }
 
     private static AuthorizationCodeParameters CreateAndStoreCodeChallenge()
     {

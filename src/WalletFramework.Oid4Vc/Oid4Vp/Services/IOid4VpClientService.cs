@@ -1,6 +1,8 @@
 using WalletFramework.Oid4Vc.Oid4Vp.Models;
 
 using WalletFramework.Oid4Vc.ClientAttestation;
+using WalletFramework.Oid4Vc.Oid4Vci.AuthFlow.Models;
+
 namespace WalletFramework.Oid4Vc.Oid4Vp.Services;
 
 /// <summary>
@@ -31,4 +33,11 @@ public interface IOid4VpClientService
         AuthorizationRequest authorizationRequest,
         IEnumerable<SelectedCredential> selectedCredentials,
         CombinedWalletAttestation? combinedWalletAttestation = null);
+    
+    Task<Uri?> SendAuthorizationResponseAsync(
+        AuthorizationRequest authorizationRequest,
+        IEnumerable<SelectedCredential> selectedCredentials,
+        IssuanceSession issuanceSession,
+        CombinedWalletAttestation? combinedWalletAttestation = null);
+    //issuer signing key
 }
