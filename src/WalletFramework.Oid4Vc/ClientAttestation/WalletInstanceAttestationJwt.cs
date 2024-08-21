@@ -1,7 +1,7 @@
 using WalletFramework.Core.Functional;
 using WalletFramework.Core.Functional.Errors;
 
-namespace WalletFramework.Oid4Vc.Oid4Vci.AuthFlow.Models;
+namespace WalletFramework.Oid4Vc.ClientAttestation;
 
 public struct WalletInstanceAttestationJwt
 {

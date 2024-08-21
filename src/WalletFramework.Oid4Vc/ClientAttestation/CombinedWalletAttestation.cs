@@ -1,4 +1,6 @@
-namespace WalletFramework.Oid4Vc.Oid4Vci.AuthFlow.Models;
+using WalletFramework.Oid4Vc.Oid4Vci.AuthFlow.Models;
+
+namespace WalletFramework.Oid4Vc.ClientAttestation;
 
 public record CombinedWalletAttestation
 {

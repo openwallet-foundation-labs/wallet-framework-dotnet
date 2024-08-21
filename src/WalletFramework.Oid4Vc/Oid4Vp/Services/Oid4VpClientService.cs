@@ -2,6 +2,7 @@ using Hyperledger.Aries.Agents;
 using LanguageExt;
 using Microsoft.Extensions.Logging;
 using SD_JWT.Models;
+using WalletFramework.Oid4Vc.ClientAttestation;
 using WalletFramework.Core.Credentials.Abstractions;
 using WalletFramework.Core.Functional;
 using WalletFramework.MdocLib;
@@ -10,7 +11,6 @@ using WalletFramework.MdocLib.Device.Response;
 using WalletFramework.MdocLib.Elements;
 using WalletFramework.MdocLib.Security;
 using WalletFramework.MdocVc;
-using WalletFramework.Oid4Vc.Oid4Vci.Abstractions;
 using WalletFramework.Oid4Vc.Oid4Vci.CredConfiguration.Models;
 using WalletFramework.Oid4Vc.Oid4Vp.Models;
 using WalletFramework.Oid4Vc.Oid4Vp.PresentationExchange.Services;
@@ -82,7 +82,8 @@ public class Oid4VpClientService : IOid4VpClientService
     /// <inheritdoc />
     public async Task<Uri?> SendAuthorizationResponseAsync(
         AuthorizationRequest authorizationRequest,
-        IEnumerable<SelectedCredential> selectedCredentials)
+        IEnumerable<SelectedCredential> selectedCredentials,
+        CombinedWalletAttestation? clientAttestation = null)
     {
         var credentials = selectedCredentials.ToList();
         
@@ -171,6 +172,8 @@ public class Oid4VpClientService : IOid4VpClientService
 
         var httpClient = _httpClientFactory.CreateClient();
         httpClient.DefaultRequestHeaders.Clear();
+        if (clientAttestation is not null)
+            httpClient.AddClientAttestationPopHeader(clientAttestation);
 
         var json = SerializeObject(authorizationResponse);
         var nameValueCollection = DeserializeObject<Dictionary<string, string>>(json)!.ToList();

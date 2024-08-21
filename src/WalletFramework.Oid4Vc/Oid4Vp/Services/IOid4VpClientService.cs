@@ -1,5 +1,6 @@
 using WalletFramework.Oid4Vc.Oid4Vp.Models;
 
+using WalletFramework.Oid4Vc.ClientAttestation;
 namespace WalletFramework.Oid4Vc.Oid4Vp.Services;
 
 /// <summary>
@@ -22,10 +23,12 @@ public interface IOid4VpClientService
     /// </summary>
     /// <param name="authorizationRequest"></param>
     /// <param name="selectedCredentials"></param>
+    /// <param name="combinedWalletAttestation"></param>
     /// <returns>
     ///     A task representing the asynchronous operation. The task result contains the Callback Url of the Authorization Response if present.
     /// </returns>
     Task<Uri?> SendAuthorizationResponseAsync(
         AuthorizationRequest authorizationRequest,
-        IEnumerable<SelectedCredential> selectedCredentials);
+        IEnumerable<SelectedCredential> selectedCredentials,
+        CombinedWalletAttestation? combinedWalletAttestation = null);
 }
