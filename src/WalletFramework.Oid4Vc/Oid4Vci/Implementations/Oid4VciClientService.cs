@@ -136,8 +136,7 @@ public class Oid4VciClientService : IOid4VciClientService
             null,
             null);
 
-        var authServerMetadata = 
-            await FetchAuthorizationServerMetadataAsync(issuerMetadata);
+        var authServerMetadata = await FetchAuthorizationServerMetadataAsync(issuerMetadata);
             
         _httpClient.DefaultRequestHeaders.Clear();
         var response = await _httpClient.PostAsync(

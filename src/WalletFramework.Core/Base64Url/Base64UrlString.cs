@@ -5,6 +5,10 @@ namespace WalletFramework.Core.Base64Url;
 public readonly struct Base64UrlString
 {
     private string Value { get; }
+    
+    public byte[] AsByteArray => Base64UrlEncoder.DecodeBytes(Value);
+
+    public string AsString => Value;
 
     private Base64UrlString(string value)
     {
