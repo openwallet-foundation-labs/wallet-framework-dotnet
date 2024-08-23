@@ -10,6 +10,8 @@ public readonly struct Base64UrlString
 
     public string AsString => Value;
 
+    public byte[] AsByteArray => Base64UrlEncoder.DecodeBytes(Value);
+
     private Base64UrlString(string value)
     {
         Value = value;

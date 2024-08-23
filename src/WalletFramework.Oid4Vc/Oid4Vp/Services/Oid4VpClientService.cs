@@ -2,6 +2,7 @@ using Hyperledger.Aries.Agents;
 using LanguageExt;
 using Microsoft.Extensions.Logging;
 using SD_JWT.Models;
+using WalletFramework.Oid4Vc.ClientAttestation;
 using WalletFramework.Core.Credentials.Abstractions;
 using WalletFramework.Core.Functional;
 using WalletFramework.MdocLib;
@@ -82,7 +83,8 @@ public class Oid4VpClientService : IOid4VpClientService
     /// <inheritdoc />
     public async Task<Uri?> SendAuthorizationResponseAsync(
         AuthorizationRequest authorizationRequest,
-        IEnumerable<SelectedCredential> selectedCredentials)
+        IEnumerable<SelectedCredential> selectedCredentials,
+        CombinedWalletAttestation? clientAttestation = null)
     {
         var credentials = selectedCredentials.ToList();
         

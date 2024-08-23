@@ -36,6 +36,7 @@ public class PresentationDefinition
     /// <summary>
     ///     This MUST be a string that describes the purpose for which the Presentation Definition's inputs are being used for.
     /// </summary>
+    [JsonProperty("purpose")]
     public string? Purpose { get; }
 
     /// <summary>
