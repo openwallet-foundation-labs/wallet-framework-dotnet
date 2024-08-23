@@ -12,6 +12,7 @@ using WalletFramework.MdocLib.Elements;
 using WalletFramework.MdocLib.Security;
 using WalletFramework.MdocVc;
 using WalletFramework.Oid4Vc.Oid4Vci.CredConfiguration.Models;
+using WalletFramework.Oid4Vc.Oid4Vp.AuthResponse.Encryption;
 using WalletFramework.Oid4Vc.Oid4Vp.Models;
 using WalletFramework.Oid4Vc.Oid4Vp.PresentationExchange.Services;
 using WalletFramework.SdJwtVc.Models.Records;
@@ -126,6 +127,7 @@ public class Oid4VpClientService : IOid4VpClientService
                     
                     var toDisclose = claims.Select(claim =>
                     {
+                        // TODO: This is needed because in mdoc the requested attributes look like this: $[Namespace][ElementId]. Refactor this more clean
                         var keys = claim.Split(new[] { "[", "]" }, StringSplitOptions.RemoveEmptyEntries);
                         
                         var nameSpace = NameSpace.ValidNameSpace(keys[0]).UnwrapOrThrow();
@@ -170,22 +172,12 @@ public class Oid4VpClientService : IOid4VpClientService
             presentationMaps.Select(tuple => (tuple.InputDescriptorId, tuple.Presentation, tuple.Format)).ToArray()
         );
 
-        var httpClient = _httpClientFactory.CreateClient();
-        httpClient.DefaultRequestHeaders.Clear();
-        if (clientAttestation is not null)
-            httpClient.AddClientAttestationPopHeader(clientAttestation);
-
-        var json = SerializeObject(authorizationResponse);
-        var nameValueCollection = DeserializeObject<Dictionary<string, string>>(json)!.ToList();
-        
-        // TODO: This is only a hack until the encryption response is implemented
-        mdocNonce.IfSome(nonce =>
+        var content = authorizationRequest.ResponseMode switch
         {
-            var pair = new KeyValuePair<string, string>("apu", nonce.AsBase64Url.ToString());
-            nameValueCollection.Add(pair);
-        });
-        
-        var content = new FormUrlEncodedContent(nameValueCollection);
+            AuthorizationRequest.DirectPost => authorizationResponse.ToFormUrl(),
+            AuthorizationRequest.DirectPostJwt => authorizationResponse.Encrypt(authorizationRequest, mdocNonce).ToFormUrl(),
+            _ => throw new ArgumentOutOfRangeException(nameof(authorizationRequest.ResponseMode))
+        };
 
         var message = new HttpRequestMessage
         {
@@ -193,13 +185,15 @@ public class Oid4VpClientService : IOid4VpClientService
             Method = HttpMethod.Post,
             Content = content
         };
-            
+        
         // TODO: Introduce timeout
+        var httpClient = _httpClientFactory.CreateClient();
+        httpClient.DefaultRequestHeaders.Clear();
         var responseMessage = await httpClient.SendAsync(message);
         if (!responseMessage.IsSuccessStatusCode)
         {
             var str = await responseMessage.Content.ReadAsStringAsync();
-            throw new InvalidOperationException($"Authorization Response could not be sent with message {str}");
+            throw new InvalidOperationException($"Authorization Response failed with message {str}");
         }
         
         var presentedCredentials = presentationMaps.Select(presentationMap =>

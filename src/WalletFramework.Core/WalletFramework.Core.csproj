@@ -5,6 +5,7 @@
         <Nullable>enable</Nullable>
     </PropertyGroup>
     <ItemGroup>
+      <PackageReference Include="jose-jwt" Version="5.0.0" />
       <PackageReference Include="LanguageExt.Core" Version="4.4.9" />
       <PackageReference Include="Microsoft.IdentityModel.Tokens" Version="8.0.1" />
       <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
