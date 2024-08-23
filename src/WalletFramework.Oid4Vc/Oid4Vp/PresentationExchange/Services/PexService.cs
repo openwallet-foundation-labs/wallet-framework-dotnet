@@ -83,11 +83,6 @@ public class PexService : IPexService
             result.Add(credentialCandidates);
         }
 
-        if (result.IsEmpty())
-        {
-            throw new Oid4VpNoCredentialCandidateException();
-        }
-
         return result.ToArray();
     }
 
@@ -154,7 +149,7 @@ public class PexService : IPexService
             },
             () => filteredMdocRecords.Match(
                 mdocCredentials => mdocCredentials,
-                () => throw new Oid4VpNoCredentialCandidateException()
+                () => []
             ));
 
         return credentialCandidates.ToList();

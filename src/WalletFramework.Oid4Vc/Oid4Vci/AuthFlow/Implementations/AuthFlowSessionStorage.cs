@@ -50,6 +50,6 @@ public class AuthFlowSessionStorage : IAuthFlowSessionStorage
         await _recordService.DeleteAsync<AuthFlowSessionRecord>(context.Wallet, authFlowSessionState);
     
     /// <inheritdoc />
-    public async Task<bool> UpdateAsync(IAgentContext context, AuthFlowSessionState authFlowSessionState) => 
-        await _recordService.DeleteAsync<AuthFlowSessionRecord>(context.Wallet, authFlowSessionState);
+    public async Task UpdateAsync(IAgentContext context, AuthFlowSessionRecord record) => 
+        await _recordService.UpdateAsync(context.Wallet, record);
 }

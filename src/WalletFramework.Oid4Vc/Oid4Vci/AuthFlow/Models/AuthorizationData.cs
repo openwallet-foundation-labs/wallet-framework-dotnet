@@ -1,9 +1,11 @@
 using System.Globalization;
 using Newtonsoft.Json.Linq;
+using OneOf;
 using WalletFramework.Core.Functional;
 using WalletFramework.Oid4Vc.Oid4Vci.Authorization.Models;
 using WalletFramework.Oid4Vc.Oid4Vci.CredOffer.Models;
 using WalletFramework.Oid4Vc.Oid4Vci.Issuer.Models;
+using WalletFramework.Oid4Vc.Oid4Vp.Models;
 
 namespace WalletFramework.Oid4Vc.Oid4Vci.AuthFlow.Models;
 
@@ -11,6 +13,7 @@ public record AuthorizationData(
     ClientOptions ClientOptions,
     IssuerMetadata IssuerMetadata,
     AuthorizationServerMetadata AuthorizationServerMetadata,
+    string AccessToken,
     List<CredentialConfigurationId> CredentialConfigurationIds);
 
 public static class AuthorizationDataFun
@@ -18,6 +21,7 @@ public static class AuthorizationDataFun
     private const string ClientOptionsJsonKey = "client_options";
     private const string IssuerMetadataJsonKey = "issuer_metadata";
     private const string AuthorizationServerMetadataJsonKey = "authorization_server_metadata";
+    private const string CredentialAccessToken = "credential_access_token";
     private const string CredentialConfigurationIdsJsonKey = "credential_configuration_ids";
     
     public static JObject EncodeToJson(this AuthorizationData data)
@@ -27,7 +31,7 @@ public static class AuthorizationDataFun
         var issuerMetadata = data.IssuerMetadata.EncodeToJson();
         
         var authServerMetadata = JObject.FromObject(data.AuthorizationServerMetadata);
-        
+            
         var ids = data.CredentialConfigurationIds.Select(id => id.ToString());
         var idsArray = new JArray(ids);
         
@@ -36,6 +40,7 @@ public static class AuthorizationDataFun
             { ClientOptionsJsonKey, clientOptions },
             { IssuerMetadataJsonKey, issuerMetadata },
             { AuthorizationServerMetadataJsonKey, authServerMetadata },
+            { CredentialAccessToken, data.AccessToken },
             { CredentialConfigurationIdsJsonKey, idsArray }
         };
     }
@@ -50,6 +55,8 @@ public static class AuthorizationDataFun
         
         var authServerMetadata = json[AuthorizationServerMetadataJsonKey]!.ToObject<AuthorizationServerMetadata>()!;
         
+        var credentialAccessToken  = json[CredentialAccessToken]!.ToObject<string>()!;
+        
         var configIds = json[CredentialConfigurationIdsJsonKey]!.Cast<JValue>().Select(value =>
         {
             var str = value.ToString(CultureInfo.InvariantCulture);
@@ -59,6 +66,6 @@ public static class AuthorizationDataFun
 
         }).ToList();
         
-        return new AuthorizationData(clientOptions, issuerMetadata, authServerMetadata, configIds);
+        return new AuthorizationData(clientOptions, issuerMetadata, authServerMetadata, credentialAccessToken, configIds);
     }
 }

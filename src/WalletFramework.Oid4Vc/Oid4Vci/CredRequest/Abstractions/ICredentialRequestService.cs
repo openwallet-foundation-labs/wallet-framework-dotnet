@@ -8,6 +8,7 @@ using WalletFramework.Oid4Vc.Oid4Vci.CredConfiguration.Models.Mdoc;
 using WalletFramework.Oid4Vc.Oid4Vci.CredConfiguration.Models.SdJwt;
 using WalletFramework.Oid4Vc.Oid4Vci.CredResponse;
 using WalletFramework.Oid4Vc.Oid4Vci.Issuer.Models;
+using WalletFramework.Oid4Vc.Oid4Vp.Models;
 
 namespace WalletFramework.Oid4Vc.Oid4Vci.CredRequest.Abstractions;
 
@@ -17,5 +18,6 @@ public interface ICredentialRequestService
         OneOf<SdJwtConfiguration, MdocConfiguration> configuration,
         IssuerMetadata issuerMetadata,
         OneOf<OAuthToken, DPopToken> token,
-        Option<ClientOptions> clientOptions);
+        Option<ClientOptions> clientOptions,
+        Option<AuthorizationRequest> authorizationRequest);
 }

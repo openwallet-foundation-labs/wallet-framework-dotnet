@@ -31,7 +31,7 @@ public sealed class AuthFlowSessionRecord : RecordBase
     /// <summary>
     ///     The authorization data.
     /// </summary>
-    public AuthorizationData AuthorizationData { get; }
+    public AuthorizationData AuthorizationData { get; set; }
         
     /// <summary>
     ///     The parameters for the 'authorization_code' grant type.

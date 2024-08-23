@@ -6,6 +6,7 @@ using WalletFramework.Core.Cryptography.Models;
 using WalletFramework.Core.Functional;
 using WalletFramework.Core.Json;
 using WalletFramework.Core.Uri;
+using WalletFramework.MdocLib.Security;
 using WalletFramework.Oid4Vc.Oid4Vci.AuthFlow.Models;
 using WalletFramework.Oid4Vc.Oid4Vci.Authorization.DPop.Abstractions;
 using WalletFramework.Oid4Vc.Oid4Vci.Authorization.DPop.Models;
@@ -20,6 +21,7 @@ using WalletFramework.Oid4Vc.Oid4Vci.Extensions;
 using WalletFramework.Oid4Vc.Oid4Vci.Issuer.Models;
 using WalletFramework.Oid4Vc.Oid4Vci.CredRequest.Models.SdJwt;
 using WalletFramework.Oid4Vc.Oid4Vci.CredResponse;
+using WalletFramework.Oid4Vc.Oid4Vp.Models;
 using WalletFramework.SdJwtVc.Services.SdJwtVcHolderService;
 
 namespace WalletFramework.Oid4Vc.Oid4Vci.CredRequest.Implementations;
@@ -46,9 +48,10 @@ public class CredentialRequestService : ICredentialRequestService
     private async Task<CredentialRequest> CreateCredentialRequest(
         KeyId keyId,
         Format format,
-        IssuerMetadata issuerMetadata,
         OneOf<OAuthToken, DPopToken> token,
-        Option<ClientOptions> clientOptions)
+        IssuerMetadata issuerMetadata,
+        Option<ClientOptions> clientOptions,
+        Option<AuthorizationRequest> authorizationRequest)
     {
         var cNonce = token.Match(
             oauthToken => oauthToken.CNonce,
@@ -61,21 +64,35 @@ public class CredentialRequestService : ICredentialRequestService
             "openid4vci-proof+jwt",
             null,
             clientOptions.ToNullable()?.ClientId);
+        
+        var proof = Option<ProofOfPossession>.None;
+        var sessionTranscript = Option<SessionTranscript>.None;
 
-        var proof = new ProofOfPossession
-        {
-            ProofType = "jwt",
-            Jwt = keyBindingJwt
-        };
+        authorizationRequest.Match(
+            Some: _ =>
+            {
+                if (format == "mso_mdoc")
+                    sessionTranscript = authorizationRequest.UnwrapOrThrow(new Exception()).ToVpHandover().ToSessionTranscript();
+                
+            },
+            None: () =>
+            {
+                proof = new ProofOfPossession
+                {
+                    ProofType = "jwt",
+                    Jwt = keyBindingJwt
+                };
+            });
 
-        return new CredentialRequest(proof, format);
+        return new CredentialRequest(format, proof, sessionTranscript);
     }
 
     async Task<Validation<CredentialResponse>> ICredentialRequestService.RequestCredentials(
         OneOf<SdJwtConfiguration, MdocConfiguration> configuration,
         IssuerMetadata issuerMetadata,
         OneOf<OAuthToken, DPopToken> token,
-        Option<ClientOptions> clientOptions)
+        Option<ClientOptions> clientOptions,
+        Option<AuthorizationRequest> authorizationRequest)
     {
         var keyId = await _keyStore.GenerateKey();
 
@@ -85,9 +102,10 @@ public class CredentialRequestService : ICredentialRequestService
                 var vciRequest = await CreateCredentialRequest(
                     keyId,
                     sdJwt.Format,
-                    issuerMetadata,
                     token,
-                    clientOptions);
+                    issuerMetadata,
+                    clientOptions,
+                    authorizationRequest);
                 
                 var result = new SdJwtCredentialRequest(vciRequest, sdJwt.Vct);
                 return result.EncodeToJson();
@@ -97,9 +115,10 @@ public class CredentialRequestService : ICredentialRequestService
                 var vciRequest = await CreateCredentialRequest(
                     keyId,
                     mdoc.Format,
-                    issuerMetadata,
                     token,
-                    clientOptions);
+                    issuerMetadata,
+                    clientOptions,
+                    authorizationRequest);
                 
                 var result = new MdocCredentialRequest(vciRequest, mdoc);
                 return result.EncodeToJson();

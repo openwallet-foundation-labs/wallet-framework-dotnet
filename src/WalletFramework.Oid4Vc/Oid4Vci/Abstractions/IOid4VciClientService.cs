@@ -3,9 +3,11 @@ using WalletFramework.Oid4Vc.Oid4Vci.CredOffer.Models;
 using OneOf;
 using WalletFramework.Core.Functional;
 using WalletFramework.Core.Localization;
+using WalletFramework.MdocLib;
 using WalletFramework.MdocVc;
 using WalletFramework.Oid4Vc.Oid4Vci.AuthFlow.Models;
-using WalletFramework.Oid4Vc.Oid4Vci.OnDemandCredential.Models;
+using WalletFramework.Oid4Vc.Oid4Vp.Models;
+using WalletFramework.SdJwtVc.Models;
 using WalletFramework.SdJwtVc.Models.Records;
 
 namespace WalletFramework.Oid4Vc.Oid4Vci.Abstractions;
@@ -41,7 +43,7 @@ public interface IOid4VciClientService
     /// </returns>
     Task<Validation<List<OneOf<SdJwtRecord, MdocRecord>>>> RequestCredential(IssuanceSession issuanceSession);
     
-    Task<Validation<List<OneOf<SdJwtRecord, MdocRecord>>>> RequestOnDemandCredential(IssuanceSession issuanceSession);
+    Task<Validation<List<OneOf<SdJwtRecord, MdocRecord>>>> RequestOnDemandCredential(IssuanceSession issuanceSession, AuthorizationRequest authorizationRequest, OneOf<Vct, DocType> credentialType);
 //Add Acces TOken to issaunce session
 //Dont dletet issaunce session
     

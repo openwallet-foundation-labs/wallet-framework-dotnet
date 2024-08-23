@@ -25,6 +25,14 @@ public interface IAuthFlowSessionStorage
     /// <param name="authFlowSessionState">Session State Identifier of a Authorization Code Flow session</param>
     /// <returns></returns>
     Task<AuthFlowSessionRecord> GetAsync(IAgentContext context, AuthFlowSessionState authFlowSessionState);
+    
+    /// <summary>
+    ///     Updates the authorization session record by the session identifier.
+    /// </summary>
+    /// <param name="context">Agent Context</param>
+    /// <param name="record">the updated Authorization Session Record</param>
+    /// <returns></returns>
+    Task UpdateAsync(IAgentContext context, AuthFlowSessionRecord record);
 
     /// <summary>
     ///     Stores the authorization session record.

@@ -1,7 +1,10 @@
 using Hyperledger.Aries;
 using Hyperledger.Aries.Agents;
+using Hyperledger.Aries.Extensions;
 using Hyperledger.Aries.Storage;
 using Hyperledger.Indy.WalletApi;
+using Microsoft.IdentityModel.Tokens;
+using Newtonsoft.Json;
 using SD_JWT.Models;
 using SD_JWT.Roles;
 using WalletFramework.SdJwtVc.Models.Records;
@@ -50,11 +53,33 @@ public class SdJwtVcHolderService : ISdJwtVcHolderService
     
         var presentationFormat =
             _holder.CreatePresentationFormat(credential.EncodedIssuerSignedJwt, disclosures.ToArray());
-    
+        
         if (!string.IsNullOrEmpty(credential.KeyId) 
             && !string.IsNullOrEmpty(nonce) 
             && !string.IsNullOrEmpty(audience))
         {
+            
+            var header = new Dictionary<string, object>
+            {
+                { "alg", "ES256" },
+                { "typ", "kb-jwt" }
+            };
+            
+            var payload = new Dictionary<string, object>
+            {
+                { "aud", audience },
+                { "nonce", nonce },
+                { "iat" , DateTimeOffset.UtcNow.ToUnixTimeSeconds()},
+                { "sd_hash", presentationFormat.ToSdHash()},
+            };
+
+            var encodedHeader = Base64UrlEncoder.Encode(JsonConvert.SerializeObject(header).GetUTF8Bytes());
+            var encodedPayload = Base64UrlEncoder.Encode(JsonConvert.SerializeObject(payload));
+            
+            var dataToSign = encodedHeader + "." + encodedPayload + ".toBeRemoved";
+            
+            return presentationFormat.AddKeyBindingJwt(dataToSign);
+            
             var keybindingJwt = await _sdJwtSigner.GenerateKbProofOfPossessionAsync(
                 credential.KeyId,
                 audience,
