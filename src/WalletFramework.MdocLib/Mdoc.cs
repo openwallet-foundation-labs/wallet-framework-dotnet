@@ -104,11 +104,10 @@ public record Mdoc
         });
         
         var validateIntegrity = new List<Validator<Mdoc>>
-            {
-                MdocFun.DocTypeMatches,
-                MdocFun.DigestsMatch
-            }
-            .AggregateValidators();
+        {
+            MdocFun.DocTypeMatches,
+            MdocFun.DigestsMatch
+        }.AggregateValidators();
 
         return 
             from bytes in decodeBase64Url(base64UrlencodedCborByteString)

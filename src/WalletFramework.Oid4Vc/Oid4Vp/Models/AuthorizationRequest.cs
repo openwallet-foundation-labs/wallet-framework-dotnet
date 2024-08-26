@@ -11,8 +11,8 @@ namespace WalletFramework.Oid4Vc.Oid4Vp.Models;
 /// </summary>
 public record AuthorizationRequest
 {
-    private const string DirectPost = "direct_post";
-    private const string DirectPostJwt = "direct_post.jwt";
+    public const string DirectPost = "direct_post";
+    public const string DirectPostJwt = "direct_post.jwt";
 
     private const string VpToken = "vp_token";
 
@@ -45,6 +45,9 @@ public record AuthorizationRequest
     /// </summary>
     [JsonProperty("response_uri")]
     public string ResponseUri { get; }
+    
+    [JsonProperty("response_mode")]
+    public string ResponseMode { get; }
 
     /// <summary>
     ///     Gets the client metadata. Contains the Verifier metadata.
@@ -89,6 +92,7 @@ public record AuthorizationRequest
         string clientId,
         string nonce,
         string responseUri,
+        string responseMode,
         ClientMetadata? clientMetadata,
         string? clientMetadataUri,
         string? scope,
@@ -101,6 +105,7 @@ public record AuthorizationRequest
         Nonce = nonce;
         PresentationDefinition = presentationDefinition;
         ResponseUri = responseUri;
+        ResponseMode = responseMode;
         Scope = scope;
         State = state;
     }

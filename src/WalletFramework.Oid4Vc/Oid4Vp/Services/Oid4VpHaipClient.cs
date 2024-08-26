@@ -56,7 +56,7 @@ internal class Oid4VpHaipClient : IOid4VpHaipClient
 
         return new AuthorizationResponse
         {
-            PresentationSubmission = SerializeObject(presentationSubmission),
+            PresentationSubmission = presentationSubmission,
             VpToken = vpToken.Count > 1 ? SerializeObject(vpToken) : vpToken[0],
             State = authorizationRequest.State
         };
