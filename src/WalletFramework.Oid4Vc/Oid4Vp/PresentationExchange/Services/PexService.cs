@@ -149,7 +149,7 @@ public class PexService : IPexService
             },
             () => filteredMdocRecords.Match(
                 mdocCredentials => mdocCredentials,
-                () => []
+                () => Enumerable.Empty<ICredential>()
             ));
 
         return credentialCandidates.ToList();

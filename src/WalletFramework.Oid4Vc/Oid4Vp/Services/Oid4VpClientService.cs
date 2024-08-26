@@ -22,6 +22,7 @@ using WalletFramework.MdocVc;
 using WalletFramework.Oid4Vc.Oid4Vci.AuthFlow.Abstractions;
 using WalletFramework.Oid4Vc.Oid4Vci.AuthFlow.Models;
 using WalletFramework.Oid4Vc.Oid4Vci.CredConfiguration.Models;
+using WalletFramework.Oid4Vc.Oid4Vci.Extensions;
 using WalletFramework.Oid4Vc.Oid4Vp.AuthResponse.Encryption;
 using WalletFramework.Oid4Vc.Oid4Vp.Models;
 using WalletFramework.Oid4Vc.Oid4Vp.PresentationExchange.Services;
@@ -314,6 +315,11 @@ public class Oid4VpClientService : IOid4VpClientService
             var context = await _agentProvider.GetContextAsync();
             var session = await _authFlowSessionStorage.GetAsync(context, issuanceSession.AuthFlowSessionState);
             
+            var client = _httpClientFactory.CreateClient();
+            client.WithAuthorizationHeader(session.AuthorizationData.OAuthToken.UnwrapOrThrow(new Exception()));
+            
+            var sha256 = SHA256.Create();
+            
             var presentation = string.Empty;
             switch (credential.Credential)
             {
@@ -328,39 +334,31 @@ public class Oid4VpClientService : IOid4VpClientService
 
                     var kbJwt = presentation[presentation.LastIndexOf('~')..][1..];
                     var kbJwtWithoutSignature = kbJwt[..kbJwt.LastIndexOf('.')];
-
-                    var sha256 = SHA256.Create();
+                    
+                    var kbJwtWithoutSignatureHash = sha256.ComputeHash(kbJwtWithoutSignature.GetUTF8Bytes());
+                    
                     var content = new JObject();
-                    // var test = "eyJhbGciOiJFUzI1NiJ9.eyJpc3MiOiJqb2UiLA0KICJleHAiOjEzMDA4MTkzODAsDQogImh0dHA6Ly9leGFtcGxlLmNvbS9pc19yb290Ijp0cnVlfQ";
-                    // var haher = sha256.ComputeHash(test.GetUTF8Bytes());
-                    // var base65 = Base64UrlEncoder.Encode(haher);
-                    var hash = sha256.ComputeHash(kbJwtWithoutSignature.GetUTF8Bytes());
-                    content.Add("hash_bytes", Base64UrlEncoder.Encode(hash));
+                    content.Add("hash_bytes", Base64UrlEncoder.Encode(kbJwtWithoutSignatureHash));
 
-                    var contentAsString = content.ToString();
-                    var httpContent =
+                    var sdJwtHttpContent =
                         new StringContent
                         (
-                            contentAsString,
+                            content.ToString(),
                             Encoding.UTF8,
                             MediaTypeNames.Application.Json
                         );
-        
-                    var client = _httpClientFactory.CreateClient();
-                    client.DefaultRequestHeaders.Remove("Authorization");
-                    client.DefaultRequestHeaders.Add(
-                        "Authorization",
-                        $"DPoP {session.AuthorizationData.AccessToken}");
                     
-                    var response = await client.PostAsync(new Uri("https://demo.pid-issuer.bundesdruckerei.de/c2/presentation-signing"), httpContent);
+                    var sdJwtSignatureResponse = await client.PostAsync(
+                        session.AuthorizationData.IssuerMetadata.PresentationSigningEndpoint.UnwrapOrThrow(new Exception()), 
+                        sdJwtHttpContent
+                        );
 
-                    if (response.IsSuccessStatusCode)
+                    if (sdJwtSignatureResponse.IsSuccessStatusCode)
                     {
-                        var responseContent = await response.Content.ReadAsStringAsync();
+                        var responseContent = await sdJwtSignatureResponse.Content.ReadAsStringAsync();
                         var signatureBytes = JObject.Parse(responseContent)["signature_bytes"]?.ToString();
 
-                        var pre = presentation[..presentation.LastIndexOf('~')];
-                        presentation = $"{pre}~{kbJwtWithoutSignature}.{signatureBytes}";
+                        presentation = $"{presentation[..presentation.LastIndexOf('.')]}.{signatureBytes}";
                     }
                     
                     presentedCredential = sdJwt;
@@ -388,45 +386,42 @@ public class Oid4VpClientService : IOid4VpClientService
                     var handover = authorizationRequest.ToVpHandover();
                     mdocNonce = handover.MdocGeneratedNonce;
                     var sessionTranscript = handover.ToSessionTranscript();
-                    
-                    
-                    
+
                     var deviceNamespaces =
                         from keyAuths in mdoc.IssuerSigned.IssuerAuth.Payload.DeviceKeyInfo.KeyAuthorizations
                         select keyAuths.ToDeviceNameSpaces();
-
+                    
                     var deviceAuthentication = new DeviceAuthentication(
                         sessionTranscript, mdoc.DocType, deviceNamespaces);
                     
-                    var sha2562 = SHA256.Create();
-                    var hashdhef = sha2562.ComputeHash(deviceAuthentication.ToCbor().ToJSONBytes());
+                    var sigStructure = new SigStructure(deviceAuthentication, mdoc.IssuerSigned.IssuerAuth.ProtectedHeaders);
+                    
+                    var sigStructureByteString = sigStructure.ToCborByteString();
+                    
+                    var sigStructureHash = sha256.ComputeHash(sigStructureByteString.EncodeToBytes());
                     
                     var mDocPostContent = new JObject();
-                    mDocPostContent.Add("hash_bytes", Base64UrlEncoder.Encode(hashdhef));
+                    mDocPostContent.Add("hash_bytes", Base64UrlEncoder.Encode(sigStructureHash));
 
-                    var contentAsString2 = mDocPostContent.ToString();
-                    var httpContent2 =
+                    var mDocHttpContent =
                         new StringContent
                         (
-                            contentAsString2,
+                            mDocPostContent.ToString(),
                             Encoding.UTF8,
                             MediaTypeNames.Application.Json
                         );
-        
-                    var client2 = _httpClientFactory.CreateClient();
-                    client2.DefaultRequestHeaders.Remove("Authorization");
-                    client2.DefaultRequestHeaders.Add(
-                        "Authorization",
-                        $"DPoP {session.AuthorizationData.AccessToken}");
                     
-                    var response2 = await client2.PostAsync(new Uri("https://demo.pid-issuer.bundesdruckerei.de/c2/presentation-signing"), httpContent2);
+                    var mDocSignatureResponse = await client.PostAsync(
+                        session.AuthorizationData.IssuerMetadata.PresentationSigningEndpoint.UnwrapOrThrow(new Exception()), 
+                        mDocHttpContent
+                        );
 
-                    if (response2.IsSuccessStatusCode)
+                    if (mDocSignatureResponse.IsSuccessStatusCode)
                     {
-                        var responseContent = await response2.Content.ReadAsStringAsync();
+                        var responseContent = await mDocSignatureResponse.Content.ReadAsStringAsync();
                         var signatureBytes = JObject.Parse(responseContent)["signature_bytes"]?.ToString();
-
-                        var coseSignature = new CoseSignature(signatureBytes.GetUTF8Bytes());
+                        
+                        var coseSignature = new CoseSignature(Base64UrlEncoder.DecodeBytes(signatureBytes));
                         
                         var deviceSigned = new DeviceSignature(BuildProtectedHeaders(), coseSignature)
                             .ToDeviceSigned(deviceNamespaces);
@@ -434,12 +429,6 @@ public class Oid4VpClientService : IOid4VpClientService
                         presentation = new Document(new AuthenticatedMdoc(mdoc, deviceSigned)).BuildDeviceResponse().EncodeToBase64Url();
                     }
                     
-                    
-                    // var authenticatedMdoc = await _mdocAuthenticationService.Authenticate(
-                    //     mdoc, sessionTranscript, mdocRecord.KeyId);
-                    
-                    
-
                     presentedCredential = mdocRecord;
                     
                     break;

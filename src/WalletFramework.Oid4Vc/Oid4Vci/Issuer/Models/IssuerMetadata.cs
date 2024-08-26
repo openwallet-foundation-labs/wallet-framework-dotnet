@@ -39,6 +39,11 @@ public record IssuerMetadata
     ///     Gets the URL of the Credential Issuer's Credential Endpoint.
     /// </summary>
     public Uri CredentialEndpoint { get; }
+    
+    /// <summary>
+    ///     Gets the URL of the Presentation Signing Endpoint Endpoint.
+    /// </summary>
+    public Option<Uri> PresentationSigningEndpoint { get; }
 
     /// <summary>
     ///     Gets the identifier of the Credential Issuer.
@@ -58,12 +63,14 @@ public record IssuerMetadata
         Dictionary<CredentialConfigurationId, SupportedCredentialConfiguration> credentialConfigurationsSupported,
         Option<List<IssuerDisplay>> display,
         Uri credentialEndpoint,
+        Option<Uri> presentationSigningEndpoint,
         CredentialIssuerId credentialIssuer,
         Option<IEnumerable<AuthorizationServerId>> authorizationServers)
     {
         CredentialConfigurationsSupported = credentialConfigurationsSupported;
         Display = display;
         CredentialEndpoint = credentialEndpoint;
+        PresentationSigningEndpoint = presentationSigningEndpoint;
         CredentialIssuer = credentialIssuer;
         AuthorizationServers = authorizationServers;
     }
@@ -72,11 +79,13 @@ public record IssuerMetadata
         Dictionary<CredentialConfigurationId, SupportedCredentialConfiguration> credentialConfigurationsSupported,
         Option<List<IssuerDisplay>> display,
         Uri credentialEndpoint,
+        Option<Uri> presentationSigningEndpoint,
         CredentialIssuerId credentialIssuer,
         Option<IEnumerable<AuthorizationServerId>> authorizationServers) => new(
         credentialConfigurationsSupported,
         display,
         credentialEndpoint,
+        presentationSigningEndpoint,
         credentialIssuer,
         authorizationServers);
 
@@ -133,6 +142,10 @@ public record IssuerMetadata
                 }
             })
             select endpoint;
+        
+        var presentationSigningEndpoint =
+            from jToken in json.GetByKey(PresentationSigningEndpointJsonKey).ToOption()
+            select new Uri(jToken.ToString());
 
         var credentialIssuerId = json
             .GetByKey(CredentialIssuerJsonKey)
@@ -149,6 +162,7 @@ public record IssuerMetadata
             .Apply(credentialConfigurations)
             .Apply(display)
             .Apply(credentialEndpoint)
+            .Apply(presentationSigningEndpoint)
             .Apply(credentialIssuerId)
             .Apply(authServers);
     }
@@ -159,6 +173,7 @@ public static class IssuerMetadataJsonExtensions
     public const string CredentialConfigsSupportedJsonKey = "credential_configurations_supported";
     public const string DisplayJsonKey = "display";
     public const string CredentialEndpointJsonKey = "credential_endpoint";
+    public const string PresentationSigningEndpointJsonKey = "presentation_signing_endpoint";
     public const string CredentialIssuerJsonKey = "credential_issuer";
     public const string AuthorizationServersJsonKey = "authorization_servers";
     
@@ -189,6 +204,10 @@ public static class IssuerMetadataJsonExtensions
         });
         
         result.Add(CredentialEndpointJsonKey, issuerMetadata.CredentialEndpoint.ToStringWithoutTrail());
+        issuerMetadata.PresentationSigningEndpoint.IfSome(endpoint =>
+        {
+            result.Add(PresentationSigningEndpointJsonKey, endpoint.ToStringWithoutTrail());
+        });
         result.Add(CredentialIssuerJsonKey, issuerMetadata.CredentialIssuer.ToString());
         
         var authServersJson = new JArray();

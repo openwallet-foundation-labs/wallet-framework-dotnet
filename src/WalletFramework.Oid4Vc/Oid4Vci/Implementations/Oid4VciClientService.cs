@@ -159,7 +159,7 @@ public class Oid4VciClientService : IOid4VciClientService
             clientOptions,
             issuerMetadata,
             authServerMetadata,
-            string.Empty,
+            Option<OAuthToken>.None, 
             offer.CredentialOffer.CredentialConfigurationIds);
 
         var context = await _agentProvider.GetContextAsync();
@@ -222,7 +222,7 @@ public class Oid4VciClientService : IOid4VciClientService
                     clientOptions,
                     validIssuerMetadata,
                     authServerMetadata,
-                    string.Empty,
+                    Option<OAuthToken>.None, 
                     validIssuerMetadata.CredentialConfigurationsSupported.Keys.ToList());
 
                 var context = await _agentProvider.GetContextAsync();
@@ -461,12 +461,12 @@ public class Oid4VciClientService : IOid4VciClientService
                             token = token.Match<OneOf<OAuthToken, DPopToken>>(
                                 oAuth =>
                                 {
-                                    session.AuthorizationData = session.AuthorizationData with { AccessToken = oAuth.AccessToken };
+                                    session.AuthorizationData = session.AuthorizationData with { OAuthToken = oAuth };
                                     return oAuth with { CNonce = cNonce.ToNullable() };
                                 },
                                 dPop =>
                                 {
-                                    session.AuthorizationData = session.AuthorizationData with { AccessToken = dPop.Token.AccessToken };
+                                    session.AuthorizationData = session.AuthorizationData with { OAuthToken = dPop.Token };
                                     return dPop with { Token = dPop.Token with { CNonce = cNonce.ToNullable() } };
                                 });
                             
@@ -480,12 +480,12 @@ public class Oid4VciClientService : IOid4VciClientService
                             token = token.Match<OneOf<OAuthToken, DPopToken>>(
                                 oAuth =>
                                 {
-                                    session.AuthorizationData = session.AuthorizationData with { AccessToken = oAuth.AccessToken };
+                                    session.AuthorizationData = session.AuthorizationData with { OAuthToken = oAuth };
                                     return oAuth with { CNonce = cNonce.ToNullable() };
                                 },
                                 dPop =>
                                 {
-                                    session.AuthorizationData = session.AuthorizationData with { AccessToken = dPop.Token.AccessToken };
+                                    session.AuthorizationData = session.AuthorizationData with { OAuthToken = dPop.Token };
                                     return dPop with { Token = dPop.Token with { CNonce = cNonce.ToNullable() } };
                                 });
                             
