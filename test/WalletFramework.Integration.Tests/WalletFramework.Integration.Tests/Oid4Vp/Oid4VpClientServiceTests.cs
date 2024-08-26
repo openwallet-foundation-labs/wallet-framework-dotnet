@@ -10,6 +10,7 @@ using SD_JWT.Roles.Implementation;
 using WalletFramework.Core.Cryptography.Models;
 using WalletFramework.MdocLib.Device.Abstractions;
 using WalletFramework.Oid4Vc.Oid4Vci.Abstractions;
+using WalletFramework.Oid4Vc.Oid4Vci.AuthFlow.Abstractions;
 using WalletFramework.Oid4Vc.Oid4Vp.Models;
 using WalletFramework.Oid4Vc.Oid4Vp.PresentationExchange.Services;
 using WalletFramework.Oid4Vc.Oid4Vp.Services;
@@ -50,6 +51,7 @@ public class Oid4VpClientServiceTests : IAsyncLifetime
             oid4VpHaipClient,
             _oid4VpRecordService,
             pexService,
+            _authFlowSessionStorageMock.Object,
             _sdJwtVcHolderService);
 
         _sdJwtSignerService.Setup(keyStore =>
@@ -72,6 +74,7 @@ public class Oid4VpClientServiceTests : IAsyncLifetime
     private readonly Mock<IMdocAuthenticationService> _mdocAuthenticationService = new();
     private readonly Mock<IMdocStorage> _mdocStorageMock = new();
     private readonly Mock<ISdJwtSigner> _sdJwtSignerService = new();
+    private readonly Mock<IAuthFlowSessionStorage> _authFlowSessionStorageMock = new();
     private readonly MockAgentRouter _router = new();
     private readonly Oid4VpClientService _oid4VpClientService;
     private readonly Oid4VpRecordService _oid4VpRecordService;

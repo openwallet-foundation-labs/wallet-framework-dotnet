@@ -1,5 +1,6 @@
 using FluentAssertions;
 using Hyperledger.Aries.Storage;
+using LanguageExt;
 using Newtonsoft.Json.Linq;
 using WalletFramework.Core.Functional;
 using WalletFramework.Core.Uri;
@@ -44,6 +45,7 @@ public class AuthFlowSessionRecordTests
             clientOptions,
             issuerMetadata,
             authorizationServerMetadata,
+            Option<OAuthToken>.None, 
             new List<CredentialConfigurationId> { credentialConfigurationId });
         
         var authorizationCodeParameters = new AuthorizationCodeParameters("hello", "world");

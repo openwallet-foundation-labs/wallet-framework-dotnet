@@ -1,5 +1,4 @@
 using WalletFramework.Oid4Vc.Oid4Vp.Models;
-
 using WalletFramework.Oid4Vc.ClientAttestation;
 using WalletFramework.Oid4Vc.Oid4Vci.AuthFlow.Models;
 
@@ -34,10 +33,19 @@ public interface IOid4VpClientService
         IEnumerable<SelectedCredential> selectedCredentials,
         CombinedWalletAttestation? combinedWalletAttestation = null);
     
+    /// <summary>
+    ///     Prepares and sends an Authorization Response containing a Presentation Submission with on demand credentials (C'') and the VP Token to the Redirect Uri.
+    /// </summary>
+    /// <param name="authorizationRequest"></param>
+    /// <param name="selectedCredentials"></param>
+    /// <param name="issuanceSession"></param>
+    /// <param name="combinedWalletAttestation"></param>
+    /// <returns>
+    ///     A task representing the asynchronous operation. The task result contains the Callback Url of the Authorization Response if present.
+    /// </returns>
     Task<Uri?> SendAuthorizationResponseAsync(
         AuthorizationRequest authorizationRequest,
         IEnumerable<SelectedCredential> selectedCredentials,
         IssuanceSession issuanceSession,
         CombinedWalletAttestation? combinedWalletAttestation = null);
-    //issuer signing key
 }

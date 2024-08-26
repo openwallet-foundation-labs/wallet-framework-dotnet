@@ -73,7 +73,6 @@ public class CredentialRequestService : ICredentialRequestService
             {
                 if (format == "mso_mdoc")
                     sessionTranscript = authorizationRequest.UnwrapOrThrow(new Exception()).ToVpHandover().ToSessionTranscript();
-                
             },
             None: () =>
             {
