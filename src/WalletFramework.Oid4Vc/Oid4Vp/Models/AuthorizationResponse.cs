@@ -31,10 +31,11 @@ public static class AuthorizationResponseFun
 {
     public static FormUrlEncodedContent ToFormUrl(this AuthorizationResponse authorizationResponse)
     {
-        var json = JsonConvert.SerializeObject(authorizationResponse);
-        var nameValueCollection = 
-            JsonConvert.DeserializeObject<Dictionary<string, string>>(json)!.ToList();
+        var dict = new Dictionary<string, string>();
+        dict.Add("vp_token", authorizationResponse.VpToken);
+        dict.Add("presentation_submission", JsonConvert.SerializeObject(authorizationResponse.PresentationSubmission));
+        dict.Add("state", authorizationResponse.State ?? string.Empty);
         
-        return new FormUrlEncodedContent(nameValueCollection);
+        return new FormUrlEncodedContent(dict);
     }
 }
