@@ -1,4 +1,5 @@
 using System.Globalization;
+using LanguageExt;
 using Newtonsoft.Json.Linq;
 using WalletFramework.Core.Functional;
 using WalletFramework.Oid4Vc.Oid4Vci.Authorization.Models;
@@ -11,6 +12,7 @@ public record AuthorizationData(
     ClientOptions ClientOptions,
     IssuerMetadata IssuerMetadata,
     AuthorizationServerMetadata AuthorizationServerMetadata,
+    Option<OAuthToken> OAuthToken,
     List<CredentialConfigurationId> CredentialConfigurationIds);
 
 public static class AuthorizationDataFun
@@ -18,6 +20,7 @@ public static class AuthorizationDataFun
     private const string ClientOptionsJsonKey = "client_options";
     private const string IssuerMetadataJsonKey = "issuer_metadata";
     private const string AuthorizationServerMetadataJsonKey = "authorization_server_metadata";
+    private const string CredentialOAuthToken = "credential_oauth_token";
     private const string CredentialConfigurationIdsJsonKey = "credential_configuration_ids";
     
     public static JObject EncodeToJson(this AuthorizationData data)
@@ -27,6 +30,10 @@ public static class AuthorizationDataFun
         var issuerMetadata = data.IssuerMetadata.EncodeToJson();
         
         var authServerMetadata = JObject.FromObject(data.AuthorizationServerMetadata);
+
+        var oAuthToken = data.OAuthToken.MatchUnsafe(
+            Some: JObject.FromObject,
+            None: () => null);
         
         var ids = data.CredentialConfigurationIds.Select(id => id.ToString());
         var idsArray = new JArray(ids);
@@ -36,6 +43,7 @@ public static class AuthorizationDataFun
             { ClientOptionsJsonKey, clientOptions },
             { IssuerMetadataJsonKey, issuerMetadata },
             { AuthorizationServerMetadataJsonKey, authServerMetadata },
+            { CredentialOAuthToken, oAuthToken },
             { CredentialConfigurationIdsJsonKey, idsArray }
         };
     }
@@ -50,6 +58,8 @@ public static class AuthorizationDataFun
         
         var authServerMetadata = json[AuthorizationServerMetadataJsonKey]!.ToObject<AuthorizationServerMetadata>()!;
         
+        var credentialOAuthToken  = json[CredentialOAuthToken]!.ToObject<OAuthToken>()!;
+        
         var configIds = json[CredentialConfigurationIdsJsonKey]!.Cast<JValue>().Select(value =>
         {
             var str = value.ToString(CultureInfo.InvariantCulture);
@@ -59,6 +69,6 @@ public static class AuthorizationDataFun
 
         }).ToList();
         
-        return new AuthorizationData(clientOptions, issuerMetadata, authServerMetadata, configIds);
+        return new AuthorizationData(clientOptions, issuerMetadata, authServerMetadata, credentialOAuthToken, configIds);
     }
 }

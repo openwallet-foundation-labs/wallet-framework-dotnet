@@ -41,7 +41,7 @@ public static class EncryptedAuthorizationResponseFun
         var jwe = JWE.EncryptBytes(
             response.ToJson().GetUTF8Bytes(),
             new [] { new JweRecipient(JweAlgorithm.ECDH_ES, verifierPubKey.ToEcdh()) },
-            JweEncryption.A256GCM,
+            JweEncryption.A128CBC_HS256,
             mode: SerializationMode.Compact,
             extraProtectedHeaders: headers);
 

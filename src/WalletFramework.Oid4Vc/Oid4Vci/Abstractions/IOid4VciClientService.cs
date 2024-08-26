@@ -3,8 +3,11 @@ using WalletFramework.Oid4Vc.Oid4Vci.CredOffer.Models;
 using OneOf;
 using WalletFramework.Core.Functional;
 using WalletFramework.Core.Localization;
+using WalletFramework.MdocLib;
 using WalletFramework.MdocVc;
 using WalletFramework.Oid4Vc.Oid4Vci.AuthFlow.Models;
+using WalletFramework.Oid4Vc.Oid4Vp.Models;
+using WalletFramework.SdJwtVc.Models;
 using WalletFramework.SdJwtVc.Models.Records;
 
 namespace WalletFramework.Oid4Vc.Oid4Vci.Abstractions;
@@ -39,6 +42,17 @@ public interface IOid4VciClientService
     /// A list of credentials.
     /// </returns>
     Task<Validation<List<OneOf<SdJwtRecord, MdocRecord>>>> RequestCredential(IssuanceSession issuanceSession);
+    
+    /// <summary>
+    ///     Requests a verifiable credential using the authorization code flow and C''.
+    /// </summary>
+    /// <param name="issuanceSession">Holds authorization session relevant information.</param>
+    /// <param name="authorizationRequest">The AuthorizationRequest that is associated witht the ad-hoc crednetial issuance</param>
+    /// <param name="credentialType">Specifies whether Sd-Jwt or MDoc should be issued</param>
+    /// <returns>
+    /// A list of credentials.
+    /// </returns>
+    Task<Validation<List<OneOf<SdJwtRecord, MdocRecord>>>> RequestOnDemandCredential(IssuanceSession issuanceSession, AuthorizationRequest authorizationRequest, OneOf<Vct, DocType> credentialType);
     
     /// <summary>
     ///     Processes a credential offer

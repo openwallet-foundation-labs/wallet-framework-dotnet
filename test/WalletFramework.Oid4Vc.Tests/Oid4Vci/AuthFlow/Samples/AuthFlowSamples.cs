@@ -9,6 +9,10 @@ public static class AuthFlowSamples
     {
         ["authorization_data"] = new JObject
         {
+            ["credential_oauth_token"] = new JObject
+            {
+                ["access_token"] = "i can write anything"
+            },
             ["client_options"] = new JObject
             {
                 ["ClientId"] = "https://test-issuer.com/redirect",

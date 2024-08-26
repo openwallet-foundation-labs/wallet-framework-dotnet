@@ -1,7 +1,6 @@
 using Hyperledger.Aries;
 using Hyperledger.Aries.Agents;
 using Hyperledger.Aries.Storage;
-using Hyperledger.Indy.WalletApi;
 using SD_JWT.Models;
 using SD_JWT.Roles;
 using WalletFramework.SdJwtVc.Models.Records;
