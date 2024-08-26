@@ -203,11 +203,11 @@ public class PexServiceTests
         var sdJwtVcHolderService = CreatePexService();
 
         // Act
-        Func<Task> act = async () =>  await sdJwtVcHolderService.FindCredentialCandidates(
+        var credentialCandidates = await sdJwtVcHolderService.FindCredentialCandidates(
             new[] { driverLicenseInputDescriptor });
 
         // Assert
-        await Assert.ThrowsAsync<Oid4VpNoCredentialCandidateException>(act);
+        credentialCandidates.Should().BeEmpty();
     }
 
     [Fact]
@@ -231,12 +231,12 @@ public class PexServiceTests
         var sdJwtVcHolderService = CreatePexService();
 
         // Act
-        Func<Task> act = async () => await sdJwtVcHolderService.FindCredentialCandidates(
+        var credentialCandidates = await sdJwtVcHolderService.FindCredentialCandidates(
             new[] { driverLicenseInputDescriptor }
         );
 
         // Assert
-        await Assert.ThrowsAsync<Oid4VpNoCredentialCandidateException>(act);
+        credentialCandidates.Should().BeEmpty();
     }
 
     #region Helper Methods
