@@ -57,25 +57,26 @@ public class CredentialRequestService : ICredentialRequestService
             oauthToken => oauthToken.CNonce,
             dPopToken => dPopToken.Token.CNonce);
 
-        var keyBindingJwt = await _sdJwtSigner.GenerateKbProofOfPossessionAsync(
-            keyId,
-            issuerMetadata.CredentialIssuer.ToString(),
-            cNonce,
-            "openid4vci-proof+jwt",
-            null,
-            clientOptions.ToNullable()?.ClientId);
-        
         var proof = Option<ProofOfPossession>.None;
         var sessionTranscript = Option<SessionTranscript>.None;
 
-        authorizationRequest.Match(
+        await authorizationRequest.Match(
             Some: _ =>
             {
                 if (format == "mso_mdoc")
                     sessionTranscript = authorizationRequest.UnwrapOrThrow(new Exception()).ToVpHandover().ToSessionTranscript();
+                return Task.CompletedTask;
             },
-            None: () =>
+            None: async () =>
             {
+                var keyBindingJwt = await _sdJwtSigner.GenerateKbProofOfPossessionAsync(
+                    keyId,
+                    issuerMetadata.CredentialIssuer.ToString(),
+                    cNonce,
+                    "openid4vci-proof+jwt",
+                    null,
+                    clientOptions.ToNullable()?.ClientId);
+                
                 proof = new ProofOfPossession
                 {
                     ProofType = "jwt",
@@ -93,7 +94,7 @@ public class CredentialRequestService : ICredentialRequestService
         Option<ClientOptions> clientOptions,
         Option<AuthorizationRequest> authorizationRequest)
     {
-        var keyId = await _keyStore.GenerateKey();
+        var keyId = await _keyStore.GenerateKey(isPermanent: authorizationRequest.IsNone);
 
         var requestJson = await configuration.Match(
             async sdJwt =>
