@@ -93,7 +93,7 @@ public class CredentialRequestService : ICredentialRequestService
         Option<ClientOptions> clientOptions,
         Option<AuthorizationRequest> authorizationRequest)
     {
-        var keyId = await _keyStore.GenerateKey();
+        var keyId = await _keyStore.GenerateKey(isPermanent: authorizationRequest.IsNone);
 
         var requestJson = await configuration.Match(
             async sdJwt =>
