@@ -40,6 +40,7 @@ public record ClientMetadata
     
     [JsonProperty("jwks")]
     [JsonConverter(typeof(ClientJwksConverter))]
+    [JsonIgnore]
     public List<JsonWebKey> Jwks { get; }
     
     /// <summary>
