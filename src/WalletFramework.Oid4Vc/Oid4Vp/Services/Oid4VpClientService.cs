@@ -205,6 +205,9 @@ public class Oid4VpClientService : IOid4VpClientService
         // TODO: Introduce timeout
         var httpClient = _httpClientFactory.CreateClient();
         httpClient.DefaultRequestHeaders.Clear();
+        if (clientAttestation != null)
+            httpClient.AddClientAttestationPopHeader(clientAttestation);
+        
         var responseMessage = await httpClient.SendAsync(message);
         if (!responseMessage.IsSuccessStatusCode)
         {
