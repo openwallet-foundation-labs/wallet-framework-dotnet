@@ -12,6 +12,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="SD-JWT" Version="0.1.0-rc.59" />
+    <PackageReference Include="SD-JWT" Version="0.1.0-rc.65" />
   </ItemGroup>
 </Project>
