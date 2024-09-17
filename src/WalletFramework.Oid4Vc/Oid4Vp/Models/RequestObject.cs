@@ -74,9 +74,14 @@ public static class RequestObjectExtensions
     /// <returns>The validated request object.</returns>
     /// <exception cref="InvalidOperationException">Throws when validation fails</exception>
     public static RequestObject ValidateJwt(this RequestObject requestObject)
-        => ((JwtSecurityToken)requestObject).IsSignatureValid(requestObject.GetLeafCertificate().GetPublicKey())
+    {
+        var jwt = (JwtSecurityToken)requestObject;
+        var pubKey = requestObject.GetLeafCertificate().GetPublicKey();
+        
+        return jwt.IsSignatureValid(pubKey)
             ? requestObject
             : throw new InvalidOperationException("Invalid JWT Signature");
+    }
 
     /// <summary>
     ///     Validates the SAN name of the leaf certificate
@@ -85,9 +90,8 @@ public static class RequestObjectExtensions
     /// <exception cref="InvalidOperationException">Throws when validation fails</exception>
     public static RequestObject ValidateSanName(this RequestObject requestObject)
     {
-        var x509Certificate = new X509Certificate2(
-            requestObject.GetLeafCertificate().GetEncoded()
-        );
+        var encoded = requestObject.GetLeafCertificate().GetEncoded();
+        var x509Certificate = new X509Certificate2(encoded);
         
         return GetSanDnsNames(x509Certificate).Any(sanDnsName => requestObject.ClientId.EndsWith(sanDnsName.Split("*").Last()))
             ? requestObject
@@ -121,25 +125,36 @@ public static class RequestObjectExtensions
     /// </summary>
     /// <returns>The validated request object</returns>
     /// <exception cref="InvalidOperationException">Throws when validation fails</exception>
-    public static RequestObject ValidateTrustChain(this RequestObject requestObject) =>
-        requestObject
-            .GetCertificates()
-            .IsTrustChainValid()
-            ? requestObject
-            : throw new InvalidOperationException("Validation of trust chain failed");
+    public static RequestObject ValidateTrustChain(this RequestObject requestObject)
+    {
+        var certificates = requestObject.GetCertificates();
+        if (certificates.Count == 1)
+        {
+            if (certificates.First().IsSelfSigned())
+                return requestObject;
+            else
+                throw new InvalidOperationException("TrustChain must not consist of only one non-self-signed certificate");
+        }
+        else
+        {
+            if (certificates.IsTrustChainValid())
+                return requestObject;
+            else
+                throw new InvalidOperationException("Validation of trust chain failed");
+        }
+    }
 
-    internal static List<X509Certificate> GetCertificates(this RequestObject requestObject) =>
-        Parse(((JwtSecurityToken)requestObject).Header.X5c)
-            .Select(
-                certAsJToken =>
-                    new X509CertificateParser()
-                        .ReadCertificate(
-                            FromBase64String(certAsJToken.ToString())
-                        )
-            )
-            .ToList();
+    internal static List<X509Certificate> GetCertificates(this RequestObject requestObject)
+    {
+        var x5C = ((JwtSecurityToken)requestObject).Header.X5c;
+        return Parse(x5C).Select(
+            certAsJToken =>
+            {
+                var certBytes = FromBase64String(certAsJToken.ToString());
+                return new X509CertificateParser().ReadCertificate(certBytes);
+            }).ToList();
+    }
 
     internal static X509Certificate GetLeafCertificate(this RequestObject requestObject) =>
         GetCertificates(requestObject).First();
 }
-
