@@ -3,6 +3,7 @@ using System.Security.Cryptography;
 using System.Text;
 using Hyperledger.Aries.Agents;
 using Hyperledger.Aries.Extensions;
+using Jose;
 using LanguageExt;
 using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
@@ -142,8 +143,8 @@ public class Oid4VpClientService : IOid4VpClientService
                     
                     var toDisclose = claims.Select(claim =>
                     {
-                        // TODO: This is needed because in mdoc the requested attributes look like this: $[Namespace][ElementId]. Refactor this more clean
-                        var keys = claim.Split(new[] { "[", "]" }, StringSplitOptions.RemoveEmptyEntries);
+                        // TODO: This is needed because in mdoc the requested attributes look like this: $['Namespace']['ElementId']. Refactor this more clean
+                        var keys = claim.Split(new[] { "['", "']" }, StringSplitOptions.RemoveEmptyEntries);
                         
                         var nameSpace = NameSpace.ValidNameSpace(keys[0]).UnwrapOrThrow();
                         var elementId = ElementIdentifier
@@ -374,7 +375,7 @@ public class Oid4VpClientService : IOid4VpClientService
                     var toDisclose = claims.Select(claim =>
                     {
                         // TODO: This is needed because in mdoc the requested attributes look like this: $[Namespace][ElementId]. Refactor this more clean
-                        var keys = claim.Split(new[] { "[", "]" }, StringSplitOptions.RemoveEmptyEntries);
+                        var keys = claim.Split(new[] { "['", "']" }, StringSplitOptions.RemoveEmptyEntries);
                         
                         var nameSpace = NameSpace.ValidNameSpace(keys[0]).UnwrapOrThrow();
                         var elementId = ElementIdentifier

@@ -121,8 +121,7 @@ public class PexService : IPexService
                 try
                 {
                     var jObj = record.Mdoc.IssuerSigned.IssuerNameSpaces.ToJObject();
-                    // TODO: This functionality to add quotes to JSON Path Expression to make them usable for Newtonsoft is better suited somewhere else
-                    if (jObj.SelectToken(field.Path.First().Replace("[", "['").Replace("]", "']"), true) is JValue value
+                    if (jObj.SelectToken(field.Path.First(), true) is JValue value
                         && field.Filter?.Const != null)
                     {
                         return field.Filter?.Const == value.Value?.ToString();
