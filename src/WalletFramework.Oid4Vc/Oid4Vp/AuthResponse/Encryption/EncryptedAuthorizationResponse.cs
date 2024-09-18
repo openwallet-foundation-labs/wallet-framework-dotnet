@@ -17,7 +17,7 @@ public static class EncryptedAuthorizationResponseFun
     {
         var content = new Dictionary<string, string>
         {
-            { "response", response.ToString() },
+            { "response", response.ToString() }
         };
 
         return new FormUrlEncodedContent(content);

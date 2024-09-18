@@ -108,7 +108,6 @@ public class Oid4VpClientService : IOid4VpClientService
             .PresentationDefinition
             .InputDescriptors;
         
-        // TODO: This is only a hack until the encryption response is implemented
         var mdocNonce = Option<Nonce>.None;
 
         var presentationMapTasks = credentials.Select(async credential =>
@@ -291,8 +290,11 @@ public class Oid4VpClientService : IOid4VpClientService
     }
     
     //TODO: Refactor this C'' method into current flows (too much duplicate code)
-    public async Task<Uri?> SendAuthorizationResponseAsync(AuthorizationRequest authorizationRequest, IEnumerable<SelectedCredential> selectedCredentials,
-        IssuanceSession issuanceSession, CombinedWalletAttestation? clientAttestation = null)
+    public async Task<Uri?> SendAuthorizationResponseAsync(
+        AuthorizationRequest authorizationRequest,
+        IEnumerable<SelectedCredential> selectedCredentials,
+        IssuanceSession issuanceSession,
+        CombinedWalletAttestation? clientAttestation = null)
     {
         var credentials = selectedCredentials.ToList();
         
@@ -300,7 +302,6 @@ public class Oid4VpClientService : IOid4VpClientService
             .PresentationDefinition
             .InputDescriptors;
         
-        // TODO: This is only a hack until the encryption response is implemented
         var mdocNonce = Option<Nonce>.None;
 
         var presentationMapTasks = credentials.Select(async credential =>
