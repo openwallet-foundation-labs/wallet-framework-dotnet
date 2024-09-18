@@ -53,6 +53,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Mdoc", "Mdoc", "{A1DD69B3-D
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WalletFramework.Integration.Tests", "..\test\WalletFramework.Integration.Tests\WalletFramework.Integration.Tests\WalletFramework.Integration.Tests.csproj", "{70DB749B-255A-4B71-8B76-BAD6B091DA7C}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WalletFramework.Core.Tests", "WalletFramework.Core.Tests\WalletFramework.Core.Tests.csproj", "{93B3ED00-4158-4F79-9532-D3E940630A8A}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -135,6 +137,10 @@ Global
 		{70DB749B-255A-4B71-8B76-BAD6B091DA7C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{70DB749B-255A-4B71-8B76-BAD6B091DA7C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{70DB749B-255A-4B71-8B76-BAD6B091DA7C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{93B3ED00-4158-4F79-9532-D3E940630A8A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{93B3ED00-4158-4F79-9532-D3E940630A8A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{93B3ED00-4158-4F79-9532-D3E940630A8A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{93B3ED00-4158-4F79-9532-D3E940630A8A}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -160,6 +166,7 @@ Global
 		{F6B3A24B-CDA2-4CC1-9F68-380203355099} = {873772C5-60B9-442B-B06E-C279919B963C}
 		{0EDD27CB-967F-4451-81AE-309E7F534F1C} = {A1DD69B3-DC35-43CF-AE14-D751722F074A}
 		{70DB749B-255A-4B71-8B76-BAD6B091DA7C} = {02ADBA96-A50C-44F0-A9D9-FA0629AA2DF4}
+		{93B3ED00-4158-4F79-9532-D3E940630A8A} = {02ADBA96-A50C-44F0-A9D9-FA0629AA2DF4}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {4FFA80F9-ADC6-40DB-BBD1-A522B8A68560}
