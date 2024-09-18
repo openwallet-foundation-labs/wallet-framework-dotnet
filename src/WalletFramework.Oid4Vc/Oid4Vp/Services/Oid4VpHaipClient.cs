@@ -75,24 +75,23 @@ internal class Oid4VpHaipClient : IOid4VpHaipClient
         var authRequest = requestObject.ToAuthorizationRequest();
         var clientMetadata = await FetchClientMetadata(authRequest);
 
-        return
-            requestObject.ClientIdScheme.Value switch
-            {
-                X509SanDns => requestObject
-                    .ValidateJwt()
-                    .ValidateTrustChain()
-                    .ValidateSanName()
-                    .ToAuthorizationRequest()
-                    .WithX509(requestObject)
-                    .WithClientMetadata(clientMetadata),
-                RedirectUri => requestObject
-                    .ToAuthorizationRequest()
-                    .WithClientMetadata(clientMetadata),
-                VerifierAttestation =>
-                    throw new NotImplementedException("Verifier Attestation not yet implemented"),
-                _ => throw new InvalidOperationException(
-                    $"Client ID Scheme {requestObject.ClientIdScheme} not supported")
-            };
+        return requestObject.ClientIdScheme.Value switch
+        {
+            X509SanDns => requestObject
+                .ValidateJwt()
+                .ValidateTrustChain()
+                .ValidateSanName()
+                .ToAuthorizationRequest()
+                .WithX509(requestObject)
+                .WithClientMetadata(clientMetadata),
+            RedirectUri => requestObject
+                .ToAuthorizationRequest()
+                .WithClientMetadata(clientMetadata),
+            VerifierAttestation =>
+                throw new NotImplementedException("Verifier Attestation not yet implemented"),
+            _ => throw new InvalidOperationException(
+                $"Client ID Scheme {requestObject.ClientIdScheme} not supported")
+        };
     }
 
     private async Task<ClientMetadata?> FetchClientMetadata(AuthorizationRequest authorizationRequest)
