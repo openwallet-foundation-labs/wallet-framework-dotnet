@@ -32,15 +32,23 @@ public sealed class MdocRecord : RecordBase, ICredential
     public Option<List<MdocDisplay>> Displays { get; }
     
     public KeyId KeyId { get; }
+    
+    public CredentialState CredentialState { get; set; }
+    
+    public bool OneTimeUse { get; set; }
+    
+    public string CredentialSetId { get; set; }
 
     public override string TypeName => "WF.MdocRecord";
 
-    public MdocRecord(Mdoc mdoc, Option<List<MdocDisplay>> displays, KeyId keyId)
+    public MdocRecord(Mdoc mdoc, Option<List<MdocDisplay>> displays, KeyId keyId, string credentialSetId)
     {
         CredentialId = CredentialId.CreateCredentialId();
         Mdoc = mdoc;
         Displays = displays;
         KeyId = keyId;
+        CredentialSetId = credentialSetId;
+        CredentialState = CredentialState.ACTIVE;
     }
 
 #pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
@@ -99,7 +107,8 @@ public static class MdocRecordFun
             .ValidKeyId(json[KeyIdJsonKey]!.ToString())
             .UnwrapOrThrow();
 
-        var result = new MdocRecord(mdoc, displays, keyId)
+        var credentialSetId = json[nameof(MdocRecord.CredentialSetId)]!.ToString();
+        var result = new MdocRecord(mdoc, displays, keyId, credentialSetId)
         {
             Id = id
         };
@@ -130,6 +139,6 @@ public static class MdocRecordFun
         return result;
     }
 
-    public static MdocRecord ToRecord(this Mdoc mdoc, Option<List<MdocDisplay>> displays, KeyId keyId) => 
-        new(mdoc, displays, keyId);
+    public static MdocRecord ToRecord(this Mdoc mdoc, Option<List<MdocDisplay>> displays, KeyId keyId, string credentialSetId) => 
+        new(mdoc, displays, keyId, credentialSetId);
 }

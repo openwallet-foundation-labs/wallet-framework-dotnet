@@ -48,7 +48,26 @@ public sealed class SdJwtRecord : RecordBase, ICredential
     ///     Gets the Issuer-signed JWT part of the SD-JWT.
     /// </summary>
     public string EncodedIssuerSignedJwt { get; set; } = null!;
+    
+    /// <summary>
+    ///     Tracks the state of the SD-JWT.
+    /// </summary>
+    public CredentialState CredentialState { get; set; }
+    
+    /// <summary>
+    ///     Indicator if the SD-JWT should only be used once.
+    /// </summary>
+    public bool OneTimeUse { get; set; }
+    
+    public DateTime ExpiresAt { get; set; }
 
+    [JsonIgnore]
+    public string CredentialSetId
+    {
+        get => Get();
+        set => Set(value, false);
+    }
+    
     /// <summary>
     ///     Gets or sets the identifier for the issuer.
     /// </summary>
@@ -134,7 +153,8 @@ public sealed class SdJwtRecord : RecordBase, ICredential
         string serializedSdJwtWithDisclosures,
         Dictionary<string, ClaimMetadata> displayedAttributes,
         List<SdJwtDisplay> display,
-        KeyId keyId)
+        KeyId keyId,
+        string credentialSetId)
     {
         Id = Guid.NewGuid().ToString();
             
@@ -144,8 +164,15 @@ public sealed class SdJwtRecord : RecordBase, ICredential
         Claims = sdJwtDoc.GetAllSubjectClaims();
         Display = display;
         DisplayedAttributes = displayedAttributes;
-            
+
+        CredentialSetId = credentialSetId;
+        CredentialState = CredentialState.ACTIVE;
+        
         KeyId = keyId;
+        ExpiresAt = DateTimeOffset.FromUnixTimeSeconds(
+                sdJwtDoc.UnsecuredPayload.SelectToken("exp")?.Value<long>() 
+                ?? throw new ArgumentNullException(nameof(ExpiresAt), "exp claim is missing or null"))
+            .DateTime;
         IssuerId = sdJwtDoc.UnsecuredPayload.SelectToken("iss")?.Value<string>() 
                    ?? throw new ArgumentNullException(nameof(IssuerId), "iss claim is missing or null");
         Vct = sdJwtDoc.UnsecuredPayload.SelectToken("vct")?.Value<string>() 
@@ -156,7 +183,8 @@ public sealed class SdJwtRecord : RecordBase, ICredential
         SdJwtDoc sdJwtDoc,
         Dictionary<string, ClaimMetadata> displayedAttributes,
         List<SdJwtDisplay> display,
-        KeyId keyId)
+        KeyId keyId,
+        string credentialSetId)
     {
         Id = Guid.NewGuid().ToString();
             
@@ -166,7 +194,14 @@ public sealed class SdJwtRecord : RecordBase, ICredential
         Display = display;
         DisplayedAttributes = displayedAttributes;
             
+        CredentialSetId = credentialSetId;
+        CredentialState = CredentialState.ACTIVE;
+        
         KeyId = keyId;
+        ExpiresAt = DateTimeOffset.FromUnixTimeSeconds(
+            sdJwtDoc.UnsecuredPayload.SelectToken("exp")?.Value<long>() 
+            ?? throw new ArgumentNullException(nameof(ExpiresAt), "exp claim is missing or null"))
+            .DateTime;
         IssuerId = sdJwtDoc.UnsecuredPayload.SelectToken("iss")?.Value<string>() 
                    ?? throw new ArgumentNullException(nameof(IssuerId), "iss claim is missing or null");
         Vct = sdJwtDoc.UnsecuredPayload.SelectToken("vct")?.Value<string>() 

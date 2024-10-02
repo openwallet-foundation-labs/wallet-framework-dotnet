@@ -3,6 +3,7 @@ using WalletFramework.MdocLib.Device.Abstractions;
 using WalletFramework.MdocLib.Device.Implementations;
 using WalletFramework.MdocLib.Security.Cose.Abstractions;
 using WalletFramework.MdocLib.Security.Cose.Implementations;
+using WalletFramework.Oid4Vc.CredentialSet;
 using WalletFramework.Oid4Vc.Oid4Vci.Abstractions;
 using WalletFramework.Oid4Vc.Oid4Vci.AuthFlow.Abstractions;
 using WalletFramework.Oid4Vc.Oid4Vci.AuthFlow.Implementations;
@@ -45,6 +46,7 @@ public static class SeviceCollectionExtensions
         builder.AddSingleton<IOid4VpRecordService, Oid4VpRecordService>();
         builder.AddSingleton<IPexService, PexService>();
         builder.AddSingleton<ITokenService, TokenService>();
+        builder.AddSingleton<ICredentialSetService, CredentialSetService>();
 
         builder.AddSdJwtVcServices();
         
