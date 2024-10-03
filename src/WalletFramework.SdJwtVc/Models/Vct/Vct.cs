@@ -4,7 +4,7 @@ using WalletFramework.Core.Functional;
 using WalletFramework.Core.Functional.Errors;
 using WalletFramework.Core.Json;
 
-namespace WalletFramework.SdJwtVc.Models;
+namespace WalletFramework.SdJwtVc.Models.Vct.Models;
 
 public readonly struct Vct
 {
