@@ -2,9 +2,9 @@ using Newtonsoft.Json.Linq;
 using WalletFramework.Core.Functional;
 using WalletFramework.Core.Json;
 using WalletFramework.SdJwtVc.Models;
-using WalletFramework.SdJwtVc.Models.Credential.Attributes;
 using static WalletFramework.Oid4Vc.Oid4Vci.CredConfiguration.Models.CredentialConfiguration;
 using static WalletFramework.Oid4Vc.Oid4Vci.CredConfiguration.Models.SdJwt.SdJwtConfiguration.SdJwtConfigurationJsonKeys;
+using ClaimMetadata = WalletFramework.SdJwtVc.Models.Credential.Attributes.ClaimMetadata;
 
 namespace WalletFramework.Oid4Vc.Oid4Vci.CredConfiguration.Models.SdJwt;
 

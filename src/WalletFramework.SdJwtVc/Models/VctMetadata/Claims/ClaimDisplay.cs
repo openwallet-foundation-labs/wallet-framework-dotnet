@@ -3,7 +3,6 @@ using LanguageExt;
 using Newtonsoft.Json.Linq;
 using WalletFramework.Core.Functional;
 using WalletFramework.Core.Functional.Errors;
-using WalletFramework.Core.Integrity;
 using WalletFramework.Core.Json;
 using WalletFramework.SdJwtVc.Models.VctMetadata.Rendering;
 using static WalletFramework.SdJwtVc.Models.VctMetadata.Claims.ClaimDisplayJsonKeys;
@@ -17,46 +16,45 @@ namespace WalletFramework.SdJwtVc.Models.VctMetadata.Claims;
 public readonly struct ClaimDisplay
 {
     /// <summary>
-    ///     Gets or sets the URI pointing to the logo image.
+    ///     Gets or sets the human-readable label for the claim.
     /// </summary>
-    public Option<IntegrityUri> Uri { get; }
+    public Option<string> Label { get; }
     
     /// <summary>
-    ///     Gets or sets the alternative text for the logo image.
+    ///     Gets or sets the human-readable description for the claim.
     /// </summary>
-    public Option<string> AltText { get; }
+    public Option<string> Description { get; }
     
-    private Logo(
-        Option<IntegrityUri> uri,
-        Option<string> altText)
+    private ClaimDisplay(
+        Option<string> label,
+        Option<string> description)
     {
-        Uri = uri;
-        AltText = altText;
+        Label = label;
+        Description = description;
     }
         
-    private static Logo Create(
-        Option<IntegrityUri> uri,
-        Option<string> altText
+    private static ClaimDisplay Create(
+        Option<string> label,
+        Option<string> description
     ) => new(
-        uri,
-        altText);
+        label,
+        description);
         
-    public static Validation<Logo> ValidLogo(JObject json)
+    public static Validation<ClaimDisplay> ValidClaimDisplay(JToken json)
     {
-        var uri = json
-            .GetByKey(UriJsonName)
-            .OnSuccess(token => token.ToJValue())
-            .OnSuccess(extendsValue =>
+        var label = json.GetByKey(LabelJsonName).OnSuccess(token => token.ToJValue()).OnSuccess(value =>
             {
-                var integrity = json.GetByKey(UriIntegrityJsonName)
-                    .OnSuccess(token => token.ToJValue())
-                    .OnSuccess(value => value.ToString(CultureInfo.InvariantCulture))
-                    .ToOption();
-                return IntegrityUri.ValidIntegrityUri(extendsValue.ToString(CultureInfo.InvariantCulture), integrity);
+                var str = value.ToString(CultureInfo.InvariantCulture);
+                if (string.IsNullOrWhiteSpace(str))
+                {
+                    return new StringIsNullOrWhitespaceError<SimpleRenderingMethod>();
+                }
+
+                return Valid(str);
             })
             .ToOption();
         
-        var altText = json.GetByKey(AltTextJsonName).OnSuccess(token => token.ToJValue()).OnSuccess(value =>
+        var description = json.GetByKey(DescriptionJsonName).OnSuccess(token => token.ToJValue()).OnSuccess(value =>
             {
                 var str = value.ToString(CultureInfo.InvariantCulture);
                 if (string.IsNullOrWhiteSpace(str))
@@ -69,8 +67,8 @@ public readonly struct ClaimDisplay
             .ToOption();
 
         return Valid(Create)
-            .Apply(uri)
-            .Apply(altText);
+            .Apply(label)
+            .Apply(description);
     }
 }
 

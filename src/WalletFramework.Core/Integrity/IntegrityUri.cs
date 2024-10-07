@@ -2,11 +2,12 @@ using System.Globalization;
 using LanguageExt;
 using WalletFramework.Core.Functional;
 using WalletFramework.Core.Functional.Errors;
+using static WalletFramework.Core.Functional.ValidationFun;
 
 namespace WalletFramework.Core.Integrity;
 
 /// <summary>
-///     Represents an URI and its integrity metadata.
+///     Represents a URI and its integrity metadata.
 /// </summary>
 public readonly struct IntegrityUri
 {
@@ -35,19 +36,22 @@ public readonly struct IntegrityUri
         uri,
         integrity);
         
-    public static Validation<IntegrityUri> ValidLogo(string value, string integrity)
+    public static Validation<IntegrityUri> ValidIntegrityUri(string value, Option<string> integrity)
     {
         if (!System.Uri.TryCreate(value, UriKind.Absolute, out System.Uri uri))
         {
             return new UriCanNotBeParsedError<IntegrityUri>();
         }
-        
-        var str = value.ToString(CultureInfo.InvariantCulture);
-        if (string.IsNullOrWhiteSpace(str))
-        {
-            return new StringIsNullOrWhitespaceError<IntegrityUri>();
-        }
 
-        return ValidationFun.Valid(Create(uri, str));
+        return integrity.Match(some =>
+            {
+                if (string.IsNullOrWhiteSpace(some))
+                {
+                    return new StringIsNullOrWhitespaceError<IntegrityUri>();
+                }
+
+                return Valid(Create(uri, some));
+            },
+            () => Valid(Create(uri, Option<string>.None)));
     }
 }

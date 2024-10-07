@@ -1,9 +1,12 @@
 using System.Globalization;
+using System.Text.RegularExpressions;
 using LanguageExt;
 using Newtonsoft.Json.Linq;
 using WalletFramework.Core.Functional;
+using WalletFramework.Core.Functional.Enumerable;
 using WalletFramework.Core.Functional.Errors;
 using WalletFramework.Core.Json;
+using WalletFramework.Core.Localization;
 using WalletFramework.SdJwtVc.Models.VctMetadata.Claims;
 using WalletFramework.SdJwtVc.Models.VctMetadata.Rendering;
 using static WalletFramework.Core.Functional.ValidationFun;
@@ -14,7 +17,7 @@ namespace WalletFramework.SdJwtVc.Models.VctMetadata;
 /// <summary>
 ///     Represents the claim information for the vc type.
 /// </summary>
-public readonly struct VctMetadataClaims
+public readonly struct VctMetadataClaim
 {
     /// <summary>
     ///     Gets or sets the claim or claims that are being addressed.
@@ -24,7 +27,7 @@ public readonly struct VctMetadataClaims
     /// <summary>
     ///     Gets or sets the display information for the claim.
     /// </summary>
-    public Option<ClaimDisplay> Display { get; }
+    public Option<Dictionary<Locale, ClaimDisplay>> Display { get; }
         
     /// <summary>
     ///     Gets or sets the infomration how to verify the claim.
@@ -36,9 +39,9 @@ public readonly struct VctMetadataClaims
     /// </summary>
     public Option<ClaimSelectiveDisclosure> SelectiveDisclosure { get; }
         
-    private VctMetadataClaims(
+    private VctMetadataClaim(
         string[] path,
-        Option<ClaimDisplay> display,
+        Option<Dictionary<Locale, ClaimDisplay>> display,
         Option<ClaimVerification> verification,
         Option<ClaimSelectiveDisclosure> selectiveDisclosure)
     {
@@ -48,9 +51,9 @@ public readonly struct VctMetadataClaims
         SelectiveDisclosure = selectiveDisclosure;
     }
         
-    private static VctMetadataClaims Create(
+    private static VctMetadataClaim Create(
         string[] path,
-        Option<ClaimDisplay> display,
+        Option<Dictionary<Locale, ClaimDisplay>> display,
         Option<ClaimVerification> verification,
         Option<ClaimSelectiveDisclosure> selectiveDisclosure
     ) => new(
@@ -59,26 +62,26 @@ public readonly struct VctMetadataClaims
         verification,
         selectiveDisclosure);
         
-    public static Validation<VctMetadataClaims> ValidVctMetadataClaims(JToken json)
+    public static Validation<VctMetadataClaim> ValidVctMetadataClaim(JToken json)
     {
         var path = json
             .GetByKey(PathJsonName)
             .OnSuccess(token => token.ToJArray())
             .OnSuccess(arr =>
             {
-                return arr.Select(token => token.ToString()).ToArray();
+                return arr.Select(token => token.ToObject<string>() == null ? null : token.ToString()).ToArray();
             });
         
         var display = json
             .GetByKey(DisplayJsonName)
             .OnSuccess(token => token.ToJObject())
-            .OnSuccess(ClaimDisplay.ValidClaimDisplay)
+            .OnSuccess(obj => obj.ToValidDictionaryAll(Locale.ValidLocale, ClaimDisplay.ValidClaimDisplay))
             .ToOption();
         
         var verification = json.GetByKey(VerificationJsonName).OnSuccess(token => token.ToJValue())
             .OnSuccess(value =>
             {
-                var str = value.ToString(CultureInfo.InvariantCulture);
+                var str = Regex.Replace(value.ToString(CultureInfo.InvariantCulture), "[^a-zA-Z]", string.Empty);
                 if (!Enum.TryParse(str, true, out ClaimVerification verification))
                 {
                     return new EnumCanNotBeParsedError<ClaimVerification>(str);

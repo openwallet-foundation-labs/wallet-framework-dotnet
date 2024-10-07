@@ -18,7 +18,8 @@ public class SdJwtRecordTests
             encodedSdJwt,
             new Dictionary<string, ClaimMetadata>(),
             new List<SdJwtDisplay>(),
-            keyId);
+            keyId,
+            string.Empty);
         
         record.Claims.Count.Should().Be(10);
     }

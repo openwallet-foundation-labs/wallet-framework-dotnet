@@ -1,6 +1,6 @@
 namespace WalletFramework.SdJwtVc.Models.VctMetadata.Claims;
 
-public enum ClaimSelectiveDisclosable
+public enum ClaimSelectiveDisclosure
 {
     Always,
     Allowed,

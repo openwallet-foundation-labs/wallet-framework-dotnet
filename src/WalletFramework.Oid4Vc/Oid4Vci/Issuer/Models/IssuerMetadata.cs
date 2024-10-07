@@ -121,7 +121,7 @@ public record IssuerMetadata
             })
             select dict;
 
-        var display =
+        Option<List<IssuerDisplay>> display =
             from jToken in json.GetByKey(DisplayJsonKey).ToOption()
             from jArray in jToken.ToJArray().ToOption()
             from result in jArray.TraverseAny(OptionalIssuerDisplay)
