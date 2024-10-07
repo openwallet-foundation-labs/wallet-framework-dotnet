@@ -267,7 +267,8 @@ public class PexServiceTests
             issuedSdJwt.IssuanceFormat,
             new Dictionary<string, ClaimMetadata>(),
             new List<SdJwtDisplay>(), 
-            keyId);
+            keyId,
+            string.Empty);
             
         return record;
     }
