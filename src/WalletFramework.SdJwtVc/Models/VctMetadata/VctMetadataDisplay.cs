@@ -1,11 +1,13 @@
+using LanguageExt;
 using Newtonsoft.Json;
+using WalletFramework.SdJwtVc.Models.VctMetadata.Rendering;
 
-namespace WalletFramework.SdJwtVc.Models.Vct.Models
+namespace WalletFramework.SdJwtVc.Models.VctMetadata
 {
     /// <summary>
     ///     Represents the visual representations for the vc type.
     /// </summary>
-    public class VctDisplay
+    public class VctMetadataDisplay
     {
         /// <summary>
         ///     Gets or sets the human readable name for the type.
@@ -24,6 +26,6 @@ namespace WalletFramework.SdJwtVc.Models.Vct.Models
         /// </summary>
         // TODO: how to deal with different rendering models for rendering methods "simple" and "svg_template"?
         [JsonProperty("rendering", NullValueHandling = NullValueHandling.Ignore)]
-        public Dictionary<string, RenderingMetadata>? Rendering { get; set; }
+        public Option<RenderingMetadata> Rendering { get; set; }
     }
 }

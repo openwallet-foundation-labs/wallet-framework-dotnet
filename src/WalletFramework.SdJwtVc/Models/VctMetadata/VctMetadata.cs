@@ -3,11 +3,11 @@ using Newtonsoft.Json.Linq;
 using WalletFramework.Core.Functional;
 using WalletFramework.Core.Json;
 using WalletFramework.Core.Localization;
-using WalletFramework.SdJwtVc.Models.Vct.Attributes;
+using WalletFramework.SdJwtVc.Models.VctMetadata.Attributes;
 using static WalletFramework.Core.Functional.ValidationFun;
-using static WalletFramework.SdJwtVc.Models.Vct.Models.VctMetadataJsonKeys;
+using static WalletFramework.SdJwtVc.Models.VctMetadata.VctMetadataJsonKeys;
 
-namespace WalletFramework.SdJwtVc.Models.Vct.Models;
+namespace WalletFramework.SdJwtVc.Models.VctMetadata;
 
 /// <summary>
 ///     Represents the metadata of a specific vc type.
@@ -22,22 +22,22 @@ public class VctMetadata
     /// <summary>
     ///     Gets or sets the integrity metadaty
     /// </summary>
-    public Option<VctName> Name { get; }
+    public Option<VctMetadataName> Name { get; }
 
     /// <summary>
     ///     Gets or sets the human readable description for the type.
     /// </summary>
-    public Option<VctDescription> Description { get; }
+    public Option<VctMetadataDescription> Description { get; }
 
     /// <summary>
     ///     Gets or sets the URI of another type that this type extends.
     /// </summary>
-    public Option<VctExtends> Extends { get; }
+    public Option<VctMetadataExtends> Extends { get; }
         
     /// <summary>
     ///     Gets or sets the dictionary representing the display information of the vc type in different languages.
     /// </summary>
-    public Option<Dictionary<Locale, VctDisplay>> Display { get; }
+    public Option<Dictionary<Locale, VctMetadataDisplay>> Display { get; }
         
     /// <summary>
     ///     Gets or sets the dictionary representing the claim information of the vc type in different languages.
@@ -47,27 +47,22 @@ public class VctMetadata
     /// <summary>
     ///     Gets or sets the embedded JSON schema document describing the structure of the credential.
     /// </summary>
-    public Option<string> Schema { get; }
+    public Option<VctMetadataSchema> Schema { get; }
         
     /// <summary>
     ///     Gets or sets the URL pointing to a JSON schema document desribing the structure of the credential.
     /// </summary>
-    public Option<Uri> SchemaUrl { get; }
-        
-    /// <summary>
-    ///     Gets or sets the integrity metadata for the schema url.
-    /// </summary>
-    public Option<string> SchemaUrlIntegrity { get; }
-
+    public Option<VctMetadataSchemaUrl> SchemaUrl { get; }
+    
     private VctMetadata(
         Option<Vct> vct,
-        Option<VctName> name,
-        Option<VctDescription> description,
-        Option<VctExtends> extends,
-        Option<Dictionary<Locale, VctDisplay>> display,
+        Option<VctMetadataName> name,
+        Option<VctMetadataDescription> description,
+        Option<VctMetadataExtends> extends,
+        Option<Dictionary<Locale, VctMetadataDisplay>> display,
         Option<ClaimMetadata> claims,
-        Option<string> schema,
-        Option<Uri> schemaUrl)
+        Option<VctMetadataSchema> schema,
+        Option<VctMetadataSchemaUrl> schemaUrl)
     {
         Vct = vct;
         Name = name;
@@ -81,13 +76,13 @@ public class VctMetadata
         
     private static VctMetadata Create(
         Option<Vct> vct,
-        Option<VctName> name,
-        Option<VctDescription> description,
-        Option<VctExtends> extends,
-        Option<Dictionary<Locale, VctDisplay>> display,
+        Option<VctMetadataName> name,
+        Option<VctMetadataDescription> description,
+        Option<VctMetadataExtends> extends,
+        Option<Dictionary<Locale, VctMetadataDisplay>> display,
         Option<ClaimMetadata> claims,
-        Option<string> schema,
-        Option<Uri> schemaUrl
+        Option<VctMetadataSchema> schema,
+        Option<VctMetadataSchemaUrl> schemaUrl
         ) => new(
         vct,
         name,
@@ -101,19 +96,25 @@ public class VctMetadata
     public static Validation<VctMetadata> ValidVctMetadata(JObject json)
     {
         var vct = json.GetByKey(VctJsonName).OnSuccess(Models.Vct.ValidVct).ToOption();
-        var name = json.GetByKey(NameJsonName).ToOption().OnSome(VctName.OptionVctName);
-        var description = json.GetByKey(NameJsonName).ToOption().OnSome(VctDescription.OptionVctDescription);
-        var extends = json.GetByKey(ExtendsJsonName).OnSuccess(VctExtends.ValidVctExtends).ToOption();
-
+        var name = json.GetByKey(NameJsonName).ToOption().OnSome(VctMetadataName.OptionVctName);
+        var description = json.GetByKey(DescriptionJsonName).ToOption().OnSome(VctMetadataDescription.OptionVctDescription);
+        var extends = json.GetByKey(ExtendsJsonName).OnSuccess(VctMetadataExtends.ValidVctMetadataExtends).ToOption();
+        
+        // var display = 
+        // var claims =
+        
+        var schema = json.GetByKey(SchemaJsonName).ToOption().OnSome(VctMetadataSchema.OptionVctSchemaMetadata);
+        var schemaUrl = json.GetByKey(SchemaUrlJsonName).OnSuccess(VctMetadataSchemaUrl.ValidVctMetadataSchemaUrl).ToOption();
+        
         return Valid(Create)
             .Apply(vct)
             .Apply(name)
             .Apply(description)
             .Apply(extends)
-            .Apply(Option<Dictionary<Locale, VctDisplay>>.None)
+            .Apply(Option<Dictionary<Locale, VctMetadataDisplay>>.None)
             .Apply(Option<ClaimMetadata>.None)
-            .Apply(Option<string>.None)
-            .Apply(Option<Uri>.None);
+            .Apply(schema)
+            .Apply(schemaUrl);
     }
 }
 
