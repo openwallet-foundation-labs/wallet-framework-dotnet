@@ -7,6 +7,7 @@ using WalletFramework.Core.Functional.Enumerable;
 using WalletFramework.Core.Functional.Errors;
 using WalletFramework.Core.Json;
 using WalletFramework.Core.Localization;
+using WalletFramework.Core.Path;
 using WalletFramework.SdJwtVc.Models.VctMetadata.Claims;
 using WalletFramework.SdJwtVc.Models.VctMetadata.Rendering;
 using static WalletFramework.Core.Functional.ValidationFun;
@@ -22,7 +23,7 @@ public readonly struct VctMetadataClaim
     /// <summary>
     ///     Gets or sets the claim or claims that are being addressed.
     /// </summary>
-    public string[] Path { get; }
+    public ClaimPath Path { get; }
         
     /// <summary>
     ///     Gets or sets the display information for the claim.
@@ -40,7 +41,7 @@ public readonly struct VctMetadataClaim
     public Option<ClaimSelectiveDisclosure> SelectiveDisclosure { get; }
         
     private VctMetadataClaim(
-        string[] path,
+        ClaimPath path,
         Option<Dictionary<Locale, ClaimDisplay>> display,
         Option<ClaimVerification> verification,
         Option<ClaimSelectiveDisclosure> selectiveDisclosure)
@@ -52,7 +53,7 @@ public readonly struct VctMetadataClaim
     }
         
     private static VctMetadataClaim Create(
-        string[] path,
+        ClaimPath path,
         Option<Dictionary<Locale, ClaimDisplay>> display,
         Option<ClaimVerification> verification,
         Option<ClaimSelectiveDisclosure> selectiveDisclosure
@@ -69,7 +70,7 @@ public readonly struct VctMetadataClaim
             .OnSuccess(token => token.ToJArray())
             .OnSuccess(arr =>
             {
-                return arr.Select(token => token.ToObject<string>() == null ? null : token.ToString()).ToArray();
+                return ClaimPath.ValidClaimPath(arr.Select(token => token.ToObject<string>() == null ? null : token.ToString()).ToArray());
             });
         
         var display = json

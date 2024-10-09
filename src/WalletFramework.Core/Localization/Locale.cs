@@ -14,7 +14,7 @@ namespace WalletFramework.Core.Localization;
 ///     ("en-US"). These are based on RFC 4646: https://www.rfc-editor.org/rfc/rfc4646.html.
 ///     <remarks>Locales are case-sensitive.</remarks>
 /// </summary>
-public readonly struct Locale
+public readonly record struct Locale
 {
     private CultureInfo Value { get; }
 
