@@ -23,16 +23,20 @@ public class ClaimPathTests
         Assert.True(claimPath.IsSuccess);
     }
     
-    [Fact]
-    public void Can_Convert_ClaimPath_To_JsonPath()
+    [Theory]
+    [InlineData(new[] {"name"}, "$.name")]
+    [InlineData(new[] {"address"}, "$.address")]
+    [InlineData(new[] {"address", "street_address"}, "$.address.street_address")]
+    [InlineData(new[] {"degree", null}, "$.degree")]
+    public void Can_Convert_ClaimPath_To_JsonPath(string?[] path, string expectedResult)
     {
         // Arrange
-        var claimPath = ClaimPath.ValidClaimPath(_claimPath).UnwrapOrThrow();
+        var claimPath = ClaimPath.ValidClaimPath(path).UnwrapOrThrow();
         
         // Act
         var jsonPath = claimPath.ToJsonPath();
 
         // Assert
-        Assert.Equal("$.address.street_address", jsonPath);
+        Assert.Equal(expectedResult, jsonPath);
     }
 }

@@ -20,7 +20,7 @@ public static class ClaimPathFun
 {
     public static JsonPath ToJsonPath(this ClaimPath claimPath)
     {
-        var jsonPath = $"$.{string.Join('.', claimPath)}";
+        var jsonPath = $"$.{string.Join('.', ((string?[])claimPath).Where(x => x is not null))}";
         return JsonPath.ValidJsonPath(jsonPath).UnwrapOrThrow();
     }
 }
