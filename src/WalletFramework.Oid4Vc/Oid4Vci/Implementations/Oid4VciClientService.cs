@@ -20,7 +20,6 @@ using WalletFramework.MdocLib;
 using WalletFramework.MdocVc;
 using WalletFramework.Oid4Vc.Oid4Vci.Authorization.DPop.Models;
 using WalletFramework.Oid4Vc.Oid4Vp.Models;
-using WalletFramework.Oid4Vc.Oid4Vp.PresentationExchange.Models;
 using WalletFramework.SdJwtVc.Models;
 using WalletFramework.SdJwtVc.Models.Records;
 using WalletFramework.SdJwtVc.Services.SdJwtVcHolderService;
@@ -140,7 +139,7 @@ public class Oid4VciClientService : IOid4VciClientService
             null,
             null);
 
-        var authServerMetadata = await FetchAuthorizationServerMetadataAsync(issuerMetadata);
+        var authServerMetadata = await FetchAuthorizationServerMetadataAsync(issuerMetadata, offer.CredentialOffer);
             
         _httpClient.DefaultRequestHeaders.Clear();
         var response = await _httpClient.PostAsync(
@@ -202,7 +201,7 @@ public class Oid4VciClientService : IOid4VciClientService
                     null);
                 
                 var authServerMetadata = 
-                    await FetchAuthorizationServerMetadataAsync(validIssuerMetadata);
+                    await FetchAuthorizationServerMetadataAsync(validIssuerMetadata, Option<CredentialOffer>.None);
             
                 _httpClient.DefaultRequestHeaders.Clear();
                 var response = await _httpClient.PostAsync(
@@ -256,7 +255,7 @@ public class Oid4VciClientService : IOid4VciClientService
             TransactionCode = transactionCode
         };
 
-        var authorizationServerMetadata = await FetchAuthorizationServerMetadataAsync(issuerMetadata);
+        var authorizationServerMetadata = await FetchAuthorizationServerMetadataAsync(issuerMetadata, credentialOfferMetadata.CredentialOffer);
 
         var token = await _tokenService.RequestToken(
             tokenRequest,
@@ -522,12 +521,31 @@ public class Oid4VciClientService : IOid4VciClientService
         return new AuthorizationCodeParameters(codeChallenge, codeVerifier);
     }
 
-    private async Task<AuthorizationServerMetadata> FetchAuthorizationServerMetadataAsync(IssuerMetadata issuerMetadata)
+    private async Task<AuthorizationServerMetadata> FetchAuthorizationServerMetadataAsync(IssuerMetadata issuerMetadata, Option<CredentialOffer> credentialOffer)
     {
         Uri credentialIssuer = issuerMetadata.CredentialIssuer;
-
+        
         var authServerUrl = issuerMetadata.AuthorizationServers.Match(
-            servers => CreateAuthorizationServerMetadataUri(servers.First()),
+            issuerMetadataAuthServers =>
+            {
+                var credentialOfferAuthServer = from offer in credentialOffer
+                    from grants in offer.Grants
+                    from code in grants.AuthorizationCode
+                    from server in code.AuthorizationServer
+                    select server;
+                
+                return credentialOfferAuthServer.Match(
+                    offerAuthServer =>
+                    {
+                        var matchingAuthServer = issuerMetadataAuthServers.Find(issuerMetadataAuthServer => issuerMetadataAuthServer.ToString() == offerAuthServer);
+
+                        return matchingAuthServer.Match(
+                            Some: server => CreateAuthorizationServerMetadataUri(server),
+                            None: () => throw new InvalidOperationException(
+                                "The authorization server in the credential offer does not match any authorization server in the issuer metadata."));
+                    },
+                    () => CreateAuthorizationServerMetadataUri(issuerMetadataAuthServers.First()));
+            },
             () => CreateAuthorizationServerMetadataUri(credentialIssuer));
 
         var getAuthServerResponse = await _httpClient.GetAsync(authServerUrl);
