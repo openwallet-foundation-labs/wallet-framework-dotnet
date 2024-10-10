@@ -21,6 +21,7 @@ using WalletFramework.Oid4Vc.Oid4Vci.Issuer.Implementations;
 using WalletFramework.Oid4Vc.Oid4Vp.PresentationExchange.Services;
 using WalletFramework.Oid4Vc.Oid4Vp.Services;
 using WalletFramework.SdJwtVc;
+using WalletFramework.SdJwtVc.Services;
 
 namespace WalletFramework.Oid4Vc;
 
@@ -47,6 +48,7 @@ public static class SeviceCollectionExtensions
         builder.AddSingleton<IPexService, PexService>();
         builder.AddSingleton<ITokenService, TokenService>();
         builder.AddSingleton<ICredentialSetService, CredentialSetService>();
+        builder.AddSingleton<IVctMetadataService, VctMetadataService>();
 
         builder.AddSdJwtVcServices();
         
