@@ -54,12 +54,13 @@ public sealed class SdJwtRecord : RecordBase, ICredential
     /// </summary>
     public CredentialState CredentialState { get; set; }
     
+    //TODO: Must be set when batch issuance is implemented
     /// <summary>
     ///     Indicator if the SD-JWT should only be used once.
     /// </summary>
     public bool OneTimeUse { get; set; }
     
-    public DateTime ExpiresAt { get; set; }
+    public DateTime? ExpiresAt { get; set; }
 
     [JsonIgnore]
     public string CredentialSetId
@@ -169,10 +170,9 @@ public sealed class SdJwtRecord : RecordBase, ICredential
         CredentialState = CredentialState.ACTIVE;
         
         KeyId = keyId;
-        ExpiresAt = DateTimeOffset.FromUnixTimeSeconds(
-                sdJwtDoc.UnsecuredPayload.SelectToken("exp")?.Value<long>() 
-                ?? throw new ArgumentNullException(nameof(ExpiresAt), "exp claim is missing or null"))
-            .DateTime;
+        ExpiresAt = sdJwtDoc.UnsecuredPayload.SelectToken("exp")?.Value<long>() is not null
+            ? DateTimeOffset.FromUnixTimeSeconds(sdJwtDoc.UnsecuredPayload.SelectToken("exp")!.Value<long>()).DateTime
+            : null;
         IssuerId = sdJwtDoc.UnsecuredPayload.SelectToken("iss")?.Value<string>() 
                    ?? throw new ArgumentNullException(nameof(IssuerId), "iss claim is missing or null");
         Vct = sdJwtDoc.UnsecuredPayload.SelectToken("vct")?.Value<string>() 
@@ -198,10 +198,10 @@ public sealed class SdJwtRecord : RecordBase, ICredential
         CredentialState = CredentialState.ACTIVE;
         
         KeyId = keyId;
-        ExpiresAt = DateTimeOffset.FromUnixTimeSeconds(
-            sdJwtDoc.UnsecuredPayload.SelectToken("exp")?.Value<long>() 
-            ?? throw new ArgumentNullException(nameof(ExpiresAt), "exp claim is missing or null"))
-            .DateTime;
+        
+        ExpiresAt = sdJwtDoc.UnsecuredPayload.SelectToken("exp")?.Value<long>() is not null
+            ? DateTimeOffset.FromUnixTimeSeconds(sdJwtDoc.UnsecuredPayload.SelectToken("exp")!.Value<long>()).DateTime
+            : null;
         IssuerId = sdJwtDoc.UnsecuredPayload.SelectToken("iss")?.Value<string>() 
                    ?? throw new ArgumentNullException(nameof(IssuerId), "iss claim is missing or null");
         Vct = sdJwtDoc.UnsecuredPayload.SelectToken("vct")?.Value<string>() 
@@ -216,6 +216,8 @@ public sealed class SdJwtRecord : RecordBase, ICredential
 
         return id;
     }
+    
+    public string GetCredentialSetId() => CredentialSetId;
 }
     
 internal static class JsonExtensions
@@ -270,6 +272,7 @@ internal static class JsonExtensions
                 break;
 
             default:
+                //TODO decide if path without $ should be used -> currentPath.TrimStart('.')
                 leafNodePaths.Add(currentPath.TrimStart('.'));
                 break;
         }

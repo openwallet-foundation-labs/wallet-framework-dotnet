@@ -1,5 +1,6 @@
+using LanguageExt;
+using Microsoft.Extensions.Logging;
 using WalletFramework.Core.Functional;
-using WalletFramework.Core.Functional.Errors;
 using WalletFramework.SdJwtVc.Models;
 using WalletFramework.SdJwtVc.Models.VctMetadata;
 using static WalletFramework.Core.Json.JsonFun;
@@ -9,30 +10,45 @@ namespace WalletFramework.SdJwtVc.Services;
 
 public class VctMetadataService : IVctMetadataService
 {
+    private readonly ILogger<VctMetadataService> _logger;
     private readonly HttpClient _httpClient;
     
-    public VctMetadataService(IHttpClientFactory httpClientFactory)
+    public VctMetadataService(
+        IHttpClientFactory httpClientFactory, 
+        ILogger<VctMetadataService> logger)
     {
+        _logger = logger;
         _httpClient = httpClientFactory.CreateClient();
     }
     
-    public async Task<Validation<VctMetadata>> ProcessMetadata(Vct vct)
+    public async Task<Option<VctMetadata>> ProcessMetadata(Vct vct)
     {
         if(!Uri.TryCreate(vct, UriKind.Absolute, out Uri vctUri))
-            return new UriCanNotBeParsedError<VctMetadata>();
+            return Option<VctMetadata>.None;
 
         var baseEndpoint = new Uri(vctUri.GetLeftPart(UriPartial.Authority));
         var credentialName = vctUri.AbsolutePath;
         
         var metadataUrl = new Uri(baseEndpoint, $".well-known/vct{credentialName}");
-        
-        var response = await _httpClient.GetAsync(metadataUrl);
-        if (response.IsSuccessStatusCode)
+
+        try
         {
-            var str = await response.Content.ReadAsStringAsync();
-            return ParseAsJObject(str).OnSuccess(ValidVctMetadata);
+            var response = await _httpClient.GetAsync(metadataUrl);
+            if (response.IsSuccessStatusCode)
+            {
+                var str = await response.Content.ReadAsStringAsync();
+                return ParseAsJObject(str).OnSuccess(ValidVctMetadata).Match(
+                    validMetadata => validMetadata,
+                    _ => Option<VctMetadata>.None);
+            }
+        }
+        catch (Exception e)
+        {
+            _logger.LogWarning(
+                e, 
+                "Could not retrieve vct metadata by vct: {Vct}", vct);
         }
         
-        throw new HttpRequestException($"Failed to get VCT metadata for VCT '{vct}'. Status code is {response.StatusCode}");
+        return Option<VctMetadata>.None;
     }
 }

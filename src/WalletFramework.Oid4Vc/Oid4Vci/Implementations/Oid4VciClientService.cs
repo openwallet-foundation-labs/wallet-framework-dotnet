@@ -411,7 +411,9 @@ public class Oid4VciClientService : IOid4VciClientService
 
             await result.OnSuccess(async task => credentials.Add(await task));
         }
-        
+
+        // var aa = CredentialSetRecordExtensions.EncodeToJson(credentialSet);
+        // var bb = CredentialSetRecordExtensions.DecodeFromJson(aa);
         await _credentialSetService.AddAsync(credentialSet);
         
         await _authFlowSessionStorage.DeleteAsync(context, session.AuthFlowSessionState);

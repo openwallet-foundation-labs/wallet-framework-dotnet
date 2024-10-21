@@ -57,6 +57,8 @@ public readonly record struct Locale
     
     public static Option<Locale> OptionLocale(JToken locale) => ValidLocale(locale).ToOption();
     
+    public static Locale Create(string locale) => new(locale);
+    
     public override string ToString() => this;
 }
 

@@ -3,6 +3,7 @@ using Hyperledger.Aries.Agents;
 using Hyperledger.Aries.Storage;
 using LanguageExt;
 using WalletFramework.Core.Credentials;
+using WalletFramework.Core.Functional;
 using WalletFramework.MdocVc;
 using WalletFramework.Oid4Vc.CredentialSet.Models;
 using WalletFramework.Oid4Vc.Oid4Vci.Abstractions;
@@ -57,7 +58,7 @@ public class CredentialSetService : ICredentialSetService
             Option<ISearchQuery>.Some(mDocQuery));
     }
 
-    public async Task DeleteAsync(string credentialSetId)
+    public virtual async Task DeleteAsync(string credentialSetId)
     {
         var context = await _agentProvider.GetContextAsync();
         var credentialSetRecord = await _walletRecordService.GetAsync<CredentialSetRecord>(context.Wallet, credentialSetId);
@@ -93,7 +94,34 @@ public class CredentialSetService : ICredentialSetService
         await _walletRecordService.AddAsync(context.Wallet, credentialSetRecord);
     }
     
-    public async Task UpdateAsync(CredentialSetRecord credentialSetRecord)
+    public async Task<Option<IEnumerable<CredentialSetRecord>>> ListAsync(
+        Option<ISearchQuery> query,
+        int count = 100,
+        int skip = 0)
+    {
+        var context = await _agentProvider.GetContextAsync();
+        var list = await _walletRecordService.SearchAsync<CredentialSetRecord>(
+            context.Wallet, 
+            query.ToNullable(),
+            null,
+            count, 
+            skip);
+
+        if (list.Count == 0)
+            return Option<IEnumerable<CredentialSetRecord>>.None;
+
+        return list;
+    }
+    
+    public async Task<Option<CredentialSetRecord>> GetAsync(string credentialId)
+    {
+        var context = await _agentProvider.GetContextAsync();
+        var record = await _walletRecordService.GetAsync<CredentialSetRecord>(context.Wallet, credentialId);
+        
+        return record;
+    }
+    
+    public virtual async Task UpdateAsync(CredentialSetRecord credentialSetRecord)
     {
         var context = await _agentProvider.GetContextAsync();
         await _walletRecordService.UpdateAsync(context.Wallet, credentialSetRecord);

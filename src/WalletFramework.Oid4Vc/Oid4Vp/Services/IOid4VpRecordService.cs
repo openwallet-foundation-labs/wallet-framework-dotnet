@@ -40,7 +40,7 @@ public interface IOid4VpRecordService
     /// <param name="context">The agent context.</param>
     /// <param name="clientId">The combined issuance.</param>
     /// <param name="clientMetadata">The key id.</param>
-    /// <param name="presentedCredentials">The issuer metadata.</param>
+    /// <param name="presentedCredentialSets">The issuer metadata.</param>
     /// <param name="name">The name of the presentation definition.</param>
     /// <returns>A task representing the asynchronous operation. The task result contains the ID of the stored OidPresentation record.</returns>
     Task<string> StoreAsync(
@@ -48,7 +48,7 @@ public interface IOid4VpRecordService
         string clientId,
         ClientMetadata? clientMetadata,
         string? name,
-        PresentedCredential[] presentedCredentials);
+        List<PresentedCredentialSet> presentedCredentialSets);
 
     /// <summary>
     ///     Deletes a specific OidPresentation record by its ID.

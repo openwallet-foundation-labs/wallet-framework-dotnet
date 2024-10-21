@@ -3,10 +3,8 @@ using Newtonsoft.Json.Linq;
 using SD_JWT.Models;
 using WalletFramework.Core.Credentials.Abstractions;
 using WalletFramework.Core.Functional;
-using WalletFramework.Core.Functional.Enumerable;
 using WalletFramework.MdocLib.Issuer;
 using WalletFramework.Oid4Vc.Oid4Vci.Abstractions;
-using WalletFramework.Oid4Vc.Oid4Vp.Exceptions;
 using WalletFramework.Oid4Vc.Oid4Vp.Models;
 using WalletFramework.Oid4Vc.Oid4Vp.PresentationExchange.Models;
 using WalletFramework.SdJwtVc.Models.Records;
@@ -75,9 +73,18 @@ public class PexService : IPexService
 
             var limitDisclosuresRequired = string.Equals(inputDescriptor.Constraints.LimitDisclosure, "required");
 
+            var credentialSetGroups = matchingCredentials.GroupBy(x => x.GetCredentialSetId());
+                
+            var credentialSetCandidates = credentialSetGroups.Select(group =>
+            {
+                var credentialSetId = group.Key;
+                var credentials = group.First();
+                return new CredentialSetCandidate(credentialSetId, [credentials]);
+            });
+            
             var credentialCandidates = new CredentialCandidates(
                 inputDescriptor.Id,
-                matchingCredentials,
+                credentialSetCandidates,
                 limitDisclosuresRequired);
 
             result.Add(credentialCandidates);

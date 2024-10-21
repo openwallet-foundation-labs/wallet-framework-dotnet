@@ -35,20 +35,29 @@ public sealed class MdocRecord : RecordBase, ICredential
     
     public CredentialState CredentialState { get; set; }
     
+    //TODO: Must be set when batch issuance is implemented
     public bool OneTimeUse { get; set; }
     
-    public string CredentialSetId { get; set; }
+    public Option<DateTime> ExpiresAt { get; set; }
+    
+    [JsonIgnore]
+    public string CredentialSetId
+    {
+        get => Get();
+        set => Set(value, false);
+    }
 
     public override string TypeName => "WF.MdocRecord";
 
-    public MdocRecord(Mdoc mdoc, Option<List<MdocDisplay>> displays, KeyId keyId, string credentialSetId)
+    public MdocRecord(Mdoc mdoc, Option<List<MdocDisplay>> displays, KeyId keyId, string credentialSetId, CredentialState credentialState, Option<DateTime> expiresAt)
     {
         CredentialId = CredentialId.CreateCredentialId();
         Mdoc = mdoc;
         Displays = displays;
         KeyId = keyId;
         CredentialSetId = credentialSetId;
-        CredentialState = CredentialState.ACTIVE;
+        CredentialState = credentialState;
+        ExpiresAt = expiresAt;
     }
 
 #pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
@@ -58,6 +67,8 @@ public sealed class MdocRecord : RecordBase, ICredential
 #pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
 
     public CredentialId GetId() => CredentialId;
+    
+    public string GetCredentialSetId() => CredentialSetId;
 
     public static implicit operator Mdoc(MdocRecord record) => record.Mdoc;
 }
@@ -85,8 +96,11 @@ public class MdocRecordJsonConverter : JsonConverter<MdocRecord>
 public static class MdocRecordFun
 {
     private const string MdocDisplaysJsonKey = "displays";
-    public const string MdocJsonKey = "mdoc";
-    public const string KeyIdJsonKey = "keyId";
+    private const string MdocJsonKey = "mdoc";
+    private const string KeyIdJsonKey = "keyId";
+    private const string CredentialSetIdJsonKey = "credentialSetId";
+    private const string CredentialStateJsonKey = "credentialState";
+    private const string ExpiresAtJsonKey = "expiresAt";
 
     public static MdocRecord DecodeFromJson(JObject json)
     {
@@ -107,8 +121,15 @@ public static class MdocRecordFun
             .ValidKeyId(json[KeyIdJsonKey]!.ToString())
             .UnwrapOrThrow();
 
-        var credentialSetId = json[nameof(MdocRecord.CredentialSetId)]!.ToString();
-        var result = new MdocRecord(mdoc, displays, keyId, credentialSetId)
+        var credentialSetId = json[CredentialSetIdJsonKey]!.ToString();
+        
+        var expiresAt = 
+            from expires in json.GetByKey(ExpiresAtJsonKey).ToOption()
+            select expires.ToObject<DateTime>();
+
+        var credentialState = Enum.Parse<CredentialState>(json[CredentialStateJsonKey]!.ToString());
+        
+        var result = new MdocRecord(mdoc, displays, keyId, credentialSetId, credentialState, expiresAt)
         {
             Id = id
         };
@@ -122,8 +143,12 @@ public static class MdocRecordFun
         {
             { nameof(RecordBase.Id), record.Id },
             { MdocJsonKey, record.Mdoc.Encode() },
-            { KeyIdJsonKey, record.KeyId.ToString() }
+            { KeyIdJsonKey, record.KeyId.ToString() },
+            { CredentialSetIdJsonKey, record.CredentialSetId },
+            { CredentialStateJsonKey, record.CredentialState.ToString() }
         };
+        
+        record.ExpiresAt.IfSome(expires => result.Add(ExpiresAtJsonKey, expires));
 
         record.Displays.IfSome(displays =>
         {
@@ -140,5 +165,5 @@ public static class MdocRecordFun
     }
 
     public static MdocRecord ToRecord(this Mdoc mdoc, Option<List<MdocDisplay>> displays, KeyId keyId, string credentialSetId) => 
-        new(mdoc, displays, keyId, credentialSetId);
+        new(mdoc, displays, keyId, credentialSetId, CredentialState.ACTIVE, Option<DateTime>.None);
 }

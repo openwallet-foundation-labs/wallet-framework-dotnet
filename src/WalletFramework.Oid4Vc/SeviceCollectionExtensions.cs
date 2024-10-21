@@ -71,4 +71,18 @@ public static class SeviceCollectionExtensions
         builder.AddSingleton<TService>(x => x.GetService<TImplementation>());
         return builder;
     }
+    
+    /// <summary>
+    /// Adds the extended CredentialSet service.
+    /// </summary>
+    /// <returns>The extended CredentialSet credential service.</returns>
+    /// <param name="builder">Builder.</param>
+    /// <typeparam name="TImplementation">The 2nd type parameter.</typeparam>
+    public static IServiceCollection AddExtendedSdJwtHolderService<TImplementation>(this IServiceCollection builder)
+        where TImplementation : class, ICredentialSetService
+    {
+        builder.AddSingleton<TImplementation>();
+        builder.AddSingleton<ICredentialSetService>(x => x.GetService<TImplementation>());
+        return builder;
+    }
 }
