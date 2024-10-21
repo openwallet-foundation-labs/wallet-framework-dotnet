@@ -37,19 +37,20 @@ public sealed class OidPresentationRecord : RecordBase
     ///     Gets or sets the metadata of the Verifier.
     /// </summary>
     public Option<ClientMetadata> ClientMetadata { get; set; }
-
+    
     /// <summary>
     ///     Gets or sets the name of the presentation.
     /// </summary>
     [JsonIgnore]
     public Option<string> Name
     {
-        get
-        {
-            var a = Get();
-            return a;
-        }
-        set => Set(value!, false);
+        get => Get();
+        set => value.Match(
+            name =>
+                {
+                    Set(name, false);
+                },
+            () => { });
     }
 
 #pragma warning disable CS8618
