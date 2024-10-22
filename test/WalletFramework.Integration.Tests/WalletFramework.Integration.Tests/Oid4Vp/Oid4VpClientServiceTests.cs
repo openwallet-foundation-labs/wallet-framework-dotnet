@@ -101,7 +101,7 @@ public class Oid4VpClientServiceTests : IAsyncLifetime
         var selectedCandidates = new SelectedCredential
         {
             InputDescriptorId = credentials.First().InputDescriptorId,
-            Credential = credentials.First().Credentials.First()
+            Credential = credentials.First().CredentialSetCandidates.First().Credentials.First()
         };
         
         SetupHttpClient(
