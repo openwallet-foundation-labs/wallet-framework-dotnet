@@ -117,10 +117,15 @@ public static class CredentialSetRecordExtensions
         MdocRecord mdocRecord)
     {
         credentialSetRecord.MDocCredentialType = mdocRecord.DocType;
-        // if (credentialSetRecord.CredentialAttributes.Count == 0)
-        //     credentialSetRecord.CredentialAttributes = sdJwtRecord.Mdoc.IssuerSigned.IssuerNameSpaces;
+        
+        if (credentialSetRecord.CredentialAttributes.Count == 0) 
+            credentialSetRecord.CredentialAttributes = mdocRecord.Mdoc.IssuerSigned.IssuerNameSpaces.Value.First().Value.ToDictionary(
+                issuerSignedItem => issuerSignedItem.ElementId.ToString(), 
+                issuerSignedItem => issuerSignedItem.Element.ToString());
+        
         credentialSetRecord.State = mdocRecord.CredentialState;
         credentialSetRecord.ExpiresAt = mdocRecord.ExpiresAt.ToOption();
+        //TODO: Add issuerId
     }
     
     public static OneOf<Vct, DocType> GetCredentialType(this CredentialSetRecord credentialSetRecord)
