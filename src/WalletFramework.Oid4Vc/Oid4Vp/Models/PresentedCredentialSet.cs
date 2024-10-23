@@ -11,7 +11,7 @@ namespace WalletFramework.Oid4Vc.Oid4Vp.Models;
 
 public record PresentedCredentialSet
 {
-    public CredentialSetId CredentialSetId { get; set; } = null!;
+    public CredentialSetId CredentialSetId { get; set; }
     
     public Option<Vct> SdJwtCredentialType { get; set; }
     

@@ -3,15 +3,9 @@ using WalletFramework.Core.Credentials.Abstractions;
 
 namespace WalletFramework.Oid4Vc.Oid4Vp.Models;
 
-public class CredentialSetCandidate
+public class CredentialSetCandidate(CredentialSetId credentialSetId, IEnumerable<ICredential> credentials)
 {
-    public CredentialSetId CredentialSetId { get; private set; }
+    public CredentialSetId CredentialSetId { get; private set; } = credentialSetId;
 
-    public List<ICredential> Credentials { get; private set; }
-
-    public CredentialSetCandidate(CredentialSetId credentialSetId, IEnumerable<ICredential> credentials)
-    {
-        CredentialSetId = credentialSetId;
-        Credentials = credentials.ToList();
-    }
+    public List<ICredential> Credentials { get; private set; } = credentials.ToList();
 }
