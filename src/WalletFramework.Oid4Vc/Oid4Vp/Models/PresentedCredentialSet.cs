@@ -1,6 +1,7 @@
 using LanguageExt;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using WalletFramework.Core.Credentials;
 using WalletFramework.Core.Functional;
 using WalletFramework.Core.Json;
 using WalletFramework.MdocLib;
@@ -10,7 +11,7 @@ namespace WalletFramework.Oid4Vc.Oid4Vp.Models;
 
 public record PresentedCredentialSet
 {
-    public string CredentialSetId { get; set; } = null!;
+    public CredentialSetId CredentialSetId { get; set; } = null!;
     
     public Option<Vct> SdJwtCredentialType { get; set; }
     
@@ -30,7 +31,7 @@ public static class PresentedCredentialSetExtensions
     {
         var result = new JObject();
         
-        result.Add(CredentialSetIdJsonKey, presentedCredentialSet.CredentialSetId);
+        result.Add(CredentialSetIdJsonKey, presentedCredentialSet.CredentialSetId.ToString());
 
         presentedCredentialSet.SdJwtCredentialType.IfSome(sdJwtType =>
             result.Add(SdJwtCredentialTypeJsonKey, sdJwtType.ToString()));
@@ -79,7 +80,7 @@ public static class PresentedCredentialSetExtensions
         
         return new PresentedCredentialSet
         {
-            CredentialSetId = credentialSetId,
+            CredentialSetId = CredentialSetId .ValidCredentialSetId(credentialSetId).UnwrapOrThrow(),
             SdJwtCredentialType = sdJwtCredentialType,
             MDocCredentialType = mDocCredentialType,
             PresentedClaims = presentedClaims.ToDictionary(kvp => kvp.ClaimName, kvp => kvp.ClaimValue)

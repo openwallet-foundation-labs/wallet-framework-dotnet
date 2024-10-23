@@ -3,6 +3,7 @@ using LanguageExt;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using OneOf;
+using WalletFramework.Core.Credentials;
 using WalletFramework.Core.Functional;
 using WalletFramework.Core.Json;
 using WalletFramework.MdocLib;
@@ -16,16 +17,25 @@ namespace WalletFramework.Oid4Vc.CredentialSet.Models;
 [JsonConverter(typeof(CredentialSetRecordConverter))]
 public sealed class CredentialSetRecord : RecordBase
 {
+    public CredentialSetId CredentialSetId
+    {
+        get => CredentialSetId
+            .ValidCredentialSetId(Id)
+            .UnwrapOrThrow(new InvalidOperationException("The Id is corrupt"));
+        private set => Id = value;
+    }
+    
     public Option<Vct> SdJwtCredentialType { get; set; }
 
     public Option<DocType> MDocCredentialType { get; set; }
 
-    public Dictionary<string, string> CredentialAttributes { get; set; } // Prioritizes Sd-Jwt
+    public Dictionary<string, string> CredentialAttributes { get; set; } = null!;
 
-    public CredentialState State { get; set; } //ACTIVE, DELETED // MISSING: REVOKED, EXPIRED
+    public CredentialState State { get; set; }
 
     public Option<DateTime> ExpiresAt { get; set; }
 
+    //TODO: Add Status List
     // public Option<StatusList> StatusList { get; }
 
     public Option<DateTime> RevokedAt { get; set; }
@@ -43,7 +53,6 @@ public sealed class CredentialSetRecord : RecordBase
     public override string TypeName => "AF.CredentialSetRecord";
 
     public CredentialSetRecord(
-        string id,
         Option<Vct> sdJwtCredentialType, 
         Option<DocType> mDocCredentialType, 
         Dictionary<string, string> credentialAttributes, 
@@ -53,7 +62,6 @@ public sealed class CredentialSetRecord : RecordBase
         Option<DateTime> deletedAt, 
         string issuerId)
     {
-        Id = id;
         SdJwtCredentialType = sdJwtCredentialType;
         MDocCredentialType = mDocCredentialType;
         CredentialAttributes = credentialAttributes;
@@ -66,7 +74,7 @@ public sealed class CredentialSetRecord : RecordBase
     
     public CredentialSetRecord()
     {
-        Id = Guid.NewGuid().ToString();
+        CredentialSetId = CredentialSetId.CreateCredentialSetId();
     }
 }
 
@@ -92,6 +100,7 @@ public class CredentialSetRecordConverter : JsonConverter<CredentialSetRecord>
 
 public static class CredentialSetRecordExtensions
 {
+    private const string CredentialSetIdTypeJsonKey = "credential_set_id";
     private const string SdJwtCredentialTypeJsonKey = "sd_jwt_credential_type";
     private const string MDocCredentialTypeJsonKey = "mdoc_credential_type";
     private const string CredentialAttributesJsonKey = "credential_attributes";
@@ -142,6 +151,7 @@ public static class CredentialSetRecordExtensions
         var result = new JObject();
         
         result.Add(nameof(RecordBase.Id), credentialSetRecord.Id);
+        result.Add(CredentialSetIdTypeJsonKey, credentialSetRecord.CredentialSetId.ToString());
         
         credentialSetRecord.SdJwtCredentialType.IfSome(vct => result.Add(SdJwtCredentialTypeJsonKey, vct.ToString()));
         credentialSetRecord.MDocCredentialType.IfSome(docType => result.Add(MDocCredentialTypeJsonKey, docType.ToString()));
@@ -196,7 +206,6 @@ public static class CredentialSetRecordExtensions
         var issuerIdentifierType = json[IssuerIdJsonKey]!.ToString();
 
         return new CredentialSetRecord(
-            id,
             sdJwtCredentialType,
             mDocCredentialType,
             credentialAttributesType,
@@ -204,6 +213,9 @@ public static class CredentialSetRecordExtensions
             expiresAtType,
             revokedAtType,
             deletedAtType,
-            issuerIdentifierType);
+            issuerIdentifierType)
+        {
+            Id = id
+        };
     }
 }

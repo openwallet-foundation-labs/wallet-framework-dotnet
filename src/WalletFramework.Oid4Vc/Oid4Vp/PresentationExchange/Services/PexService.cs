@@ -13,22 +13,12 @@ using WalletFramework.SdJwtVc.Services.SdJwtVcHolderService;
 namespace WalletFramework.Oid4Vc.Oid4Vp.PresentationExchange.Services;
 
 /// <inheritdoc />
-public class PexService : IPexService
+public class PexService(
+    IAgentProvider agentProvider,
+    IMdocStorage mdocStorage,
+    ISdJwtVcHolderService sdJwtVcHolderService)
+    : IPexService
 {
-    public PexService(
-        IAgentProvider agentProvider,
-        IMdocStorage mdocStorage,
-        ISdJwtVcHolderService sdJwtVcHolderService)
-    {
-        _agentProvider = agentProvider;
-        _mdocStorage = mdocStorage;
-        _sdJwtVcHolderService = sdJwtVcHolderService;
-    }
-
-    private readonly IAgentProvider _agentProvider;
-    private readonly IMdocStorage _mdocStorage;
-    private readonly ISdJwtVcHolderService _sdJwtVcHolderService;
-    
     /// <inheritdoc />
     public Task<PresentationSubmission> CreatePresentationSubmission(
         PresentationDefinition presentationDefinition,
@@ -95,10 +85,10 @@ public class PexService : IPexService
 
     private async Task<List<ICredential>> GetMatchingCredentials(InputDescriptor inputDescriptor)
     {
-        var context = await _agentProvider.GetContextAsync();
+        var context = await agentProvider.GetContextAsync();
         
-        var sdJwtRecords = await _sdJwtVcHolderService.ListAsync(context);
-        var mdocRecords = await _mdocStorage.List();
+        var sdJwtRecords = await sdJwtVcHolderService.ListAsync(context);
+        var mdocRecords = await mdocStorage.List();
         
         var filteredSdJwtRecords = sdJwtRecords.Where(record =>
         {

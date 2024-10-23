@@ -1,5 +1,6 @@
 using System.Drawing;
 using SD_JWT.Models;
+using WalletFramework.Core.Credentials;
 using WalletFramework.Core.Cryptography.Models;
 using WalletFramework.Core.Functional;
 using WalletFramework.Oid4Vc.Oid4Vci.CredConfiguration.Models.SdJwt;
@@ -15,7 +16,7 @@ public static class SdJwtRecordExtensions
         this SdJwtDoc sdJwtDoc,
         SdJwtConfiguration configuration,
         KeyId keyId,
-        string credentialSetId)
+        CredentialSetId credentialSetId)
     {
         var claims = configuration
             .Claims?
@@ -60,7 +61,7 @@ public static class SdJwtRecordExtensions
             sdJwtDoc,
             claims!,
             display.Fallback(new List<SdJwtDisplay>()),
-            keyId,
+            keyId, 
             credentialSetId);
 
         return record;

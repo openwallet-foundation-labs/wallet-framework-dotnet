@@ -55,14 +55,11 @@ public sealed class SdJwtRecord : RecordBase, ICredential
     public CredentialState CredentialState { get; set; }
     
     //TODO: Must be set when batch issuance is implemented
-    /// <summary>
-    ///     Indicator if the SD-JWT should only be used once.
-    /// </summary>
-    public bool OneTimeUse { get; set; }
+    // public bool OneTimeUse { get; set; }
     
     public DateTime? ExpiresAt { get; set; }
 
-    [JsonIgnore]
+    //TODO: Use CredentialSetId Type instead fo string
     public string CredentialSetId
     {
         get => Get();
@@ -130,6 +127,7 @@ public sealed class SdJwtRecord : RecordBase, ICredential
     /// <param name="display">The display of the credential.</param>
     /// <param name="issuerId"></param>
     /// <param name="encodedIssuerSignedJwt">The Issuer-signed JWT part of the SD-JWT.</param>
+    /// <param name="credentialSetId">The CredentialSetId.</param>
     [JsonConstructor]
     public SdJwtRecord(
         Dictionary<string, ClaimMetadata> displayedAttributes,
@@ -137,7 +135,8 @@ public sealed class SdJwtRecord : RecordBase, ICredential
         ImmutableArray<string> disclosures,
         List<SdJwtDisplay> display,
         string issuerId,
-        string encodedIssuerSignedJwt)
+        string encodedIssuerSignedJwt,
+        string credentialSetId)
     {
         Claims = claims;
         Disclosures = disclosures;
@@ -148,6 +147,7 @@ public sealed class SdJwtRecord : RecordBase, ICredential
         EncodedIssuerSignedJwt = encodedIssuerSignedJwt;
 
         IssuerId = issuerId;
+        CredentialSetId = credentialSetId;
     }
     
     public SdJwtRecord(
@@ -155,7 +155,7 @@ public sealed class SdJwtRecord : RecordBase, ICredential
         Dictionary<string, ClaimMetadata> displayedAttributes,
         List<SdJwtDisplay> display,
         KeyId keyId,
-        string credentialSetId)
+        CredentialSetId credentialSetId)
     {
         Id = Guid.NewGuid().ToString();
             
@@ -184,7 +184,7 @@ public sealed class SdJwtRecord : RecordBase, ICredential
         Dictionary<string, ClaimMetadata> displayedAttributes,
         List<SdJwtDisplay> display,
         KeyId keyId,
-        string credentialSetId)
+        CredentialSetId credentialSetId)
     {
         Id = Guid.NewGuid().ToString();
             
@@ -216,8 +216,10 @@ public sealed class SdJwtRecord : RecordBase, ICredential
 
         return id;
     }
-    
-    public string GetCredentialSetId() => CredentialSetId;
+
+    public CredentialSetId GetCredentialSetId() =>
+        Core.Credentials.CredentialSetId.ValidCredentialSetId(CredentialSetId)
+            .UnwrapOrThrow(new InvalidOperationException("The Id is corrupt"));
 }
     
 internal static class JsonExtensions

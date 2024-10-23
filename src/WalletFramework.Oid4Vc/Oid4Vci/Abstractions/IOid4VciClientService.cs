@@ -4,12 +4,10 @@ using OneOf;
 using WalletFramework.Core.Functional;
 using WalletFramework.Core.Localization;
 using WalletFramework.MdocLib;
-using WalletFramework.MdocVc;
 using WalletFramework.Oid4Vc.CredentialSet.Models;
 using WalletFramework.Oid4Vc.Oid4Vci.AuthFlow.Models;
 using WalletFramework.Oid4Vc.Oid4Vp.Models;
 using WalletFramework.SdJwtVc.Models;
-using WalletFramework.SdJwtVc.Models.Records;
 
 namespace WalletFramework.Oid4Vc.Oid4Vci.Abstractions;
 
@@ -53,7 +51,7 @@ public interface IOid4VciClientService
     /// <returns>
     /// A list of credentials.
     /// </returns>
-    Task<Validation<CredentialSetRecord>> RequestOnDemandCredential(IssuanceSession issuanceSession, AuthorizationRequest authorizationRequest, OneOf<Vct, DocType> credentialType);
+    Task<Validation<OnDemandCredentialSet>> RequestOnDemandCredential(IssuanceSession issuanceSession, AuthorizationRequest authorizationRequest, OneOf<Vct, DocType> credentialType);
     
     /// <summary>
     ///     Processes a credential offer

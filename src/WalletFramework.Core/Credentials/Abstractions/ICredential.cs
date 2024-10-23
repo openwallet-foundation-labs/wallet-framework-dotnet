@@ -7,5 +7,5 @@ public interface ICredential
 {
     CredentialId GetId();
     
-    string GetCredentialSetId();
+    CredentialSetId GetCredentialSetId();
 }

@@ -14,6 +14,7 @@ using WalletFramework.Oid4Vc.Oid4Vci.CredRequest.Abstractions;
 using WalletFramework.Oid4Vc.Oid4Vci.Issuer.Abstractions;
 using WalletFramework.Oid4Vc.Oid4Vci.Issuer.Models;
 using OneOf;
+using WalletFramework.Core.Credentials.Abstractions;
 using WalletFramework.Core.Functional;
 using WalletFramework.Core.Localization;
 using WalletFramework.MdocLib;
@@ -22,7 +23,6 @@ using WalletFramework.Oid4Vc.CredentialSet;
 using WalletFramework.Oid4Vc.CredentialSet.Models;
 using WalletFramework.Oid4Vc.Oid4Vci.Authorization.DPop.Models;
 using WalletFramework.Oid4Vc.Oid4Vp.Models;
-using WalletFramework.Oid4Vc.Oid4Vp.PresentationExchange.Models;
 using WalletFramework.SdJwtVc.Models;
 using WalletFramework.SdJwtVc.Models.Records;
 using WalletFramework.SdJwtVc.Services.SdJwtVcHolderService;
@@ -49,6 +49,7 @@ public class Oid4VciClientService : IOid4VciClientService
     /// <param name="authFlowSessionAuthFlowSessionStorage">The authorization record service</param>
     /// <param name="sdJwtService"></param>
     /// <param name="tokenService">The token service.</param>
+    /// <param name="credentialSetService"></param>
     /// <param name="agentProvider"></param>
     /// <param name="mdocStorage"></param>
     public Oid4VciClientService(
@@ -283,7 +284,7 @@ public class Oid4VciClientService : IOid4VciClientService
                 async credential => await credential.Value.Match<Task<OneOf<SdJwtRecord, MdocRecord>>>(
                     async sdJwt =>
                     {
-                        var record = sdJwt.Decoded.ToRecord(configuration.AsT0, response.KeyId, credentialSet.Id);
+                        var record = sdJwt.Decoded.ToRecord(configuration.AsT0, response.KeyId, credentialSet.CredentialSetId);
                         var context = await _agentProvider.GetContextAsync();
                         await _sdJwtService.AddAsync(context, record);
 
@@ -295,7 +296,7 @@ public class Oid4VciClientService : IOid4VciClientService
                     async mdoc =>
                     {
                         var displays = MdocFun.CreateMdocDisplays(configuration.AsT1);
-                        var record = mdoc.Decoded.ToRecord(displays, response.KeyId, credentialSet.Id);
+                        var record = mdoc.Decoded.ToRecord(displays, response.KeyId, credentialSet.CredentialSetId);
                         await _mdocStorage.Add(record);
                             
                         credentialSet.AddMDocData(record);
@@ -360,7 +361,6 @@ public class Oid4VciClientService : IOid4VciClientService
             tokenRequest,
             session.AuthorizationData.AuthorizationServerMetadata);
 
-        List<OneOf<SdJwtRecord, MdocRecord>> credentials = new();
         var credentialSet = new CredentialSetRecord();
         
         //TODO: Make sure that it does not always request all available credConfigurations
@@ -385,7 +385,7 @@ public class Oid4VciClientService : IOid4VciClientService
                                 oAuth => oAuth with { CNonce = cNonce.ToNullable()},
                                 dPop => dPop with { Token = dPop.Token with {CNonce = cNonce.ToNullable()}});
                             
-                            var record = sdJwt.Decoded.ToRecord(configuration.AsT0, response.KeyId, credentialSet.Id);
+                            var record = sdJwt.Decoded.ToRecord(configuration.AsT0, response.KeyId, credentialSet.CredentialSetId);
                             await _sdJwtService.AddAsync(context, record);
 
                             credentialSet.AddSdJwtData(record);
@@ -399,7 +399,7 @@ public class Oid4VciClientService : IOid4VciClientService
                                 dPop => dPop with { Token = dPop.Token with {CNonce = cNonce.ToNullable()}});
                             
                             var displays = MdocFun.CreateMdocDisplays(configuration.AsT1);
-                            var record = mdoc.Decoded.ToRecord(displays, response.KeyId, credentialSet.Id);
+                            var record = mdoc.Decoded.ToRecord(displays, response.KeyId, credentialSet.CredentialSetId);
                             await _mdocStorage.Add(record);
                             
                             credentialSet.AddMDocData(record);
@@ -409,11 +409,9 @@ public class Oid4VciClientService : IOid4VciClientService
                     // ReSharper disable once UnusedParameter.Local
                     transactionId => throw new NotImplementedException());
 
-            await result.OnSuccess(async task => credentials.Add(await task));
+            await result.OnSuccess(task => task);
         }
 
-        // var aa = CredentialSetRecordExtensions.EncodeToJson(credentialSet);
-        // var bb = CredentialSetRecordExtensions.DecodeFromJson(aa);
         await _credentialSetService.AddAsync(credentialSet);
         
         await _authFlowSessionStorage.DeleteAsync(context, session.AuthFlowSessionState);
@@ -423,7 +421,7 @@ public class Oid4VciClientService : IOid4VciClientService
     
     //TODO: Refactor this C'' method into current flows (too much duplicate code)
     /// <inheritdoc />
-    public async Task<Validation<CredentialSetRecord>> RequestOnDemandCredential(IssuanceSession issuanceSession, AuthorizationRequest authorizationRequest, OneOf<Vct, DocType> credentialType)
+    public async Task<Validation<OnDemandCredentialSet>> RequestOnDemandCredential(IssuanceSession issuanceSession, AuthorizationRequest authorizationRequest, OneOf<Vct, DocType> credentialType)
     {
         var context = await _agentProvider.GetContextAsync();
         
@@ -465,8 +463,8 @@ public class Oid4VciClientService : IOid4VciClientService
                 _ => false,
                 mDocConfiguration => mDocConfiguration.DocType == docType)));
             
-        List<OneOf<SdJwtRecord, MdocRecord>> credentials = new();
-        var credentialSet = new CredentialSetRecord();
+        List<ICredential> credentials = new();
+        var credentialSetRecord = new CredentialSetRecord();
         
         //TODO: Make sure that it does not always request all available credConfigurations
         foreach (var configuration in credentialConfigs)
@@ -487,9 +485,9 @@ public class Oid4VciClientService : IOid4VciClientService
                     credential => credential.Value.Match<OneOf<SdJwtRecord, MdocRecord>>(
                         sdJwt =>
                         {
-                            var record = sdJwt.Decoded.ToRecord(configuration.AsT0, response.KeyId, credentialSet.Id);
+                            var record = sdJwt.Decoded.ToRecord(configuration.AsT0, response.KeyId, credentialSetRecord.CredentialSetId);
                             
-                            credentialSet.AddSdJwtData(record);
+                            credentialSetRecord.AddSdJwtData(record);
                             
                             token = token.Match<OneOf<OAuthToken, DPopToken>>(
                                 oAuth =>
@@ -508,9 +506,9 @@ public class Oid4VciClientService : IOid4VciClientService
                         mdoc =>
                         {
                             var displays = MdocFun.CreateMdocDisplays(configuration.AsT1);
-                            var record = mdoc.Decoded.ToRecord(displays, response.KeyId, credentialSet.Id);
+                            var record = mdoc.Decoded.ToRecord(displays, response.KeyId, credentialSetRecord.CredentialSetId);
                             
-                            credentialSet.AddMDocData(record);
+                            credentialSetRecord.AddMDocData(record);
                             
                             token = token.Match<OneOf<OAuthToken, DPopToken>>(
                                 oAuth =>
@@ -531,16 +529,14 @@ public class Oid4VciClientService : IOid4VciClientService
 
             result.OnSuccess(task =>
             {
-                credentials.Add(task);
+                credentials.Add((ICredential)task.Value);
                 return Unit.Default;
             });
         }
         
-        await _credentialSetService.AddAsync(credentialSet);
-        
         await _authFlowSessionStorage.UpdateAsync(context, session);
         
-        return credentialSet;
+        return new OnDemandCredentialSet(credentialSetRecord, credentials);
     }
 
     private static AuthorizationCodeParameters CreateAndStoreCodeChallenge()

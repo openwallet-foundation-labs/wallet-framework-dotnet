@@ -9,6 +9,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json.Linq;
 using SD_JWT.Models;
+using WalletFramework.Core.Credentials;
 using WalletFramework.Oid4Vc.ClientAttestation;
 using WalletFramework.Core.Credentials.Abstractions;
 using WalletFramework.Core.Functional;
@@ -244,7 +245,7 @@ public class Oid4VpClientService : IOid4VpClientService
                     result = new PresentedCredentialSet
                     {
                         SdJwtCredentialType = Vct.ValidVct(sdJwtRecord.Vct).UnwrapOrThrow(),
-                        CredentialSetId = sdJwtRecord.CredentialSetId,
+                        CredentialSetId = CredentialSetId.ValidCredentialSetId(sdJwtRecord.CredentialSetId).UnwrapOrThrow(),
                         PresentedClaims = presentedClaims.ToDictionary(itm => itm.key, itm => itm.value)
                     };
                     break;
@@ -512,7 +513,7 @@ public class Oid4VpClientService : IOid4VpClientService
                     result = new PresentedCredentialSet
                     {
                         SdJwtCredentialType = Vct.ValidVct(sdJwtRecord.Vct).UnwrapOrThrow(),
-                        CredentialSetId = sdJwtRecord.CredentialSetId,
+                        CredentialSetId = CredentialSetId.ValidCredentialSetId(sdJwtRecord.CredentialSetId).UnwrapOrThrow(),
                         PresentedClaims = presentedClaims.ToDictionary(itm => itm.key, itm => itm.value)
                     };
                     break;

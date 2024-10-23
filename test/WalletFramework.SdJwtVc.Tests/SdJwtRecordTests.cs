@@ -1,4 +1,5 @@
 using FluentAssertions;
+using WalletFramework.Core.Credentials;
 using WalletFramework.Core.Cryptography.Models;
 using WalletFramework.SdJwtVc.Models.Credential;
 using WalletFramework.SdJwtVc.Models.Credential.Attributes;
@@ -19,7 +20,7 @@ public class SdJwtRecordTests
             new Dictionary<string, ClaimMetadata>(),
             new List<SdJwtDisplay>(),
             keyId,
-            string.Empty);
+            CredentialSetId.CreateCredentialSetId());
         
         record.Claims.Count.Should().Be(10);
     }

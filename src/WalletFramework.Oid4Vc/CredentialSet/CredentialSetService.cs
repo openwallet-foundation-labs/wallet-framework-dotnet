@@ -12,34 +12,22 @@ using WalletFramework.SdJwtVc.Services.SdJwtVcHolderService;
 
 namespace WalletFramework.Oid4Vc.CredentialSet;
 
-public class CredentialSetService : ICredentialSetService
+public class CredentialSetService(
+    IAgentProvider agentProvider,
+    ISdJwtVcHolderService sdJwtVcHolderService,
+    IMdocStorage mDocStorage,
+    IWalletRecordService walletRecordService)
+    : ICredentialSetService
 {
-    private readonly IAgentProvider _agentProvider;
-    private readonly ISdJwtVcHolderService _sdJwtVcHolderService;
-    private readonly IMdocStorage _mDocStorage;
-    private readonly IWalletRecordService _walletRecordService;
-
-    public CredentialSetService(
-        IAgentProvider agentProvider,
-        ISdJwtVcHolderService sdJwtVcHolderService,
-        IMdocStorage mDocStorage,
-        IWalletRecordService walletRecordService)
+    public async Task<Option<IEnumerable<SdJwtRecord>>> GetAssociatedSdJwtRecords(CredentialSetId credentialSetId)
     {
-        _agentProvider = agentProvider;
-        _sdJwtVcHolderService = sdJwtVcHolderService;
-        _mDocStorage = mDocStorage;
-        _walletRecordService = walletRecordService;
-    }
-    
-    public async Task<Option<IEnumerable<SdJwtRecord>>> GetAssociatedSdJwtRecords(string credentialSetId)
-    {
-        var context = await _agentProvider.GetContextAsync();
+        var context = await agentProvider.GetContextAsync();
         
         var sdJwtQuery = SearchQuery.Equal(
             "~" + nameof(SdJwtRecord.CredentialSetId),
             credentialSetId);
 
-        var sdJwtRecords = await _sdJwtVcHolderService.ListAsync(
+        var sdJwtRecords = await sdJwtVcHolderService.ListAsync(
             context,
             sdJwtQuery);
 
@@ -48,20 +36,20 @@ public class CredentialSetService : ICredentialSetService
             : Option<IEnumerable<SdJwtRecord>>.None;
     }
     
-    public async Task<Option<IEnumerable<MdocRecord>>> GetAssociatedMDocRecords(string credentialSetId)
+    public async Task<Option<IEnumerable<MdocRecord>>> GetAssociatedMDocRecords(CredentialSetId credentialSetId)
     {
         var mDocQuery = SearchQuery.Equal(
             "~" + nameof(MdocRecord.CredentialSetId),
             credentialSetId);
 
-        return await _mDocStorage.List(
+        return await mDocStorage.List(
             Option<ISearchQuery>.Some(mDocQuery));
     }
 
-    public virtual async Task DeleteAsync(string credentialSetId)
+    public virtual async Task DeleteAsync(CredentialSetId credentialSetId)
     {
-        var context = await _agentProvider.GetContextAsync();
-        var credentialSetRecord = await _walletRecordService.GetAsync<CredentialSetRecord>(context.Wallet, credentialSetId);
+        var context = await agentProvider.GetContextAsync();
+        var credentialSetRecord = await walletRecordService.GetAsync<CredentialSetRecord>(context.Wallet, credentialSetId);
         if (credentialSetRecord == null)
             throw new AriesFrameworkException(ErrorCode.RecordNotFound, "CredentialSet record not found");
         
@@ -70,7 +58,7 @@ public class CredentialSetService : ICredentialSetService
             Some: async records =>
             {
                 foreach (var record in records)
-                    await _sdJwtVcHolderService.DeleteAsync(context, record.Id);
+                    await sdJwtVcHolderService.DeleteAsync(context, record.Id);
             },
             None: () => Task.CompletedTask);
         
@@ -79,19 +67,19 @@ public class CredentialSetService : ICredentialSetService
             Some: async records =>
             {
                 foreach (var record in records)
-                    await _mDocStorage.Delete(record);
+                    await mDocStorage.Delete(record);
             },
             None: () => Task.CompletedTask);
 
         credentialSetRecord.State = CredentialState.DELETED;
         credentialSetRecord.DeletedAt = DateTime.UtcNow;
-        await _walletRecordService.UpdateAsync(context.Wallet, credentialSetRecord);
+        await walletRecordService.UpdateAsync(context.Wallet, credentialSetRecord);
     }
 
     public async Task AddAsync(CredentialSetRecord credentialSetRecord)
     {
-        var context = await _agentProvider.GetContextAsync();
-        await _walletRecordService.AddAsync(context.Wallet, credentialSetRecord);
+        var context = await agentProvider.GetContextAsync();
+        await walletRecordService.AddAsync(context.Wallet, credentialSetRecord);
     }
     
     public async Task<Option<IEnumerable<CredentialSetRecord>>> ListAsync(
@@ -99,8 +87,8 @@ public class CredentialSetService : ICredentialSetService
         int count = 100,
         int skip = 0)
     {
-        var context = await _agentProvider.GetContextAsync();
-        var list = await _walletRecordService.SearchAsync<CredentialSetRecord>(
+        var context = await agentProvider.GetContextAsync();
+        var list = await walletRecordService.SearchAsync<CredentialSetRecord>(
             context.Wallet, 
             query.ToNullable(),
             null,
@@ -113,17 +101,17 @@ public class CredentialSetService : ICredentialSetService
         return list;
     }
     
-    public async Task<Option<CredentialSetRecord>> GetAsync(string credentialId)
+    public async Task<Option<CredentialSetRecord>> GetAsync(CredentialSetId credentialSetId)
     {
-        var context = await _agentProvider.GetContextAsync();
-        var record = await _walletRecordService.GetAsync<CredentialSetRecord>(context.Wallet, credentialId);
+        var context = await agentProvider.GetContextAsync();
+        var record = await walletRecordService.GetAsync<CredentialSetRecord>(context.Wallet, credentialSetId);
         
         return record;
     }
     
     public virtual async Task UpdateAsync(CredentialSetRecord credentialSetRecord)
     {
-        var context = await _agentProvider.GetContextAsync();
-        await _walletRecordService.UpdateAsync(context.Wallet, credentialSetRecord);
+        var context = await agentProvider.GetContextAsync();
+        await walletRecordService.UpdateAsync(context.Wallet, credentialSetRecord);
     }
 }

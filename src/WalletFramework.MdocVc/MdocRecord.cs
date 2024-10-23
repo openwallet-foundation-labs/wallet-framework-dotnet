@@ -33,23 +33,30 @@ public sealed class MdocRecord : RecordBase, ICredential
     
     public KeyId KeyId { get; }
     
-    public CredentialState CredentialState { get; set; }
+    public CredentialState CredentialState { get; }
     
     //TODO: Must be set when batch issuance is implemented
-    public bool OneTimeUse { get; set; }
+    // public bool OneTimeUse { get; }
     
-    public Option<DateTime> ExpiresAt { get; set; }
+    public Option<DateTime> ExpiresAt { get; }
     
     [JsonIgnore]
-    public string CredentialSetId
+    public CredentialSetId CredentialSetId
     {
-        get => Get();
+        get => CredentialSetId.ValidCredentialSetId(Get())
+            .UnwrapOrThrow(new InvalidOperationException("The CredentialSetId is corrupt"));
         set => Set(value, false);
     }
 
     public override string TypeName => "WF.MdocRecord";
 
-    public MdocRecord(Mdoc mdoc, Option<List<MdocDisplay>> displays, KeyId keyId, string credentialSetId, CredentialState credentialState, Option<DateTime> expiresAt)
+    public MdocRecord(
+        Mdoc mdoc, 
+        Option<List<MdocDisplay>> displays, 
+        KeyId keyId, 
+        CredentialSetId credentialSetId, 
+        CredentialState credentialState, 
+        Option<DateTime> expiresAt)
     {
         CredentialId = CredentialId.CreateCredentialId();
         Mdoc = mdoc;
@@ -68,7 +75,7 @@ public sealed class MdocRecord : RecordBase, ICredential
 
     public CredentialId GetId() => CredentialId;
     
-    public string GetCredentialSetId() => CredentialSetId;
+    public CredentialSetId GetCredentialSetId() => CredentialSetId;
 
     public static implicit operator Mdoc(MdocRecord record) => record.Mdoc;
 }
@@ -121,7 +128,7 @@ public static class MdocRecordFun
             .ValidKeyId(json[KeyIdJsonKey]!.ToString())
             .UnwrapOrThrow();
 
-        var credentialSetId = json[CredentialSetIdJsonKey]!.ToString();
+        var credentialSetId = CredentialSetId.ValidCredentialSetId(json[CredentialSetIdJsonKey]!.ToString()).UnwrapOrThrow();
         
         var expiresAt = 
             from expires in json.GetByKey(ExpiresAtJsonKey).ToOption()
@@ -144,7 +151,7 @@ public static class MdocRecordFun
             { nameof(RecordBase.Id), record.Id },
             { MdocJsonKey, record.Mdoc.Encode() },
             { KeyIdJsonKey, record.KeyId.ToString() },
-            { CredentialSetIdJsonKey, record.CredentialSetId },
+            { CredentialSetIdJsonKey, record.CredentialSetId.ToString() },
             { CredentialStateJsonKey, record.CredentialState.ToString() }
         };
         
@@ -164,6 +171,6 @@ public static class MdocRecordFun
         return result;
     }
 
-    public static MdocRecord ToRecord(this Mdoc mdoc, Option<List<MdocDisplay>> displays, KeyId keyId, string credentialSetId) => 
+    public static MdocRecord ToRecord(this Mdoc mdoc, Option<List<MdocDisplay>> displays, KeyId keyId, CredentialSetId credentialSetId) => 
         new(mdoc, displays, keyId, credentialSetId, CredentialState.ACTIVE, Option<DateTime>.None);
 }

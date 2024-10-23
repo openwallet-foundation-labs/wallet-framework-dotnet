@@ -5,10 +5,10 @@ using Moq;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using SD_JWT.Roles.Implementation;
+using WalletFramework.Core.Credentials;
 using WalletFramework.Core.Credentials.Abstractions;
 using WalletFramework.Core.Cryptography.Models;
 using WalletFramework.Oid4Vc.Oid4Vci.Abstractions;
-using WalletFramework.Oid4Vc.Oid4Vp.Exceptions;
 using WalletFramework.Oid4Vc.Oid4Vp.Models;
 using WalletFramework.Oid4Vc.Oid4Vp.PresentationExchange.Models;
 using WalletFramework.Oid4Vc.Oid4Vp.PresentationExchange.Services;
@@ -27,12 +27,12 @@ public class PexServiceTests
     private readonly Mock<IMdocStorage> _mdocStorageMock = new();
     private readonly Mock<ISdJwtVcHolderService> _sdJwtVcHolderServiceMock = new();
 
-    private const string DriverLicenseCredentialSetId = "driverLicenseCredentialSetId";
-    private const string DriverLicenseCredentialCloneSetId = "driverLicenseCredentialCloneSetId";
-    private const string UniversityCredentialSetId = "universityCredentialSetId";
-    private const string NestedCredentialSetId = "nestedCredentialSetId";
-    private const string AlternativeNestedCredentialSetId = "alternativeNestedCredentialSetId";
-    private const string BatchCredentialSetId = "batchCredentialSetId";
+    private static readonly CredentialSetId DriverLicenseCredentialSetId = CredentialSetId.CreateCredentialSetId();
+    private static readonly CredentialSetId DriverLicenseCredentialCloneSetId = CredentialSetId.CreateCredentialSetId();
+    private static readonly CredentialSetId UniversityCredentialSetId = CredentialSetId.CreateCredentialSetId();
+    private static readonly CredentialSetId NestedCredentialSetId = CredentialSetId.CreateCredentialSetId();
+    private static readonly CredentialSetId AlternativeNestedCredentialSetId = CredentialSetId.CreateCredentialSetId();
+    private static readonly CredentialSetId BatchCredentialSetId = CredentialSetId.CreateCredentialSetId();
 
     private readonly SdJwtRecord _driverCredential = CreateCredential(CredentialExamples.DriverCredential, DriverLicenseCredentialSetId);
     private readonly SdJwtRecord _driverCredentialClone = CreateCredential(CredentialExamples.DriverCredential, DriverLicenseCredentialCloneSetId);
@@ -285,7 +285,7 @@ public class PexServiceTests
         return new PexService(_agentProviderMock.Object, _mdocStorageMock.Object, _sdJwtVcHolderServiceMock.Object);
     }
         
-    private static SdJwtRecord CreateCredential(JObject payload, string credentialSetId)
+    private static SdJwtRecord CreateCredential(JObject payload, CredentialSetId credentialSetId)
     {
         // Arrange
         const string jwk = "{\"kty\":\"EC\",\"d\":\"1_2Dagk1gvTIOX-DLPe7GHNsGLJMc7biySNA-so7TXE\",\"use\":\"sig\",\"crv\":\"P-256\",\"x\":\"X6sZhH_kFp_oKYiPXW-LvUyAv9mHp1xYcpAK3yy0wGY\",\"y\":\"p0URU7tgWbh42miznti0NVKM36fpJBbIfnF8ZCYGryE\",\"alg\":\"ES256\"}";
