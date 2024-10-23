@@ -58,7 +58,7 @@ jobs:
 #                  apt-get install -y libindy
                   
             - name: Build
-              run: dotnet build $SOLUTION --configuration $BUILD_CONFIG -p:Version=$APP_VERSION --no-restore
+              run: dotnet build $SOLUTION --configuration $BUILD_CONFIG -p:Version=$APP_VERSION
 
             - name: Run tests
               run: |
