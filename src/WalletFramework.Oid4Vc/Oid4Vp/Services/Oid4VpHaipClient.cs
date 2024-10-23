@@ -68,7 +68,7 @@ internal class Oid4VpHaipClient : IOid4VpHaipClient
     {
         var httpClient = _httpClientFactory.CreateClient();
         httpClient.DefaultRequestHeaders.Clear();
-
+        
         var requestObjectJson = await httpClient.GetStringAsync(haipAuthorizationRequestUri.RequestUri);
         var requestObject = CreateRequestObject(requestObjectJson);
 
@@ -78,13 +78,14 @@ internal class Oid4VpHaipClient : IOid4VpHaipClient
         return requestObject.ClientIdScheme.Value switch
         {
             X509SanDns => requestObject
-                .ValidateJwt()
+                .ValidateJwtSignature()
                 .ValidateTrustChain()
                 .ValidateSanName()
                 .ToAuthorizationRequest()
                 .WithX509(requestObject)
                 .WithClientMetadata(clientMetadata),
             RedirectUri => requestObject
+                .ValidateJwtClientId()
                 .ToAuthorizationRequest()
                 .WithClientMetadata(clientMetadata),
             VerifierAttestation =>
