@@ -1,4 +1,3 @@
-using WalletFramework.Core.Credentials.Abstractions;
 
 namespace WalletFramework.Oid4Vc.Oid4Vp.Models;
 
@@ -15,7 +14,7 @@ public class CredentialCandidates
     /// <summary>
     ///     Gets the array of credentials matching the input descriptor.
     /// </summary>
-    public ICredential[] Credentials { get; private set; }
+    public CredentialSetCandidate[] CredentialSetCandidates { get; private set; }
 
     /// <summary>
     ///     Gets the ID of the input descriptor.
@@ -28,11 +27,11 @@ public class CredentialCandidates
     /// <param name="inputDescriptorId">The ID of the input descriptor.</param>
     /// <param name="credentials">The credentials matching the input descriptor.</param>
     /// <param name="limitDisclosuresRequired">Specifies whether disclosures should be limited.</param>
-    public CredentialCandidates(string inputDescriptorId, IEnumerable<ICredential> credentials,
+    public CredentialCandidates(string inputDescriptorId, IEnumerable<CredentialSetCandidate> credentials,
         bool limitDisclosuresRequired = false)
     {
         InputDescriptorId = inputDescriptorId;
-        Credentials = credentials.ToArray();
+        CredentialSetCandidates = credentials.ToArray();
         LimitDisclosuresRequired = limitDisclosuresRequired;
     }
 }

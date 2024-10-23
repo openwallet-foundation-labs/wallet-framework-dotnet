@@ -24,4 +24,12 @@ public readonly struct Vct
 
         return new Vct(str);
     });
+    
+    public static Validation<Vct> ValidVct(string vct)
+    {
+        if (string.IsNullOrWhiteSpace(vct))
+            return new StringIsNullOrWhitespaceError<Vct>().ToInvalid<Vct>();
+
+        return new Vct(vct);
+    }
 }

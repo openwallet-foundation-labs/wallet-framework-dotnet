@@ -5,6 +5,15 @@ namespace WalletFramework.Oid4Vc.Tests.PresentationExchange.Services;
 
 public static class CredentialExamples
 {
+    public static JObject BatchCredential => new()
+    {
+        {"vct", "BatchCredential"},
+        {"iss", "did:example:batch-authority"},
+        new SdProperty("id", "123"),
+        new SdProperty("issuer", "did:example:gov"),
+        new SdProperty("batchExp", "01/01/2000")
+    };
+    
     public static JObject DriverCredential => new()
     {
         {"vct", "DriverCredential"},

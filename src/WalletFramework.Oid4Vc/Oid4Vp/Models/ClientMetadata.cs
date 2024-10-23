@@ -55,8 +55,7 @@ public record ClientMetadata
     [JsonProperty("tos_uri")]
     public string? TosUri { get; }
 
-    [JsonConstructor]
-    private ClientMetadata(
+    public ClientMetadata(
         string? clientName,
         string? clientUri,
         string[]? contacts,
