@@ -45,6 +45,7 @@ public static class SeviceCollectionExtensions
         builder.AddSingleton<IOid4VpRecordService, Oid4VpRecordService>();
         builder.AddSingleton<IPexService, PexService>();
         builder.AddSingleton<ITokenService, TokenService>();
+        builder.AddSingleton<IAuthorizationRequestService, AuthorizationRequestService>();
 
         builder.AddSdJwtVcServices();
         

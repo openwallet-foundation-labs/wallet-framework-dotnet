@@ -1,8 +1,11 @@
 using System.Security.Cryptography.X509Certificates;
+using LanguageExt;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using WalletFramework.Core.Functional;
 using WalletFramework.Oid4Vc.Oid4Vp.PresentationExchange.Models;
 using static WalletFramework.Oid4Vc.Oid4Vp.Models.ClientIdScheme;
+using static WalletFramework.Oid4Vc.Oid4Vp.Models.ClientIdScheme.ClientIdSchemeValue;
 
 namespace WalletFramework.Oid4Vc.Oid4Vp.Models;
 
@@ -118,7 +121,7 @@ public record AuthorizationRequest
     /// <exception cref="InvalidOperationException">Thrown when the request does not match the HAIP.</exception>
     public static AuthorizationRequest CreateAuthorizationRequest(string authorizationRequestJson)
         => CreateAuthorizationRequest(JObject.Parse(authorizationRequestJson));
-
+    
     private static AuthorizationRequest CreateAuthorizationRequest(JObject authorizationRequestJson) =>
         IsHaipConform(authorizationRequestJson)
             ? authorizationRequestJson.ToObject<AuthorizationRequest>()
@@ -175,6 +178,19 @@ internal static class AuthorizationRequestExtensions
         
     internal static AuthorizationRequest WithClientMetadata(
         this AuthorizationRequest authorizationRequest,
-        ClientMetadata? clientMetadata) 
-        => authorizationRequest with { ClientMetadata = clientMetadata };
+        Option<ClientMetadata> clientMetadata) 
+        => authorizationRequest with { ClientMetadata = clientMetadata.ToNullable() };
+    
+    public static AuthorizationRequest ValidateAuthorizationRequest(this AuthorizationRequest authorizationRequest)
+    {
+        return authorizationRequest;
+        return authorizationRequest.ClientIdScheme.Value switch
+        {
+            RedirectUri => (authorizationRequest.ResponseMode == "direct_post" || authorizationRequest.ResponseMode == "direct_post.jwt") 
+                           && authorizationRequest.ClientId == authorizationRequest.ResponseUri
+                ? authorizationRequest
+                : throw new InvalidOperationException("ClientID does not match ResponseUri"),
+            _ => authorizationRequest
+        };
+    }
 }

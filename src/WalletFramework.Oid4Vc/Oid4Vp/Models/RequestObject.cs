@@ -52,6 +52,7 @@ public readonly struct RequestObject
     {
         var tokenHandler = new JwtSecurityTokenHandler();
 
+        //should this stay? JAR without Sig should not be allowed
         if (requestObjectJson.Split('.').Length == 2)
             requestObjectJson += ".";
         
@@ -84,18 +85,6 @@ public static class RequestObjectExtensions
         return jwt.IsSignatureValid(pubKey)
             ? requestObject
             : throw new InvalidOperationException("Invalid JWT Signature");
-    }
-    
-    /// <summary>
-    ///     Validates the ClientId of the Jwt
-    /// </summary>
-    /// <returns>The validated request object.</returns>
-    /// <exception cref="InvalidOperationException">Throws when validation fails</exception>
-    public static RequestObject ValidateJwtClientId(this RequestObject requestObject)
-    {
-        return requestObject.ClientId == requestObject.ToAuthorizationRequest().ResponseUri
-            ? requestObject
-            : throw new InvalidOperationException("ClientID does not match ResponseUri");
     }
 
     /// <summary>
