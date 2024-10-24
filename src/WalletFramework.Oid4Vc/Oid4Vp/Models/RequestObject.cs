@@ -52,6 +52,10 @@ public readonly struct RequestObject
     {
         var tokenHandler = new JwtSecurityTokenHandler();
 
+        //should this stay? JAR without Sig should not be allowed
+        if (requestObjectJson.Split('.').Length == 2)
+            requestObjectJson += ".";
+        
         var jwt = tokenHandler.ReadJwtToken(requestObjectJson);
 
         return new RequestObject(jwt);
@@ -73,7 +77,7 @@ public static class RequestObjectExtensions
     /// </summary>
     /// <returns>The validated request object.</returns>
     /// <exception cref="InvalidOperationException">Throws when validation fails</exception>
-    public static RequestObject ValidateJwt(this RequestObject requestObject)
+    public static RequestObject ValidateJwtSignature(this RequestObject requestObject)
     {
         var jwt = (JwtSecurityToken)requestObject;
         var pubKey = requestObject.GetLeafCertificate().GetPublicKey();

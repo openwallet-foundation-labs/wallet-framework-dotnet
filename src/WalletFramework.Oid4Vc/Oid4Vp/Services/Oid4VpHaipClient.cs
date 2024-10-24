@@ -1,9 +1,6 @@
-using System.Net.Http.Headers;
 using WalletFramework.Oid4Vc.Oid4Vp.Models;
 using WalletFramework.Oid4Vc.Oid4Vp.PresentationExchange.Models;
 using WalletFramework.Oid4Vc.Oid4Vp.PresentationExchange.Services;
-using static WalletFramework.Oid4Vc.Oid4Vp.Models.RequestObject;
-using static WalletFramework.Oid4Vc.Oid4Vp.Models.ClientIdScheme.ClientIdSchemeValue;
 using static Newtonsoft.Json.JsonConvert;
 using Format = WalletFramework.Oid4Vc.Oid4Vci.CredConfiguration.Models.Format;
 
@@ -15,17 +12,17 @@ internal class Oid4VpHaipClient : IOid4VpHaipClient
     /// <summary>
     ///     Initializes a new instance of the <see cref="Oid4VpHaipClient" /> class.
     /// </summary>
-    /// <param name="httpClientFactory">The http client factory to create http clients.</param>
+    /// <param name="authorizationRequestService">The auth srvice used to handle incoming Authorization Request Uris</param>
     /// <param name="pexService">The service responsible for presentation exchange protocol operations.</param>
     public Oid4VpHaipClient(
-        IHttpClientFactory httpClientFactory,
+        IAuthorizationRequestService authorizationRequestService,
         IPexService pexService)
     {
-        _httpClientFactory = httpClientFactory;
+        _authorizationRequestService = authorizationRequestService;
         _pexService = pexService;
     }
 
-    private readonly IHttpClientFactory _httpClientFactory;
+    private readonly IAuthorizationRequestService _authorizationRequestService;
     private readonly IPexService _pexService;
 
     /// <inheritdoc />
@@ -64,50 +61,8 @@ internal class Oid4VpHaipClient : IOid4VpHaipClient
 
     /// <inheritdoc />
     public async Task<AuthorizationRequest> ProcessAuthorizationRequestAsync(
-        HaipAuthorizationRequestUri haipAuthorizationRequestUri)
-    {
-        var httpClient = _httpClientFactory.CreateClient();
-        httpClient.DefaultRequestHeaders.Clear();
-
-        var requestObjectJson = await httpClient.GetStringAsync(haipAuthorizationRequestUri.RequestUri);
-        var requestObject = CreateRequestObject(requestObjectJson);
-
-        var authRequest = requestObject.ToAuthorizationRequest();
-        var clientMetadata = await FetchClientMetadata(authRequest);
-
-        return requestObject.ClientIdScheme.Value switch
-        {
-            X509SanDns => requestObject
-                .ValidateJwt()
-                .ValidateTrustChain()
-                .ValidateSanName()
-                .ToAuthorizationRequest()
-                .WithX509(requestObject)
-                .WithClientMetadata(clientMetadata),
-            RedirectUri => requestObject
-                .ToAuthorizationRequest()
-                .WithClientMetadata(clientMetadata),
-            VerifierAttestation =>
-                throw new NotImplementedException("Verifier Attestation not yet implemented"),
-            _ => throw new InvalidOperationException(
-                $"Client ID Scheme {requestObject.ClientIdScheme} not supported")
-        };
-    }
-
-    private async Task<ClientMetadata?> FetchClientMetadata(AuthorizationRequest authorizationRequest)
-    {
-        var httpClient = _httpClientFactory.CreateClient();
-        httpClient.DefaultRequestHeaders.Clear();
-        httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-
-        if (authorizationRequest.ClientMetadata != null)
-            return authorizationRequest.ClientMetadata;
-
-        if (string.IsNullOrWhiteSpace(authorizationRequest.ClientMetadataUri))
-            return null;
-            
-        var response = await httpClient.GetAsync(authorizationRequest.ClientMetadataUri);
-        var clientMetadata = await response.Content.ReadAsStringAsync();
-        return DeserializeObject<ClientMetadata>(clientMetadata);
-    }
+        AuthorizationRequestUri authorizationRequestUri) =>
+        await authorizationRequestUri.Value.Match(
+            async authRequestByReference => await _authorizationRequestService.CreateAuthorizationRequest(authRequestByReference),
+            async authRequestByValue => await _authorizationRequestService.CreateAuthorizationRequest(authRequestByValue));
 }
