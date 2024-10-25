@@ -52,7 +52,6 @@ public readonly struct RequestObject
     {
         var tokenHandler = new JwtSecurityTokenHandler();
 
-        //should this stay? JAR without Sig should not be allowed
         if (requestObjectJson.Split('.').Length == 2)
             requestObjectJson += ".";
         

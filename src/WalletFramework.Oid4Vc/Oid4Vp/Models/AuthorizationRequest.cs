@@ -5,7 +5,6 @@ using Newtonsoft.Json.Linq;
 using WalletFramework.Core.Functional;
 using WalletFramework.Oid4Vc.Oid4Vp.PresentationExchange.Models;
 using static WalletFramework.Oid4Vc.Oid4Vp.Models.ClientIdScheme;
-using static WalletFramework.Oid4Vc.Oid4Vp.Models.ClientIdScheme.ClientIdSchemeValue;
 
 namespace WalletFramework.Oid4Vc.Oid4Vp.Models;
 
@@ -180,17 +179,4 @@ internal static class AuthorizationRequestExtensions
         this AuthorizationRequest authorizationRequest,
         Option<ClientMetadata> clientMetadata) 
         => authorizationRequest with { ClientMetadata = clientMetadata.ToNullable() };
-    
-    public static AuthorizationRequest ValidateAuthorizationRequest(this AuthorizationRequest authorizationRequest)
-    {
-        return authorizationRequest;
-        return authorizationRequest.ClientIdScheme.Value switch
-        {
-            RedirectUri => (authorizationRequest.ResponseMode == "direct_post" || authorizationRequest.ResponseMode == "direct_post.jwt") 
-                           && authorizationRequest.ClientId == authorizationRequest.ResponseUri
-                ? authorizationRequest
-                : throw new InvalidOperationException("ClientID does not match ResponseUri"),
-            _ => authorizationRequest
-        };
-    }
 }

@@ -35,7 +35,6 @@ public class AuthorizationRequestService(
             //TODO: Remove Redirect URi in the future (kept for now for compatibility)
             RedirectUri => requestObject
                 .ToAuthorizationRequest()
-                .ValidateAuthorizationRequest()
                 .WithClientMetadata(clientMetadata),
             VerifierAttestation =>
                 throw new NotImplementedException("Verifier Attestation not yet implemented"),
@@ -82,7 +81,6 @@ public class AuthorizationRequestService(
         return authRequest.ClientIdScheme.Value switch
         {
             RedirectUri => authRequest
-                .ValidateAuthorizationRequest()
                 .WithClientMetadata(clientMetadata),
             _ => throw new InvalidOperationException(
                 $"Client ID Scheme {authRequest.ClientIdScheme.Value} not supported when passing the Authorization Request within the Uri")
