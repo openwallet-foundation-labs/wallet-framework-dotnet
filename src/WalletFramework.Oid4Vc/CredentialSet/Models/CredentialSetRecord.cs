@@ -21,7 +21,7 @@ public sealed class CredentialSetRecord : RecordBase
 
     public Option<DocType> MDocCredentialType { get; set; }
 
-    public Dictionary<string, string> CredentialAttributes { get; set; } = null!;
+    public Dictionary<string, string> CredentialAttributes { get; set; } = new();
 
     public CredentialState State { get; set; }
 
