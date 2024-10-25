@@ -52,7 +52,8 @@ public class AuthorizationRequestService(
         {
             var value = queryParams[key];
 
-            if (string.IsNullOrEmpty(value)) continue;
+            if (string.IsNullOrEmpty(value)) 
+                continue;
                     
             try
             {
