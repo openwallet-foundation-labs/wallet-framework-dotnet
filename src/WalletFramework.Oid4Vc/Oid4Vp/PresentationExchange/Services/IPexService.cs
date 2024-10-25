@@ -23,5 +23,5 @@ public interface IPexService
     /// </summary>
     /// <param name="inputDescriptors">An array of input descriptors to be satisfied.</param>
     /// <returns>An array of credential candidates, each containing a list of credentials that match the input descriptors.</returns>
-    Task<CredentialCandidates[]> FindCredentialCandidates(IEnumerable<InputDescriptor> inputDescriptors);
+    Task<PresentationCandidates[]> FindCredentialCandidates(IEnumerable<InputDescriptor> inputDescriptors);
 }

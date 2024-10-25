@@ -71,7 +71,7 @@ public class CredentialSetService(
             },
             None: () => Task.CompletedTask);
 
-        credentialSetRecord.State = CredentialState.DELETED;
+        credentialSetRecord.State = CredentialState.Deleted;
         credentialSetRecord.DeletedAt = DateTime.UtcNow;
         await walletRecordService.UpdateAsync(context.Wallet, credentialSetRecord);
     }

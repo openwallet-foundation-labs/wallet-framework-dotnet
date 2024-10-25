@@ -40,7 +40,7 @@ public interface IOid4VciClientService
     /// <returns>
     /// A list of credentials.
     /// </returns>
-    Task<Validation<CredentialSetRecord>> RequestCredential(IssuanceSession issuanceSession);
+    Task<Validation<CredentialSetRecord>> RequestCredentialSet(IssuanceSession issuanceSession);
     
     /// <summary>
     ///     Requests a verifiable credential using the authorization code flow and C''.
@@ -51,7 +51,7 @@ public interface IOid4VciClientService
     /// <returns>
     /// A list of credentials.
     /// </returns>
-    Task<Validation<OnDemandCredentialSet>> RequestOnDemandCredential(IssuanceSession issuanceSession, AuthorizationRequest authorizationRequest, OneOf<Vct, DocType> credentialType);
+    Task<Validation<OnDemandCredentialSet>> RequestOnDemandCredentialSet(IssuanceSession issuanceSession, AuthorizationRequest authorizationRequest, OneOf<Vct, DocType> credentialType);
     
     /// <summary>
     ///     Processes a credential offer

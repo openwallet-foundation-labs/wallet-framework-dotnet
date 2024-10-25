@@ -119,7 +119,7 @@ public class PexServiceTests
         var batchCredentialSetCandidate = new CredentialSetCandidate(BatchCredentialSetId,
             new List<ICredential> { _batchCredentialOne });
         
-        var expected = new List<CredentialCandidates>
+        var expected = new List<PresentationCandidates>
         {
             new(driverLicenseInputDescriptor.Id, 
                 new List<CredentialSetCandidate>
@@ -160,7 +160,7 @@ public class PexServiceTests
             "We can only accept digital identity credentials.",
             new[] { "A" });
 
-        var expected = new List<CredentialCandidates>
+        var expected = new List<PresentationCandidates>
         {
             new(identityCredentialInputDescriptor.Id,
                 new List<CredentialSetCandidate> { alternativeNestedCredentialSetCandidate })
@@ -196,7 +196,7 @@ public class PexServiceTests
             "We can only accept digital identity credentials.",
             new[] { "A" });
 
-        var expected = new List<CredentialCandidates>
+        var expected = new List<PresentationCandidates>
         {
             new(identityCredentialInputDescriptor.Id,
                 new List<CredentialSetCandidate> { nestedCredentialSetCandidate, alternativeNestedCredentialSetCandidate }),

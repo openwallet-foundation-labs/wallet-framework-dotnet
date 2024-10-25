@@ -11,13 +11,13 @@ namespace WalletFramework.Oid4Vc.Oid4Vp.Models;
 
 public record PresentedCredentialSet
 {
-    public CredentialSetId CredentialSetId { get; set; }
+    public CredentialSetId CredentialSetId { get; init; }
     
-    public Option<Vct> SdJwtCredentialType { get; set; }
+    public Option<Vct> SdJwtCredentialType { get; init; }
     
-    public Option<DocType> MDocCredentialType { get; set; }
+    public Option<DocType> MDocCredentialType { get; init; }
 
-    public Dictionary<string, PresentedClaim> PresentedClaims { get; set; } = null!;
+    public Dictionary<string, PresentedClaim> PresentedClaims { get; init; } = null!;
 }
 
 public static class PresentedCredentialSetExtensions

@@ -17,14 +17,6 @@ namespace WalletFramework.Oid4Vc.CredentialSet.Models;
 [JsonConverter(typeof(CredentialSetRecordConverter))]
 public sealed class CredentialSetRecord : RecordBase
 {
-    public CredentialSetId CredentialSetId
-    {
-        get => CredentialSetId
-            .ValidCredentialSetId(Id)
-            .UnwrapOrThrow(new InvalidOperationException("The Id is corrupt"));
-        private set => Id = value;
-    }
-    
     public Option<Vct> SdJwtCredentialType { get; set; }
 
     public Option<DocType> MDocCredentialType { get; set; }
@@ -74,7 +66,7 @@ public sealed class CredentialSetRecord : RecordBase
     
     public CredentialSetRecord()
     {
-        CredentialSetId = CredentialSetId.CreateCredentialSetId();
+        Id = CredentialSetId.CreateCredentialSetId();
     }
 }
 
@@ -137,6 +129,10 @@ public static class CredentialSetRecordExtensions
         //TODO: Add issuerId
     }
     
+    public static CredentialSetId GetCredentialSetId(this CredentialSetRecord credentialSetRecord) =>
+        CredentialSetId.ValidCredentialSetId(credentialSetRecord.Id)
+            .UnwrapOrThrow(new InvalidOperationException("The Id is corrupt"));
+    
     public static OneOf<Vct, DocType> GetCredentialType(this CredentialSetRecord credentialSetRecord)
     {
         return credentialSetRecord.SdJwtCredentialType.Match(
@@ -151,7 +147,6 @@ public static class CredentialSetRecordExtensions
         var result = new JObject();
         
         result.Add(nameof(RecordBase.Id), credentialSetRecord.Id);
-        result.Add(CredentialSetIdTypeJsonKey, credentialSetRecord.CredentialSetId.ToString());
         
         credentialSetRecord.SdJwtCredentialType.IfSome(vct => result.Add(SdJwtCredentialTypeJsonKey, vct.ToString()));
         credentialSetRecord.MDocCredentialType.IfSome(docType => result.Add(MDocCredentialTypeJsonKey, docType.ToString()));

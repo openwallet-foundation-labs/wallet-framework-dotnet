@@ -167,7 +167,7 @@ public sealed class SdJwtRecord : RecordBase, ICredential
         DisplayedAttributes = displayedAttributes;
 
         CredentialSetId = credentialSetId;
-        CredentialState = CredentialState.ACTIVE;
+        CredentialState = CredentialState.Active;
         
         KeyId = keyId;
         ExpiresAt = sdJwtDoc.UnsecuredPayload.SelectToken("exp")?.Value<long>() is not null
@@ -195,7 +195,7 @@ public sealed class SdJwtRecord : RecordBase, ICredential
         DisplayedAttributes = displayedAttributes;
             
         CredentialSetId = credentialSetId;
-        CredentialState = CredentialState.ACTIVE;
+        CredentialState = CredentialState.Active;
         
         KeyId = keyId;
         

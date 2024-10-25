@@ -40,9 +40,9 @@ public class PexService(
     }
 
     /// <inheritdoc />
-    public virtual async Task<CredentialCandidates[]> FindCredentialCandidates(IEnumerable<InputDescriptor> inputDescriptors)
+    public virtual async Task<PresentationCandidates[]> FindCredentialCandidates(IEnumerable<InputDescriptor> inputDescriptors)
     {
-        var result = new List<CredentialCandidates>();
+        var result = new List<PresentationCandidates>();
 
         foreach (var inputDescriptor in inputDescriptors)
         {
@@ -72,7 +72,7 @@ public class PexService(
                 return new CredentialSetCandidate(credentialSetId, [credentials]);
             });
             
-            var credentialCandidates = new CredentialCandidates(
+            var credentialCandidates = new PresentationCandidates(
                 inputDescriptor.Id,
                 credentialSetCandidates,
                 limitDisclosuresRequired);

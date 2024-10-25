@@ -84,7 +84,7 @@ public class Oid4VpClientService : IOid4VpClientService
     private readonly ISdJwtVcHolderService _sdJwtVcHolderService;
 
     /// <inheritdoc />
-    public async Task<(AuthorizationRequest, IEnumerable<CredentialCandidates>)> ProcessAuthorizationRequestAsync(
+    public async Task<(AuthorizationRequest, IEnumerable<PresentationCandidates>)> ProcessAuthorizationRequestAsync(
         Uri authorizationRequestUri)
     {
         var haipAuthorizationRequestUri = HaipAuthorizationRequestUri.FromUri(authorizationRequestUri);

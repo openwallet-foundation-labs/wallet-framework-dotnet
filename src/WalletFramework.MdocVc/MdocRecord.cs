@@ -172,5 +172,5 @@ public static class MdocRecordFun
     }
 
     public static MdocRecord ToRecord(this Mdoc mdoc, Option<List<MdocDisplay>> displays, KeyId keyId, CredentialSetId credentialSetId) => 
-        new(mdoc, displays, keyId, credentialSetId, CredentialState.ACTIVE, Option<DateTime>.None);
+        new(mdoc, displays, keyId, credentialSetId, CredentialState.Active, Option<DateTime>.None);
 }
