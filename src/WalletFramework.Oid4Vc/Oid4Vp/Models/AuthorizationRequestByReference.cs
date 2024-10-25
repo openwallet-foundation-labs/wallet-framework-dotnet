@@ -1,4 +1,4 @@
-using Hyperledger.Aries.Utils;
+using System.Web;
 using LanguageExt;
 
 namespace WalletFramework.Oid4Vc.Oid4Vp.Models;
@@ -13,9 +13,9 @@ public record AuthorizationRequestByReference
     
     public static Option<AuthorizationRequestByReference> CreateAuthorizationRequestByReference(Uri uri)
     {
-        var clientId = uri.GetQueryParam("client_id");
-        
-        var requestUri = uri.GetQueryParam("request_uri");
+        var queryString = HttpUtility.ParseQueryString(uri.Query);
+        var clientId = queryString["client_id"];
+        var requestUri = queryString["request_uri"];
         
         if (string.IsNullOrEmpty(clientId)
             || string.IsNullOrEmpty(requestUri)) 
