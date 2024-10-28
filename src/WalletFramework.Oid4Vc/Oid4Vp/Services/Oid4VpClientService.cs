@@ -3,7 +3,6 @@ using System.Security.Cryptography;
 using System.Text;
 using Hyperledger.Aries.Agents;
 using Hyperledger.Aries.Extensions;
-using Jose;
 using LanguageExt;
 using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
@@ -87,7 +86,7 @@ public class Oid4VpClientService : IOid4VpClientService
     public async Task<(AuthorizationRequest, IEnumerable<PresentationCandidates>)> ProcessAuthorizationRequestAsync(
         Uri authorizationRequestUri)
     {
-        var haipAuthorizationRequestUri = HaipAuthorizationRequestUri.FromUri(authorizationRequestUri);
+        var haipAuthorizationRequestUri = AuthorizationRequestUri.FromUri(authorizationRequestUri);
 
         var authorizationRequest = await _oid4VpHaipClient.ProcessAuthorizationRequestAsync(
             haipAuthorizationRequestUri

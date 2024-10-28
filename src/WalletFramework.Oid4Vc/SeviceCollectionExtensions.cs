@@ -49,6 +49,7 @@ public static class SeviceCollectionExtensions
         builder.AddSingleton<ITokenService, TokenService>();
         builder.AddSingleton<ICredentialSetService, CredentialSetService>();
         builder.AddSingleton<IVctMetadataService, VctMetadataService>();
+        builder.AddSingleton<IAuthorizationRequestService, AuthorizationRequestService>();
 
         builder.AddSdJwtVcServices();
         
