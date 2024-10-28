@@ -34,6 +34,21 @@ public delegate Validation<T2> Validator<in T1, T2>(T1 value);
 
 public static class ValidationFun
 {
+    public static Validation<Func<T2, Func<T3, Func<T4, Func<T5, Func<T6, Func<T7, Func<T8, Func<T9, Func<T10, TR>>>>>>>>>> Apply<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, TR>(
+        this Validation<Func<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, TR>> valF,
+        Validation<T1> valT) =>
+        Apply(valF.Select(Prelude.curry), valT);
+    
+    public static Validation<Func<T2, Func<T3, Func<T4, Func<T5, Func<T6, Func<T7, Func<T8, Func<T9, TR>>>>>>>>> Apply<T1, T2, T3, T4, T5, T6, T7, T8, T9, TR>(
+        this Validation<Func<T1, T2, T3, T4, T5, T6, T7, T8, T9, TR>> valF,
+        Validation<T1> valT) =>
+        Apply(valF.Select(Prelude.curry), valT);
+    
+    public static Validation<Func<T2, Func<T3, Func<T4, Func<T5, Func<T6, Func<T7, Func<T8, TR>>>>>>>> Apply<T1, T2, T3, T4, T5, T6, T7, T8, TR>(
+        this Validation<Func<T1, T2, T3, T4, T5, T6, T7, T8, TR>> valF,
+        Validation<T1> valT) =>
+        Apply(valF.Select(Prelude.curry), valT);
+    
     public static Validation<Func<T2, Func<T3, Func<T4, Func<T5, Func<T6, Func<T7, TR>>>>>>> Apply<T1, T2, T3, T4, T5, T6, T7, TR>(
         this Validation<Func<T1, T2, T3, T4, T5, T6, T7, TR>> valF,
         Validation<T1> valT) =>

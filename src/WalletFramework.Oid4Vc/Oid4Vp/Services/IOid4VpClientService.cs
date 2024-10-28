@@ -16,8 +16,7 @@ public interface IOid4VpClientService
     /// <returns>
     ///     A task representing the asynchronous operation. The task result contains the Authorization Response object associated with the OpenID4VP Authorization Request Url and Credentials Candidates that can be used to answer the request.
     /// </returns>
-    Task<(AuthorizationRequest authorizationRequest, IEnumerable<CredentialCandidates> credentialCandidates)> 
-        ProcessAuthorizationRequestAsync(Uri authorizationRequestUrl);
+    Task<(AuthorizationRequest authorizationRequest, IEnumerable<PresentationCandidates> presentationCandidates)> ProcessAuthorizationRequestAsync(Uri authorizationRequestUrl);
 
     /// <summary>
     ///     Prepares and sends an Authorization Response containing a Presentation Submission and the VP Token to the Redirect Uri.

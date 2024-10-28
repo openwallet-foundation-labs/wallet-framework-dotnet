@@ -14,7 +14,7 @@ namespace WalletFramework.Core.Localization;
 ///     ("en-US"). These are based on RFC 4646: https://www.rfc-editor.org/rfc/rfc4646.html.
 ///     <remarks>Locales are case-sensitive.</remarks>
 /// </summary>
-public readonly struct Locale
+public readonly record struct Locale
 {
     private CultureInfo Value { get; }
 
@@ -56,6 +56,8 @@ public readonly struct Locale
     public static Option<Locale> OptionLocale(string locale) => ValidLocale(locale).ToOption();
     
     public static Option<Locale> OptionLocale(JToken locale) => ValidLocale(locale).ToOption();
+    
+    public static Locale Create(string locale) => new(locale);
     
     public override string ToString() => this;
 }

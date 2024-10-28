@@ -48,7 +48,24 @@ public sealed class SdJwtRecord : RecordBase, ICredential
     ///     Gets the Issuer-signed JWT part of the SD-JWT.
     /// </summary>
     public string EncodedIssuerSignedJwt { get; set; } = null!;
+    
+    /// <summary>
+    ///     Tracks the state of the SD-JWT.
+    /// </summary>
+    public CredentialState CredentialState { get; set; }
+    
+    //TODO: Must be set when batch issuance is implemented
+    // public bool OneTimeUse { get; set; }
+    
+    public DateTime? ExpiresAt { get; set; }
 
+    //TODO: Use CredentialSetId Type instead fo string
+    public string CredentialSetId
+    {
+        get => Get();
+        set => Set(value, false);
+    }
+    
     /// <summary>
     ///     Gets or sets the identifier for the issuer.
     /// </summary>
@@ -110,6 +127,7 @@ public sealed class SdJwtRecord : RecordBase, ICredential
     /// <param name="display">The display of the credential.</param>
     /// <param name="issuerId"></param>
     /// <param name="encodedIssuerSignedJwt">The Issuer-signed JWT part of the SD-JWT.</param>
+    /// <param name="credentialSetId">The CredentialSetId.</param>
     [JsonConstructor]
     public SdJwtRecord(
         Dictionary<string, ClaimMetadata> displayedAttributes,
@@ -117,7 +135,8 @@ public sealed class SdJwtRecord : RecordBase, ICredential
         ImmutableArray<string> disclosures,
         List<SdJwtDisplay> display,
         string issuerId,
-        string encodedIssuerSignedJwt)
+        string encodedIssuerSignedJwt,
+        string credentialSetId)
     {
         Claims = claims;
         Disclosures = disclosures;
@@ -128,13 +147,15 @@ public sealed class SdJwtRecord : RecordBase, ICredential
         EncodedIssuerSignedJwt = encodedIssuerSignedJwt;
 
         IssuerId = issuerId;
+        CredentialSetId = credentialSetId;
     }
     
     public SdJwtRecord(
         string serializedSdJwtWithDisclosures,
         Dictionary<string, ClaimMetadata> displayedAttributes,
         List<SdJwtDisplay> display,
-        KeyId keyId)
+        KeyId keyId,
+        CredentialSetId credentialSetId)
     {
         Id = Guid.NewGuid().ToString();
             
@@ -144,8 +165,14 @@ public sealed class SdJwtRecord : RecordBase, ICredential
         Claims = sdJwtDoc.GetAllSubjectClaims();
         Display = display;
         DisplayedAttributes = displayedAttributes;
-            
+
+        CredentialSetId = credentialSetId;
+        CredentialState = CredentialState.Active;
+        
         KeyId = keyId;
+        ExpiresAt = sdJwtDoc.UnsecuredPayload.SelectToken("exp")?.Value<long>() is not null
+            ? DateTimeOffset.FromUnixTimeSeconds(sdJwtDoc.UnsecuredPayload.SelectToken("exp")!.Value<long>()).DateTime
+            : null;
         IssuerId = sdJwtDoc.UnsecuredPayload.SelectToken("iss")?.Value<string>() 
                    ?? throw new ArgumentNullException(nameof(IssuerId), "iss claim is missing or null");
         Vct = sdJwtDoc.UnsecuredPayload.SelectToken("vct")?.Value<string>() 
@@ -156,7 +183,8 @@ public sealed class SdJwtRecord : RecordBase, ICredential
         SdJwtDoc sdJwtDoc,
         Dictionary<string, ClaimMetadata> displayedAttributes,
         List<SdJwtDisplay> display,
-        KeyId keyId)
+        KeyId keyId,
+        CredentialSetId credentialSetId)
     {
         Id = Guid.NewGuid().ToString();
             
@@ -166,7 +194,14 @@ public sealed class SdJwtRecord : RecordBase, ICredential
         Display = display;
         DisplayedAttributes = displayedAttributes;
             
+        CredentialSetId = credentialSetId;
+        CredentialState = CredentialState.Active;
+        
         KeyId = keyId;
+        
+        ExpiresAt = sdJwtDoc.UnsecuredPayload.SelectToken("exp")?.Value<long>() is not null
+            ? DateTimeOffset.FromUnixTimeSeconds(sdJwtDoc.UnsecuredPayload.SelectToken("exp")!.Value<long>()).DateTime
+            : null;
         IssuerId = sdJwtDoc.UnsecuredPayload.SelectToken("iss")?.Value<string>() 
                    ?? throw new ArgumentNullException(nameof(IssuerId), "iss claim is missing or null");
         Vct = sdJwtDoc.UnsecuredPayload.SelectToken("vct")?.Value<string>() 
@@ -181,6 +216,10 @@ public sealed class SdJwtRecord : RecordBase, ICredential
 
         return id;
     }
+
+    public CredentialSetId GetCredentialSetId() =>
+        Core.Credentials.CredentialSetId.ValidCredentialSetId(CredentialSetId)
+            .UnwrapOrThrow(new InvalidOperationException("The Id is corrupt"));
 }
     
 internal static class JsonExtensions
@@ -235,6 +274,7 @@ internal static class JsonExtensions
                 break;
 
             default:
+                //TODO decide if path without $ should be used -> currentPath.TrimStart('.')
                 leafNodePaths.Add(currentPath.TrimStart('.'));
                 break;
         }

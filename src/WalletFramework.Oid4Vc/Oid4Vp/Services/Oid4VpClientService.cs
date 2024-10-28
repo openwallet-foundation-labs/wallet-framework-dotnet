@@ -8,6 +8,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json.Linq;
 using SD_JWT.Models;
+using WalletFramework.Core.Credentials;
 using WalletFramework.Oid4Vc.ClientAttestation;
 using WalletFramework.Core.Credentials.Abstractions;
 using WalletFramework.Core.Functional;
@@ -26,6 +27,7 @@ using WalletFramework.Oid4Vc.Oid4Vci.Extensions;
 using WalletFramework.Oid4Vc.Oid4Vp.AuthResponse.Encryption;
 using WalletFramework.Oid4Vc.Oid4Vp.Models;
 using WalletFramework.Oid4Vc.Oid4Vp.PresentationExchange.Services;
+using WalletFramework.SdJwtVc.Models;
 using WalletFramework.SdJwtVc.Models.Records;
 using WalletFramework.SdJwtVc.Services.SdJwtVcHolderService;
 using static Newtonsoft.Json.JsonConvert;
@@ -81,7 +83,7 @@ public class Oid4VpClientService : IOid4VpClientService
     private readonly ISdJwtVcHolderService _sdJwtVcHolderService;
 
     /// <inheritdoc />
-    public async Task<(AuthorizationRequest, IEnumerable<CredentialCandidates>)> ProcessAuthorizationRequestAsync(
+    public async Task<(AuthorizationRequest, IEnumerable<PresentationCandidates>)> ProcessAuthorizationRequestAsync(
         Uri authorizationRequestUri)
     {
         var haipAuthorizationRequestUri = AuthorizationRequestUri.FromUri(authorizationRequestUri);
@@ -216,7 +218,7 @@ public class Oid4VpClientService : IOid4VpClientService
         
         var presentedCredentials = presentationMaps.Select(presentationMap =>
         {
-            PresentedCredential result;
+            PresentedCredentialSet result;
             
             switch (presentationMap.PresentedCredential)
             {
@@ -239,18 +241,20 @@ public class Oid4VpClientService : IOid4VpClientService
                             value = new PresentedClaim { Value = claim.Value }  
                         };
         
-                    result = new PresentedCredential
+                    result = new PresentedCredentialSet
                     {
-                        CredentialId = sdJwtRecord.Id,
+                        SdJwtCredentialType = Vct.ValidVct(sdJwtRecord.Vct).UnwrapOrThrow(),
+                        CredentialSetId = CredentialSetId.ValidCredentialSetId(sdJwtRecord.CredentialSetId).UnwrapOrThrow(),
                         PresentedClaims = presentedClaims.ToDictionary(itm => itm.key, itm => itm.value)
                     };
                     break;
                 case MdocRecord mdocRecord:
                     var claims = mdocRecord.Mdoc.IssuerSigned.IssuerNameSpaces.Value.SelectMany(pair => pair.Value);
 
-                    result = new PresentedCredential
+                    result = new PresentedCredentialSet
                     {
-                        CredentialId = mdocRecord.CredentialId,
+                        MDocCredentialType = mdocRecord.DocType,
+                        CredentialSetId = mdocRecord.CredentialSetId,
                         PresentedClaims = claims.ToDictionary(
                             item => item.ElementId.ToString(),
                             item => new PresentedClaim { Value = item.Element.ToString() }
@@ -265,13 +269,13 @@ public class Oid4VpClientService : IOid4VpClientService
         });
 
         var context = await _agentProvider.GetContextAsync();
-        
+
         await _oid4VpRecordService.StoreAsync(
             context,
             authorizationRequest.ClientId,
             authorizationRequest.ClientMetadata,
             authorizationRequest.PresentationDefinition.Name,
-            presentedCredentials.ToArray());
+            presentedCredentials.ToList());
 
         var redirectUriJson = await responseMessage.Content.ReadAsStringAsync();
 
@@ -482,7 +486,7 @@ public class Oid4VpClientService : IOid4VpClientService
         
         var presentedCredentials = presentationMaps.Select(presentationMap =>
         {
-            PresentedCredential result;
+            PresentedCredentialSet result;
             
             switch (presentationMap.PresentedCredential)
             {
@@ -505,18 +509,20 @@ public class Oid4VpClientService : IOid4VpClientService
                             value = new PresentedClaim { Value = claim.Value }  
                         };
         
-                    result = new PresentedCredential
+                    result = new PresentedCredentialSet
                     {
-                        CredentialId = sdJwtRecord.Id,
+                        SdJwtCredentialType = Vct.ValidVct(sdJwtRecord.Vct).UnwrapOrThrow(),
+                        CredentialSetId = CredentialSetId.ValidCredentialSetId(sdJwtRecord.CredentialSetId).UnwrapOrThrow(),
                         PresentedClaims = presentedClaims.ToDictionary(itm => itm.key, itm => itm.value)
                     };
                     break;
                 case MdocRecord mdocRecord:
                     var claims = mdocRecord.Mdoc.IssuerSigned.IssuerNameSpaces.Value.SelectMany(pair => pair.Value);
 
-                    result = new PresentedCredential
+                    result = new PresentedCredentialSet
                     {
-                        CredentialId = mdocRecord.CredentialId,
+                        MDocCredentialType = mdocRecord.DocType,
+                        CredentialSetId = mdocRecord.CredentialSetId,
                         PresentedClaims = claims.ToDictionary(
                             item => item.ElementId.ToString(),
                             item => new PresentedClaim { Value = item.Element.ToString() }
@@ -537,7 +543,7 @@ public class Oid4VpClientService : IOid4VpClientService
             authorizationRequest.ClientId,
             authorizationRequest.ClientMetadata,
             authorizationRequest.PresentationDefinition.Name,
-            presentedCredentials.ToArray());
+            presentedCredentials.ToList());
 
         var redirectUriJson = await responseMessage.Content.ReadAsStringAsync();
 

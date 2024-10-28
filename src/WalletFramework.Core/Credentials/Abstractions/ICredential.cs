@@ -6,4 +6,6 @@ namespace WalletFramework.Core.Credentials.Abstractions;
 public interface ICredential
 {
     CredentialId GetId();
+    
+    CredentialSetId GetCredentialSetId();
 }
