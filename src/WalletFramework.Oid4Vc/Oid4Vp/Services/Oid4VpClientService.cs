@@ -26,12 +26,14 @@ using WalletFramework.Oid4Vc.Oid4Vci.CredConfiguration.Models;
 using WalletFramework.Oid4Vc.Oid4Vci.Extensions;
 using WalletFramework.Oid4Vc.Oid4Vp.AuthResponse.Encryption;
 using WalletFramework.Oid4Vc.Oid4Vp.Models;
+using WalletFramework.Oid4Vc.Oid4Vp.PresentationExchange.Models;
 using WalletFramework.Oid4Vc.Oid4Vp.PresentationExchange.Services;
 using WalletFramework.SdJwtVc.Models;
 using WalletFramework.SdJwtVc.Models.Records;
 using WalletFramework.SdJwtVc.Services.SdJwtVcHolderService;
 using static Newtonsoft.Json.JsonConvert;
 using static WalletFramework.MdocLib.Security.Cose.ProtectedHeaders;
+using Format = WalletFramework.Oid4Vc.Oid4Vci.CredConfiguration.Models.Format;
 
 namespace WalletFramework.Oid4Vc.Oid4Vp.Services;
 
@@ -96,6 +98,13 @@ public class Oid4VpClientService : IOid4VpClientService
             authorizationRequest.PresentationDefinition.InputDescriptors);
 
         return (authorizationRequest, credentialCandidates);
+    }
+
+    /// <inheritdoc />
+    public async Task<Option<PresentationCandidates>> FindCredentialCandidatesForInputDescriptorAsync(InputDescriptor inputDescriptor)
+    {
+        var candidates = await _pexService.FindCredentialCandidates([inputDescriptor]);
+        return candidates.Any() ? candidates.First() : Option<PresentationCandidates>.None;
     }
 
     /// <inheritdoc />

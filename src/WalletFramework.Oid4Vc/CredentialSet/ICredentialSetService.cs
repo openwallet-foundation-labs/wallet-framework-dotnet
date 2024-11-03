@@ -22,4 +22,6 @@ public interface ICredentialSetService
     Task<Option<IEnumerable<SdJwtRecord>>> GetAssociatedSdJwtRecords(CredentialSetId credentialSetId);
     
     Task<Option<IEnumerable<MdocRecord>>> GetAssociatedMDocRecords(CredentialSetId credentialSetId);
+
+    Task<IEnumerable<CredentialSetRecord>> UpdateCredentialSetStates(IEnumerable<CredentialSetRecord> credentialSetRecords);
 }

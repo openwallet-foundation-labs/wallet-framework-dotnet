@@ -22,9 +22,13 @@ public sealed class CredentialSetRecord : RecordBase
     public Option<DocType> MDocCredentialType { get; set; }
 
     public Dictionary<string, string> CredentialAttributes { get; set; } = new();
-
+    
     public CredentialState State { get; set; }
 
+    public Option<DateTime> NotBefore { get; set; }
+    
+    public Option<DateTime> IssuedAt { get; set; }
+    
     public Option<DateTime> ExpiresAt { get; set; }
 
     //TODO: Add Status List
@@ -49,7 +53,9 @@ public sealed class CredentialSetRecord : RecordBase
         Option<DocType> mDocCredentialType, 
         Dictionary<string, string> credentialAttributes, 
         CredentialState credentialState,
-        Option<DateTime> expiresAt, 
+        Option<DateTime> expiresAt,
+        Option<DateTime> issuedAt,
+        Option<DateTime> notBefore,
         Option<DateTime> revokedAt, 
         Option<DateTime> deletedAt, 
         string issuerId)
@@ -59,6 +65,8 @@ public sealed class CredentialSetRecord : RecordBase
         CredentialAttributes = credentialAttributes;
         State = credentialState;
         ExpiresAt = expiresAt;
+        IssuedAt = issuedAt;
+        NotBefore = notBefore;
         RevokedAt = revokedAt;
         DeletedAt = deletedAt;
         IssuerId = issuerId;
@@ -98,6 +106,8 @@ public static class CredentialSetRecordExtensions
     private const string CredentialAttributesJsonKey = "credential_attributes";
     private const string StateJsonKey = "state";
     private const string ExpiresAtJsonKey = "expires_at";
+    private const string IssuedAtJsonKey = "issued_at";
+    private const string NotBeforeJsonKey = "not_before";
     private const string RevokedAtJsonKey = "revoked_at";
     private const string DeletedAtJsonKey = "deleted_at";
     private const string IssuerIdJsonKey = "issuer_id";
@@ -110,6 +120,8 @@ public static class CredentialSetRecordExtensions
         credentialSetRecord.CredentialAttributes = sdJwtRecord.Claims;
         credentialSetRecord.State = sdJwtRecord.CredentialState;
         credentialSetRecord.ExpiresAt = sdJwtRecord.ExpiresAt.ToOption();
+        credentialSetRecord.IssuedAt = sdJwtRecord.IssuedAt.ToOption();
+        credentialSetRecord.NotBefore = sdJwtRecord.NotBefore.ToOption();
         credentialSetRecord.IssuerId = sdJwtRecord.IssuerId;
     }
     
@@ -118,14 +130,15 @@ public static class CredentialSetRecordExtensions
         MdocRecord mdocRecord)
     {
         credentialSetRecord.MDocCredentialType = mdocRecord.DocType;
+        credentialSetRecord.State = mdocRecord.CredentialState;
         
         if (credentialSetRecord.CredentialAttributes.Count == 0) 
             credentialSetRecord.CredentialAttributes = mdocRecord.Mdoc.IssuerSigned.IssuerNameSpaces.Value.First().Value.ToDictionary(
                 issuerSignedItem => issuerSignedItem.ElementId.ToString(), 
                 issuerSignedItem => issuerSignedItem.Element.ToString());
         
-        credentialSetRecord.State = mdocRecord.CredentialState;
-        credentialSetRecord.ExpiresAt = mdocRecord.ExpiresAt.ToOption();
+        if (credentialSetRecord.ExpiresAt.IsNone)
+            credentialSetRecord.ExpiresAt = mdocRecord.ExpiresAt.ToOption();
         //TODO: Add issuerId
     }
     
@@ -141,6 +154,18 @@ public static class CredentialSetRecordExtensions
                 docType => docType,
                 () => throw new InvalidOperationException("No credential type found")));
     }
+    
+    public static bool IsActive(this CredentialSetRecord credentialSetRecord) =>
+        credentialSetRecord.State == CredentialState.Active;
+    
+    public static bool IsRevoked(this CredentialSetRecord credentialSetRecord) =>
+        credentialSetRecord.State == CredentialState.Revoked;
+    
+    public static bool IsDeleted(this CredentialSetRecord credentialSetRecord) => 
+        credentialSetRecord.State == CredentialState.Deleted;
+    
+    public static bool IsExpired(this CredentialSetRecord credentialSetRecord) =>
+        credentialSetRecord.State == CredentialState.Expired;
     
     public static JObject EncodeToJson(this CredentialSetRecord credentialSetRecord)
     {
@@ -161,6 +186,8 @@ public static class CredentialSetRecordExtensions
         result.Add(StateJsonKey, credentialSetRecord.State.ToString());
         
         credentialSetRecord.ExpiresAt.IfSome(expiresAt => result.Add(ExpiresAtJsonKey, expiresAt));
+        credentialSetRecord.IssuedAt.IfSome(issuedAt => result.Add(IssuedAtJsonKey, issuedAt));
+        credentialSetRecord.NotBefore.IfSome(notBefore => result.Add(NotBeforeJsonKey, notBefore));
         credentialSetRecord.RevokedAt.IfSome(revokedAt => result.Add(RevokedAtJsonKey, revokedAt));
         credentialSetRecord.DeletedAt.IfSome(deletedAt => result.Add(DeletedAtJsonKey, deletedAt));
         result.Add(IssuerIdJsonKey, credentialSetRecord.IssuerId);
@@ -190,6 +217,14 @@ public static class CredentialSetRecordExtensions
             from jToken in json.GetByKey(ExpiresAtJsonKey).ToOption()
             select jToken.ToObject<DateTime>();
         
+        var issuedAtType = 
+            from jToken in json.GetByKey(IssuedAtJsonKey).ToOption()
+            select jToken.ToObject<DateTime>();
+        
+        var notBeforeType = 
+            from jToken in json.GetByKey(NotBeforeJsonKey).ToOption()
+            select jToken.ToObject<DateTime>();
+        
         var revokedAtType =
             from jToken in json.GetByKey(RevokedAtJsonKey).ToOption()
             select jToken.ToObject<DateTime>();
@@ -206,6 +241,8 @@ public static class CredentialSetRecordExtensions
             credentialAttributesType,
             stateType,
             expiresAtType,
+            issuedAtType,
+            notBeforeType,
             revokedAtType,
             deletedAtType,
             issuerIdentifierType)
