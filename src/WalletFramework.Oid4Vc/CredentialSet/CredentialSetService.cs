@@ -115,34 +115,60 @@ public class CredentialSetService(
         await walletRecordService.UpdateAsync(context.Wallet, credentialSetRecord);
     }
     
-    public async Task<IEnumerable<CredentialSetRecord>> UpdateCredentialSetStates(IEnumerable<CredentialSetRecord> credentialSetRecords)
+    public async Task<CredentialSetRecord> RefreshCredentialSetState(CredentialSetRecord credentialSetRecord)
     {
-        var updatedCredentialSetRecords = new List<CredentialSetRecord>();
-        
-        foreach (var credentialSetRecord in credentialSetRecords)
-        {
-            if (credentialSetRecord.IsDeleted())
-            {
-                updatedCredentialSetRecords.Add(credentialSetRecord);
-                continue;
-            }
+        if (credentialSetRecord.IsDeleted())
+            return credentialSetRecord;
 
-            credentialSetRecord.ExpiresAt.IfSome(expiresAt =>
-            {
-                if (expiresAt < DateTime.UtcNow)
-                    credentialSetRecord.State = CredentialState.Expired;
-            });
-            
-            //TODO: Implement revocation check (status List) -> Currently IsRevoked always returns false
-            if (credentialSetRecord.IsRevoked())
-                credentialSetRecord.State = CredentialState.Revoked;
-            
-            updatedCredentialSetRecords.Add(credentialSetRecord);
-            
-            var context = await agentProvider.GetContextAsync();
-            await walletRecordService.UpdateAsync(context.Wallet, credentialSetRecord);
-        }
+        credentialSetRecord.ExpiresAt.IfSome(expiresAt =>
+        {
+            if (expiresAt < DateTime.UtcNow)
+                credentialSetRecord.State = CredentialState.Expired;
+        });
         
-        return updatedCredentialSetRecords;
+        //TODO: Implement revocation check (status List) -> Currently IsRevoked always returns false
+        if (credentialSetRecord.IsRevoked())
+            credentialSetRecord.State = CredentialState.Revoked;
+
+        var context = await agentProvider.GetContextAsync();
+        await walletRecordService.UpdateAsync(context.Wallet, credentialSetRecord);
+        return credentialSetRecord;
+    }
+    
+    public async Task<Option<List<CredentialSetRecord>>> RefreshCredentialSetStates()
+    {
+        var credentialSetRecords = await ListAsync(Option<ISearchQuery>.None);
+        var updatedCredentialSetRecords = new List<CredentialSetRecord>();
+
+        return await credentialSetRecords.Match(
+            async records =>
+            {
+                foreach (var credentialSetRecord in records)
+                {
+                    if (credentialSetRecord.IsDeleted())
+                    {
+                        updatedCredentialSetRecords.Add(credentialSetRecord);
+                        continue;
+                    }
+
+                    credentialSetRecord.ExpiresAt.IfSome(expiresAt =>
+                    {
+                        if (expiresAt < DateTime.UtcNow)
+                            credentialSetRecord.State = CredentialState.Expired;
+                    });
+
+                    //TODO: Implement revocation check (status List) -> Currently IsRevoked always returns false
+                    if (credentialSetRecord.IsRevoked())
+                        credentialSetRecord.State = CredentialState.Revoked;
+
+                    updatedCredentialSetRecords.Add(credentialSetRecord);
+
+                    var context = await agentProvider.GetContextAsync();
+                    await walletRecordService.UpdateAsync(context.Wallet, credentialSetRecord);
+                }
+
+                return Option<List<CredentialSetRecord>>.Some(updatedCredentialSetRecords);
+            },
+            () => Task.FromResult(Option<List<CredentialSetRecord>>.None));
     }
 }

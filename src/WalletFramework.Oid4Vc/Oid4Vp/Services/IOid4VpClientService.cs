@@ -57,5 +57,5 @@ public interface IOid4VpClientService
     /// <returns>
     ///     A task representing the asynchronous operation. The task result contains the Presentation Candidate if one was found for the Input Descriptor.
     /// </returns>
-    Task<Option<PresentationCandidates>> FindCredentialCandidatesForInputDescriptorAsync(InputDescriptor inputDescriptor);
+    Task<Option<PresentationCandidates>> FindCredentialCandidateForInputDescriptorAsync(InputDescriptor inputDescriptor);
 }

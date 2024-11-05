@@ -101,7 +101,7 @@ public class Oid4VpClientService : IOid4VpClientService
     }
 
     /// <inheritdoc />
-    public async Task<Option<PresentationCandidates>> FindCredentialCandidatesForInputDescriptorAsync(InputDescriptor inputDescriptor)
+    public async Task<Option<PresentationCandidates>> FindCredentialCandidateForInputDescriptorAsync(InputDescriptor inputDescriptor)
     {
         var candidates = await _pexService.FindCredentialCandidates([inputDescriptor]);
         return candidates.Any() ? candidates.First() : Option<PresentationCandidates>.None;
