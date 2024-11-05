@@ -55,7 +55,7 @@ public class PexService(
             {
                 throw new InvalidOperationException("Fields cannot be null or empty");
             }
-
+            
             var matchingCredentials = await GetMatchingCredentials(inputDescriptor);
 
             if (matchingCredentials.Count == 0)
@@ -97,10 +97,10 @@ public class PexService(
             {
                 try
                 {
-                    if (doc.UnsecuredPayload.SelectToken(field.Path.First(), true) is JValue value 
-                        && field.Filter?.Const != null)
+                    if (doc.UnsecuredPayload.SelectToken(field.Path.First(), true) is JValue value
+                        && (field.Filter?.Const != null || field.Filter?.Enum != null))
                     {
-                        return field.Filter?.Const == value.Value?.ToString();
+                        return field.Filter?.Const == value.Value?.ToString() || field.Filter?.Enum?.Contains(value.Value?.ToString()) == true;
                     }
         
                     return true;
