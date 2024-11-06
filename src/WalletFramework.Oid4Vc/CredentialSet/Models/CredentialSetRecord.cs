@@ -57,7 +57,9 @@ public sealed class CredentialSetRecord : RecordBase
         Option<DateTime> issuedAt,
         Option<DateTime> notBefore,
         Option<DateTime> revokedAt, 
-        Option<DateTime> deletedAt, 
+        Option<DateTime> deletedAt,
+        Option<DateTime> createdAt, 
+        Option<DateTime> updatedAt, 
         string issuerId)
     {
         SdJwtCredentialType = sdJwtCredentialType;
@@ -69,12 +71,16 @@ public sealed class CredentialSetRecord : RecordBase
         NotBefore = notBefore;
         RevokedAt = revokedAt;
         DeletedAt = deletedAt;
+        UpdatedAtUtc = updatedAt.ToNullable();
+        CreatedAtUtc = createdAt.ToNullable();
         IssuerId = issuerId;
     }
     
     public CredentialSetRecord()
     {
         Id = CredentialSetId.CreateCredentialSetId();
+        CreatedAtUtc = DateTime.UtcNow;
+        UpdatedAtUtc = DateTime.UtcNow;
     }
 }
 
@@ -111,6 +117,8 @@ public static class CredentialSetRecordExtensions
     private const string RevokedAtJsonKey = "revoked_at";
     private const string DeletedAtJsonKey = "deleted_at";
     private const string IssuerIdJsonKey = "issuer_id";
+    private const string CreatedAtJsonKey = "created_at";
+    private const string UpdatedAtJsonKey = "updated_at";
     
     public static void AddSdJwtData(
         this CredentialSetRecord credentialSetRecord, 
@@ -190,6 +198,8 @@ public static class CredentialSetRecordExtensions
         credentialSetRecord.NotBefore.IfSome(notBefore => result.Add(NotBeforeJsonKey, notBefore));
         credentialSetRecord.RevokedAt.IfSome(revokedAt => result.Add(RevokedAtJsonKey, revokedAt));
         credentialSetRecord.DeletedAt.IfSome(deletedAt => result.Add(DeletedAtJsonKey, deletedAt));
+        credentialSetRecord.CreatedAtUtc.IfSome(createdAtUtc => result.Add(CreatedAtJsonKey, createdAtUtc));
+        credentialSetRecord.UpdatedAtUtc.IfSome(updatedAtUtc => result.Add(UpdatedAtJsonKey, updatedAtUtc));
         result.Add(IssuerIdJsonKey, credentialSetRecord.IssuerId);
 
         return result;
@@ -233,6 +243,14 @@ public static class CredentialSetRecordExtensions
             from jToken in json.GetByKey(DeletedAtJsonKey).ToOption()
             select jToken.ToObject<DateTime>();
         
+        var createdAtType =
+            from jToken in json.GetByKey(CreatedAtJsonKey).ToOption()
+            select jToken.ToObject<DateTime>();
+        
+        var updatedAtType =
+            from jToken in json.GetByKey(UpdatedAtJsonKey).ToOption()
+            select jToken.ToObject<DateTime>();
+        
         var issuerIdentifierType = json[IssuerIdJsonKey]!.ToString();
 
         return new CredentialSetRecord(
@@ -245,6 +263,8 @@ public static class CredentialSetRecordExtensions
             notBeforeType,
             revokedAtType,
             deletedAtType,
+            createdAtType,
+            updatedAtType,
             issuerIdentifierType)
         {
             Id = id

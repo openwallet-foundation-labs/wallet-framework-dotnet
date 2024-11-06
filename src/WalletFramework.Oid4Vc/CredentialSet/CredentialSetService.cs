@@ -88,20 +88,20 @@ public class CredentialSetService(
         int skip = 0)
     {
         var context = await agentProvider.GetContextAsync();
-        var list = await walletRecordService.SearchAsync<CredentialSetRecord>(
+        var records = await walletRecordService.SearchAsync<CredentialSetRecord>(
             context.Wallet, 
             query.ToNullable(),
             null,
             count, 
             skip);
-
-        if (list.Count == 0)
+        
+        if (records.Count == 0)
             return Option<IEnumerable<CredentialSetRecord>>.None;
-
-        return list;
+        
+        return records;
     }
     
-    public async Task<Option<CredentialSetRecord>> GetAsync(CredentialSetId credentialSetId)
+    public virtual async Task<Option<CredentialSetRecord>> GetAsync(CredentialSetId credentialSetId)
     {
         var context = await agentProvider.GetContextAsync();
         var record = await walletRecordService.GetAsync<CredentialSetRecord>(context.Wallet, credentialSetId);
@@ -117,58 +117,41 @@ public class CredentialSetService(
     
     public async Task<CredentialSetRecord> RefreshCredentialSetState(CredentialSetRecord credentialSetRecord)
     {
+        var context = await agentProvider.GetContextAsync();
+        
         if (credentialSetRecord.IsDeleted())
             return credentialSetRecord;
 
-        credentialSetRecord.ExpiresAt.IfSome(expiresAt =>
+        await credentialSetRecord.ExpiresAt.IfSomeAsync(async expiresAt =>
         {
             if (expiresAt < DateTime.UtcNow)
+            {
                 credentialSetRecord.State = CredentialState.Expired;
+                await walletRecordService.UpdateAsync(context.Wallet, credentialSetRecord);
+            }
         });
         
         //TODO: Implement revocation check (status List) -> Currently IsRevoked always returns false
         if (credentialSetRecord.IsRevoked())
+        {
             credentialSetRecord.State = CredentialState.Revoked;
-
-        var context = await agentProvider.GetContextAsync();
-        await walletRecordService.UpdateAsync(context.Wallet, credentialSetRecord);
+            await walletRecordService.UpdateAsync(context.Wallet, credentialSetRecord);
+        }
+        
         return credentialSetRecord;
     }
-    
-    public async Task<Option<List<CredentialSetRecord>>> RefreshCredentialSetStates()
+
+    public async Task RefreshCredentialSetStates()
     {
         var credentialSetRecords = await ListAsync(Option<ISearchQuery>.None);
-        var updatedCredentialSetRecords = new List<CredentialSetRecord>();
 
-        return await credentialSetRecords.Match(
+        await credentialSetRecords.IfSomeAsync(
             async records =>
             {
                 foreach (var credentialSetRecord in records)
                 {
-                    if (credentialSetRecord.IsDeleted())
-                    {
-                        updatedCredentialSetRecords.Add(credentialSetRecord);
-                        continue;
-                    }
-
-                    credentialSetRecord.ExpiresAt.IfSome(expiresAt =>
-                    {
-                        if (expiresAt < DateTime.UtcNow)
-                            credentialSetRecord.State = CredentialState.Expired;
-                    });
-
-                    //TODO: Implement revocation check (status List) -> Currently IsRevoked always returns false
-                    if (credentialSetRecord.IsRevoked())
-                        credentialSetRecord.State = CredentialState.Revoked;
-
-                    updatedCredentialSetRecords.Add(credentialSetRecord);
-
-                    var context = await agentProvider.GetContextAsync();
-                    await walletRecordService.UpdateAsync(context.Wallet, credentialSetRecord);
+                    await RefreshCredentialSetState(credentialSetRecord);
                 }
-
-                return Option<List<CredentialSetRecord>>.Some(updatedCredentialSetRecords);
-            },
-            () => Task.FromResult(Option<List<CredentialSetRecord>>.None));
+            });
     }
 }
