@@ -117,8 +117,6 @@ public class CredentialSetService(
     
     public async Task<CredentialSetRecord> RefreshCredentialSetState(CredentialSetRecord credentialSetRecord)
     {
-        var context = await agentProvider.GetContextAsync();
-        
         if (credentialSetRecord.IsDeleted())
             return credentialSetRecord;
 
@@ -127,7 +125,7 @@ public class CredentialSetService(
             if (expiresAt < DateTime.UtcNow)
             {
                 credentialSetRecord.State = CredentialState.Expired;
-                await walletRecordService.UpdateAsync(context.Wallet, credentialSetRecord);
+                await UpdateAsync(credentialSetRecord);
             }
         });
         
@@ -135,7 +133,7 @@ public class CredentialSetService(
         if (credentialSetRecord.IsRevoked())
         {
             credentialSetRecord.State = CredentialState.Revoked;
-            await walletRecordService.UpdateAsync(context.Wallet, credentialSetRecord);
+            await UpdateAsync(credentialSetRecord);
         }
         
         return credentialSetRecord;
