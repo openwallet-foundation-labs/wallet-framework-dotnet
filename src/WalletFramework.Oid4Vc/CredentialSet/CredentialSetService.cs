@@ -88,20 +88,20 @@ public class CredentialSetService(
         int skip = 0)
     {
         var context = await agentProvider.GetContextAsync();
-        var list = await walletRecordService.SearchAsync<CredentialSetRecord>(
+        var records = await walletRecordService.SearchAsync<CredentialSetRecord>(
             context.Wallet, 
             query.ToNullable(),
             null,
             count, 
             skip);
-
-        if (list.Count == 0)
+        
+        if (records.Count == 0)
             return Option<IEnumerable<CredentialSetRecord>>.None;
-
-        return list;
+        
+        return records;
     }
     
-    public async Task<Option<CredentialSetRecord>> GetAsync(CredentialSetId credentialSetId)
+    public virtual async Task<Option<CredentialSetRecord>> GetAsync(CredentialSetId credentialSetId)
     {
         var context = await agentProvider.GetContextAsync();
         var record = await walletRecordService.GetAsync<CredentialSetRecord>(context.Wallet, credentialSetId);
@@ -113,5 +113,43 @@ public class CredentialSetService(
     {
         var context = await agentProvider.GetContextAsync();
         await walletRecordService.UpdateAsync(context.Wallet, credentialSetRecord);
+    }
+    
+    public async Task<CredentialSetRecord> RefreshCredentialSetState(CredentialSetRecord credentialSetRecord)
+    {
+        if (credentialSetRecord.IsDeleted())
+            return credentialSetRecord;
+
+        await credentialSetRecord.ExpiresAt.IfSomeAsync(async expiresAt =>
+        {
+            if (expiresAt < DateTime.UtcNow)
+            {
+                credentialSetRecord.State = CredentialState.Expired;
+                await UpdateAsync(credentialSetRecord);
+            }
+        });
+        
+        //TODO: Implement revocation check (status List) -> Currently IsRevoked always returns false
+        if (credentialSetRecord.IsRevoked())
+        {
+            credentialSetRecord.State = CredentialState.Revoked;
+            await UpdateAsync(credentialSetRecord);
+        }
+        
+        return credentialSetRecord;
+    }
+
+    public async Task RefreshCredentialSetStates()
+    {
+        var credentialSetRecords = await ListAsync(Option<ISearchQuery>.None);
+
+        await credentialSetRecords.IfSomeAsync(
+            async records =>
+            {
+                foreach (var credentialSetRecord in records)
+                {
+                    await RefreshCredentialSetState(credentialSetRecord);
+                }
+            });
     }
 }

@@ -11,15 +11,23 @@ public interface ICredentialSetService
 {
     Task DeleteAsync(CredentialSetId credentialSetId);
 
-    Task<Option<CredentialSetRecord>> GetAsync(CredentialSetId credentialSetId);
+    Task<Option<CredentialSetRecord>> GetAsync(
+        CredentialSetId credentialSetId);
     
     Task AddAsync(CredentialSetRecord credentialSetRecord);
     
     Task UpdateAsync(CredentialSetRecord credentialSetRecord);
     
-    Task<Option<IEnumerable<CredentialSetRecord>>> ListAsync(Option<ISearchQuery> query, int count = 100, int skip = 0);
+    Task<Option<IEnumerable<CredentialSetRecord>>> ListAsync(
+        Option<ISearchQuery> query, 
+        int count = 100, 
+        int skip = 0);
     
     Task<Option<IEnumerable<SdJwtRecord>>> GetAssociatedSdJwtRecords(CredentialSetId credentialSetId);
     
     Task<Option<IEnumerable<MdocRecord>>> GetAssociatedMDocRecords(CredentialSetId credentialSetId);
+    
+    Task<CredentialSetRecord> RefreshCredentialSetState(CredentialSetRecord credentialSetRecord);
+    
+    Task RefreshCredentialSetStates();
 }

@@ -1,6 +1,8 @@
+using LanguageExt;
 using WalletFramework.Oid4Vc.Oid4Vp.Models;
 using WalletFramework.Oid4Vc.ClientAttestation;
 using WalletFramework.Oid4Vc.Oid4Vci.AuthFlow.Models;
+using WalletFramework.Oid4Vc.Oid4Vp.PresentationExchange.Models;
 
 namespace WalletFramework.Oid4Vc.Oid4Vp.Services;
 
@@ -47,4 +49,13 @@ public interface IOid4VpClientService
         IEnumerable<SelectedCredential> selectedCredentials,
         IssuanceSession issuanceSession,
         CombinedWalletAttestation? combinedWalletAttestation = null);
+    
+    /// <summary>
+    ///     Finds possible PresentationCandidates for an InputDescriptor.
+    /// </summary>
+    /// <param name="inputDescriptor"></param>
+    /// <returns>
+    ///     A task representing the asynchronous operation. The task result contains the Presentation Candidate if one was found for the Input Descriptor.
+    /// </returns>
+    Task<Option<PresentationCandidates>> FindCredentialCandidateForInputDescriptorAsync(InputDescriptor inputDescriptor);
 }

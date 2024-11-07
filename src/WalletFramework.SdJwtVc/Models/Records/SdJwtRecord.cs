@@ -57,7 +57,20 @@ public sealed class SdJwtRecord : RecordBase, ICredential
     //TODO: Must be set when batch issuance is implemented
     // public bool OneTimeUse { get; set; }
     
+    /// <summary>
+    ///     Tracks the Expiration Date of the Sd-JWT
+    /// </summary>
     public DateTime? ExpiresAt { get; set; }
+    
+    /// <summary>
+    ///     Tracks when the Sd-JWT was issued
+    /// </summary>
+    public DateTime? IssuedAt { get; set; }
+    
+    /// <summary>
+    ///     Tracks when the Sd-JWT is valid from
+    /// </summary>
+    public DateTime? NotBefore { get; set; }
 
     //TODO: Use CredentialSetId Type instead fo string
     public string CredentialSetId
@@ -128,6 +141,9 @@ public sealed class SdJwtRecord : RecordBase, ICredential
     /// <param name="issuerId"></param>
     /// <param name="encodedIssuerSignedJwt">The Issuer-signed JWT part of the SD-JWT.</param>
     /// <param name="credentialSetId">The CredentialSetId.</param>
+    /// <param name="expiresAt">The CredentialSetId.</param>
+    /// <param name="issuedAt">The CredentialSetId.</param>
+    /// <param name="notBefore">The CredentialSetId.</param>
     [JsonConstructor]
     public SdJwtRecord(
         Dictionary<string, ClaimMetadata> displayedAttributes,
@@ -136,7 +152,10 @@ public sealed class SdJwtRecord : RecordBase, ICredential
         List<SdJwtDisplay> display,
         string issuerId,
         string encodedIssuerSignedJwt,
-        string credentialSetId)
+        string credentialSetId,
+        DateTime? expiresAt,
+        DateTime? issuedAt,
+        DateTime? notBefore)
     {
         Claims = claims;
         Disclosures = disclosures;
@@ -146,6 +165,9 @@ public sealed class SdJwtRecord : RecordBase, ICredential
             
         EncodedIssuerSignedJwt = encodedIssuerSignedJwt;
 
+        ExpiresAt = expiresAt;
+        IssuedAt = issuedAt;
+        NotBefore = notBefore;
         IssuerId = issuerId;
         CredentialSetId = credentialSetId;
     }
@@ -171,6 +193,12 @@ public sealed class SdJwtRecord : RecordBase, ICredential
         
         KeyId = keyId;
         ExpiresAt = sdJwtDoc.UnsecuredPayload.SelectToken("exp")?.Value<long>() is not null
+            ? DateTimeOffset.FromUnixTimeSeconds(sdJwtDoc.UnsecuredPayload.SelectToken("exp")!.Value<long>()).DateTime
+            : null;
+        IssuedAt = sdJwtDoc.UnsecuredPayload.SelectToken("iat")?.Value<long>() is not null
+            ? DateTimeOffset.FromUnixTimeSeconds(sdJwtDoc.UnsecuredPayload.SelectToken("iat")!.Value<long>()).DateTime
+            : null;
+        NotBefore = sdJwtDoc.UnsecuredPayload.SelectToken("nbf")?.Value<long>() is not null
             ? DateTimeOffset.FromUnixTimeSeconds(sdJwtDoc.UnsecuredPayload.SelectToken("exp")!.Value<long>()).DateTime
             : null;
         IssuerId = sdJwtDoc.UnsecuredPayload.SelectToken("iss")?.Value<string>() 
@@ -200,6 +228,12 @@ public sealed class SdJwtRecord : RecordBase, ICredential
         KeyId = keyId;
         
         ExpiresAt = sdJwtDoc.UnsecuredPayload.SelectToken("exp")?.Value<long>() is not null
+            ? DateTimeOffset.FromUnixTimeSeconds(sdJwtDoc.UnsecuredPayload.SelectToken("exp")!.Value<long>()).DateTime
+            : null;
+        IssuedAt = sdJwtDoc.UnsecuredPayload.SelectToken("iat")?.Value<long>() is not null
+            ? DateTimeOffset.FromUnixTimeSeconds(sdJwtDoc.UnsecuredPayload.SelectToken("iat")!.Value<long>()).DateTime
+            : null;
+        NotBefore = sdJwtDoc.UnsecuredPayload.SelectToken("nbf")?.Value<long>() is not null
             ? DateTimeOffset.FromUnixTimeSeconds(sdJwtDoc.UnsecuredPayload.SelectToken("exp")!.Value<long>()).DateTime
             : null;
         IssuerId = sdJwtDoc.UnsecuredPayload.SelectToken("iss")?.Value<string>() 
