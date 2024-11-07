@@ -99,7 +99,13 @@ public class Filter
     ///     Gets the constant value which the selected value is evaluated against.
     /// </summary>
     [JsonProperty("const")]
-    public string Const { get; private set; } = null!;
+    public string? Const { get; private set; } = null!;
+    
+    /// <summary>
+    ///     Gets the constant value which the selected value is evaluated against.
+    /// </summary>
+    [JsonProperty("enum")]
+    public string[]? Enum { get; private set; } = null!;
 
     /// <summary>
     ///     Gets the type of filter applied.

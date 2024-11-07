@@ -211,6 +211,63 @@ public class PexServiceTests
         // Assert
         credentialCandidatesArray.Should().BeEquivalentTo(expected);
     }
+    
+    [Fact]
+    public async Task Can_Get_Credential_Candidates_For_Input_Descriptors_With_Enum_Filter()
+    {
+        var credentialSetCandidate = new CredentialSetCandidate(UniversityCredentialSetId,
+            new List<ICredential> { _universityCredential });
+
+        var enumVctFilter = new Filter();
+        enumVctFilter.PrivateSet(x => x.Enum, new[] { "UniversityDegreeCredential", "vctTypeTwo" });
+        enumVctFilter.PrivateSet(x => x.Type, "string");
+
+        var universityInputDescriptor = CreateInputDescriptor(
+            CreateConstraints(new[] { CreateField("$.degree"), CreateField("$.vct", enumVctFilter) }),
+            new Dictionary<string, Format> { {"vc+sd-jwt", CreateFormat(new[] { "ES256" }) }},
+            Guid.NewGuid().ToString(),
+            "University Degree",
+            "We can only accept digital university degrees.");
+
+        var expected = new List<PresentationCandidates>
+        {
+            new(universityInputDescriptor.Id,
+                new List<CredentialSetCandidate> { credentialSetCandidate }),
+        };
+
+        var sdJwtVcHolderService = CreatePexService();
+
+        // Act
+        var credentialCandidatesArray = await sdJwtVcHolderService.FindCredentialCandidates(
+            new[] { universityInputDescriptor });
+
+        // Assert
+        credentialCandidatesArray.Should().BeEquivalentTo(expected);
+    }
+    
+    [Fact]
+    public async Task Cant_Get_Credential_Candidates_For_Input_Descriptors_With_Enum_Filter_Not_Fulfilled()
+    {
+        var enumVctFilter = new Filter();
+        enumVctFilter.PrivateSet(x => x.Enum, new[] { "vctTypeTwo", "vctTypeTwo" });
+        enumVctFilter.PrivateSet(x => x.Type, "string");
+
+        var universityInputDescriptor = CreateInputDescriptor(
+            CreateConstraints(new[] { CreateField("$.degree"), CreateField("$.vct", enumVctFilter) }),
+            new Dictionary<string, Format> { {"vc+sd-jwt", CreateFormat(new[] { "ES256" }) }},
+            Guid.NewGuid().ToString(),
+            "University Degree",
+            "We can only accept digital university degrees.");
+        
+        var sdJwtVcHolderService = CreatePexService();
+
+        // Act
+        var credentialCandidatesArray = await sdJwtVcHolderService.FindCredentialCandidates(
+            new[] { universityInputDescriptor });
+
+        // Assert
+        credentialCandidatesArray.Should().BeEmpty();
+    }
 
     [Fact]
     public async Task Cant_Get_Credential_Candidates_When_Not_All_Fields_Are_Fulfilled()
