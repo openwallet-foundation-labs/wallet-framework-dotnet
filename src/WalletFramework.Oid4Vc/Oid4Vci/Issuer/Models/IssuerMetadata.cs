@@ -17,6 +17,7 @@ using static WalletFramework.Oid4Vc.Oid4Vci.Issuer.Models.CredentialIssuerId;
 using static WalletFramework.Oid4Vc.Oid4Vci.CredOffer.Models.CredentialConfigurationId;
 using static WalletFramework.Oid4Vc.Oid4Vci.Models.Metadata.Issuer.IssuerDisplay;
 using static WalletFramework.Oid4Vc.Oid4Vci.Issuer.Models.IssuerMetadataJsonExtensions;
+using static WalletFramework.Oid4Vc.Oid4Vci.Models.Metadata.Issuer.BatchCredentialIssuance;
 
 namespace WalletFramework.Oid4Vc.Oid4Vci.Issuer.Models;
 
@@ -59,13 +60,19 @@ public record IssuerMetadata
     /// </summary>
     public Option<IEnumerable<AuthorizationServerId>> AuthorizationServers { get; }
     
+    /// <summary>
+    ///     Gets the information about the Credential Issuer`s supports for batch issuance.
+    /// </summary>
+    public Option<BatchCredentialIssuance> BatchCredentialIssuance { get; }
+    
     private IssuerMetadata(
         Dictionary<CredentialConfigurationId, SupportedCredentialConfiguration> credentialConfigurationsSupported,
         Option<List<IssuerDisplay>> display,
         Uri credentialEndpoint,
         Option<Uri> presentationSigningEndpoint,
         CredentialIssuerId credentialIssuer,
-        Option<IEnumerable<AuthorizationServerId>> authorizationServers)
+        Option<IEnumerable<AuthorizationServerId>> authorizationServers,
+        Option<BatchCredentialIssuance> batchCredentialIssuance)
     {
         CredentialConfigurationsSupported = credentialConfigurationsSupported;
         Display = display;
@@ -73,6 +80,7 @@ public record IssuerMetadata
         PresentationSigningEndpoint = presentationSigningEndpoint;
         CredentialIssuer = credentialIssuer;
         AuthorizationServers = authorizationServers;
+        BatchCredentialIssuance = batchCredentialIssuance;
     }
     
     private static IssuerMetadata Create(
@@ -81,13 +89,15 @@ public record IssuerMetadata
         Uri credentialEndpoint,
         Option<Uri> presentationSigningEndpoint,
         CredentialIssuerId credentialIssuer,
-        Option<IEnumerable<AuthorizationServerId>> authorizationServers) => new(
+        Option<IEnumerable<AuthorizationServerId>> authorizationServers,
+        Option<BatchCredentialIssuance> batchCredentialIssuance) => new(
         credentialConfigurationsSupported,
         display,
         credentialEndpoint,
         presentationSigningEndpoint,
         credentialIssuer,
-        authorizationServers);
+        authorizationServers,
+        batchCredentialIssuance);
 
     public static Validation<IssuerMetadata> ValidIssuerMetadata(JObject json)
     {
@@ -158,13 +168,19 @@ public record IssuerMetadata
                 .TraverseAny(token => ValidAuthorizationServerId(token).ToOption())
             select serverIds;
 
+        var issuance = json
+            .GetByKey(BatchCredentialIssuanceJsonKey)
+            .ToOption()
+            .OnSome(OptionalBatchCredentialIssuance);
+        
         return Valid(Create)
             .Apply(credentialConfigurations)
             .Apply(display)
             .Apply(credentialEndpoint)
             .Apply(presentationSigningEndpoint)
             .Apply(credentialIssuerId)
-            .Apply(authServers);
+            .Apply(authServers)
+            .Apply(issuance);
     }
 }
 
@@ -176,6 +192,7 @@ public static class IssuerMetadataJsonExtensions
     public const string PresentationSigningEndpointJsonKey = "presentation_signing_endpoint";
     public const string CredentialIssuerJsonKey = "credential_issuer";
     public const string AuthorizationServersJsonKey = "authorization_servers";
+    public const string BatchCredentialIssuanceJsonKey = "batch_credential_issuance";
     
     public static JObject EncodeToJson(this IssuerMetadata issuerMetadata)
     {
@@ -219,6 +236,11 @@ public static class IssuerMetadataJsonExtensions
             }
         });
         result.Add(AuthorizationServersJsonKey, authServersJson);
+        
+        issuerMetadata.BatchCredentialIssuance.IfSome(issuance =>
+        {
+            result.Add(BatchCredentialIssuanceJsonKey, issuance.EncodeToJson());
+        });
         
         return result;
     }

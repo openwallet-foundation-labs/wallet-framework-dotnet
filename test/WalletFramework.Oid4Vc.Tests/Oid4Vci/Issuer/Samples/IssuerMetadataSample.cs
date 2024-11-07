@@ -52,6 +52,10 @@ public static class IssuerMetadataSample
         {
             [SdJwtConfigurationId] = SdJwtConfigurationSample.Valid,
             [MdocConfigurationId] = MdocConfigurationSample.Valid
+        },
+        ["batch_credential_issuance"] = new JObject
+        {
+            ["batch_size"] = 5
         }
     };
     
