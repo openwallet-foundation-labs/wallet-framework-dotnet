@@ -21,7 +21,7 @@ public record CredentialResponse
 {
     /// <summary>
     ///     <para>
-    ///         Credential: Contains issued Credential. It MUST be present when transaction_id is not returned. It MAY be a
+    ///         Credentials: Contains issued Credentials. It MUST be present when transaction_id is not returned. It MAY be a
     ///         string or an object, depending on the Credential format
     ///     </para>
     ///     <para>
@@ -32,7 +32,7 @@ public record CredentialResponse
     ///         has been obtained by the Wallet
     ///     </para>
     /// </summary>
-    public OneOf<Credential, TransactionId> CredentialOrTransactionId { get; }
+    public OneOf<List<Credential>, TransactionId> CredentialsOrTransactionId { get; }
     
     /// <summary>
     ///     OPTIONAL. JSON string containing a nonce to be used to create a proof of possession of key material
@@ -51,32 +51,47 @@ public record CredentialResponse
     public KeyId KeyId { get; }
     
     private CredentialResponse(
-        OneOf<Credential, TransactionId> credentialOrTransactionId,
+        OneOf<List<Credential>, TransactionId> credentialsOrTransactionId,
         Option<string> cNonce,
         Option<int> cNonceExpiresIn,
         KeyId keyId)
     {
         CNonceExpiresIn = cNonceExpiresIn;
-        CredentialOrTransactionId = credentialOrTransactionId;
+        CredentialsOrTransactionId = credentialsOrTransactionId;
         CNonce = cNonce;
         KeyId = keyId;
     }
     
     private static CredentialResponse Create(
-        OneOf<Credential, TransactionId> credentialOrTransactionId,
+        OneOf<List<Credential>, TransactionId> credentialsOrTransactionId,
         Option<string> cNonce,
         Option<int> cNonceExpiresIn,
         KeyId keyId) =>
-        new(credentialOrTransactionId, cNonce, cNonceExpiresIn, keyId);
+        new(credentialsOrTransactionId, cNonce, cNonceExpiresIn, keyId);
 
     public static Validation<CredentialResponse> ValidCredentialResponse(JObject response, KeyId keyId)
     {
         // TODO: Implement transactionID
         var credential =
-            from jToken in response.GetByKey("credential")
-            from jValue in jToken.ToJValue()
-            from cred in Credential.ValidCredential(jValue)
-            select (OneOf<Credential, TransactionId>)cred;
+            from jToken in response.GetByKey("credential").ToOption()
+            from jValue in jToken.ToJValue().ToOption()
+            from cred in Credential.ValidCredential(jValue).ToOption()
+            select cred;
+
+        var batchCredentials =
+            from jToken in response.GetByKey("credentials").ToOption()
+            from jArray in jToken.ToJArray().ToOption()
+            from all in jArray.TraverseAll(jToken =>
+                from jValue in jToken.ToJValue().ToOption()
+                from cred in Credential.ValidCredential(jValue).ToOption()
+                select cred)
+            select all;
+
+        var credentials = batchCredentials.Match(
+            Some: bc => (OneOf<List<Credential>, TransactionId>)bc.ToList(),
+            None: () => credential.Match(
+                Some: c => (OneOf<List<Credential>, TransactionId>)new List<Credential> { c },
+                None: () => throw new InvalidOperationException("Credential response contains no credentials")));
 
         var cNonce = response
             .GetByKey("c_nonce")
@@ -109,7 +124,7 @@ public record CredentialResponse
             .ToOption();
         
         return ValidationFun.Valid(Create)
-            .Apply(credential)
+            .Apply(credentials)
             .Apply(cNonce)
             .Apply(cNonceExpiresIn)
             .Apply(keyId);
