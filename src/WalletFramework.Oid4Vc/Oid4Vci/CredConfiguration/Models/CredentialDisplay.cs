@@ -7,6 +7,7 @@ using WalletFramework.SdJwtVc.Models.Credential;
 using static WalletFramework.Oid4Vc.Oid4Vci.CredConfiguration.Models.CredentialName;
 using static WalletFramework.Core.Localization.Locale;
 using static WalletFramework.Oid4Vc.Oid4Vci.CredConfiguration.Models.CredentialLogo;
+using static WalletFramework.Oid4Vc.Oid4Vci.CredConfiguration.Models.CredentialBackgroundImage;
 using static WalletFramework.Oid4Vc.Oid4Vci.CredConfiguration.Models.CredentialDisplayFun;
 using Color = WalletFramework.Core.Colors.Color;
 
@@ -31,6 +32,11 @@ public record CredentialDisplay
     ///     Gets the logo associated with this Credential.
     /// </summary>
     public Option<CredentialLogo> Logo { get; }
+    
+    /// <summary>
+    ///     Gets the logo associated with this Credential.
+    /// </summary>
+    public Option<CredentialBackgroundImage> BackgroundImage { get; }
 
     /// <summary>
     ///     Gets the name of the Credential.
@@ -44,11 +50,13 @@ public record CredentialDisplay
 
     private CredentialDisplay(
         Option<CredentialLogo> logo,
+        Option<CredentialBackgroundImage> backgroundImage,
         Option<CredentialName> name,
         Option<Color> backgroundColor,
         Option<Locale> locale,
         Option<Color> textColor)
     {
+        BackgroundImage = backgroundImage;
         Logo = logo;
         Name = name;
         BackgroundColor = backgroundColor;
@@ -73,12 +81,13 @@ public record CredentialDisplay
 
             var name = jObject.GetByKey(NameJsonKey).ToOption().OnSome(OptionalCredentialName);
             var logo = jObject.GetByKey(LogoJsonKey).ToOption().OnSome(OptionalCredentialLogo);
+            var backgroundImage = jObject.GetByKey(BackgroundImageJsonKey).ToOption().OnSome(OptionalCredentialBackgroundImage);
             var locale = jObject.GetByKey(LocaleJsonKey).OnSuccess(ValidLocale).ToOption();
 
             if (name.IsNone && logo.IsNone && backgroundColor.IsNone && locale.IsNone && textColor.IsNone)
                 return Option<CredentialDisplay>.None;
 
-            return new CredentialDisplay(logo, name, backgroundColor, locale, textColor);
+            return new CredentialDisplay(logo, backgroundImage, name, backgroundColor, locale, textColor);
         });
 }
 
@@ -87,6 +96,7 @@ public static class CredentialDisplayFun
     public const string BackgroundColorJsonKey = "background_color";
     public const string LocaleJsonKey = "locale";
     public const string LogoJsonKey = "logo";
+    public const string BackgroundImageJsonKey = "background_image";
     public const string NameJsonKey = "name";
     public const string TextColorJsonKey = "text_color";
     
@@ -95,6 +105,8 @@ public static class CredentialDisplayFun
         var result = new JObject();
 
         display.Logo.IfSome(logo => { result.Add(LogoJsonKey, logo.EncodeToJson()); });
+        
+        display.BackgroundImage.IfSome(bgImage => { result.Add(BackgroundImageJsonKey, bgImage.EncodeToJson()); });
 
         display.Name.IfSome(name => { result.Add(NameJsonKey, name.ToString()); });
 
