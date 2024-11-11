@@ -11,12 +11,17 @@ namespace WalletFramework.Oid4Vc.Oid4Vci.CredRequest.Models;
 ///     This request contains the format of the credential, the type of credential,
 ///     and a proof of possession of the key material the issued credential shall be bound to.
 /// </summary>
-public record CredentialRequest(Format Format, Option<ProofOfPossession> Proof, Option<SessionTranscript> SessionTranscript)
+public record CredentialRequest(Format Format, Option<ProofOfPossession> Proof, Option<ProofsOfPossession> Proofs, Option<SessionTranscript> SessionTranscript)
 {
     /// <summary>
     ///     Gets the proof of possession of the key material the issued credential shall be bound to.
     /// </summary>
     public Option<ProofOfPossession> Proof { get; } = Proof;
+    
+    /// <summary>
+    ///     Gets one or more proof of possessions of the key material the issued credential shall be bound to.
+    /// </summary>
+    public Option<ProofsOfPossession> Proofs { get; } = Proofs;
 
     /// <summary>
     ///     Gets the format of the credential to be issued.
@@ -29,6 +34,7 @@ public record CredentialRequest(Format Format, Option<ProofOfPossession> Proof, 
 public static class CredentialRequestFun
 {
     private const string ProofJsonKey = "proof";
+    private const string ProofsJsonKey = "proofs";
     private const string FormatJsonKey = "format";
     private const string SessionTranscriptKey = "session_transcript";
     
@@ -39,6 +45,11 @@ public static class CredentialRequestFun
         request.Proof.IfSome(proof =>
         {
             result.Add(ProofJsonKey, JObject.FromObject(proof));
+        });
+        
+        request.Proofs.IfSome(proofs =>
+        {
+            result.Add(ProofsJsonKey, proofs.EncodeToJson());
         });
         
         request.SessionTranscript.IfSome(sessionTranscript =>

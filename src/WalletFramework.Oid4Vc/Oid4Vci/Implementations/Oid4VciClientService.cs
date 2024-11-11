@@ -22,9 +22,9 @@ using WalletFramework.MdocVc;
 using WalletFramework.Oid4Vc.CredentialSet;
 using WalletFramework.Oid4Vc.CredentialSet.Models;
 using WalletFramework.Oid4Vc.Oid4Vci.Authorization.DPop.Models;
+using WalletFramework.Oid4Vc.Oid4Vci.CredResponse;
 using WalletFramework.Oid4Vc.Oid4Vp.Models;
 using WalletFramework.SdJwtVc.Models;
-using WalletFramework.SdJwtVc.Models.Records;
 using WalletFramework.SdJwtVc.Services.SdJwtVcHolderService;
 using static Newtonsoft.Json.JsonConvert;
 
@@ -279,31 +279,35 @@ public class Oid4VciClientService : IOid4VciClientService
         
         var result =
             from response in validResponse
-            let credentialOrTransactionId = response.CredentialOrTransactionId
-            select credentialOrTransactionId.Match(
-                async credential => await credential.Value.Match<Task<OneOf<SdJwtRecord, MdocRecord>>>(
-                    async sdJwt =>
+            let credentialsOrTransactionId = response.CredentialsOrTransactionId
+            select credentialsOrTransactionId.Match(
+                async creds =>
+                {
+                    foreach (var credential in creds)
                     {
-                        var record = sdJwt.Decoded.ToRecord(configuration.AsT0, response.KeyId, credentialSet.GetCredentialSetId());
-                        var context = await _agentProvider.GetContextAsync();
-                        await _sdJwtService.AddAsync(context, record);
+                        await credential.Value.Match(
+                            async sdJwt =>
+                            {
+                                var record = sdJwt.Decoded.ToRecord(configuration.AsT0, response.KeyId,
+                                    credentialSet.GetCredentialSetId());
+                                var context = await _agentProvider.GetContextAsync();
+                                await _sdJwtService.AddAsync(context, record);
 
-                        credentialSet.AddSdJwtData(record);
-                        await _credentialSetService.AddAsync(credentialSet);
-                            
-                        return record;
-                    },
-                    async mdoc =>
-                    {
-                        var displays = MdocFun.CreateMdocDisplays(configuration.AsT1);
-                        var record = mdoc.Decoded.ToRecord(displays, response.KeyId, credentialSet.GetCredentialSetId());
-                        await _mdocStorage.Add(record);
-                            
-                        credentialSet.AddMDocData(record);
-                        await _credentialSetService.AddAsync(credentialSet);
-                            
-                        return record;
-                    }),
+                                credentialSet.AddSdJwtData(record);
+                                await _credentialSetService.AddAsync(credentialSet);
+                            },
+                            async mdoc =>
+                            {
+                                var displays = MdocFun.CreateMdocDisplays(configuration.AsT1);
+                                var record = mdoc.Decoded.ToRecord(displays, response.KeyId,
+                                    credentialSet.GetCredentialSetId());
+                                await _mdocStorage.Add(record);
+
+                                credentialSet.AddMDocData(record);
+                                await _credentialSetService.AddAsync(credentialSet);
+                            });
+                    }
+                },
                 // ReSharper disable once UnusedParameter.Local
                 transactionId => throw new NotImplementedException());
         
@@ -376,36 +380,40 @@ public class Oid4VciClientService : IOid4VciClientService
             var result =
                 from response in validResponse
                 let cNonce = response.CNonce
-                let credentialOrTransactionId = response.CredentialOrTransactionId
-                select credentialOrTransactionId.Match(
-                    async credential => await credential.Value.Match<Task<OneOf<SdJwtRecord, MdocRecord>>>(
-                        async sdJwt =>
+                let credentialsOrTransactionId = response.CredentialsOrTransactionId
+                select credentialsOrTransactionId.Match(
+                    async creds =>
+                    {
+                        foreach (var credential in creds)
                         {
-                            token = token.Match<OneOf<OAuthToken, DPopToken>>(
-                                oAuth => oAuth with { CNonce = cNonce.ToNullable()},
-                                dPop => dPop with { Token = dPop.Token with {CNonce = cNonce.ToNullable()}});
-                            
-                            var record = sdJwt.Decoded.ToRecord(configuration.AsT0, response.KeyId, credentialSet.GetCredentialSetId());
-                            await _sdJwtService.AddAsync(context, record);
+                            await credential.Value.Match(
+                                async sdJwt =>
+                                {
+                                    token = token.Match<OneOf<OAuthToken, DPopToken>>(
+                                        oAuth => oAuth with { CNonce = cNonce.ToNullable() },
+                                        dPop => dPop with { Token = dPop.Token with { CNonce = cNonce.ToNullable() } });
 
-                            credentialSet.AddSdJwtData(record);
-                            
-                            return record;
-                        },
-                        async mdoc =>
-                        {
-                            token = token.Match<OneOf<OAuthToken, DPopToken>>(
-                                oAuth => oAuth with { CNonce = cNonce.ToNullable()},
-                                dPop => dPop with { Token = dPop.Token with {CNonce = cNonce.ToNullable()}});
-                            
-                            var displays = MdocFun.CreateMdocDisplays(configuration.AsT1);
-                            var record = mdoc.Decoded.ToRecord(displays, response.KeyId, credentialSet.GetCredentialSetId());
-                            await _mdocStorage.Add(record);
-                            
-                            credentialSet.AddMDocData(record);
-                            
-                            return record;
-                        }),
+                                    var record = sdJwt.Decoded.ToRecord(configuration.AsT0, response.KeyId,
+                                        credentialSet.GetCredentialSetId());
+                                    await _sdJwtService.AddAsync(context, record);
+
+                                    credentialSet.AddSdJwtData(record);
+                                },
+                                async mdoc =>
+                                {
+                                    token = token.Match<OneOf<OAuthToken, DPopToken>>(
+                                        oAuth => oAuth with { CNonce = cNonce.ToNullable() },
+                                        dPop => dPop with { Token = dPop.Token with { CNonce = cNonce.ToNullable() } });
+
+                                    var displays = MdocFun.CreateMdocDisplays(configuration.AsT1);
+                                    var record = mdoc.Decoded.ToRecord(displays, response.KeyId,
+                                        credentialSet.GetCredentialSetId());
+                                    await _mdocStorage.Add(record);
+
+                                    credentialSet.AddMDocData(record);
+                                });   
+                        }
+                    },
                     // ReSharper disable once UnusedParameter.Local
                     transactionId => throw new NotImplementedException());
 
@@ -480,56 +488,81 @@ public class Oid4VciClientService : IOid4VciClientService
             var result =
                 from response in validResponse
                 let cNonce = response.CNonce
-                let credentialOrTransactionId = response.CredentialOrTransactionId
-                select credentialOrTransactionId.Match(
-                    credential => credential.Value.Match<OneOf<SdJwtRecord, MdocRecord>>(
-                        sdJwt =>
+                let credentialsOrTransactionId = response.CredentialsOrTransactionId
+                select credentialsOrTransactionId.Match<OneOf<List<ICredential>, TransactionId>>(
+                    creds =>
+                    {
+                        var records = new List<ICredential>();
+                        foreach (var credential in creds)
                         {
-                            var record = sdJwt.Decoded.ToRecord(configuration.AsT0, response.KeyId, credentialSetRecord.GetCredentialSetId());
+                            var record = credential.Value.Match<ICredential>(
+                            sdJwt =>
+                            {
+                                var record = sdJwt.Decoded.ToRecord(configuration.AsT0, response.KeyId,
+                                    credentialSetRecord.GetCredentialSetId());
+
+                                credentialSetRecord.AddSdJwtData(record);
+
+                                token = token.Match<OneOf<OAuthToken, DPopToken>>(
+                                    oAuth =>
+                                    {
+                                        session.AuthorizationData = session.AuthorizationData with
+                                        {
+                                            OAuthToken = oAuth
+                                        };
+                                        return oAuth with { CNonce = cNonce.ToNullable() };
+                                    },
+                                    dPop =>
+                                    {
+                                        session.AuthorizationData = session.AuthorizationData with
+                                        {
+                                            OAuthToken = dPop.Token
+                                        };
+                                        return dPop with { Token = dPop.Token with { CNonce = cNonce.ToNullable() } };
+                                    });
+
+                                return record;
+                            },
+                            mdoc =>
+                            {
+                                var displays = MdocFun.CreateMdocDisplays(configuration.AsT1);
+                                var record = mdoc.Decoded.ToRecord(displays, response.KeyId,
+                                    credentialSetRecord.GetCredentialSetId());
+
+                                credentialSetRecord.AddMDocData(record);
+
+                                token = token.Match<OneOf<OAuthToken, DPopToken>>(
+                                    oAuth =>
+                                    {
+                                        session.AuthorizationData = session.AuthorizationData with
+                                        {
+                                            OAuthToken = oAuth
+                                        };
+                                        return oAuth with { CNonce = cNonce.ToNullable() };
+                                    },
+                                    dPop =>
+                                    {
+                                        session.AuthorizationData = session.AuthorizationData with
+                                        {
+                                            OAuthToken = dPop.Token
+                                        };
+                                        return dPop with { Token = dPop.Token with { CNonce = cNonce.ToNullable() } };
+                                    });
+
+                                return record;
+                            });
                             
-                            credentialSetRecord.AddSdJwtData(record);
-                            
-                            token = token.Match<OneOf<OAuthToken, DPopToken>>(
-                                oAuth =>
-                                {
-                                    session.AuthorizationData = session.AuthorizationData with { OAuthToken = oAuth };
-                                    return oAuth with { CNonce = cNonce.ToNullable() };
-                                },
-                                dPop =>
-                                {
-                                    session.AuthorizationData = session.AuthorizationData with { OAuthToken = dPop.Token };
-                                    return dPop with { Token = dPop.Token with { CNonce = cNonce.ToNullable() } };
-                                });
-                            
-                            return record;
-                        },
-                        mdoc =>
-                        {
-                            var displays = MdocFun.CreateMdocDisplays(configuration.AsT1);
-                            var record = mdoc.Decoded.ToRecord(displays, response.KeyId, credentialSetRecord.GetCredentialSetId());
-                            
-                            credentialSetRecord.AddMDocData(record);
-                            
-                            token = token.Match<OneOf<OAuthToken, DPopToken>>(
-                                oAuth =>
-                                {
-                                    session.AuthorizationData = session.AuthorizationData with { OAuthToken = oAuth };
-                                    return oAuth with { CNonce = cNonce.ToNullable() };
-                                },
-                                dPop =>
-                                {
-                                    session.AuthorizationData = session.AuthorizationData with { OAuthToken = dPop.Token };
-                                    return dPop with { Token = dPop.Token with { CNonce = cNonce.ToNullable() } };
-                                });
-                            
-                            return record;
-                        }),
+                            records.Add(record);
+                        }
+
+                        return records;
+                    },
                     // ReSharper disable once UnusedParameter.Local
                     transactionId => throw new NotImplementedException());
 
             result.OnSuccess(task =>
             {
-                credentials.Add((ICredential)task.Value);
+                credentials.AddRange((List<ICredential>)task.Value);
                 return Unit.Default;
             });
         }
