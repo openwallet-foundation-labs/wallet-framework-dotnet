@@ -97,12 +97,14 @@ public class PexService(
             {
                 try
                 {
-                    if (doc.UnsecuredPayload.SelectToken(field.Path.First(), true) is JValue value
-                        && (field.Filter?.Const != null || field.Filter?.Enum != null))
+                    if (doc.UnsecuredPayload.SelectToken(field.Path.First(), true) is not JValue value)
+                        return false;
+                    
+                    if (field.Filter?.Const != null || field.Filter?.Enum != null)
                     {
                         return field.Filter?.Const == value.Value?.ToString() || field.Filter?.Enum?.Contains(value.Value?.ToString()) == true;
                     }
-        
+
                     return true;
                 }
                 catch (Exception)
@@ -118,8 +120,11 @@ public class PexService(
                 try
                 {
                     var jObj = record.Mdoc.IssuerSigned.IssuerNameSpaces.ToJObject();
-                    if (jObj.SelectToken(field.Path.First(), true) is JValue value
-                        && field.Filter?.Const != null)
+                    
+                    if (jObj.SelectToken(field.Path.First(), true) is not JValue value)
+                        return false;
+                    
+                    if (field.Filter?.Const != null)
                     {
                         return field.Filter?.Const == value.Value?.ToString();
                     }
