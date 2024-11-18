@@ -45,7 +45,7 @@
         <HyperledgerIndyVdrVersion>0.4.2-alpha</HyperledgerIndyVdrVersion>
         <MediatrExtensionsMicrosoftDependencyInjectionVersion>8.0.1</MediatrExtensionsMicrosoftDependencyInjectionVersion>
         <MediatrVersion>8.0.2</MediatrVersion>
-        <MicroElementsSwashbuckleFluentValidationVersion>4.0.0</MicroElementsSwashbuckleFluentValidationVersion>
+        <MicroElementsSwashbuckleFluentValidationVersion>5.7.0</MicroElementsSwashbuckleFluentValidationVersion>
         <MoqVersion>4.14.5</MoqVersion>
         <MultiformatsBaseVersion>2.0.2</MultiformatsBaseVersion>
         <NewtonsoftJsonVersion>13.0.1</NewtonsoftJsonVersion>
