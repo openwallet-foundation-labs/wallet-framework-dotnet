@@ -117,24 +117,23 @@ public class CredentialSetService(
     
     public async Task<CredentialSetRecord> RefreshCredentialSetState(CredentialSetRecord credentialSetRecord)
     {
+        var oldState = credentialSetRecord.State;
+        
         if (credentialSetRecord.IsDeleted())
             return credentialSetRecord;
-
-        await credentialSetRecord.ExpiresAt.IfSomeAsync(async expiresAt =>
+        
+        credentialSetRecord.ExpiresAt.IfSome( expiresAt =>
         {
             if (expiresAt < DateTime.UtcNow)
-            {
                 credentialSetRecord.State = CredentialState.Expired;
-                await UpdateAsync(credentialSetRecord);
-            }
         });
         
         //TODO: Implement revocation check (status List) -> Currently IsRevoked always returns false
         if (credentialSetRecord.IsRevoked())
-        {
             credentialSetRecord.State = CredentialState.Revoked;
+        
+        if (oldState != credentialSetRecord.State) 
             await UpdateAsync(credentialSetRecord);
-        }
         
         return credentialSetRecord;
     }
