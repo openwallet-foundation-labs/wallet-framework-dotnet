@@ -124,7 +124,7 @@ public static class CredentialDisplayFun
     {
         var logo = new SdJwtDisplay.SdJwtLogo
         {
-            Uri = credentialDisplay.Logo.ToNullable()?.Uri.ToNullable()!,
+            Uri = credentialDisplay.Logo.ToNullable()?.Uri!,
             AltText = credentialDisplay.Logo.ToNullable()?.AltText.ToNullable()
         };
 

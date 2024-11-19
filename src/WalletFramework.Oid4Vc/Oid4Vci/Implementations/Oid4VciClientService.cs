@@ -17,6 +17,7 @@ using OneOf;
 using WalletFramework.Core.Credentials.Abstractions;
 using WalletFramework.Core.Functional;
 using WalletFramework.Core.Localization;
+using WalletFramework.Core.String;
 using WalletFramework.MdocLib;
 using WalletFramework.MdocVc;
 using WalletFramework.Oid4Vc.CredentialSet;
@@ -112,18 +113,13 @@ public class Oid4VciClientService : IOid4VciClientService
             .Where(config => offer.CredentialOffer.CredentialConfigurationIds.Contains(config.Key))
             .Select(pair => pair.Value.Match(
                 sdJwt => new AuthorizationDetails(
-                    null,
-                    sdJwt.Vct.ToString(),
                     pair.Key.ToString(),
-                    issuerMetadata.AuthorizationServers.ToNullable()?.Select(id => id.ToString()).ToArray(),
-                    null
+                    issuerMetadata.AuthorizationServers.ToNullable()?.Select(id => id.ToString()).ToArray()
                 ),
                 mdoc => new AuthorizationDetails(
-                    null,
-                    null,
                     pair.Key.ToString(),
-                    issuerMetadata.AuthorizationServers.ToNullable()?.Select(id => id.ToString()).ToArray(),
-                    mdoc.DocType.ToString()))
+                    issuerMetadata.AuthorizationServers.ToNullable()?.Select(id => id.ToString()).ToArray())
+                )
             );
 
         var authCode =
@@ -136,7 +132,7 @@ public class Oid4VciClientService : IOid4VciClientService
             from issState in code.IssuerState
             select issState;
 
-        var par = new PushedAuthorizationRequest(
+        var vciAuthorizationRequest = new VciAuthorizationRequest(
             sessionId,
             clientOptions,
             authorizationCodeParameters,
@@ -145,22 +141,13 @@ public class Oid4VciClientService : IOid4VciClientService
             issuerState.ToNullable(),
             null,
             null);
-
+        
         var authServerMetadata = await FetchAuthorizationServerMetadataAsync(issuerMetadata, offer.CredentialOffer);
-            
-        _httpClient.DefaultRequestHeaders.Clear();
-        var response = await _httpClient.PostAsync(
-            authServerMetadata.PushedAuthorizationRequestEndpoint,
-            par.ToFormUrlEncoded()
-        );
-
-        var parResponse = DeserializeObject<PushedAuthorizationRequestResponse>(await response.Content.ReadAsStringAsync()) 
-                          ?? throw new InvalidOperationException("Failed to deserialize the PAR response.");
-            
-        var authorizationRequestUri = new Uri(authServerMetadata.AuthorizationEndpoint 
-                                              + "?client_id=" + par.ClientId 
-                                              + "&request_uri=" + System.Net.WebUtility.UrlEncode(parResponse.RequestUri.ToString()));
-
+        
+        var authorizationRequestUri = authServerMetadata.PushedAuthorizationRequestEndpoint.IsNullOrEmpty()
+            ? new Uri(authServerMetadata.AuthorizationEndpoint + "?" + vciAuthorizationRequest.ToQueryString())
+            : await GetRequestUriUsingPushedAuthorizationRequest(authServerMetadata, vciAuthorizationRequest);
+        
         var authorizationData = new AuthorizationData(
             clientOptions,
             issuerMetadata,
@@ -189,6 +176,9 @@ public class Oid4VciClientService : IOid4VciClientService
         return await issuerMetadata.Match(
             async validIssuerMetadata =>
             {
+                var authServerMetadata = 
+                    await FetchAuthorizationServerMetadataAsync(validIssuerMetadata, Option<CredentialOffer>.None);
+
                 var sessionId = AuthFlowSessionState.CreateAuthFlowSessionState();
                 var authorizationCodeParameters = CreateAndStoreCodeChallenge();
 
@@ -197,32 +187,29 @@ public class Oid4VciClientService : IOid4VciClientService
                     mdDocConfig => mdDocConfig.CredentialConfiguration.Scope.OnSome(scope => scope.ToString())
                 );
                 
-                var par = new PushedAuthorizationRequest(
+                var authorizationDetails = validIssuerMetadata.CredentialConfigurationsSupported.First().Value.Match(
+                    sdJwtConfig => new AuthorizationDetails(
+                        validIssuerMetadata.CredentialConfigurationsSupported.First().Key.ToString(),
+                        validIssuerMetadata.AuthorizationServers.ToNullable()?.Select(id => id.ToString()).ToArray()),
+                    mdDocConfig => new AuthorizationDetails(
+                        validIssuerMetadata.CredentialConfigurationsSupported.First().Key.ToString(),
+                        validIssuerMetadata.AuthorizationServers.ToNullable()?.Select(id => id.ToString()).ToArray())
+                );
+                
+                var vciAuthorizationRequest = new VciAuthorizationRequest(
                     sessionId,
                     clientOptions,
                     authorizationCodeParameters,
-                    null,
+                    [authorizationDetails],
                     scope.ToNullable(),
                     null,
                     null,
                     null);
                 
-                var authServerMetadata = 
-                    await FetchAuthorizationServerMetadataAsync(validIssuerMetadata, Option<CredentialOffer>.None);
-            
-                _httpClient.DefaultRequestHeaders.Clear();
-                var response = await _httpClient.PostAsync(
-                    authServerMetadata.PushedAuthorizationRequestEndpoint,
-                    par.ToFormUrlEncoded()
-                );
-
-                var parResponse = DeserializeObject<PushedAuthorizationRequestResponse>(await response.Content.ReadAsStringAsync()) 
-                                  ?? throw new InvalidOperationException("Failed to deserialize the PAR response.");
-            
-                var authorizationRequestUri = new Uri(authServerMetadata.AuthorizationEndpoint 
-                                                      + "?client_id=" + par.ClientId 
-                                                      + "&request_uri=" + System.Net.WebUtility.UrlEncode(parResponse.RequestUri.ToString()));
-
+                var authorizationRequestUri = authServerMetadata.PushedAuthorizationRequestEndpoint.IsNullOrEmpty()
+                    ? new Uri(authServerMetadata.AuthorizationEndpoint + "?" + vciAuthorizationRequest.ToQueryString())
+                    : await GetRequestUriUsingPushedAuthorizationRequest(authServerMetadata, vciAuthorizationRequest);
+                
                 //TODO: Select multiple configurationIds
                 var authorizationData = new AuthorizationData(
                     clientOptions,
@@ -244,6 +231,22 @@ public class Oid4VciClientService : IOid4VciClientService
             );
     }
 
+    private async Task<Uri> GetRequestUriUsingPushedAuthorizationRequest(AuthorizationServerMetadata authorizationServerMetadata, VciAuthorizationRequest vciAuthorizationRequest)
+    {
+        _httpClient.DefaultRequestHeaders.Clear();
+        var response = await _httpClient.PostAsync(
+            authorizationServerMetadata.PushedAuthorizationRequestEndpoint,
+            vciAuthorizationRequest.ToFormUrlEncoded()
+        );
+
+        var parResponse = DeserializeObject<PushedAuthorizationRequestResponse>(await response.Content.ReadAsStringAsync()) 
+                          ?? throw new InvalidOperationException("Failed to deserialize the PAR response.");
+            
+        return new Uri(authorizationServerMetadata.AuthorizationEndpoint 
+                       + "?client_id=" + vciAuthorizationRequest.ClientId 
+                       + "&request_uri=" + System.Net.WebUtility.UrlEncode(parResponse.RequestUri.ToString()));
+    }
+    
     public async Task<Validation<CredentialSetRecord>> AcceptOffer(CredentialOfferMetadata credentialOfferMetadata, string? transactionCode)
     {
         var issuerMetadata = credentialOfferMetadata.IssuerMetadata;
@@ -294,7 +297,6 @@ public class Oid4VciClientService : IOid4VciClientService
                                 await _sdJwtService.AddAsync(context, record);
 
                                 credentialSet.AddSdJwtData(record);
-                                await _credentialSetService.AddAsync(credentialSet);
                             },
                             async mdoc =>
                             {
@@ -304,14 +306,13 @@ public class Oid4VciClientService : IOid4VciClientService
                                 await _mdocStorage.Add(record);
 
                                 credentialSet.AddMDocData(record);
-                                await _credentialSetService.AddAsync(credentialSet);
                             });
                     }
                 },
                 // ReSharper disable once UnusedParameter.Local
                 transactionId => throw new NotImplementedException());
         
-        await result.OnSuccess(task => task);
+        await result.OnSuccess(async _ => await _credentialSetService.AddAsync(credentialSet));
 
         return credentialSet;
     }
@@ -605,7 +606,7 @@ public class Oid4VciClientService : IOid4VciClientService
                     offerAuthServer =>
                     {
                         var matchingAuthServer = issuerMetadataAuthServers.Find(issuerMetadataAuthServer => issuerMetadataAuthServer.ToString() == offerAuthServer);
-
+        
                         return matchingAuthServer.Match(
                             Some: server => new List<Uri>(){CreateAuthorizationServerMetadataUri(server)},
                             None: () => throw new InvalidOperationException(
@@ -620,19 +621,19 @@ public class Oid4VciClientService : IOid4VciClientService
         var authorizationServerMetadatas = new List<AuthorizationServerMetadata>();
         foreach (var authServerUrl in authServerUrls)
         {
-        var getAuthServerResponse = await _httpClient.GetAsync(authServerUrl);
-
-        if (!getAuthServerResponse.IsSuccessStatusCode)
-            throw new HttpRequestException(
-                $"Failed to get authorization server metadata. Status Code is: {getAuthServerResponse.StatusCode}"
-            );
-
-        var content = await getAuthServerResponse.Content.ReadAsStringAsync();
-
-        var authServer = DeserializeObject<AuthorizationServerMetadata>(content)
-                         ?? throw new InvalidOperationException(
-                             "Failed to deserialize the authorization server metadata.");
-
+            var getAuthServerResponse = await _httpClient.GetAsync(authServerUrl);
+            
+            if (!getAuthServerResponse.IsSuccessStatusCode)
+                throw new HttpRequestException(
+                    $"Failed to get authorization server metadata. Status Code is: {getAuthServerResponse.StatusCode}"
+                );
+            
+            var content = await getAuthServerResponse.Content.ReadAsStringAsync();
+        
+            var authServer = DeserializeObject<AuthorizationServerMetadata>(content)
+                             ?? throw new InvalidOperationException(
+                                 "Failed to deserialize the authorization server metadata.");
+            
             authorizationServerMetadatas.Add(authServer);
         }
 

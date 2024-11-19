@@ -18,23 +18,7 @@ public static class SdJwtRecordExtensions
         KeyId keyId,
         CredentialSetId credentialSetId)
     {
-        var claims = configuration
-            .Claims?
-            .SelectMany(claimMetadata => 
-            {
-                var claimMetadatas = new Dictionary<string, ClaimMetadata> { { claimMetadata.Key, claimMetadata.Value } };
-
-                if (!(claimMetadata.Value.NestedClaims == null || claimMetadata.Value.NestedClaims.Count == 0))
-                {
-                    foreach (var nested in claimMetadata.Value.NestedClaims!)
-                    {
-                        claimMetadatas.Add(claimMetadata.Key + "." + nested.Key, nested.Value?.ToObject<ClaimMetadata>()!);
-                    }
-                }
-                
-                return claimMetadatas;
-            })
-            .ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
+        var claims = configuration.ExtractClaimMetadata();
         
         var display = 
             from displays in configuration.CredentialConfiguration.Display
@@ -48,7 +32,7 @@ public static class SdJwtRecordExtensions
                     Logo = new SdJwtDisplay.SdJwtLogo
                     {
                         AltText = credentialDisplay.Logo.ToNullable()?.AltText.ToNullable(),
-                        Uri = credentialDisplay.Logo.ToNullable()?.Uri.ToNullable()!
+                        Uri = credentialDisplay.Logo.ToNullable()?.Uri!
                     },
                     Name = credentialDisplay.Name.ToNullable(),
                     BackgroundColor = backgroundColor,

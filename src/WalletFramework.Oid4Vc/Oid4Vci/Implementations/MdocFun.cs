@@ -19,9 +19,8 @@ public static class MdocFun
             let mdocDisplays = credentialDisplays.Select(credentialDisplay =>
             {
                 var logo = 
-                    from credentialLogo in credentialDisplay.Logo 
-                    from uri in credentialLogo.Uri 
-                    select new MdocLogo(uri);
+                    from credentialLogo in credentialDisplay.Logo
+                    select new MdocLogo(credentialLogo.Uri);
         
                 var mdocName = 
                     from credentialName in credentialDisplay.Name
