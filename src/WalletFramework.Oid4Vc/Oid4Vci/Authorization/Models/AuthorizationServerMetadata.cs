@@ -73,6 +73,16 @@ public class AuthorizationServerMetadata
     /// </summary>
     [JsonProperty("require_pushed_authorization_requests")]
     public bool? RequirePushedAuthorizationRequests { get; set; }
+    
+    /// <summary>
+    ///     Gets or sets a value indicating which grant types the Authorization Server supports.
+    /// </summary>
+    [JsonProperty("grant_types_supported")]
+    public string[]? GrantTypesSupported { get; set; }
         
     internal bool IsDPoPSupported => DPopSigningAlgValuesSupported != null && DPopSigningAlgValuesSupported.Contains("ES256");
+    
+    internal bool SupportsPreAuthFlow => GrantTypesSupported != null && GrantTypesSupported.Contains("urn:ietf:params:oauth:grant-type:pre-authorized_code");
+    
+    internal bool SupportsAuthCodeFlow => GrantTypesSupported != null && GrantTypesSupported.Contains("authorization_code");
 }

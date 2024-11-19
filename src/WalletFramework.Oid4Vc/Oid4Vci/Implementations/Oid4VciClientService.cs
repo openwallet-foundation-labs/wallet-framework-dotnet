@@ -592,7 +592,7 @@ public class Oid4VciClientService : IOid4VciClientService
     {
         Uri credentialIssuer = issuerMetadata.CredentialIssuer;
         
-        var authServerUrl = issuerMetadata.AuthorizationServers.Match(
+        var authServerUrls = issuerMetadata.AuthorizationServers.Match(
             issuerMetadataAuthServers =>
             {
                 var credentialOfferAuthServer = from offer in credentialOffer
@@ -607,14 +607,19 @@ public class Oid4VciClientService : IOid4VciClientService
                         var matchingAuthServer = issuerMetadataAuthServers.Find(issuerMetadataAuthServer => issuerMetadataAuthServer.ToString() == offerAuthServer);
 
                         return matchingAuthServer.Match(
-                            Some: server => CreateAuthorizationServerMetadataUri(server),
+                            Some: server => new List<Uri>(){CreateAuthorizationServerMetadataUri(server)},
                             None: () => throw new InvalidOperationException(
                                 "The authorization server in the credential offer does not match any authorization server in the issuer metadata."));
                     },
-                    () => CreateAuthorizationServerMetadataUri(issuerMetadataAuthServers.First()));
+                    () => issuerMetadataAuthServers.Select(uri => CreateAuthorizationServerMetadataUri(uri))
+                    );
             },
-            () => CreateAuthorizationServerMetadataUri(credentialIssuer));
+            () => new List<Uri>(){CreateAuthorizationServerMetadataUri(credentialIssuer)});
 
+
+        var authorizationServerMetadatas = new List<AuthorizationServerMetadata>();
+        foreach (var authServerUrl in authServerUrls)
+        {
         var getAuthServerResponse = await _httpClient.GetAsync(authServerUrl);
 
         if (!getAuthServerResponse.IsSuccessStatusCode)
@@ -628,7 +633,36 @@ public class Oid4VciClientService : IOid4VciClientService
                          ?? throw new InvalidOperationException(
                              "Failed to deserialize the authorization server metadata.");
 
-        return authServer;
+            authorizationServerMetadatas.Add(authServer);
+        }
+
+        if (authorizationServerMetadatas.Count == 1)
+            return authorizationServerMetadatas.First();
+
+        return credentialOffer.Match(
+            Some: offer =>
+            {
+                var credentialOfferAuthCodeGrantType = from grants in offer.Grants 
+                    from code in grants.AuthorizationCode
+                    select code;
+
+                return credentialOfferAuthCodeGrantType.Match(
+                    Some: code => authorizationServerMetadatas.Find(authServer => authServer.SupportsAuthCodeFlow) ??
+                            throw new InvalidOperationException("No suitable Authorization Server found"),
+                    None: () =>
+                    {
+                        var credentialOfferPreAuthGrantType = from grants in offer.Grants 
+                            from code in grants.AuthorizationCode
+                            select code;
+
+                        return credentialOfferPreAuthGrantType.Match(
+                            Some: preAuth => authorizationServerMetadatas.Find(authServer => authServer.SupportsPreAuthFlow)
+                                             ?? throw new InvalidOperationException("No suitable Authorization Server found"),
+                            None: () => authorizationServerMetadatas.First());
+                    });
+            },
+            None: () => authorizationServerMetadatas.Find(authServer => authServer.SupportsAuthCodeFlow) 
+                        ?? throw new InvalidOperationException("No suitable Authorization Server found"));
     }
     
     private static Uri CreateAuthorizationServerMetadataUri(Uri authorizationServerUri)
