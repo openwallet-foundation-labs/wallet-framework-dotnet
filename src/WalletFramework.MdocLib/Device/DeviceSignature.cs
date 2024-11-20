@@ -12,7 +12,7 @@ public static class DeviceSignatureFun
         var result = CBORObject.NewArray();
 
         result.Add(deviceSignature.ProtectedHeaders.AsCborByteString);
-        result.Add(CBORObject.Null);
+        result.Add(CBORObject.NewMap());
         result.Add(CBORObject.Null);
         result.Add(deviceSignature.Signature.AsCbor);
 
