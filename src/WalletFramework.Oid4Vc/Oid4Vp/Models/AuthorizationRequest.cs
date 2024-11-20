@@ -16,6 +16,9 @@ public record AuthorizationRequest
     public const string DirectPost = "direct_post";
     public const string DirectPostJwt = "direct_post.jwt";
 
+    public static readonly string[] SupportedClientIdSchemes =
+        [RedirectUriScheme, VerifierAttestationScheme, X509SanDnsScheme];
+
     private const string VpToken = "vp_token";
 
     /// <summary>
@@ -100,8 +103,17 @@ public record AuthorizationRequest
         string? scope,
         string? state)
     {
-        ClientId = clientId;
-        ClientIdScheme = clientIdScheme;
+        if (SupportedClientIdSchemes.Exists(supportedClientIdScheme => clientId.StartsWith($"{supportedClientIdScheme}:")))
+        {
+            ClientIdScheme = clientId.Split(':')[0];
+            ClientId = clientId.Split(':')[1];
+        }
+        else
+        {
+            ClientId = clientId;
+            ClientIdScheme = clientIdScheme;    
+        }
+        
         ClientMetadata = clientMetadata;
         ClientMetadataUri = clientMetadataUri;
         Nonce = nonce;
@@ -120,23 +132,34 @@ public record AuthorizationRequest
     /// <exception cref="InvalidOperationException">Thrown when the request does not match the HAIP.</exception>
     public static AuthorizationRequest CreateAuthorizationRequest(string authorizationRequestJson)
         => CreateAuthorizationRequest(JObject.Parse(authorizationRequestJson));
-    
+
     private static AuthorizationRequest CreateAuthorizationRequest(JObject authorizationRequestJson) =>
         IsHaipConform(authorizationRequestJson)
             ? authorizationRequestJson.ToObject<AuthorizationRequest>()
               ?? throw new InvalidOperationException("Could not parse the Authorization Request")
             : throw new InvalidOperationException(
-                "Invalid Authorization Request. The request does not match the HAIP"
-            );
-
+                "Invalid Authorization Request. The request does not match the HAIP");
+    
     private static bool IsHaipConform(JObject authorizationRequestJson)
     {
         var responseType = authorizationRequestJson["response_type"]!.ToString();
         var responseUri = authorizationRequestJson["response_uri"]!.ToString();
         var responseMode = authorizationRequestJson["response_mode"]!.ToString();
         var redirectUri = authorizationRequestJson["redirect_uri"];
-        var clientIdScheme = authorizationRequestJson["client_id_scheme"]!.ToString();
-        var clientId = authorizationRequestJson["client_id"]!.ToString();
+        var authorizationRequestClientId = authorizationRequestJson["client_id"]!.ToString();
+
+        string clientId;
+        string clientIdScheme;
+        if (SupportedClientIdSchemes.Exists(supportedClientIdScheme => authorizationRequestClientId.StartsWith($"{supportedClientIdScheme}:")))
+        {
+            clientIdScheme = authorizationRequestClientId.Split(':')[0]; 
+            clientId = authorizationRequestClientId.Split(':')[1];
+        }
+        else
+        {
+            clientIdScheme = authorizationRequestJson["client_id_scheme"]!.ToString();
+            clientId = authorizationRequestClientId;    
+        }
 
         return
             responseType == VpToken
