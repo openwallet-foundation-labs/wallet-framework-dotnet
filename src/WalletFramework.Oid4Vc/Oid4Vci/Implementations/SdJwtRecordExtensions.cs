@@ -16,7 +16,8 @@ public static class SdJwtRecordExtensions
         this SdJwtDoc sdJwtDoc,
         SdJwtConfiguration configuration,
         KeyId keyId,
-        CredentialSetId credentialSetId)
+        CredentialSetId credentialSetId,
+        bool isOneTimeUse)
     {
         var claims = configuration
             .Claims?
@@ -62,7 +63,8 @@ public static class SdJwtRecordExtensions
             claims!,
             display.Fallback(new List<SdJwtDisplay>()),
             keyId, 
-            credentialSetId);
+            credentialSetId,
+            isOneTimeUse);
 
         return record;
     }

@@ -35,8 +35,10 @@ public sealed class MdocRecord : RecordBase, ICredential
     
     public CredentialState CredentialState { get; }
     
-    //TODO: Must be set when batch issuance is implemented
-    // public bool OneTimeUse { get; }
+    /// <summary>
+    ///     Tracks whether it's a one-time use SD-JWT.
+    /// </summary>
+    public bool OneTimeUse { get; set; }
     
     public Option<DateTime> ExpiresAt { get; }
     
@@ -56,7 +58,8 @@ public sealed class MdocRecord : RecordBase, ICredential
         KeyId keyId, 
         CredentialSetId credentialSetId, 
         CredentialState credentialState, 
-        Option<DateTime> expiresAt)
+        Option<DateTime> expiresAt,
+        bool isOneTimeUse = false)
     {
         CredentialId = CredentialId.CreateCredentialId();
         Mdoc = mdoc;
@@ -65,6 +68,7 @@ public sealed class MdocRecord : RecordBase, ICredential
         CredentialSetId = credentialSetId;
         CredentialState = credentialState;
         ExpiresAt = expiresAt;
+        OneTimeUse = isOneTimeUse;
     }
 
 #pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
@@ -108,6 +112,7 @@ public static class MdocRecordFun
     private const string CredentialSetIdJsonKey = "credentialSetId";
     private const string CredentialStateJsonKey = "credentialState";
     private const string ExpiresAtJsonKey = "expiresAt";
+    private const string OneTimeUseJsonKey = "oneTimeUse";
 
     public static MdocRecord DecodeFromJson(JObject json)
     {
@@ -136,7 +141,12 @@ public static class MdocRecordFun
 
         var credentialState = Enum.Parse<CredentialState>(json[CredentialStateJsonKey]!.ToString());
         
-        var result = new MdocRecord(mdoc, displays, keyId, credentialSetId, credentialState, expiresAt)
+        var oneTimeUse = json.GetByKey(OneTimeUseJsonKey).ToOption().Match(
+            Some: value => value.ToObject<bool>(),
+            None: () => false
+            );
+        
+        var result = new MdocRecord(mdoc, displays, keyId, credentialSetId, credentialState, expiresAt, oneTimeUse)
         {
             Id = id
         };
@@ -152,7 +162,8 @@ public static class MdocRecordFun
             { MdocJsonKey, record.Mdoc.Encode() },
             { KeyIdJsonKey, record.KeyId.ToString() },
             { CredentialSetIdJsonKey, record.CredentialSetId.ToString() },
-            { CredentialStateJsonKey, record.CredentialState.ToString() }
+            { CredentialStateJsonKey, record.CredentialState.ToString() },
+            { OneTimeUseJsonKey, record.OneTimeUse }
         };
         
         record.ExpiresAt.IfSome(expires => result.Add(ExpiresAtJsonKey, expires));
@@ -171,6 +182,6 @@ public static class MdocRecordFun
         return result;
     }
 
-    public static MdocRecord ToRecord(this Mdoc mdoc, Option<List<MdocDisplay>> displays, KeyId keyId, CredentialSetId credentialSetId) => 
-        new(mdoc, displays, keyId, credentialSetId, CredentialState.Active, Option<DateTime>.None);
+    public static MdocRecord ToRecord(this Mdoc mdoc, Option<List<MdocDisplay>> displays, KeyId keyId, CredentialSetId credentialSetId, bool isOneTimeUse) => 
+        new(mdoc, displays, keyId, credentialSetId, CredentialState.Active, Option<DateTime>.None, isOneTimeUse);
 }
