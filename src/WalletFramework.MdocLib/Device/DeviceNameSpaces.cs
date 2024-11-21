@@ -1,11 +1,33 @@
 using LanguageExt;
 using PeterO.Cbor;
+using WalletFramework.Core.Functional;
 using WalletFramework.MdocLib.Cbor;
 using WalletFramework.MdocLib.Security;
+using static WalletFramework.MdocLib.NameSpace;
 
 namespace WalletFramework.MdocLib.Device;
 
-public record DeviceNameSpaces(Dictionary<NameSpace, List<DeviceSignedItem>> Value);
+public record DeviceNameSpaces(Dictionary<NameSpace, List<DeviceSignedItem>> Value)
+{
+    public static Validation<DeviceNameSpaces> FromCbor(CBORObject cbor)
+    {
+        var validDict = cbor
+            .ToDictionary(
+                ValidNameSpace, 
+                issuerSignedItems =>
+                {
+                    return issuerSignedItems
+                        .Values
+                        .Select(DeviceSignedItem.FromCbor)
+                        .TraverseAll(item => item)
+                        .Select(items => items.ToList());
+                });
+        
+        return
+            from dict in validDict
+            select new DeviceNameSpaces(dict);
+    }
+}
 
 public static class DeviceNameSpacesFun
 {

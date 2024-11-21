@@ -1,9 +1,10 @@
 using PeterO.Cbor;
 using WalletFramework.Core.Functional;
+using WalletFramework.MdocLib.Cbor.Errors;
 
 namespace WalletFramework.MdocLib.Cbor;
 
-internal static class CborFun
+public static class CborFun
 {
     public static bool IsNull(this CBORObject? cborObject) => cborObject is null || cborObject.IsNull;
     
@@ -29,17 +30,14 @@ internal static class CborFun
 
     public static Validation<CBORObject> GetByLabel(this CBORObject cborObject, string label)
     {
-        CBORObject value;
-        try
-        {
-            value = CBORObject.FromObject(label);
-        }
-        catch (Exception e)
-        {
-            return new CborIsNotATextStringError(label, e);
-        }
+        var cborLabel = CBORObject.FromObject(label);
+        return cborObject.GetByLabel(cborLabel);
+    }
 
-        return cborObject.GetByLabel(value);
+    public static Validation<CBORObject> GetByLabel(this CBORObject cborObject, int label)
+    {
+        var cborLabel = CBORObject.FromObject(label);
+        return cborObject.GetByLabel(cborLabel);
     }
 
     public static Validation<CBORObject> GetByIndex(this CBORObject cbor, uint index)
@@ -97,6 +95,18 @@ internal static class CborFun
         catch (Exception e)
         {
             return new CborIsNotAByteStringError(cbor.ToString(), e);
+        }
+    }
+
+    public static Validation<CBORObject> Decode(byte[] bytes)
+    {
+        try
+        {
+            return CBORObject.DecodeFromBytes(bytes);
+        }
+        catch (Exception e)
+        {
+            return new CborDecodingError(e);
         }
     }
 }

@@ -100,4 +100,7 @@ public static class OptionFun
         option.Match(
             t => t,
             () => throw e);
+    
+    public static T UnwrapOrThrow<T>(this Option<T> option) =>
+        option.UnwrapOrThrow(new InvalidOperationException("Option is None"));
 }

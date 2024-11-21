@@ -3,6 +3,8 @@ namespace WalletFramework.MdocLib;
 internal static class Constants
 {
     public const ushort CertificateIndex = 33;
+
+    public const string DeviceSignedLabel = "deviceSigned";
     
     public const string DigestAlgorithmLabel = "digestAlgorithm";
     

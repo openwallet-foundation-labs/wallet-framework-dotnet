@@ -91,7 +91,7 @@ public class PexService : IPexService
         var context = await _agentProvider.GetContextAsync();
         
         var sdJwtRecords = await _sdJwtVcHolderService.ListAsync(context);
-        var mdocRecords = await _mdocStorage.List();
+        var mdocRecords = await _mdocStorage.ListAll();
         
         var filteredSdJwtRecords = sdJwtRecords.Where(record =>
         {

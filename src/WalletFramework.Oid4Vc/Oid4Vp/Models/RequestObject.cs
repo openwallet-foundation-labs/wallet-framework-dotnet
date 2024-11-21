@@ -3,6 +3,7 @@ using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using WalletFramework.Oid4Vc.Oid4Vp.Extensions;
 using Org.BouncyCastle.X509;
+using WalletFramework.Core.X509;
 using X509Certificate = Org.BouncyCastle.X509.X509Certificate;
 using static WalletFramework.Oid4Vc.Oid4Vp.Models.AuthorizationRequest;
 using static Newtonsoft.Json.Linq.JArray;

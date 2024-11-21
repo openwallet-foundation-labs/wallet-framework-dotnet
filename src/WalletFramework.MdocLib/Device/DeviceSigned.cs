@@ -1,9 +1,30 @@
 using LanguageExt;
 using PeterO.Cbor;
+using WalletFramework.Core.Functional;
+using WalletFramework.MdocLib.Cbor;
 
 namespace WalletFramework.MdocLib.Device;
 
-public record DeviceSigned(Option<DeviceNameSpaces> DeviceNameSpaces, DeviceAuth DeviceAuth);
+public record DeviceSigned(Option<DeviceNameSpaces> DeviceNameSpaces, DeviceAuth DeviceAuth)
+{
+    public static Validation<DeviceSigned> FromCbor(CBORObject cbor)
+    {
+        var nameSpacesValidation = 
+            from nameSpacesCbor in cbor.GetByLabel("nameSpaces")
+            from deviceNameSpaces in Device.DeviceNameSpaces.FromCbor(nameSpacesCbor)
+            select deviceNameSpaces;
+        
+        var deviceAuthValidation = 
+            from deviceAuthCbor in cbor.GetByLabel("deviceAuth")
+            from deviceAuth in DeviceAuth.FromCbor(deviceAuthCbor)
+            select deviceAuth;
+
+        return
+            from deviceAuth in deviceAuthValidation
+            let nameSpaces = nameSpacesValidation.ToOption()
+            select new DeviceSigned(nameSpaces, deviceAuth);
+    }
+}
 
 public static class DeviceSignedFun
 {

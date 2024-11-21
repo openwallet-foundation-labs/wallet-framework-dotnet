@@ -73,8 +73,22 @@ public static class EncryptedAuthorizationResponseFun
         public int KeySize => 256;
 
         public byte[] Decrypt(byte[] aad, byte[] cek, byte[] iv, byte[] cipherText, byte[] authTag)
-            => throw new NotImplementedException();
+        {
+            var gcmBlockCipher = new GcmBlockCipher(new AesEngine());
+            var parameters = new AeadParameters(new KeyParameter(cek), 128, iv, aad);
+            gcmBlockCipher.Init(false, parameters);
 
+            var combinedCipherText = new byte[cipherText.Length + authTag.Length];
+            Array.Copy(cipherText, 0, combinedCipherText, 0, cipherText.Length);
+            Array.Copy(authTag, 0, combinedCipherText, cipherText.Length, authTag.Length);
+
+            var plainText = new byte[gcmBlockCipher.GetOutputSize(combinedCipherText.Length)];
+            var len = gcmBlockCipher.ProcessBytes(combinedCipherText, 0, combinedCipherText.Length, plainText, 0);
+            gcmBlockCipher.DoFinal(plainText, len);
+
+            return plainText;
+        }
+        
         public byte[][] Encrypt(byte[] aad, byte[] plainText, byte[] cek)
         {
             var iv = new byte[12];

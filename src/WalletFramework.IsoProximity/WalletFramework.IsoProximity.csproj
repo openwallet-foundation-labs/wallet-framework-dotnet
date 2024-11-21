@@ -1,0 +1,15 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>netstandard2.1</TargetFramework>
+        <Nullable>enable</Nullable>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\WalletFramework.MdocVc\WalletFramework.MdocVc.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Folder Include="EngagementPhase\Errors\" />
+    </ItemGroup>
+</Project>

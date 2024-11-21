@@ -400,9 +400,9 @@ public class Oid4VpClientService : IOid4VpClientService
                     var deviceAuthentication = new DeviceAuthentication(
                         sessionTranscript, mdoc.DocType, deviceNamespaces);
                     
-                    var sigStructure = new SigStructure(deviceAuthentication, mdoc.IssuerSigned.IssuerAuth.ProtectedHeaders);
+                    var sigStructure = new SigStructure(deviceAuthentication.ToCbor(), mdoc.IssuerSigned.IssuerAuth.ProtectedHeaders);
                     
-                    var sigStructureByteString = sigStructure.ToCborByteString();
+                    var sigStructureByteString = sigStructure.ToCbor();
                     
                     var sigStructureHash = sha256.ComputeHash(sigStructureByteString.EncodeToBytes());
                     

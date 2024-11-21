@@ -24,7 +24,7 @@ public class MdocAuthenticationService : IMdocAuthenticationService
         var deviceAuthentication = new DeviceAuthentication(
             sessionTranscript, mdoc.DocType, deviceNamespaces);
 
-        var sigStructure = new SigStructure(deviceAuthentication, mdoc.IssuerSigned.IssuerAuth.ProtectedHeaders);
+        var sigStructure = new SigStructure(deviceAuthentication.ToCbor(), mdoc.IssuerSigned.IssuerAuth.ProtectedHeaders);
 
         var coseSignature = await _coseSign1Signer.Sign(sigStructure, keyId);
         

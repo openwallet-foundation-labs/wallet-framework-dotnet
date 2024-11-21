@@ -220,7 +220,7 @@ public static class ValidationFun
         from t1 in validation
         from r in onSucc(t1)
         select r;
-
+    
     public static Task<Validation<Unit>> OnSuccess<T1>(this Validation<T1> validation, Func<T1, Task> onSucc)
     {
         var adapter = new Func<T1, Task<Unit>>(async arg =>

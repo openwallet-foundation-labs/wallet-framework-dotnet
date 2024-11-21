@@ -4,13 +4,19 @@ using WalletFramework.Core.Base64Url;
 using WalletFramework.Core.Cryptography.Models;
 using WalletFramework.Core.Functional;
 using WalletFramework.MdocLib.Cbor;
+using WalletFramework.MdocLib.Cbor.Abstractions;
 using WalletFramework.MdocLib.Device.Errors;
 
-namespace WalletFramework.MdocLib.Device;
+namespace WalletFramework.MdocLib.Security.Cose;
 
-public record DeviceKey(PublicKey Value)
+public record CoseKey(PublicKey Value) : ICborSerializable
 {
-    public static Validation<DeviceKey> ValidDeviceKey(CBORObject deviceKey)
+    public static Validation<CoseKey> FromCborBytes(CBORObject bytes) =>
+        from byteString in CborByteString.ValidCborByteString(bytes)
+        from key in FromCbor(byteString.Decode())
+        select key;
+
+    public static Validation<CoseKey> FromCbor(CBORObject deviceKey)
     {
         var ktyLabel = CBORObject.FromObject(1);
         var validKty = deviceKey.GetByLabel(ktyLabel).OnSuccess(keyType =>
@@ -72,6 +78,34 @@ public record DeviceKey(PublicKey Value)
             from x in validX
             from y in validY
             let pubKey = new PublicKey(x, y)
-            select new DeviceKey(pubKey);
+            select new CoseKey(pubKey);
     }
+
+    public CBORObject ToCbor()
+    {
+        var result = CBORObject.NewMap();
+
+        var ktyLabel = CBORObject.FromObject(1);
+        var kty = CBORObject.FromObject(2);
+        result.Add(ktyLabel, kty);
+
+        var crvLabel = CBORObject.FromObject(-1);
+        var crv = CBORObject.FromObject(1);
+        result.Add(crvLabel, crv);
+
+        var xLabel = CBORObject.FromObject(-2);
+        var x = Value.X.AsByteArray;
+        result.Add(xLabel, x);
+        
+        var yLabel = CBORObject.FromObject(-3);
+        var y = Value.Y.AsByteArray;
+        result.Add(yLabel, y);
+
+        return result;
+    }
+}
+
+public static class CoseKeyFun
+{
+    public static CoseKey ToCoseKey(this PublicKey publicKey) => new(publicKey);
 }
