@@ -28,7 +28,7 @@ namespace WalletFramework.Oid4Vc.Oid4Vci.CredRequest.Implementations;
 
 public class CredentialRequestService : ICredentialRequestService
 {
-    private const int MaxBatchSize = 10;
+    private const int MaxBatchSize = 20;
     
     public CredentialRequestService(
         HttpClient httpClient,

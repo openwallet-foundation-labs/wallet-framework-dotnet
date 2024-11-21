@@ -50,6 +50,7 @@ public class Oid4VpClientServiceTests : IAsyncLifetime
             _mdocAuthenticationService.Object,
             oid4VpHaipClient,
             _oid4VpRecordService,
+            _mdocStorageMock.Object,
             pexService,
             _authFlowSessionStorageMock.Object,
             _sdJwtVcHolderService);
