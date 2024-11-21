@@ -88,7 +88,7 @@ public class PexService(
         var context = await agentProvider.GetContextAsync();
         
         var sdJwtRecords = await sdJwtVcHolderService.ListAsync(context);
-        var mdocRecords = await mdocStorage.List();
+        var mdocRecords = await mdocStorage.ListAll();
         
         var filteredSdJwtRecords = sdJwtRecords.Where(record =>
         {
