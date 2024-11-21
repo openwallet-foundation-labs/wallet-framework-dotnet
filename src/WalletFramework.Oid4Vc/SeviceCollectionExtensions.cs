@@ -33,6 +33,7 @@ public static class SeviceCollectionExtensions
     /// <param name="builder"> The builder. </param>
     public static IServiceCollection AddOpenIdServices(this IServiceCollection builder)
     {
+        builder.AddSingleton<IAesGcmEncryption, AesGcmEncryption>();
         builder.AddSingleton<IAuthFlowSessionStorage, AuthFlowSessionStorage>();
         builder.AddSingleton<ICoseSign1Signer, CoseSign1Signer>();
         builder.AddSingleton<ICredentialOfferService, CredentialOfferService>();
@@ -40,6 +41,7 @@ public static class SeviceCollectionExtensions
         builder.AddSingleton<IDPopHttpClient, DPopHttpClient>();
         builder.AddSingleton<IIssuerMetadataService, IssuerMetadataService>();
         builder.AddSingleton<IMdocAuthenticationService, MdocAuthenticationService>();
+        builder.AddSingleton<IMdocCandidateService, MdocCandidateService>();
         builder.AddSingleton<IMdocStorage, MdocStorage>();
         builder.AddSingleton<IOid4VciClientService, Oid4VciClientService>();
         builder.AddSingleton<IOid4VpClientService, Oid4VpClientService>();

@@ -12,7 +12,7 @@ public readonly struct UnprotectedHeaders
 {
     public Dictionary<CoseLabel, CBORObject> Value { get; }
 
-    public X509Chain X5Chain { get; }
+    public List<X509Certificate2> TrustChain { get; }
     
     public CBORObject CertByteString { get; }
 
@@ -20,11 +20,11 @@ public readonly struct UnprotectedHeaders
 
     private UnprotectedHeaders(
         Dictionary<CoseLabel, CBORObject> value,
-        X509Chain x5Chain,
+        IEnumerable<X509Certificate2> trustChain,
         CBORObject certByteString)
     {
         Value = value;
-        X5Chain = x5Chain;
+        TrustChain = trustChain.ToList();
         CertByteString = certByteString;
     }
 
@@ -55,7 +55,7 @@ public readonly struct UnprotectedHeaders
                 }
             });
 
-        var decodeChain = new Func<CBORObject, Validation<X509Chain>>(cbor =>
+        var decodeChain = new Func<CBORObject, Validation<List<X509Certificate2>>>(cbor =>
         {
             try
             {
@@ -71,22 +71,23 @@ public readonly struct UnprotectedHeaders
                         .OnSuccess(certs =>
                         {
                             var chain = new X509Chain();
-                            foreach (var cert in certs)
+                            var certList = certs.ToList();
+                            foreach (var cert in certList)
                             {
                                 chain.Build(cert);
                             }
 
-                            return chain;
+                            return certList;
                         });
                 }
                 else
                 { 
-                    return cbor.TryGetByteString().OnSuccess(bytes =>
+                     return cbor.TryGetByteString().OnSuccess(bytes =>
                     {
                         var cert = new X509Certificate2(bytes);
                         var chain = new X509Chain();
                         chain.Build(cert);
-                        return chain;
+                        return new List<X509Certificate2> { cert };
                     });
                 }
             }

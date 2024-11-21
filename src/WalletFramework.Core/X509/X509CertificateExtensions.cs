@@ -1,12 +1,14 @@
-using Org.BouncyCastle.Utilities.Collections;
+using System.Security.Cryptography.X509Certificates;
 using Org.BouncyCastle.Pkix;
+using Org.BouncyCastle.Utilities.Collections;
 using Org.BouncyCastle.X509;
 using Org.BouncyCastle.X509.Store;
+using X509Certificate = Org.BouncyCastle.X509.X509Certificate;
 
-namespace WalletFramework.Oid4Vc.Oid4Vp.Extensions;
+namespace WalletFramework.Core.X509;
 
 /// <summary>
-///     Extension methods for <see cref="X509Certificate" />.
+///     Extension methods for <see cref="Org.BouncyCastle.X509.X509Certificate" />.
 /// </summary>
 public static class X509CertificateExtensions
 {
@@ -48,7 +50,13 @@ public static class X509CertificateExtensions
 
         return true;
     }
-    
-    internal static bool IsSelfSigned(this X509Certificate certificate) => 
+
+    public static X509Certificate ToBouncyCastleX509Certificate(this X509Certificate2 cert)
+    {
+        var certParser = new X509CertificateParser();
+        return certParser.ReadCertificate(cert.GetRawCertData());
+    }
+
+    public static bool IsSelfSigned(this X509Certificate certificate) => 
         certificate.IssuerDN.Equivalent(certificate.SubjectDN);
 }

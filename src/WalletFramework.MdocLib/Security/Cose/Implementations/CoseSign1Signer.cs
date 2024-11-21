@@ -15,8 +15,8 @@ public class CoseSign1Signer : ICoseSign1Signer
     
     public async Task<CoseSignature> Sign(SigStructure sigStructure, KeyId keyId)
     {
-        var sigStructureByteString = sigStructure.ToCborByteString();
-        var signature = await _keyStore.Sign(keyId, sigStructureByteString.EncodeToBytes());
+        var sigStructureCbor = sigStructure.ToCbor();
+        var signature = await _keyStore.Sign(keyId, sigStructureCbor.EncodeToBytes());
         return new CoseSignature(signature);
     }
 }

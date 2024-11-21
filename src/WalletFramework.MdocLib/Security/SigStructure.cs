@@ -5,11 +5,12 @@ using WalletFramework.MdocLib.Security.Cose;
 namespace WalletFramework.MdocLib.Security;
 
 // Currently only needed for DeviceAuth
-public record SigStructure(DeviceAuthentication Payload, ProtectedHeaders ProtectedHeaders);
+// public record SigStructure(DeviceAuthentication Payload, ProtectedHeaders ProtectedHeaders);
+public record SigStructure(CBORObject Payload, ProtectedHeaders ProtectedHeaders);
 
 public static class SigStructureFun
 {
-    public static CBORObject ToCborByteString(this SigStructure sigStructure)
+    public static CBORObject ToCbor(this SigStructure sigStructure)
     {
         var result = CBORObject.NewArray();
 
@@ -22,7 +23,7 @@ public static class SigStructureFun
         var externalAdd = CBORObject.FromObject(Array.Empty<byte>());
         result.Add(externalAdd);
 
-        var payload = sigStructure.Payload.ToCbor();
+        var payload = sigStructure.Payload;
         result.Add(payload);
 
         return result;

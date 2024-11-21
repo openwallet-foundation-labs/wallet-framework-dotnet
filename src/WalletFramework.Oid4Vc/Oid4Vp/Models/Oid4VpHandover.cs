@@ -1,5 +1,9 @@
+using LanguageExt;
 using PeterO.Cbor;
+using WalletFramework.Core.Cryptography.Models;
 using WalletFramework.Core.Encoding;
+using WalletFramework.MdocLib.Device;
+using WalletFramework.MdocLib.Security;
 using WalletFramework.MdocLib.Security.Abstractions;
 using static WalletFramework.Core.Encoding.Sha256Hash;
 using static WalletFramework.Oid4Vc.Oid4Vp.Models.Nonce;
@@ -23,6 +27,11 @@ public record Oid4VpHandover(
 
         return result;
     }
+
+    public SessionTranscript ToSessionTranscript() => new(
+        Option<DeviceEngagement>.None,
+        Option<PublicKey>.None,
+        this);
 }
 
 public static class Oid4VpHandoverFun

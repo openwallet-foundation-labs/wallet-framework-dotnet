@@ -4,6 +4,7 @@ using Microsoft.IdentityModel.Tokens;
 using PeterO.Cbor;
 using WalletFramework.Core.Functional;
 using WalletFramework.MdocLib.Cbor;
+using WalletFramework.MdocLib.Device.Response;
 using WalletFramework.MdocLib.Digests;
 using WalletFramework.MdocLib.Elements;
 using WalletFramework.MdocLib.Issuer;
@@ -122,9 +123,10 @@ public record Mdoc
 
 public static class MdocFun
 {
-    // TODO: Implement this, if needed
-    // public static Validation<Mdoc> ValidateCertificate()
+    // public static Validation<Mdoc> ValidateCertificate(this Mdoc mdoc)
     // {
+    //     var trustChain = mdoc.IssuerSigned.IssuerAuth.UnprotectedHeaders.X5Chain;
+    //
     // }
 
     public static string Encode(this Mdoc mdoc)
@@ -225,8 +227,36 @@ public static class MdocFun
         return mdoc;
     }
 
-    // TODO: Implement this, if needed
-    // public static Validation<Mdoc> ValidateIssuerSignature()
+    // public static Validation<Mdoc> ValidateIssuerSignature(this Mdoc mdoc)
     // {
+    //     
     // }
+
+    // public static Validation<Mdoc> Validate(this Mdoc mdoc)
+    // {
+    //     var validate = new List<Validator<Mdoc>>
+    //     {
+    //         DocTypeMatches,
+    //         DigestsMatch,
+    //         ValidateCertificate,
+    //         ValidateIssuerSignature,
+    //         ValidateValidityInfo,
+    //         ValidateDeviceSigned
+    //     }.AggregateValidators();
+    //
+    //     return validate(mdoc);
+    // }
+
+    // public static Validation<Mdoc> ValidateValidityInfo(this Mdoc mdoc)
+    // {
+    //     
+    // }
+
+    public static Mdoc ToMdoc(this Document document)
+    {
+        var issuerSigned = document.IssuerSigned;
+        var docType = document.DocType;
+
+        return new Mdoc(docType, issuerSigned);
+    }
 }
