@@ -223,6 +223,7 @@ public class Oid4VpClientService : IOid4VpClientService
         if (clientAttestation != null)
             httpClient.AddClientAttestationPopHeader(clientAttestation);
         
+        // ToDo: when to delete these records?
         var context = await _agentProvider.GetContextAsync();
         foreach (var credential in credentials)
         {

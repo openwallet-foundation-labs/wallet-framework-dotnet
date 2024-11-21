@@ -36,7 +36,7 @@ public sealed class MdocRecord : RecordBase, ICredential
     public CredentialState CredentialState { get; }
     
     /// <summary>
-    ///     Tracks whether it's a one-time use SD-JWT.
+    ///     Tracks whether it's a one-time use Mdoc.
     /// </summary>
     public bool OneTimeUse { get; set; }
     
