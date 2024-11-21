@@ -44,16 +44,15 @@ public class Oid4VpRecordService : IOid4VpRecordService
         string clientId,
         ClientMetadata? clientMetadata,
         string? name,
-        PresentedCredential[] presentedCredentials)
+        List<PresentedCredentialSet> presentedCredentialSets)
     {
-        var record = new OidPresentationRecord
-        {
-            Name = name,
-            ClientId = clientId,
-            ClientMetadata = clientMetadata,
-            Id = Guid.NewGuid().ToString(),
-            PresentedCredentials = presentedCredentials
-        };
+        var record = new OidPresentationRecord(
+            presentedCredentialSets,
+            clientId,
+            Guid.NewGuid().ToString(),
+            clientMetadata,
+            name
+        );
             
         await RecordService.AddAsync(context.Wallet, record);
             

@@ -38,21 +38,10 @@ public record AuthorizationDetails
     public string[]? Locations { get; }
         
     internal AuthorizationDetails(
-        string? format, 
-        string? vct, 
-        string? credentialConfigurationId, 
-        string[]? locations,
-        string? docType)
+        string credentialConfigurationId, 
+        string[]? locations)
     {
-        if (!string.IsNullOrWhiteSpace(format) && !string.IsNullOrWhiteSpace(credentialConfigurationId))
-        {
-            throw new ArgumentException("Both format and credentialConfigurationId cannot be present at the same time.");
-        }
-            
-        Format = format;
-        Vct = vct;
         CredentialConfigurationId = credentialConfigurationId;
         Locations = locations;
-        DocType = docType;
     }
 }

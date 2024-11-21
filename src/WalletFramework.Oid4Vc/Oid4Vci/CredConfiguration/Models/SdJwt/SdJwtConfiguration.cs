@@ -2,9 +2,9 @@ using Newtonsoft.Json.Linq;
 using WalletFramework.Core.Functional;
 using WalletFramework.Core.Json;
 using WalletFramework.SdJwtVc.Models;
-using WalletFramework.SdJwtVc.Models.Credential.Attributes;
 using static WalletFramework.Oid4Vc.Oid4Vci.CredConfiguration.Models.CredentialConfiguration;
 using static WalletFramework.Oid4Vc.Oid4Vci.CredConfiguration.Models.SdJwt.SdJwtConfiguration.SdJwtConfigurationJsonKeys;
+using ClaimMetadata = WalletFramework.SdJwtVc.Models.Credential.Attributes.ClaimMetadata;
 
 namespace WalletFramework.Oid4Vc.Oid4Vci.CredConfiguration.Models.SdJwt;
 
@@ -82,5 +82,27 @@ public static class SdJwtConfigurationFun
         }
         
         return credentialConfig;
+    }
+    
+    public static Dictionary<string, ClaimMetadata> ExtractClaimMetadata(this SdJwtConfiguration sdJwtConfiguration)
+    {
+        return sdJwtConfiguration
+            .Claims?
+            .Where(x => !string.IsNullOrWhiteSpace(x.Key) && x.Value.Display is not null)
+            .SelectMany(claimMetadata => 
+            {
+                var claimMetadatas = new Dictionary<string, ClaimMetadata> { { claimMetadata.Key, claimMetadata.Value } };
+
+                if (claimMetadata.Value.NestedClaims == null || claimMetadata.Value.NestedClaims.Count == 0)
+                    return claimMetadatas;
+                
+                foreach (var nested in claimMetadata.Value.NestedClaims!)
+                {
+                    claimMetadatas.Add(claimMetadata.Key + "." + nested.Key, nested.Value?.ToObject<ClaimMetadata>()!);
+                }
+
+                return claimMetadatas;
+            })
+            .ToDictionary(kvp => kvp.Key, kvp => kvp.Value) ?? new Dictionary<string, ClaimMetadata>();
     }
 }

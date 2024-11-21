@@ -21,12 +21,6 @@ namespace WalletFramework.SdJwtVc.Models.Credential
         public string? Scope { get; set; }
         
         /// <summary>
-        ///     Gets or sets the credential type. This is ISO MDOC specific.
-        /// </summary>
-        [JsonProperty("doctype")]
-        public string? Doctype { get; set; }
-        
-        /// <summary>
         ///     Gets or sets the dictionary representing the attributes of the credential in different languages.
         /// </summary>
         [JsonProperty("claims")]

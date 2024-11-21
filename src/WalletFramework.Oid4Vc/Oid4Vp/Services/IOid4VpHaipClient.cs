@@ -11,11 +11,11 @@ public interface IOid4VpHaipClient
     /// <summary>
     ///     Processes an OpenID4VP Authorization Request Url.
     /// </summary>
-    /// <param name="haipAuthorizationRequestUri"></param>
+    /// <param name="authorizationRequestUri"></param>
     /// <returns>
     ///     A task representing the asynchronous operation. The task result contains the Authorization Response object associated with the OpenID4VP Authorization Request Url.
     /// </returns>
-    Task<AuthorizationRequest> ProcessAuthorizationRequestAsync(HaipAuthorizationRequestUri haipAuthorizationRequestUri);
+    Task<AuthorizationRequest> ProcessAuthorizationRequestAsync(AuthorizationRequestUri authorizationRequestUri);
 
     /// <summary>
     ///     Creates the Parameters that are necessary to send an OpenId4VP Authorization Response.

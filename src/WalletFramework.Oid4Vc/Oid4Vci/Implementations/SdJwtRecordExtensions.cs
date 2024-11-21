@@ -1,5 +1,6 @@
 using System.Drawing;
 using SD_JWT.Models;
+using WalletFramework.Core.Credentials;
 using WalletFramework.Core.Cryptography.Models;
 using WalletFramework.Core.Functional;
 using WalletFramework.Oid4Vc.Oid4Vci.CredConfiguration.Models.SdJwt;
@@ -14,25 +15,11 @@ public static class SdJwtRecordExtensions
     public static SdJwtRecord ToRecord(
         this SdJwtDoc sdJwtDoc,
         SdJwtConfiguration configuration,
-        KeyId keyId)
+        KeyId keyId,
+        CredentialSetId credentialSetId,
+        bool isOneTimeUse)
     {
-        var claims = configuration
-            .Claims?
-            .SelectMany(claimMetadata => 
-            {
-                var claimMetadatas = new Dictionary<string, ClaimMetadata> { { claimMetadata.Key, claimMetadata.Value } };
-
-                if (!(claimMetadata.Value.NestedClaims == null || claimMetadata.Value.NestedClaims.Count == 0))
-                {
-                    foreach (var nested in claimMetadata.Value.NestedClaims!)
-                    {
-                        claimMetadatas.Add(claimMetadata.Key + "." + nested.Key, nested.Value?.ToObject<ClaimMetadata>()!);
-                    }
-                }
-                
-                return claimMetadatas;
-            })
-            .ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
+        var claims = configuration.ExtractClaimMetadata();
         
         var display = 
             from displays in configuration.CredentialConfiguration.Display
@@ -46,7 +33,7 @@ public static class SdJwtRecordExtensions
                     Logo = new SdJwtDisplay.SdJwtLogo
                     {
                         AltText = credentialDisplay.Logo.ToNullable()?.AltText.ToNullable(),
-                        Uri = credentialDisplay.Logo.ToNullable()?.Uri.ToNullable()!
+                        Uri = credentialDisplay.Logo.ToNullable()?.Uri!
                     },
                     Name = credentialDisplay.Name.ToNullable(),
                     BackgroundColor = backgroundColor,
@@ -59,7 +46,9 @@ public static class SdJwtRecordExtensions
             sdJwtDoc,
             claims!,
             display.Fallback(new List<SdJwtDisplay>()),
-            keyId);
+            keyId, 
+            credentialSetId,
+            isOneTimeUse);
 
         return record;
     }

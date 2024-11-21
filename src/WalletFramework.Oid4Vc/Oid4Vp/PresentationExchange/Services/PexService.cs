@@ -3,10 +3,8 @@ using Newtonsoft.Json.Linq;
 using SD_JWT.Models;
 using WalletFramework.Core.Credentials.Abstractions;
 using WalletFramework.Core.Functional;
-using WalletFramework.Core.Functional.Enumerable;
 using WalletFramework.MdocLib.Issuer;
 using WalletFramework.Oid4Vc.Oid4Vci.Abstractions;
-using WalletFramework.Oid4Vc.Oid4Vp.Exceptions;
 using WalletFramework.Oid4Vc.Oid4Vp.Models;
 using WalletFramework.Oid4Vc.Oid4Vp.PresentationExchange.Models;
 using WalletFramework.SdJwtVc.Models.Records;
@@ -15,22 +13,12 @@ using WalletFramework.SdJwtVc.Services.SdJwtVcHolderService;
 namespace WalletFramework.Oid4Vc.Oid4Vp.PresentationExchange.Services;
 
 /// <inheritdoc />
-public class PexService : IPexService
+public class PexService(
+    IAgentProvider agentProvider,
+    IMdocStorage mdocStorage,
+    ISdJwtVcHolderService sdJwtVcHolderService)
+    : IPexService
 {
-    public PexService(
-        IAgentProvider agentProvider,
-        IMdocStorage mdocStorage,
-        ISdJwtVcHolderService sdJwtVcHolderService)
-    {
-        _agentProvider = agentProvider;
-        _mdocStorage = mdocStorage;
-        _sdJwtVcHolderService = sdJwtVcHolderService;
-    }
-
-    private readonly IAgentProvider _agentProvider;
-    private readonly IMdocStorage _mdocStorage;
-    private readonly ISdJwtVcHolderService _sdJwtVcHolderService;
-    
     /// <inheritdoc />
     public Task<PresentationSubmission> CreatePresentationSubmission(
         PresentationDefinition presentationDefinition,
@@ -52,9 +40,9 @@ public class PexService : IPexService
     }
 
     /// <inheritdoc />
-    public virtual async Task<CredentialCandidates[]> FindCredentialCandidates(IEnumerable<InputDescriptor> inputDescriptors)
+    public virtual async Task<PresentationCandidates[]> FindCredentialCandidates(IEnumerable<InputDescriptor> inputDescriptors)
     {
-        var result = new List<CredentialCandidates>();
+        var result = new List<PresentationCandidates>();
 
         foreach (var inputDescriptor in inputDescriptors)
         {
@@ -67,7 +55,7 @@ public class PexService : IPexService
             {
                 throw new InvalidOperationException("Fields cannot be null or empty");
             }
-
+            
             var matchingCredentials = await GetMatchingCredentials(inputDescriptor);
 
             if (matchingCredentials.Count == 0)
@@ -75,9 +63,18 @@ public class PexService : IPexService
 
             var limitDisclosuresRequired = string.Equals(inputDescriptor.Constraints.LimitDisclosure, "required");
 
-            var credentialCandidates = new CredentialCandidates(
+            var credentialSetGroups = matchingCredentials.GroupBy(x => x.GetCredentialSetId());
+                
+            var credentialSetCandidates = credentialSetGroups.Select(group =>
+            {
+                var credentialSetId = group.Key;
+                var credentials = group.First();
+                return new CredentialSetCandidate(credentialSetId, [credentials]);
+            });
+            
+            var credentialCandidates = new PresentationCandidates(
                 inputDescriptor.Id,
-                matchingCredentials,
+                credentialSetCandidates,
                 limitDisclosuresRequired);
 
             result.Add(credentialCandidates);
@@ -88,10 +85,10 @@ public class PexService : IPexService
 
     private async Task<List<ICredential>> GetMatchingCredentials(InputDescriptor inputDescriptor)
     {
-        var context = await _agentProvider.GetContextAsync();
+        var context = await agentProvider.GetContextAsync();
         
-        var sdJwtRecords = await _sdJwtVcHolderService.ListAsync(context);
-        var mdocRecords = await _mdocStorage.ListAll();
+        var sdJwtRecords = await sdJwtVcHolderService.ListAsync(context);
+        var mdocRecords = await mdocStorage.List();
         
         var filteredSdJwtRecords = sdJwtRecords.Where(record =>
         {
@@ -100,12 +97,14 @@ public class PexService : IPexService
             {
                 try
                 {
-                    if (doc.UnsecuredPayload.SelectToken(field.Path.First(), true) is JValue value 
-                        && field.Filter?.Const != null)
+                    if (doc.UnsecuredPayload.SelectToken(field.Path.First(), true) is not JValue value)
+                        return false;
+                    
+                    if (field.Filter?.Const != null || field.Filter?.Enum != null)
                     {
-                        return field.Filter?.Const == value.Value?.ToString();
+                        return field.Filter?.Const == value.Value?.ToString() || field.Filter?.Enum?.Contains(value.Value?.ToString()) == true;
                     }
-        
+
                     return true;
                 }
                 catch (Exception)
@@ -121,8 +120,11 @@ public class PexService : IPexService
                 try
                 {
                     var jObj = record.Mdoc.IssuerSigned.IssuerNameSpaces.ToJObject();
-                    if (jObj.SelectToken(field.Path.First(), true) is JValue value
-                        && field.Filter?.Const != null)
+                    
+                    if (jObj.SelectToken(field.Path.First(), true) is not JValue value)
+                        return false;
+                    
+                    if (field.Filter?.Const != null)
                     {
                         return field.Filter?.Const == value.Value?.ToString();
                     }

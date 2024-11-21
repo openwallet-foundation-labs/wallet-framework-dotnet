@@ -40,7 +40,7 @@ public class Oid4VpClientServiceTests : IAsyncLifetime
         var pexService = new PexService(_agentProviderMock.Object, _mdocStorageMock.Object, _sdJwtVcHolderService!);
        
         _sdJwtVcHolderService = new SdJwtVcHolderService(holder, _sdJwtSignerService.Object, walletRecordService);
-        var oid4VpHaipClient = new Oid4VpHaipClient(_httpClientFactoryMock.Object, pexService);
+        var oid4VpHaipClient = new Oid4VpHaipClient(new AuthorizationRequestService(_httpClientFactoryMock.Object), pexService);
         _oid4VpRecordService = new Oid4VpRecordService(walletRecordService);
         
         _oid4VpClientService = new Oid4VpClientService(
@@ -50,6 +50,7 @@ public class Oid4VpClientServiceTests : IAsyncLifetime
             _mdocAuthenticationService.Object,
             oid4VpHaipClient,
             _oid4VpRecordService,
+            _mdocStorageMock.Object,
             pexService,
             _authFlowSessionStorageMock.Object,
             _sdJwtVcHolderService);
@@ -101,7 +102,7 @@ public class Oid4VpClientServiceTests : IAsyncLifetime
         var selectedCandidates = new SelectedCredential
         {
             InputDescriptorId = credentials.First().InputDescriptorId,
-            Credential = credentials.First().Credentials.First()
+            Credential = credentials.First().CredentialSetCandidates.First().Credentials.First()
         };
         
         SetupHttpClient(

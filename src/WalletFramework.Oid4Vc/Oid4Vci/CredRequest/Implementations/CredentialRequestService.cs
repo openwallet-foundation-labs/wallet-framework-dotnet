@@ -28,6 +28,8 @@ namespace WalletFramework.Oid4Vc.Oid4Vci.CredRequest.Implementations;
 
 public class CredentialRequestService : ICredentialRequestService
 {
+    private const int MaxBatchSize = 20;
+    
     public CredentialRequestService(
         HttpClient httpClient,
         IDPopHttpClient dPopHttpClient,
@@ -58,33 +60,69 @@ public class CredentialRequestService : ICredentialRequestService
             dPopToken => dPopToken.Token.CNonce);
 
         var proof = Option<ProofOfPossession>.None;
+        var proofs = Option<ProofsOfPossession>.None;
         var sessionTranscript = Option<SessionTranscript>.None;
 
         await authorizationRequest.Match(
             Some: _ =>
             {
                 if (format == "mso_mdoc")
-                    sessionTranscript = authorizationRequest.UnwrapOrThrow(new Exception()).ToVpHandover().ToSessionTranscript();
+                    sessionTranscript = authorizationRequest.UnwrapOrThrow(new Exception()).ToVpHandover()
+                        .ToSessionTranscript();
                 return Task.CompletedTask;
             },
             None: async () =>
             {
-                var keyBindingJwt = await _sdJwtSigner.GenerateKbProofOfPossessionAsync(
-                    keyId,
-                    issuerMetadata.CredentialIssuer.ToString(),
-                    cNonce,
-                    "openid4vci-proof+jwt",
-                    null,
-                    clientOptions.ToNullable()?.ClientId);
-                
-                proof = new ProofOfPossession
-                {
-                    ProofType = "jwt",
-                    Jwt = keyBindingJwt
-                };
+                await issuerMetadata.BatchCredentialIssuance.Match(
+                    Some: async batchCredentialIssuance =>
+                    {
+                        await batchCredentialIssuance.BatchSize.Match(
+                            Some: async batchSize =>
+                            {
+                                proofs = await GetProofsOfPossessionAsync(Math.Min(MaxBatchSize, batchSize), keyId,
+                                    issuerMetadata, cNonce, clientOptions);
+                            },
+                            None: async () =>
+                            {
+                                proof = await GetProofOfPossessionAsync(keyId, issuerMetadata, cNonce, clientOptions);
+                            });
+                    },
+                    None: async () =>
+                        proof = await GetProofOfPossessionAsync(keyId, issuerMetadata, cNonce, clientOptions));
             });
 
-        return new CredentialRequest(format, proof, sessionTranscript);
+        return new CredentialRequest(format, proof, proofs, sessionTranscript);
+    }
+
+    private async Task<ProofOfPossession> GetProofOfPossessionAsync(KeyId keyId, IssuerMetadata issuerMetadata, string cNonce, Option<ClientOptions> clientOptions)
+    {
+        return new ProofOfPossession
+        {
+            ProofType = "jwt",
+            Jwt = await GenerateKbProofOfPossession(keyId, issuerMetadata, cNonce, clientOptions)
+        };
+    }
+    
+    private async Task<ProofsOfPossession> GetProofsOfPossessionAsync(int batchSize, KeyId keyId, IssuerMetadata issuerMetadata, string cNonce, Option<ClientOptions> clientOptions)
+    {
+        var jwts = new List<string>();
+        for(var i = 0; i < batchSize; i++)
+        {
+            jwts.Add(await GenerateKbProofOfPossession(keyId, issuerMetadata, cNonce, clientOptions));
+        }
+        
+        return new ProofsOfPossession("jwt", jwts.ToArray());
+    }
+
+    private async Task<string> GenerateKbProofOfPossession(KeyId keyId, IssuerMetadata issuerMetadata, string cNonce, Option<ClientOptions> clientOptions)
+    {
+        return await _sdJwtSigner.GenerateKbProofOfPossessionAsync(
+            keyId,
+            issuerMetadata.CredentialIssuer.ToString(),
+            cNonce,
+            "openid4vci-proof+jwt",
+            null,
+            clientOptions.ToNullable()?.ClientId);
     }
 
     async Task<Validation<CredentialResponse>> ICredentialRequestService.RequestCredentials(

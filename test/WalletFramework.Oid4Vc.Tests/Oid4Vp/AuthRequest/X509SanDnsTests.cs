@@ -11,7 +11,7 @@ public class X509SanDnsTests
     {
         var requestObject = RequestObject.CreateRequestObject(SignedRequestObjectWithRs256AndTrustChain);
 
-        var sut = requestObject.ValidateJwt();
+        var sut = requestObject.ValidateJwtSignature();
 
         sut.Should().NotBeNull();
     }
@@ -22,7 +22,7 @@ public class X509SanDnsTests
         var requestObject = RequestObject.CreateRequestObject(SignedRequestObjectWithRs256AndInvalidSignature);
         try
         {
-            requestObject.ValidateJwt();
+            requestObject.ValidateJwtSignature();
             Assert.Fail("Expected validation to fail");
         }
         catch (Exception)
