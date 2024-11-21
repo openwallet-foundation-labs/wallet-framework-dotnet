@@ -118,23 +118,4 @@ public static class CredentialDisplayFun
 
         return result;
     }
-    
-    // TODO: Unpure
-    public static SdJwtDisplay ToSdJwtDisplay(this CredentialDisplay credentialDisplay)
-    {
-        var logo = new SdJwtDisplay.SdJwtLogo
-        {
-            Uri = credentialDisplay.Logo.ToNullable()?.Uri!,
-            AltText = credentialDisplay.Logo.ToNullable()?.AltText.ToNullable()
-        };
-
-        return new SdJwtDisplay
-        {
-            Logo = logo,
-            Name = credentialDisplay.Name.ToNullable(),
-            BackgroundColor = credentialDisplay.BackgroundColor.ToNullable(),
-            Locale = credentialDisplay.Locale.ToNullable()?.ToString(),
-            TextColor = credentialDisplay.TextColor.ToNullable()
-        };
-    }
 }

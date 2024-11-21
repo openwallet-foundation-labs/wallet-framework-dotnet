@@ -311,8 +311,12 @@ public class Oid4VciClientService : IOid4VciClientService
                 },
                 // ReSharper disable once UnusedParameter.Local
                 transactionId => throw new NotImplementedException());
-        
-        await result.OnSuccess(async _ => await _credentialSetService.AddAsync(credentialSet));
+
+        await result.OnSuccess(async task =>
+        {
+            await task;
+            await _credentialSetService.AddAsync(credentialSet);
+        });
 
         return credentialSet;
     }

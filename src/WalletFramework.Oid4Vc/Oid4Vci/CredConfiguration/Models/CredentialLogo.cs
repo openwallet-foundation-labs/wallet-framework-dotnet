@@ -22,7 +22,7 @@ public record CredentialLogo
     /// </summary>
     public Uri Uri { get; }
     
-    private CredentialLogo(Option<string> altText, Uri uri)
+    private CredentialLogo(Uri uri, Option<string> altText)
     {
         AltText = altText;
         Uri = uri;
@@ -33,17 +33,14 @@ public record CredentialLogo
         var altText = logo.GetByKey(AltTextJsonKey).ToOption().OnSome(text =>
         {
             var str = text.ToString();
-            if (string.IsNullOrWhiteSpace(str))
-                return Option<string>.None;
-
-            return str;
+            return string.IsNullOrWhiteSpace(str) ? Option<string>.None : str;
         });
         
         return logo.GetByKey(UriJsonKey).ToOption().Match(
             uri => {
                 try
                 {
-                    return new CredentialLogo(altText, new Uri(uri.ToString()));
+                    return new CredentialLogo(new Uri(uri.ToString()), altText);
                 }
                 catch (Exception)
                 {

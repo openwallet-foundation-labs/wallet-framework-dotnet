@@ -93,14 +93,14 @@ public static class SdJwtConfigurationFun
             {
                 var claimMetadatas = new Dictionary<string, ClaimMetadata> { { claimMetadata.Key, claimMetadata.Value } };
 
-                if (!(claimMetadata.Value.NestedClaims == null || claimMetadata.Value.NestedClaims.Count == 0))
-                {
-                    foreach (var nested in claimMetadata.Value.NestedClaims!)
-                    {
-                        claimMetadatas.Add(claimMetadata.Key + "." + nested.Key, nested.Value?.ToObject<ClaimMetadata>()!);
-                    }
-                }
+                if (claimMetadata.Value.NestedClaims == null || claimMetadata.Value.NestedClaims.Count == 0)
+                    return claimMetadatas;
                 
+                foreach (var nested in claimMetadata.Value.NestedClaims!)
+                {
+                    claimMetadatas.Add(claimMetadata.Key + "." + nested.Key, nested.Value?.ToObject<ClaimMetadata>()!);
+                }
+
                 return claimMetadatas;
             })
             .ToDictionary(kvp => kvp.Key, kvp => kvp.Value) ?? new Dictionary<string, ClaimMetadata>();

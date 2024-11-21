@@ -122,7 +122,7 @@ public class CredentialSetService(
         if (credentialSetRecord.IsDeleted())
             return credentialSetRecord;
         
-        credentialSetRecord.ExpiresAt.IfSome( expiresAt =>
+        credentialSetRecord.ExpiresAt.IfSome(expiresAt =>
         {
             if (expiresAt < DateTime.UtcNow)
                 credentialSetRecord.State = CredentialState.Expired;
