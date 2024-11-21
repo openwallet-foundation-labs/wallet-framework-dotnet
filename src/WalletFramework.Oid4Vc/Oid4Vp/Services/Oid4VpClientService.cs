@@ -20,6 +20,7 @@ using WalletFramework.MdocLib.Elements;
 using WalletFramework.MdocLib.Security;
 using WalletFramework.MdocLib.Security.Cose;
 using WalletFramework.MdocVc;
+using WalletFramework.Oid4Vc.Oid4Vci.Abstractions;
 using WalletFramework.Oid4Vc.Oid4Vci.AuthFlow.Abstractions;
 using WalletFramework.Oid4Vc.Oid4Vci.AuthFlow.Models;
 using WalletFramework.Oid4Vc.Oid4Vci.CredConfiguration.Models;
@@ -52,6 +53,7 @@ public class Oid4VpClientService : IOid4VpClientService
     /// <param name="logger">The ILogger.</param>
     /// <param name="authFlowSessionStorage">The Auth Flow Session Storage.</param>
     /// <param name="oid4VpRecordService">The service responsible for OidPresentationRecord related operations.</param>
+    /// <param name="mDocStorage">The service responsible for mDOc storage operations.</param> 
     public Oid4VpClientService(
         IAgentProvider agentProvider,
         IHttpClientFactory httpClientFactory,
@@ -59,6 +61,7 @@ public class Oid4VpClientService : IOid4VpClientService
         IMdocAuthenticationService mdocAuthenticationService,
         IOid4VpHaipClient oid4VpHaipClient,
         IOid4VpRecordService oid4VpRecordService,
+        IMdocStorage mDocStorage,
         IPexService pexService,
         IAuthFlowSessionStorage authFlowSessionStorage,
         ISdJwtVcHolderService sdJwtVcHolderService)
@@ -69,6 +72,7 @@ public class Oid4VpClientService : IOid4VpClientService
         _mdocAuthenticationService = mdocAuthenticationService;
         _oid4VpHaipClient = oid4VpHaipClient;
         _oid4VpRecordService = oid4VpRecordService;
+        _mDocStorage = mDocStorage;
         _pexService = pexService;
         _authFlowSessionStorage = authFlowSessionStorage;
         _sdJwtVcHolderService = sdJwtVcHolderService;
@@ -80,6 +84,7 @@ public class Oid4VpClientService : IOid4VpClientService
     private readonly IMdocAuthenticationService _mdocAuthenticationService;
     private readonly IOid4VpHaipClient _oid4VpHaipClient;
     private readonly IOid4VpRecordService _oid4VpRecordService;
+    private readonly IMdocStorage _mDocStorage;
     private readonly IPexService _pexService;
     private readonly IAuthFlowSessionStorage _authFlowSessionStorage;
     private readonly ISdJwtVcHolderService _sdJwtVcHolderService;
@@ -218,6 +223,21 @@ public class Oid4VpClientService : IOid4VpClientService
         if (clientAttestation != null)
             httpClient.AddClientAttestationPopHeader(clientAttestation);
         
+        // ToDo: when to delete these records?
+        var context = await _agentProvider.GetContextAsync();
+        foreach (var credential in credentials)
+        {
+            switch (credential.Credential)
+            {
+                case SdJwtRecord sdJwtRecord when sdJwtRecord.OneTimeUse:
+                    await _sdJwtVcHolderService.DeleteAsync(context, sdJwtRecord.GetId());
+                    break;
+                case MdocRecord mDocRecord when mDocRecord.OneTimeUse:
+                    await _mDocStorage.Delete(mDocRecord);
+                    break;
+            }
+        }
+        
         var responseMessage = await httpClient.SendAsync(message);
         if (!responseMessage.IsSuccessStatusCode)
         {
@@ -276,8 +296,6 @@ public class Oid4VpClientService : IOid4VpClientService
 
             return result;
         });
-
-        var context = await _agentProvider.GetContextAsync();
 
         await _oid4VpRecordService.StoreAsync(
             context,

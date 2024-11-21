@@ -54,8 +54,10 @@ public sealed class SdJwtRecord : RecordBase, ICredential
     /// </summary>
     public CredentialState CredentialState { get; set; }
     
-    //TODO: Must be set when batch issuance is implemented
-    // public bool OneTimeUse { get; set; }
+    /// <summary>
+    ///     Tracks whether it's a one-time use SD-JWT.
+    /// </summary>
+    public bool OneTimeUse { get; set; }
     
     /// <summary>
     ///     Tracks the Expiration Date of the Sd-JWT
@@ -138,12 +140,13 @@ public sealed class SdJwtRecord : RecordBase, ICredential
     /// <param name="claims">The claims made.</param>
     /// <param name="disclosures">The disclosures.</param>
     /// <param name="display">The display of the credential.</param>
-    /// <param name="issuerId"></param>
+    /// <param name="issuerId">The Id of the issuer</param>
     /// <param name="encodedIssuerSignedJwt">The Issuer-signed JWT part of the SD-JWT.</param>
     /// <param name="credentialSetId">The CredentialSetId.</param>
-    /// <param name="expiresAt">The CredentialSetId.</param>
-    /// <param name="issuedAt">The CredentialSetId.</param>
-    /// <param name="notBefore">The CredentialSetId.</param>
+    /// <param name="expiresAt">The Expiration Date.</param>
+    /// <param name="issuedAt">The Issued at date.</param>
+    /// <param name="notBefore">The valid after date.</param>
+    /// <param name="isOneTimeUse">Indicator whether the credential should be sued only once.</param>
     [JsonConstructor]
     public SdJwtRecord(
         Dictionary<string, ClaimMetadata> displayedAttributes,
@@ -155,7 +158,8 @@ public sealed class SdJwtRecord : RecordBase, ICredential
         string credentialSetId,
         DateTime? expiresAt,
         DateTime? issuedAt,
-        DateTime? notBefore)
+        DateTime? notBefore,
+        bool isOneTimeUse = false)
     {
         Claims = claims;
         Disclosures = disclosures;
@@ -170,6 +174,7 @@ public sealed class SdJwtRecord : RecordBase, ICredential
         NotBefore = notBefore;
         IssuerId = issuerId;
         CredentialSetId = credentialSetId;
+        OneTimeUse = isOneTimeUse;
     }
     
     public SdJwtRecord(
@@ -177,7 +182,8 @@ public sealed class SdJwtRecord : RecordBase, ICredential
         Dictionary<string, ClaimMetadata> displayedAttributes,
         List<SdJwtDisplay> display,
         KeyId keyId,
-        CredentialSetId credentialSetId)
+        CredentialSetId credentialSetId,
+        bool isOneTimeUse = false)
     {
         Id = Guid.NewGuid().ToString();
             
@@ -190,6 +196,7 @@ public sealed class SdJwtRecord : RecordBase, ICredential
 
         CredentialSetId = credentialSetId;
         CredentialState = CredentialState.Active;
+        OneTimeUse = isOneTimeUse;
         
         KeyId = keyId;
         ExpiresAt = sdJwtDoc.UnsecuredPayload.SelectToken("exp")?.Value<long>() is not null
@@ -212,7 +219,8 @@ public sealed class SdJwtRecord : RecordBase, ICredential
         Dictionary<string, ClaimMetadata> displayedAttributes,
         List<SdJwtDisplay> display,
         KeyId keyId,
-        CredentialSetId credentialSetId)
+        CredentialSetId credentialSetId,
+        bool isOneTimeUse = false)
     {
         Id = Guid.NewGuid().ToString();
             
@@ -224,6 +232,7 @@ public sealed class SdJwtRecord : RecordBase, ICredential
             
         CredentialSetId = credentialSetId;
         CredentialState = CredentialState.Active;
+        OneTimeUse = isOneTimeUse;
         
         KeyId = keyId;
         

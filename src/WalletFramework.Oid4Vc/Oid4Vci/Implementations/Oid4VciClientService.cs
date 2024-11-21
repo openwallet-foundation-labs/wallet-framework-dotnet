@@ -292,7 +292,7 @@ public class Oid4VciClientService : IOid4VciClientService
                             async sdJwt =>
                             {
                                 var record = sdJwt.Decoded.ToRecord(configuration.AsT0, response.KeyId,
-                                    credentialSet.GetCredentialSetId());
+                                    credentialSet.GetCredentialSetId(), creds.Count > 1);
                                 var context = await _agentProvider.GetContextAsync();
                                 await _sdJwtService.AddAsync(context, record);
 
@@ -302,7 +302,7 @@ public class Oid4VciClientService : IOid4VciClientService
                             {
                                 var displays = MdocFun.CreateMdocDisplays(configuration.AsT1);
                                 var record = mdoc.Decoded.ToRecord(displays, response.KeyId,
-                                    credentialSet.GetCredentialSetId());
+                                    credentialSet.GetCredentialSetId(), creds.Count > 1);
                                 await _mdocStorage.Add(record);
 
                                 credentialSet.AddMDocData(record);
@@ -399,7 +399,7 @@ public class Oid4VciClientService : IOid4VciClientService
                                         dPop => dPop with { Token = dPop.Token with { CNonce = cNonce.ToNullable() } });
 
                                     var record = sdJwt.Decoded.ToRecord(configuration.AsT0, response.KeyId,
-                                        credentialSet.GetCredentialSetId());
+                                        credentialSet.GetCredentialSetId(), creds.Count > 1);
                                     await _sdJwtService.AddAsync(context, record);
 
                                     credentialSet.AddSdJwtData(record);
@@ -412,7 +412,7 @@ public class Oid4VciClientService : IOid4VciClientService
 
                                     var displays = MdocFun.CreateMdocDisplays(configuration.AsT1);
                                     var record = mdoc.Decoded.ToRecord(displays, response.KeyId,
-                                        credentialSet.GetCredentialSetId());
+                                        credentialSet.GetCredentialSetId(), creds.Count > 1);
                                     await _mdocStorage.Add(record);
 
                                     credentialSet.AddMDocData(record);
@@ -504,7 +504,7 @@ public class Oid4VciClientService : IOid4VciClientService
                             sdJwt =>
                             {
                                 var record = sdJwt.Decoded.ToRecord(configuration.AsT0, response.KeyId,
-                                    credentialSetRecord.GetCredentialSetId());
+                                    credentialSetRecord.GetCredentialSetId(), creds.Count > 1);
 
                                 credentialSetRecord.AddSdJwtData(record);
 
@@ -532,7 +532,7 @@ public class Oid4VciClientService : IOid4VciClientService
                             {
                                 var displays = MdocFun.CreateMdocDisplays(configuration.AsT1);
                                 var record = mdoc.Decoded.ToRecord(displays, response.KeyId,
-                                    credentialSetRecord.GetCredentialSetId());
+                                    credentialSetRecord.GetCredentialSetId(), creds.Count > 1);
 
                                 credentialSetRecord.AddMDocData(record);
 

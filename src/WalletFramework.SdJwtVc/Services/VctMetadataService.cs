@@ -33,7 +33,7 @@ public class VctMetadataService : IVctMetadataService
 
         try
         {
-            var response = await _httpClient.GetAsync(metadataUrl);
+            var response = await _httpClient.GetAsync(metadataUrl); 
             if (response.IsSuccessStatusCode)
             {
                 var str = await response.Content.ReadAsStringAsync();
