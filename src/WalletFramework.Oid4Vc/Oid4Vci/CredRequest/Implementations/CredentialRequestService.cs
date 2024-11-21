@@ -79,7 +79,7 @@ public class CredentialRequestService : ICredentialRequestService
                         await batchCredentialIssuance.BatchSize.Match(
                             Some: async batchSize =>
                             {
-                                proofs = await GetProofsOfPossessionAsync(Math.Max(MaxBatchSize, batchSize), keyId,
+                                proofs = await GetProofsOfPossessionAsync(Math.Min(MaxBatchSize, batchSize), keyId,
                                     issuerMetadata, cNonce, clientOptions);
                             },
                             None: async () =>

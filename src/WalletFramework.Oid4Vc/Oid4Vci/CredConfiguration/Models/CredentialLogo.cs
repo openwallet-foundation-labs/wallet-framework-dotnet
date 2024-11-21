@@ -20,9 +20,9 @@ public record CredentialLogo
     /// <summary>
     ///     Gets the URL of the logo image.
     /// </summary>
-    public Option<Uri> Uri { get; }
+    public Uri Uri { get; }
     
-    private CredentialLogo(Option<string> altText, Option<Uri> uri)
+    private CredentialLogo(Uri uri, Option<string> altText)
     {
         AltText = altText;
         Uri = uri;
@@ -33,30 +33,21 @@ public record CredentialLogo
         var altText = logo.GetByKey(AltTextJsonKey).ToOption().OnSome(text =>
         {
             var str = text.ToString();
-            if (string.IsNullOrWhiteSpace(str))
-                return Option<string>.None;
-
-            return str;
+            return string.IsNullOrWhiteSpace(str) ? Option<string>.None : str;
         });
         
-        var imageUri = logo.GetByKey(UriJsonKey).ToOption().OnSome(uri =>
-        {
-            try
-            {
-                var str = uri.ToString();
-                var result = new Uri(str);
-                return result;
-            }
-            catch (Exception)
-            {
-                return Option<Uri>.None;
-            }
-        });
-        
-        if (altText.IsNone && imageUri.IsNone)
-            return Option<CredentialLogo>.None;
-        
-        return new CredentialLogo(altText, imageUri);
+        return logo.GetByKey(UriJsonKey).ToOption().Match(
+            uri => {
+                try
+                {
+                    return new CredentialLogo(new Uri(uri.ToString()), altText);
+                }
+                catch (Exception)
+                {
+                    return Option<CredentialLogo>.None;
+                } 
+            }, 
+            () => Option<CredentialLogo>.None);
     }
 }
 
@@ -74,10 +65,7 @@ public static class CredentialLogoJsonExtensions
             result.Add(AltTextJsonKey, altText);
         });
 
-        logo.Uri.IfSome(uri =>
-        {
-            result.Add(UriJsonKey, uri.ToStringWithoutTrail());
-        });
+        result.Add(UriJsonKey, logo.Uri.ToStringWithoutTrail());
 
         return result;
     }

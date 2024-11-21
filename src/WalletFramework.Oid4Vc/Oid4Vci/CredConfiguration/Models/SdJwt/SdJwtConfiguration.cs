@@ -83,4 +83,26 @@ public static class SdJwtConfigurationFun
         
         return credentialConfig;
     }
+    
+    public static Dictionary<string, ClaimMetadata> ExtractClaimMetadata(this SdJwtConfiguration sdJwtConfiguration)
+    {
+        return sdJwtConfiguration
+            .Claims?
+            .Where(x => !string.IsNullOrWhiteSpace(x.Key) && x.Value.Display is not null)
+            .SelectMany(claimMetadata => 
+            {
+                var claimMetadatas = new Dictionary<string, ClaimMetadata> { { claimMetadata.Key, claimMetadata.Value } };
+
+                if (claimMetadata.Value.NestedClaims == null || claimMetadata.Value.NestedClaims.Count == 0)
+                    return claimMetadatas;
+                
+                foreach (var nested in claimMetadata.Value.NestedClaims!)
+                {
+                    claimMetadatas.Add(claimMetadata.Key + "." + nested.Key, nested.Value?.ToObject<ClaimMetadata>()!);
+                }
+
+                return claimMetadatas;
+            })
+            .ToDictionary(kvp => kvp.Key, kvp => kvp.Value) ?? new Dictionary<string, ClaimMetadata>();
+    }
 }
