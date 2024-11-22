@@ -74,23 +74,6 @@ public class AesGcmEncryption : IAesGcmEncryption
 
     private byte[] GenerateIv(bool isReader)
     {
-        // TODO: This is hardcoded
-        
-        // var iv = new byte[12];
-        //
-        // var identifier = new byte[8];
-        // uint messageCounter = 1;
-        //
-        // Array.Copy(identifier, iv, identifier.Length);
-        //
-        // // Convert message counter to big-endian byte array
-        // var counterBytes = BitConverter.GetBytes(messageCounter);
-        // if (BitConverter.IsLittleEndian)
-        //     Array.Reverse(counterBytes);
-        //
-        // Array.Copy(counterBytes, 0, iv, identifier.Length, counterBytes.Length);
-        // return iv;
-
         var identifier = GetIdentifier(isReader);
         
         var iv = new byte[12];
