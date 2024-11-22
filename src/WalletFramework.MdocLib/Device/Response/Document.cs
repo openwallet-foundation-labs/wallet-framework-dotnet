@@ -1,8 +1,6 @@
 using System.Diagnostics;
 using Org.BouncyCastle.Asn1;
-using Org.BouncyCastle.Crypto;
 using Org.BouncyCastle.Crypto.Parameters;
-using Org.BouncyCastle.Crypto.Signers;
 using Org.BouncyCastle.Math;
 using Org.BouncyCastle.Security;
 using PeterO.Cbor;
@@ -13,9 +11,7 @@ using WalletFramework.MdocLib.Cbor;
 using WalletFramework.MdocLib.Device.Response.Errors;
 using WalletFramework.MdocLib.Issuer;
 using WalletFramework.MdocLib.Security;
-using WalletFramework.MdocLib.Security.Cose;
 using static WalletFramework.MdocLib.Constants;
-using X509Certificate = Org.BouncyCastle.X509.X509Certificate;
 
 namespace WalletFramework.MdocLib.Device.Response;
 
@@ -86,13 +82,36 @@ public static class DocumentFun
             select result;
     }
 
-    // public static Validation<Document> ValidateDeviceSignedData(this Document document)
-    // {
-    // }
-    
-    public static string ByteArrayToString(this byte[] ba)
+    public static Validation<Document> ValidateDeviceSignedData(this Document document, SessionTranscript sessionTranscript)
     {
-        return BitConverter.ToString(ba).Replace("-","");
+        var pubKey = document.IssuerSigned.IssuerAuth.Payload.DeviceKeyInfo.CoseKey.Value.ToECPublicKeyParameters();
+        
+        var deviceAuth = document.DeviceSigned.DeviceAuth;
+        var signatureBytes = deviceAuth.DeviceSignature.Signature.AsByteArray;
+        
+        var deviceAuthentication = new DeviceAuthentication(
+            sessionTranscript, document.DocType, document.DeviceSigned.DeviceNameSpaces);
+        
+        var payload = new SigStructure(
+            deviceAuthentication.ToCbor(),
+            document.IssuerSigned.IssuerAuth.ProtectedHeaders);
+        var payloadBytes = payload.ToCbor().EncodeToBytes();
+        
+        var signer = SignerUtilities.GetSigner("SHA-256withECDSA");
+        signer.Init(false, pubKey);
+
+        signer.BlockUpdate(payloadBytes, 0, payloadBytes.Length);
+
+        var der = ConvertRawToDerFormat(signatureBytes);
+
+        var isValid = signer.VerifySignature(der);
+        if (isValid)
+        {
+            Debug.WriteLine($"Signature is valid at {DateTime.Now:H:mm:ss:fff}");
+            return document;
+        }
+
+        return new InvalidIssuerSignatureError();
     }
     
     private static byte[] ConvertRawToDerFormat(byte[] rawSignature)
@@ -101,11 +120,7 @@ public static class DocumentFun
             throw new ArgumentException("Raw signature should be 64 bytes long", nameof(rawSignature));
 
         var r = new BigInteger(1, rawSignature.Take(32).ToArray());
-        var rHex = r.ToByteArrayUnsigned().ByteArrayToString();
-        Debug.WriteLine($"R is {rHex} at {DateTime.Now:H:mm:ss:fff}");
         var s = new BigInteger(1, rawSignature.Skip(32).ToArray());
-        var shex = s.ToByteArrayUnsigned().ByteArrayToString();
-        Debug.WriteLine($"S is {shex} at {DateTime.Now:H:mm:ss:fff}");
 
         var derSignature = new DerSequence(
             new DerInteger(r),

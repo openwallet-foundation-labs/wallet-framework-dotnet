@@ -1,5 +1,6 @@
 using System;
 using System.Diagnostics;
+using System.Reactive.Linq;
 using System.Reactive.Threading.Tasks;
 using System.Text;
 using System.Threading.Tasks;
@@ -12,6 +13,7 @@ using WalletFramework.IsoProximity.CommunicationPhase.Abstractions;
 using WalletFramework.IsoProximity.EngagementPhase.Abstractions;
 using WalletFramework.MdocLib.Ble.Abstractions;
 using WalletFramework.MdocLib.Ble.BleUuids;
+using WalletFramework.MdocLib.Device.Abstractions;
 using WalletFramework.MdocLib.Device.Request;
 using WalletFramework.MdocLib.Reader;
 using WalletFramework.MdocLib.Security;
@@ -19,11 +21,14 @@ using WalletFramework.MdocLib.Security;
 namespace WalletFramework.IsoProximity.CommunicationPhase.Implementations;
 
 public class ProximityCommunicationService(
+    IAesGcmEncryption aes,
     IBleCentral central,
     IEngagementService engagementService) : IProximityCommunicationService
 {
     public async Task<(DeviceRequest, SessionTranscript, ECPrivateKeyParameters)> HandleReaderEngagement(ReaderEngagement readerEngagement)
     {
+        aes.ResetMessageCounter();
+        
         var serviceUuid = readerEngagement.GetServiceUuid();
         Debug.WriteLine($"ServiceUUID is {serviceUuid.ToString()} at {DateTime.Now:H:mm:ss:fff}");
 
@@ -40,10 +45,18 @@ public class ProximityCommunicationService(
         var priv = generator.GetPrivateKey();
         
         var deviceEngagement = await engagementService.CreateDeviceEngagement(pub.ToPubKey());
+
+        var isTimeout = false;
         
         central
             .WaitFor(serviceUuid, MdocReaderUuids.Server2Client, readerEngagement, priv, deviceEngagement)
             .ToObservable()
+            .Timeout(TimeSpan.FromSeconds(10))
+            .Catch<(DeviceRequest, SessionTranscript), Exception>(exception =>
+            {
+                isTimeout = true;
+                return Observable.Empty<(DeviceRequest, SessionTranscript)>();
+            })
             .Subscribe(x =>
             {
                 result = x.Item1;
@@ -56,7 +69,7 @@ public class ProximityCommunicationService(
             MdocReaderUuids.Client2Server,
             deviceEngagement.ToCbor().EncodeToBytes());
         
-        while (result == null)
+        while (result == null && !isTimeout)
         {
             await Task.Delay(10);
         }

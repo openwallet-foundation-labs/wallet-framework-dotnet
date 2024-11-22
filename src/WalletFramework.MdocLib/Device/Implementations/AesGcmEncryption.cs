@@ -67,6 +67,11 @@ public class AesGcmEncryption : IAesGcmEncryption
         return actualCipherText.Concat(authTag).ToArray();
     }
 
+    public void ResetMessageCounter()
+    {
+        _messageCounter = 1;
+    }
+
     private byte[] GenerateIv(bool isReader)
     {
         // TODO: This is hardcoded
