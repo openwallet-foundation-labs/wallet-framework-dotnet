@@ -1,5 +1,4 @@
 using Org.BouncyCastle.Asn1.Nist;
-using Org.BouncyCastle.Asn1.Sec;
 using Org.BouncyCastle.Crypto.Parameters;
 using Org.BouncyCastle.Math;
 using WalletFramework.Core.Base64Url;
@@ -24,18 +23,6 @@ public static class PublicKeyFun
         y = publicKey.Y.ToString()
     };
 
-    public static PublicKey ToPubKey(this ECPrivateKeyParameters parameters)
-    {
-        var x = parameters.Parameters.G.AffineXCoord.ToBigInteger().ToByteArrayUnsigned();
-        var y = parameters.Parameters.G.AffineYCoord.ToBigInteger().ToByteArrayUnsigned();
-        
-        // TODO: Also persist D
-        
-        return new PublicKey(
-            Base64UrlString.CreateBase64UrlString(x),
-            Base64UrlString.CreateBase64UrlString(y));
-    }
-    
     public static PublicKey ToPubKey(this ECPublicKeyParameters parameters)
     {
         var x = parameters.Q.AffineXCoord.ToBigInteger().ToByteArrayUnsigned();

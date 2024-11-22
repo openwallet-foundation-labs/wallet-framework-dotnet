@@ -1,11 +1,8 @@
 using PeterO.Cbor;
-using WalletFramework.MdocLib.Device;
 using WalletFramework.MdocLib.Security.Cose;
 
 namespace WalletFramework.MdocLib.Security;
 
-// Currently only needed for DeviceAuth
-// public record SigStructure(DeviceAuthentication Payload, ProtectedHeaders ProtectedHeaders);
 public record SigStructure(CBORObject Payload, ProtectedHeaders ProtectedHeaders);
 
 public static class SigStructureFun
