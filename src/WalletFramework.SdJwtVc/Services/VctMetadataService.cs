@@ -23,7 +23,7 @@ public class VctMetadataService : IVctMetadataService
     
     public async Task<Option<VctMetadata>> ProcessMetadata(Vct vct)
     {
-        if(!Uri.TryCreate(vct, UriKind.Absolute, out Uri vctUri))
+        if(!Uri.TryCreate(vct, UriKind.Absolute, out Uri vctUri) || vctUri.Scheme != Uri.UriSchemeHttps)
             return Option<VctMetadata>.None;
 
         var baseEndpoint = new Uri(vctUri.GetLeftPart(UriPartial.Authority));
