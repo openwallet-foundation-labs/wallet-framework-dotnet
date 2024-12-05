@@ -10,6 +10,7 @@ using WalletFramework.MdocLib;
 using WalletFramework.MdocVc;
 using WalletFramework.SdJwtVc.Models;
 using WalletFramework.SdJwtVc.Models.Records;
+using WalletFramework.SdJwtVc.Models.StatusList;
 using CredentialState = WalletFramework.Core.Credentials.CredentialState;
 
 namespace WalletFramework.Oid4Vc.CredentialSet.Models;
@@ -31,8 +32,7 @@ public sealed class CredentialSetRecord : RecordBase
     
     public Option<DateTime> ExpiresAt { get; set; }
 
-    //TODO: Add Status List
-    // public Option<StatusList> StatusList { get; }
+    public Option<Status> StatusList { get; set; }
 
     public Option<DateTime> RevokedAt { get; set; }
 
@@ -53,6 +53,7 @@ public sealed class CredentialSetRecord : RecordBase
         Option<DocType> mDocCredentialType, 
         Dictionary<string, string> credentialAttributes, 
         CredentialState credentialState,
+        Option<Status> statusList,
         Option<DateTime> expiresAt,
         Option<DateTime> issuedAt,
         Option<DateTime> notBefore,
@@ -66,6 +67,7 @@ public sealed class CredentialSetRecord : RecordBase
         MDocCredentialType = mDocCredentialType;
         CredentialAttributes = credentialAttributes;
         State = credentialState;
+        StatusList = statusList;
         ExpiresAt = expiresAt;
         IssuedAt = issuedAt;
         NotBefore = notBefore;
@@ -119,6 +121,7 @@ public static class CredentialSetRecordExtensions
     private const string IssuerIdJsonKey = "issuer_id";
     private const string CreatedAtJsonKey = "created_at";
     private const string UpdatedAtJsonKey = "updated_at";
+    private const string StatusListJsonKey = "status_list";
     
     public static void AddSdJwtData(
         this CredentialSetRecord credentialSetRecord, 
@@ -131,6 +134,7 @@ public static class CredentialSetRecordExtensions
         credentialSetRecord.IssuedAt = sdJwtRecord.IssuedAt.ToOption();
         credentialSetRecord.NotBefore = sdJwtRecord.NotBefore.ToOption();
         credentialSetRecord.IssuerId = sdJwtRecord.IssuerId;
+        credentialSetRecord.StatusList = sdJwtRecord.Status;
     }
     
     public static void AddMDocData(
@@ -200,6 +204,7 @@ public static class CredentialSetRecordExtensions
         credentialSetRecord.DeletedAt.IfSome(deletedAt => result.Add(DeletedAtJsonKey, deletedAt));
         credentialSetRecord.CreatedAtUtc.IfSome(createdAtUtc => result.Add(CreatedAtJsonKey, createdAtUtc));
         credentialSetRecord.UpdatedAtUtc.IfSome(updatedAtUtc => result.Add(UpdatedAtJsonKey, updatedAtUtc));
+        credentialSetRecord.StatusList.IfSome(statusList => result.Add(StatusListJsonKey, JObject.FromObject(statusList)));
         result.Add(IssuerIdJsonKey, credentialSetRecord.IssuerId);
 
         return result;
@@ -223,6 +228,10 @@ public static class CredentialSetRecordExtensions
         
         var stateType = Enum.Parse<CredentialState>(json[StateJsonKey]!.ToString());
 
+        var statusListType = 
+            from jToken in json.GetByKey(StatusListJsonKey).ToOption()
+            select jToken.ToObject<Status>();
+        
         var expiresAtType = 
             from jToken in json.GetByKey(ExpiresAtJsonKey).ToOption()
             select jToken.ToObject<DateTime>();
@@ -258,6 +267,7 @@ public static class CredentialSetRecordExtensions
             mDocCredentialType,
             credentialAttributesType,
             stateType,
+            statusListType,
             expiresAtType,
             issuedAtType,
             notBeforeType,

@@ -14,7 +14,7 @@ namespace WalletFramework.SdJwtVc.Tests;
 
 public class SdJwtVcHolderServiceTests
 {
-    private readonly SdJwtVcHolderService _service;
+    private readonly SdJwtVcHolderService _service; 
     
     public SdJwtVcHolderServiceTests()
     {
