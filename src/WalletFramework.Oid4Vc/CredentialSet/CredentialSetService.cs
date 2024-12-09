@@ -103,7 +103,7 @@ public class CredentialSetService(
         return records;
     }
     
-    public virtual async Task<Option<CredentialSetRecord>> GetAsync(CredentialSetId credentialSetId)
+    public async Task<Option<CredentialSetRecord>> GetAsync(CredentialSetId credentialSetId)
     {
         var context = await agentProvider.GetContextAsync();
         var record = await walletRecordService.GetAsync<CredentialSetRecord>(context.Wallet, credentialSetId);
