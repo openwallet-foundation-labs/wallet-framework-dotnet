@@ -8,6 +8,7 @@ using WalletFramework.MdocVc;
 using WalletFramework.Oid4Vc.CredentialSet.Models;
 using WalletFramework.Oid4Vc.Oid4Vci.Abstractions;
 using WalletFramework.SdJwtVc.Models.Records;
+using WalletFramework.SdJwtVc.Services;
 using WalletFramework.SdJwtVc.Services.SdJwtVcHolderService;
 
 namespace WalletFramework.Oid4Vc.CredentialSet;
@@ -16,6 +17,7 @@ public class CredentialSetService(
     IAgentProvider agentProvider,
     ISdJwtVcHolderService sdJwtVcHolderService,
     IMdocStorage mDocStorage,
+    IStatusListService statusListService,
     IWalletRecordService walletRecordService)
     : ICredentialSetService
 {
@@ -101,7 +103,7 @@ public class CredentialSetService(
         return records;
     }
     
-    public virtual async Task<Option<CredentialSetRecord>> GetAsync(CredentialSetId credentialSetId)
+    public async Task<Option<CredentialSetRecord>> GetAsync(CredentialSetId credentialSetId)
     {
         var context = await agentProvider.GetContextAsync();
         var record = await walletRecordService.GetAsync<CredentialSetRecord>(context.Wallet, credentialSetId);
@@ -127,10 +129,17 @@ public class CredentialSetService(
             if (expiresAt < DateTime.UtcNow)
                 credentialSetRecord.State = CredentialState.Expired;
         });
-        
-        //TODO: Implement revocation check (status List) -> Currently IsRevoked always returns false
-        if (credentialSetRecord.IsRevoked())
-            credentialSetRecord.State = CredentialState.Revoked;
+
+        await credentialSetRecord.StatusList.IfSomeAsync(
+            async statusList =>
+            {
+                await statusListService.GetState(statusList).IfSomeAsync(
+                    state =>
+                    {
+                        if (state == CredentialState.Revoked)
+                            credentialSetRecord.State = CredentialState.Revoked;
+                    });
+            });
         
         if (oldState != credentialSetRecord.State) 
             await UpdateAsync(credentialSetRecord);

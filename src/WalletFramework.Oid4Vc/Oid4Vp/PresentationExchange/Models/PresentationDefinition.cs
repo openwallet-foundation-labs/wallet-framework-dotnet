@@ -24,7 +24,7 @@ public class PresentationDefinition
     ///     This MUST be a string. The string SHOULD provide a unique ID for the desired context.
     /// </summary>
     [JsonProperty("id", Required = Required.Always)]
-    public string Id { get; }
+    public string Id { get; } 
 
     /// <summary>
     ///     This SHOULD be a human-friendly string intended to constitute a distinctive designation of the Presentation
