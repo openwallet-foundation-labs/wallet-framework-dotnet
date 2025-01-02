@@ -142,7 +142,7 @@ public static class CredentialSetRecordExtensions
     public static void AddMDocData(
         this CredentialSetRecord credentialSetRecord, 
         MdocRecord mdocRecord,
-        IssuerMetadata issuerMetadata)
+        CredentialIssuerId credentialIssuerId)
     {
         credentialSetRecord.MDocCredentialType = mdocRecord.DocType;
         credentialSetRecord.State = mdocRecord.CredentialState;
@@ -156,7 +156,7 @@ public static class CredentialSetRecordExtensions
             credentialSetRecord.ExpiresAt = mdocRecord.ExpiresAt.ToOption();
 
         if (credentialSetRecord.IssuerId.IsNullOrEmpty())
-            credentialSetRecord.IssuerId = issuerMetadata.CredentialIssuer.ToString();
+            credentialSetRecord.IssuerId = credentialIssuerId.ToString();
     }
     
     public static CredentialSetId GetCredentialSetId(this CredentialSetRecord credentialSetRecord) =>

@@ -305,7 +305,7 @@ public class Oid4VciClientService : IOid4VciClientService
                                     credentialSet.GetCredentialSetId(), creds.Count > 1);
                                 await _mdocStorage.Add(record);
 
-                                credentialSet.AddMDocData(record, issuerMetadata);
+                                credentialSet.AddMDocData(record, issuerMetadata.CredentialIssuer);
                             });
                     }
                 },
@@ -415,7 +415,7 @@ public class Oid4VciClientService : IOid4VciClientService
                                         credentialSet.GetCredentialSetId(), creds.Count > 1);
                                     await _mdocStorage.Add(record);
 
-                                    credentialSet.AddMDocData(record, session.AuthorizationData.IssuerMetadata);
+                                    credentialSet.AddMDocData(record, session.AuthorizationData.IssuerMetadata.CredentialIssuer);
                                 });   
                         }
                     },
@@ -534,7 +534,7 @@ public class Oid4VciClientService : IOid4VciClientService
                                 var record = mdoc.Decoded.ToRecord(displays, response.KeyId,
                                     credentialSetRecord.GetCredentialSetId(), creds.Count > 1);
 
-                                credentialSetRecord.AddMDocData(record, session.AuthorizationData.IssuerMetadata);
+                                credentialSetRecord.AddMDocData(record, session.AuthorizationData.IssuerMetadata.CredentialIssuer);
 
                                 token = token.Match<OneOf<OAuthToken, DPopToken>>(
                                     oAuth =>
