@@ -6,8 +6,10 @@ using OneOf;
 using WalletFramework.Core.Credentials;
 using WalletFramework.Core.Functional;
 using WalletFramework.Core.Json;
+using WalletFramework.Core.String;
 using WalletFramework.MdocLib;
 using WalletFramework.MdocVc;
+using WalletFramework.Oid4Vc.Oid4Vci.Issuer.Models;
 using WalletFramework.SdJwtVc.Models;
 using WalletFramework.SdJwtVc.Models.Records;
 using WalletFramework.SdJwtVc.Models.StatusList;
@@ -139,7 +141,8 @@ public static class CredentialSetRecordExtensions
     
     public static void AddMDocData(
         this CredentialSetRecord credentialSetRecord, 
-        MdocRecord mdocRecord)
+        MdocRecord mdocRecord,
+        CredentialIssuerId credentialIssuerId)
     {
         credentialSetRecord.MDocCredentialType = mdocRecord.DocType;
         credentialSetRecord.State = mdocRecord.CredentialState;
@@ -151,7 +154,9 @@ public static class CredentialSetRecordExtensions
         
         if (credentialSetRecord.ExpiresAt.IsNone)
             credentialSetRecord.ExpiresAt = mdocRecord.ExpiresAt.ToOption();
-        //TODO: Add issuerId
+
+        if (credentialSetRecord.IssuerId.IsNullOrEmpty())
+            credentialSetRecord.IssuerId = credentialIssuerId.ToString();
     }
     
     public static CredentialSetId GetCredentialSetId(this CredentialSetRecord credentialSetRecord) =>
