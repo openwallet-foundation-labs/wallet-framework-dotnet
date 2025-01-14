@@ -37,9 +37,14 @@ public class Oid4VpHaipClientTests
                         ["id"] = "NextcloudCredential",
                         ["format"] = new JObject()
                         {
-                            ["vc+sd-jwt"] = new JObject()
+                            ["vc+sd-jwt"] = new JObject
                             {
-                                ["proof_type"] = new JArray("JsonWebSignature2020")
+                                ["sd-jwt_alg_values"] = new JArray("ES256"),
+                                ["kb-jwt_alg_values"] = new JArray("JsonWebSignature2020")
+                            },
+                            ["dc+jwt"] = new JObject
+                            {
+                                ["alg"] = new JArray("ES256")
                             }
                         },
                         ["constraints"] = new JObject()
@@ -77,6 +82,18 @@ public class Oid4VpHaipClientTests
                 ["redirect_uris"] = new JArray("https://verifier.com/redirect-uri"),
                 ["policy_uri"] = "https://some.de/policy",
                 ["tos_uri"] = "https://some.de/tos",
+                ["vp_formats"] = new JObject
+                {
+                    ["vc+sd-jwt"] = new JObject
+                    {
+                        ["sd-jwt_alg_values"] = new JArray("ES256"),
+                        ["kb-jwt_alg_values"] = new JArray("JsonWebSignature2020")
+                    },
+                    ["dc+jwt"] = new JObject
+                    {
+                        ["alg"] = new JArray("ES256")
+                    }
+                }
             }
             .ToString();
         
@@ -133,8 +150,8 @@ public class Oid4VpHaipClientTests
 
         inputDescriptor.Id.Should().Be("NextcloudCredential");
 
-        inputDescriptor.Formats.First().Key.Should().Be("vc+sd-jwt");
-        inputDescriptor.Formats.First().Value.ProofTypes.First().Should().Be("JsonWebSignature2020");
+        inputDescriptor.Formats.SdJwtFormat.IssuerSignedJwtAlgValues.First().Should().Be("vc+sd-jwt");
+        inputDescriptor.Formats.SdJwtFormat.KeyBindingJwtAlgValues.First().Should().Be("JsonWebSignature2020");
 
         inputDescriptor.Constraints.LimitDisclosure.Should().Be("required");
 
@@ -185,8 +202,8 @@ public class Oid4VpHaipClientTests
 
         inputDescriptor.Id.Should().Be("NextcloudCredential");
 
-        inputDescriptor.Formats.First().Key.Should().Be("vc+sd-jwt");
-        inputDescriptor.Formats.First().Value.ProofTypes.First().Should().Be("JsonWebSignature2020");
+        inputDescriptor.Formats.SdJwtFormat.IssuerSignedJwtAlgValues.First().Should().Be("vc+sd-jwt");
+        inputDescriptor.Formats.SdJwtFormat.KeyBindingJwtAlgValues.First().Should().Be("JsonWebSignature2020");
 
         inputDescriptor.Constraints.LimitDisclosure.Should().Be("required");
 

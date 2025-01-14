@@ -100,8 +100,8 @@ public class Oid4VpClientService : IOid4VpClientService
         );
 
         var credentialCandidates = await _pexService.FindCredentialCandidates(
-            authorizationRequest.PresentationDefinition.InputDescriptors);
-
+            authorizationRequest.PresentationDefinition.InputDescriptors, authorizationRequest.ClientMetadata?.Formats);
+        
         return (authorizationRequest, credentialCandidates);
     }
 

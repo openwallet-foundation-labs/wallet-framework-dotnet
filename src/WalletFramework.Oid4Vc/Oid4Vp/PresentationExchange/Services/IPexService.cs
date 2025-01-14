@@ -22,6 +22,7 @@ public interface IPexService
     ///     Finds the credential candidates based on the provided credentials and input descriptors.
     /// </summary>
     /// <param name="inputDescriptors">An array of input descriptors to be satisfied.</param>
+    /// <param name="supportedFormatSigningAlgorithms">An array of input descriptors to be satisfied.</param>
     /// <returns>An array of credential candidates, each containing a list of credentials that match the input descriptors.</returns>
-    Task<PresentationCandidates[]> FindCredentialCandidates(IEnumerable<InputDescriptor> inputDescriptors);
+    Task<PresentationCandidates[]> FindCredentialCandidates(IEnumerable<InputDescriptor> inputDescriptors, Formats? supportedFormatSigningAlgorithms = null);
 }

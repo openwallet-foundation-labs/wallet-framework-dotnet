@@ -1,9 +1,11 @@
+using System.IdentityModel.Tokens.Jwt;
 using Hyperledger.Aries.Agents;
 using Newtonsoft.Json.Linq;
 using SD_JWT.Models;
 using WalletFramework.Core.Credentials.Abstractions;
 using WalletFramework.Core.Functional;
 using WalletFramework.MdocLib.Issuer;
+using WalletFramework.MdocLib.Security.Cose;
 using WalletFramework.Oid4Vc.Oid4Vci.Abstractions;
 using WalletFramework.Oid4Vc.Oid4Vp.Models;
 using WalletFramework.Oid4Vc.Oid4Vp.PresentationExchange.Models;
@@ -40,23 +42,18 @@ public class PexService(
     }
 
     /// <inheritdoc />
-    public virtual async Task<PresentationCandidates[]> FindCredentialCandidates(IEnumerable<InputDescriptor> inputDescriptors)
+    public virtual async Task<PresentationCandidates[]> FindCredentialCandidates(IEnumerable<InputDescriptor> inputDescriptors, Formats? supportedFormatSigningAlgorithms)
     {
         var result = new List<PresentationCandidates>();
 
         foreach (var inputDescriptor in inputDescriptors)
         {
-            if (!(inputDescriptor.Formats.Keys.Contains("vc+sd-jwt") || inputDescriptor.Formats.Keys.Contains("mso_mdoc")))
-            {
-                throw new NotSupportedException("Only vc+sd-jwt or mso_mdoc format are supported");
-            }
-
             if (inputDescriptor.Constraints.Fields == null || inputDescriptor.Constraints.Fields.Length == 0)
             {
                 throw new InvalidOperationException("Fields cannot be null or empty");
             }
             
-            var matchingCredentials = await GetMatchingCredentials(inputDescriptor);
+            var matchingCredentials = await GetMatchingCredentials(inputDescriptor, supportedFormatSigningAlgorithms);
 
             if (matchingCredentials.Count == 0)
                 continue;
@@ -83,7 +80,7 @@ public class PexService(
         return result.ToArray();
     }
 
-    private async Task<List<ICredential>> GetMatchingCredentials(InputDescriptor inputDescriptor)
+    private async Task<List<ICredential>> GetMatchingCredentials(InputDescriptor inputDescriptor, Formats? supportedFormatSigningAlgorithms)
     {
         var context = await agentProvider.GetContextAsync();
         
@@ -93,7 +90,15 @@ public class PexService(
         var filteredSdJwtRecords = sdJwtRecords.Where(record =>
         {
             var doc = _toSdJwtDoc(record);
-            return inputDescriptor.Formats.ContainsKey("vc+sd-jwt") && inputDescriptor.Constraints.Fields!.All(field =>
+            
+            var handler = new JwtSecurityTokenHandler();
+            var issuerSignedJwt = handler.ReadJwtToken(doc.IssuerSignedJwt);
+            
+            return issuerSignedJwt.Header.TryGetValue("alg", out var alg)
+                   && (supportedFormatSigningAlgorithms?.SdJwtFormat?.IssuerSignedJwtAlgValues?.Contains(alg.ToString())
+                       ?? inputDescriptor.Formats?.SdJwtFormat?.IssuerSignedJwtAlgValues?.Contains(alg.ToString())
+                       ?? true)
+                   && inputDescriptor.Constraints.Fields!.All(field =>
             {
                 try
                 {
@@ -115,27 +120,34 @@ public class PexService(
         }).Cast<ICredential>().AsOption();
 
         var filteredMdocRecords = mdocRecords.OnSome(records => records
-            .Where(record => inputDescriptor.Formats.ContainsKey("mso_mdoc") && inputDescriptor.Constraints.Fields!.All(field =>
+            .Where(record =>
             {
-                try
+                return record.Mdoc.IssuerSigned.IssuerAuth.ProtectedHeaders.Value.TryGetValue(new CoseLabel(1), out var alg)
+                && (supportedFormatSigningAlgorithms?.MDocFormat?.Alg.Contains(alg.ToString()) 
+                    ?? inputDescriptor.Formats?.MDocFormat?.Alg.Contains(alg.ToString()) 
+                    ?? true)
+                && inputDescriptor.Constraints.Fields!.All(field =>
                 {
-                    var jObj = record.Mdoc.IssuerSigned.IssuerNameSpaces.ToJObject();
-                    
-                    if (jObj.SelectToken(field.Path.First(), true) is not JValue value)
-                        return false;
-                    
-                    if (field.Filter?.Const != null)
+                    try
                     {
-                        return field.Filter?.Const == value.Value?.ToString();
-                    }
+                        var jObj = record.Mdoc.IssuerSigned.IssuerNameSpaces.ToJObject();
 
-                    return true;
-                }
-                catch (Exception)
-                {
-                    return false;
-                }
-            }))
+                        if (jObj.SelectToken(field.Path.First(), true) is not JValue value)
+                            return false;
+
+                        if (field.Filter?.Const != null)
+                        {
+                            return field.Filter?.Const == value.Value?.ToString();
+                        }
+
+                        return true;
+                    }
+                    catch (Exception)
+                    {
+                        return false;
+                    }
+                });
+            })
             .Cast<ICredential>()
             .AsOption());
 
