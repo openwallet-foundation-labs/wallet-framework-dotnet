@@ -73,7 +73,7 @@ public sealed class SdJwtRecord : RecordBase, ICredential
     /// <summary>
     ///     Tracks when the Sd-JWT was issued
     /// </summary>
-    public Status? Status { get; set; }
+    public StatusListEntry? StatusListEntry { get; set; }
     
     /// <summary>
     ///     Tracks when the Sd-JWT is valid from
@@ -149,7 +149,7 @@ public sealed class SdJwtRecord : RecordBase, ICredential
     /// <param name="issuerId">The Id of the issuer</param>
     /// <param name="encodedIssuerSignedJwt">The Issuer-signed JWT part of the SD-JWT.</param>
     /// <param name="credentialSetId">The CredentialSetId.</param>
-    /// <param name="status">The status list.</param>
+    /// <param name="statusListEntry">The status list.</param>
     /// <param name="expiresAt">The Expiration Date.</param>
     /// <param name="issuedAt">The Issued at date.</param>
     /// <param name="notBefore">The valid after date.</param>
@@ -163,7 +163,7 @@ public sealed class SdJwtRecord : RecordBase, ICredential
         string issuerId,
         string encodedIssuerSignedJwt,
         string credentialSetId,
-        Status status,
+        StatusListEntry statusListEntry,
         DateTime? expiresAt,
         DateTime? issuedAt,
         DateTime? notBefore,
@@ -183,7 +183,7 @@ public sealed class SdJwtRecord : RecordBase, ICredential
         IssuerId = issuerId;
         CredentialSetId = credentialSetId;
         OneTimeUse = isOneTimeUse;
-        Status = status;
+        StatusListEntry = statusListEntry;
     }
     
     public SdJwtRecord(
@@ -202,8 +202,8 @@ public sealed class SdJwtRecord : RecordBase, ICredential
         Claims = sdJwtDoc.GetAllSubjectClaims();
         Display = display;
         DisplayedAttributes = displayedAttributes;
-        Status = sdJwtDoc.UnsecuredPayload.SelectToken("status")?.ToObject<Status>() is not null
-            ? sdJwtDoc.UnsecuredPayload.SelectToken("status")?.ToObject<Status>()
+        StatusListEntry = sdJwtDoc.UnsecuredPayload.SelectToken("status")?.ToObject<StatusListEntry>() is not null
+            ? sdJwtDoc.UnsecuredPayload.SelectToken("status")?.ToObject<StatusListEntry>()
             : null;
 
         CredentialSetId = credentialSetId;
@@ -241,8 +241,8 @@ public sealed class SdJwtRecord : RecordBase, ICredential
         Claims = sdJwtDoc.GetAllSubjectClaims();
         Display = display;
         DisplayedAttributes = displayedAttributes;
-        Status = sdJwtDoc.UnsecuredPayload.SelectToken("status")?.ToObject<Status>() is not null
-            ? sdJwtDoc.UnsecuredPayload.SelectToken("status")?.ToObject<Status>()
+        StatusListEntry = sdJwtDoc.UnsecuredPayload.SelectToken("status")?.ToObject<StatusListEntry>() is not null
+            ? sdJwtDoc.UnsecuredPayload.SelectToken("status")?.ToObject<StatusListEntry>()
             : null;
             
         CredentialSetId = credentialSetId;

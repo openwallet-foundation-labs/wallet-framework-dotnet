@@ -51,6 +51,16 @@ public class MdocStorage : IMdocStorage
         return list;
     }
 
+    public async Task<Option<IEnumerable<MdocRecord>>> List(CredentialSetId id)
+    {
+        var query = SearchQuery.Equal(
+            "~" + nameof(MdocRecord.CredentialSetId),
+            id);
+
+        var some = Option<ISearchQuery>.Some(query);
+        return await List(some);
+    }
+
     public async Task<Unit> Update(MdocRecord record)
     {
         var context = await _agentProvider.GetContextAsync();

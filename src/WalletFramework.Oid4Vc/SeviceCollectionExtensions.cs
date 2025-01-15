@@ -35,9 +35,12 @@ public static class SeviceCollectionExtensions
     {
         builder.AddSingleton<IAesGcmEncryption, AesGcmEncryption>();
         builder.AddSingleton<IAuthFlowSessionStorage, AuthFlowSessionStorage>();
+        builder.AddSingleton<IAuthorizationRequestService, AuthorizationRequestService>();
         builder.AddSingleton<ICoseSign1Signer, CoseSign1Signer>();
         builder.AddSingleton<ICredentialOfferService, CredentialOfferService>();
         builder.AddSingleton<ICredentialRequestService, CredentialRequestService>();
+        builder.AddSingleton<ICredentialSetService, CredentialSetService>();
+        builder.AddSingleton<ICredentialSetStorage, CredentialSetStorage>();
         builder.AddSingleton<IDPopHttpClient, DPopHttpClient>();
         builder.AddSingleton<IIssuerMetadataService, IssuerMetadataService>();
         builder.AddSingleton<IMdocAuthenticationService, MdocAuthenticationService>();
@@ -48,11 +51,9 @@ public static class SeviceCollectionExtensions
         builder.AddSingleton<IOid4VpHaipClient, Oid4VpHaipClient>();
         builder.AddSingleton<IOid4VpRecordService, Oid4VpRecordService>();
         builder.AddSingleton<IPexService, PexService>();
-        builder.AddSingleton<ITokenService, TokenService>();
-        builder.AddSingleton<ICredentialSetService, CredentialSetService>();
-        builder.AddSingleton<IVctMetadataService, VctMetadataService>();
-        builder.AddSingleton<IAuthorizationRequestService, AuthorizationRequestService>();
         builder.AddSingleton<IStatusListService, StatusListService>();
+        builder.AddSingleton<ITokenService, TokenService>();
+        builder.AddSingleton<IVctMetadataService, VctMetadataService>();
 
         builder.AddSdJwtVcServices();
         
@@ -82,11 +83,11 @@ public static class SeviceCollectionExtensions
     /// <returns>The extended CredentialSet credential service.</returns>
     /// <param name="builder">Builder.</param>
     /// <typeparam name="TImplementation">The 2nd type parameter.</typeparam>
-    public static IServiceCollection AddExtendedSdJwtHolderService<TImplementation>(this IServiceCollection builder)
-        where TImplementation : class, ICredentialSetService
+    public static IServiceCollection AddExtendedCredentialSetStorage<TImplementation>(this IServiceCollection builder)
+        where TImplementation : class, ICredentialSetStorage
     {
         builder.AddSingleton<TImplementation>();
-        builder.AddSingleton<ICredentialSetService>(x => x.GetService<TImplementation>());
+        builder.AddSingleton<ICredentialSetStorage>(x => x.GetService<TImplementation>());
         return builder;
     }
 }

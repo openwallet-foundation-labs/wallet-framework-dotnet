@@ -1,5 +1,7 @@
 using Hyperledger.Aries.Agents;
 using Hyperledger.Aries.Storage;
+using LanguageExt;
+using WalletFramework.Core.Credentials;
 using WalletFramework.SdJwtVc.Models.Records;
 
 namespace WalletFramework.SdJwtVc.Services.SdJwtVcHolderService;
@@ -64,6 +66,8 @@ public interface ISdJwtVcHolderService
         ISearchQuery? query = null,
         int count = 100,
         int skip = 0);
+
+    Task<Option<IEnumerable<SdJwtRecord>>> ListAsync(IAgentContext context, CredentialSetId setId);
 
     /// <summary>
     ///     Updates a SD-JWT record.

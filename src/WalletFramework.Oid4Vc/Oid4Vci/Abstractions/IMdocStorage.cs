@@ -15,6 +15,8 @@ public interface IMdocStorage
         Option<ISearchQuery> query,
         int count = 100,
         int skip = 0);
+
+    public Task<Option<IEnumerable<MdocRecord>>> List(CredentialSetId id);
     
     public Task<Option<IEnumerable<MdocRecord>>> ListAll() => List(Option<ISearchQuery>.None);
 
