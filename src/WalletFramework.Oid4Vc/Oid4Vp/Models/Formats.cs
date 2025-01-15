@@ -7,6 +7,6 @@ public record Formats
     [JsonProperty("vc+sd-jwt")]
     public SdJwtFormat? SdJwtFormat { get; init; }
     
-    [JsonProperty("dc+jwt")]
+    [JsonProperty("mso_mdoc")]
     public MDocFormat? MDocFormat { get; init; }
 }
