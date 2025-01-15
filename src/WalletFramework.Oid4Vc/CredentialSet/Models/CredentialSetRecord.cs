@@ -142,11 +142,10 @@ public static class CredentialSetRecordExtensions
         credentialSetRecord.IssuerId = sdJwtRecord.IssuerId;
         credentialSetRecord.StatusListEntry = sdJwtRecord.StatusListEntry;
     }
-    
-    public static void AddMDocData(
-        this CredentialSetRecord credentialSetRecord, 
-        MdocRecord mdocRecord,
-        CredentialIssuerId credentialIssuerId)
+
+    internal static void AddMdocData(
+        this CredentialSetRecord credentialSetRecord,
+        MdocRecord mdocRecord)
     {
         credentialSetRecord.MDocCredentialType = mdocRecord.DocType;
         credentialSetRecord.State = mdocRecord.CredentialState;
@@ -158,7 +157,15 @@ public static class CredentialSetRecordExtensions
         
         if (credentialSetRecord.ExpiresAt.IsNone)
             credentialSetRecord.ExpiresAt = mdocRecord.ExpiresAt.ToOption();
-
+    }
+    
+    public static void AddMDocData(
+        this CredentialSetRecord credentialSetRecord, 
+        MdocRecord mdocRecord,
+        CredentialIssuerId credentialIssuerId)
+    {
+        AddMdocData(credentialSetRecord, mdocRecord);
+        
         if (credentialSetRecord.IssuerId.IsNullOrEmpty())
             credentialSetRecord.IssuerId = credentialIssuerId.ToString();
     }

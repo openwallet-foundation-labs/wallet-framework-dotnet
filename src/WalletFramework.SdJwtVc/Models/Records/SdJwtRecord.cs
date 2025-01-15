@@ -19,6 +19,8 @@ namespace WalletFramework.SdJwtVc.Models.Records;
 /// </summary>
 public sealed class SdJwtRecord : RecordBase, ICredential
 {
+    public const int CurrentVersion = 2;
+    
     /// <summary>
     ///     Gets or sets the attributes that should be displayed.
     /// </summary>
@@ -153,6 +155,7 @@ public sealed class SdJwtRecord : RecordBase, ICredential
     /// <param name="expiresAt">The Expiration Date.</param>
     /// <param name="issuedAt">The Issued at date.</param>
     /// <param name="notBefore">The valid after date.</param>
+    /// <param name="recordVersion"></param>
     /// <param name="isOneTimeUse">Indicator whether the credential should be sued only once.</param>
     [JsonConstructor]
     public SdJwtRecord(
@@ -167,6 +170,7 @@ public sealed class SdJwtRecord : RecordBase, ICredential
         DateTime? expiresAt,
         DateTime? issuedAt,
         DateTime? notBefore,
+        int recordVersion,
         bool isOneTimeUse = false)
     {
         Claims = claims;
@@ -184,6 +188,7 @@ public sealed class SdJwtRecord : RecordBase, ICredential
         CredentialSetId = credentialSetId;
         OneTimeUse = isOneTimeUse;
         StatusListEntry = statusListEntry;
+        RecordVersion = recordVersion;
     }
     
     public SdJwtRecord(
@@ -224,6 +229,8 @@ public sealed class SdJwtRecord : RecordBase, ICredential
                    ?? throw new ArgumentNullException(nameof(IssuerId), "iss claim is missing or null");
         Vct = sdJwtDoc.UnsecuredPayload.SelectToken("vct")?.Value<string>() 
               ?? throw new ArgumentNullException(nameof(Vct), "vct claim is missing or null");
+
+        RecordVersion = CurrentVersion;
     }
     
     public SdJwtRecord(
@@ -264,6 +271,8 @@ public sealed class SdJwtRecord : RecordBase, ICredential
                    ?? throw new ArgumentNullException(nameof(IssuerId), "iss claim is missing or null");
         Vct = sdJwtDoc.UnsecuredPayload.SelectToken("vct")?.Value<string>() 
               ?? throw new ArgumentNullException(nameof(Vct), "vct claim is missing or null");
+
+        RecordVersion = CurrentVersion;
     }
 
     public CredentialId GetId()

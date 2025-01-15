@@ -16,6 +16,8 @@ namespace WalletFramework.MdocVc;
 [JsonConverter(typeof(MdocRecordJsonConverter))]
 public sealed class MdocRecord : RecordBase, ICredential
 {
+    public const int CurrentVersion = 2;
+    
     public CredentialId CredentialId
     {
         get => CredentialId
@@ -23,7 +25,7 @@ public sealed class MdocRecord : RecordBase, ICredential
             .UnwrapOrThrow(new InvalidOperationException("The Id is corrupt"));
         private set => Id = value;
     }
-
+    
     [RecordTag] 
     public DocType DocType => Mdoc.DocType;
     
@@ -69,6 +71,7 @@ public sealed class MdocRecord : RecordBase, ICredential
         CredentialState = credentialState;
         ExpiresAt = expiresAt;
         OneTimeUse = isOneTimeUse;
+        RecordVersion = CurrentVersion;
     }
 
 #pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
@@ -112,6 +115,7 @@ public static class MdocRecordFun
     private const string CredentialSetIdJsonKey = "credentialSetId";
     private const string CredentialStateJsonKey = "credentialState";
     private const string ExpiresAtJsonKey = "expiresAt";
+    private const string RecordVersionJsonKey = "recordVersion";
     private const string OneTimeUseJsonKey = "oneTimeUse";
 
     public static MdocRecord DecodeFromJson(JObject json)
@@ -141,14 +145,18 @@ public static class MdocRecordFun
 
         var credentialState = Enum.Parse<CredentialState>(json[CredentialStateJsonKey]!.ToString());
         
+        var recordVersion = json.GetByKey(RecordVersionJsonKey).ToOption().Match(
+            value => value.ToObject<int>(),
+            () => 1);
+        
         var oneTimeUse = json.GetByKey(OneTimeUseJsonKey).ToOption().Match(
             Some: value => value.ToObject<bool>(),
-            None: () => false
-            );
+            None: () => false);
         
         var result = new MdocRecord(mdoc, displays, keyId, credentialSetId, credentialState, expiresAt, oneTimeUse)
         {
-            Id = id
+            Id = id,
+            RecordVersion = recordVersion
         };
 
         return result;

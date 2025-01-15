@@ -5,7 +5,6 @@ using WalletFramework.Core.Cryptography.Models;
 using WalletFramework.Core.Functional;
 using WalletFramework.Oid4Vc.Oid4Vci.CredConfiguration.Models.SdJwt;
 using WalletFramework.SdJwtVc.Models.Credential;
-using WalletFramework.SdJwtVc.Models.Credential.Attributes;
 using WalletFramework.SdJwtVc.Models.Records;
 
 namespace WalletFramework.Oid4Vc.Oid4Vci.Implementations;
@@ -44,8 +43,8 @@ public static class SdJwtRecordExtensions
         
         var record = new SdJwtRecord(
             sdJwtDoc,
-            claims!,
-            display.Fallback(new List<SdJwtDisplay>()),
+            claims,
+            display.Fallback([]),
             keyId, 
             credentialSetId,
             isOneTimeUse);
