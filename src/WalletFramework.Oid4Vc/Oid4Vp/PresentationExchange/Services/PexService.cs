@@ -1,5 +1,6 @@
 using System.IdentityModel.Tokens.Jwt;
 using Hyperledger.Aries.Agents;
+using LanguageExt;
 using Newtonsoft.Json.Linq;
 using SD_JWT.Models;
 using WalletFramework.Core.Credentials.Abstractions;
@@ -42,7 +43,8 @@ public class PexService(
     }
 
     /// <inheritdoc />
-    public virtual async Task<PresentationCandidates[]> FindCredentialCandidates(IEnumerable<InputDescriptor> inputDescriptors, Formats? supportedFormatSigningAlgorithms)
+    public virtual async Task<PresentationCandidates[]> FindCredentialCandidates(
+        IEnumerable<InputDescriptor> inputDescriptors, Option<Formats> supportedFormatSigningAlgorithms)
     {
         var result = new List<PresentationCandidates>();
 
@@ -80,7 +82,7 @@ public class PexService(
         return result.ToArray();
     }
 
-    private async Task<List<ICredential>> GetMatchingCredentials(InputDescriptor inputDescriptor, Formats? supportedFormatSigningAlgorithms)
+    private async Task<List<ICredential>> GetMatchingCredentials(InputDescriptor inputDescriptor, Option<Formats> supportedFormatSigningAlgorithms)
     {
         var context = await agentProvider.GetContextAsync();
         
@@ -93,11 +95,11 @@ public class PexService(
             
             var handler = new JwtSecurityTokenHandler();
             var issuerSignedJwt = handler.ReadJwtToken(doc.IssuerSignedJwt);
-            
+
             return issuerSignedJwt.Header.TryGetValue("alg", out var alg)
-                   && (supportedFormatSigningAlgorithms?.SdJwtFormat?.IssuerSignedJwtAlgValues?.Contains(alg.ToString())
-                       ?? inputDescriptor.Formats?.SdJwtFormat?.IssuerSignedJwtAlgValues?.Contains(alg.ToString())
-                       ?? true)
+                   && supportedFormatSigningAlgorithms.Match(
+                       formats => formats.SdJwtFormat?.IssuerSignedJwtAlgValues?.Contains(alg.ToString()) ?? true,
+                       () => inputDescriptor.Formats?.SdJwtFormat?.IssuerSignedJwtAlgValues?.Contains(alg.ToString()) ?? true)
                    && inputDescriptor.Constraints.Fields!.All(field =>
             {
                 try
@@ -123,9 +125,9 @@ public class PexService(
             .Where(record =>
             {
                 return record.Mdoc.IssuerSigned.IssuerAuth.ProtectedHeaders.Value.TryGetValue(new CoseLabel(1), out var alg)
-                && (supportedFormatSigningAlgorithms?.MDocFormat?.Alg.Contains(alg.ToString()) 
-                    ?? inputDescriptor.Formats?.MDocFormat?.Alg.Contains(alg.ToString()) 
-                    ?? true)
+                && supportedFormatSigningAlgorithms.Match(
+                    formats => formats.MDocFormat?.Alg.Contains(alg.ToString()) ?? true,
+                    () => inputDescriptor.Formats?.MDocFormat?.Alg.Contains(alg.ToString()) ?? true)
                 && inputDescriptor.Constraints.Fields!.All(field =>
                 {
                     try

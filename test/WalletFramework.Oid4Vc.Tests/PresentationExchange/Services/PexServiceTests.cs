@@ -1,6 +1,7 @@
 using FluentAssertions;
 using Hyperledger.Aries.Agents;
 using Hyperledger.Aries.Storage;
+using LanguageExt;
 using Moq;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -135,7 +136,8 @@ public class PexServiceTests
 
         // Act
         var credentialCandidatesArray = await pexService.FindCredentialCandidates(
-            new[] { driverLicenseInputDescriptor, universityInputDescriptor , batchInputDescriptor});
+            [driverLicenseInputDescriptor, universityInputDescriptor, batchInputDescriptor],
+            Option<Formats>.None);
 
         // Assert
         credentialCandidatesArray.Should().BeEquivalentTo(expected);
@@ -169,8 +171,7 @@ public class PexServiceTests
         var sdJwtVcHolderService = CreatePexService();
 
         // Act
-        var credentialCandidatesArray = await sdJwtVcHolderService.FindCredentialCandidates(
-            new[] { identityCredentialInputDescriptor });
+        var credentialCandidatesArray = await sdJwtVcHolderService.FindCredentialCandidates([identityCredentialInputDescriptor], Option<Formats>.None);
 
         // Assert
         credentialCandidatesArray.Should().BeEquivalentTo(expected);
@@ -205,8 +206,7 @@ public class PexServiceTests
         var sdJwtVcHolderService = CreatePexService();
 
         // Act
-        var credentialCandidatesArray = await sdJwtVcHolderService.FindCredentialCandidates(
-            new[] { identityCredentialInputDescriptor });
+        var credentialCandidatesArray = await sdJwtVcHolderService.FindCredentialCandidates([identityCredentialInputDescriptor], Option<Formats>.None);
 
         // Assert
         credentialCandidatesArray.Should().BeEquivalentTo(expected);
@@ -238,8 +238,7 @@ public class PexServiceTests
         var sdJwtVcHolderService = CreatePexService();
 
         // Act
-        var credentialCandidatesArray = await sdJwtVcHolderService.FindCredentialCandidates(
-            new[] { universityInputDescriptor });
+        var credentialCandidatesArray = await sdJwtVcHolderService.FindCredentialCandidates([universityInputDescriptor], Option<Formats>.None);
 
         // Assert
         credentialCandidatesArray.Should().BeEquivalentTo(expected);
@@ -262,8 +261,7 @@ public class PexServiceTests
         var sdJwtVcHolderService = CreatePexService();
 
         // Act
-        var credentialCandidatesArray = await sdJwtVcHolderService.FindCredentialCandidates(
-            new[] { universityInputDescriptor });
+        var credentialCandidatesArray = await sdJwtVcHolderService.FindCredentialCandidates([universityInputDescriptor], Option<Formats>.None);
 
         // Assert
         credentialCandidatesArray.Should().BeEmpty();
@@ -287,8 +285,7 @@ public class PexServiceTests
         var sdJwtVcHolderService = CreatePexService();
 
         // Act
-        var credentialCandidates = await sdJwtVcHolderService.FindCredentialCandidates(
-            new[] { driverLicenseInputDescriptor });
+        var credentialCandidates = await sdJwtVcHolderService.FindCredentialCandidates([driverLicenseInputDescriptor], Option<Formats>.None);
 
         // Assert
         credentialCandidates.Should().BeEmpty();
@@ -315,9 +312,7 @@ public class PexServiceTests
         var sdJwtVcHolderService = CreatePexService();
 
         // Act
-        var credentialCandidates = await sdJwtVcHolderService.FindCredentialCandidates(
-            new[] { driverLicenseInputDescriptor }
-        );
+        var credentialCandidates = await sdJwtVcHolderService.FindCredentialCandidates([driverLicenseInputDescriptor], Option<Formats>.None);
 
         // Assert
         credentialCandidates.Should().BeEmpty();
