@@ -1,4 +1,5 @@
 using Newtonsoft.Json;
+using WalletFramework.Oid4Vc.Oid4Vp.Models;
 
 namespace WalletFramework.Oid4Vc.Oid4Vp.PresentationExchange.Models;
 
@@ -20,7 +21,7 @@ public class InputDescriptor
     ///     This property is optional.
     /// </summary>
     [JsonProperty("format")]
-    public Dictionary<string, Format> Formats { get; private set; } = null!;
+    public Formats? Formats { get; private set; }
 
     /// <summary>
     ///     Gets or sets the unique identifier for the input descriptor.

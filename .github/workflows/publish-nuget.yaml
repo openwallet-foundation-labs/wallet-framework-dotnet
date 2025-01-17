@@ -17,7 +17,7 @@ env:
 jobs:
     build:
         
-        runs-on: ubuntu-latest
+        runs-on: ubuntu-22.04
         
         steps:
             - uses: actions/checkout@v2
@@ -37,14 +37,6 @@ jobs:
                 fi
                 echo "APP_VERSION=$VERSION$SUFFIX" >> $GITHUB_ENV
 
-            - name: Setup NuGet
-              uses: NuGet/setup-nuget@v2
-              with:
-                nuget-version: 6.10.2
-
-            - name: Restore dependencies
-              run: nuget restore $SOLUTION
-
             - name: Setup .NET
               uses: actions/setup-dotnet@v3
               with:
@@ -57,6 +49,9 @@ jobs:
 #                sudo apt-get update \
 #                  apt-get install -y libindy
                   
+            - name: Restore dependencies
+              run: dotnet restore $SOLUTION
+                    
             - name: Build
               run: dotnet build $SOLUTION --configuration $BUILD_CONFIG -p:Version=$APP_VERSION
 

@@ -9,8 +9,8 @@
                 "A"
             ],
             "format": {
-                "jwt_vc": {
-                    "alg": ["ES256K", "ES384"]
+                "vc+sd-jwt": {
+                    "sd-jwt_alg_values": ["ES256", "ES256K", "ES384"]
                 }
             },
             "constraints": {
@@ -58,8 +58,8 @@
                 "A"
             ],
             "format": {
-                "jwt_vc": {
-                    "alg": ["ES256K", "ES384"]
+                "vc+sd-jwt": {
+                    "sd-jwt_alg_values": ["ES256", "ES256K", "ES384"]
                 }
             },
             "constraints": {

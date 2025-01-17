@@ -1,5 +1,6 @@
 using WalletFramework.Oid4Vc.Oid4Vci.CredConfiguration.Models;
 using WalletFramework.Oid4Vc.Oid4Vp.Models;
+using Format = WalletFramework.Oid4Vc.Oid4Vci.CredConfiguration.Models.Format;
 
 namespace WalletFramework.Oid4Vc.Oid4Vp.Services;
 

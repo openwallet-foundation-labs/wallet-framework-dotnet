@@ -100,15 +100,15 @@ public class Oid4VpClientService : IOid4VpClientService
         );
 
         var credentialCandidates = await _pexService.FindCredentialCandidates(
-            authorizationRequest.PresentationDefinition.InputDescriptors);
-
+            authorizationRequest.PresentationDefinition.InputDescriptors, authorizationRequest.ClientMetadata?.Formats);
+        
         return (authorizationRequest, credentialCandidates);
     }
 
     /// <inheritdoc />
     public async Task<Option<PresentationCandidates>> FindCredentialCandidateForInputDescriptorAsync(InputDescriptor inputDescriptor)
     {
-        var candidates = await _pexService.FindCredentialCandidates([inputDescriptor]);
+        var candidates = await _pexService.FindCredentialCandidates([inputDescriptor], Option<Formats>.None);
         return candidates.Any() ? candidates.First() : Option<PresentationCandidates>.None;
     }
 
