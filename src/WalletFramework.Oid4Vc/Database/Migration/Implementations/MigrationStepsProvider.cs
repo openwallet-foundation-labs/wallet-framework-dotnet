@@ -22,17 +22,21 @@ internal class MigrationStepsProvider(
         var sdJwtStep = new MigrationStep(
             1,
             2,
+            typeof(SdJwtRecord),
             async records =>
             {
                 var sdJwtRecords = records.OfType<SdJwtRecord>();
                 foreach (var record in sdJwtRecords)
                 {
-                    var credentialSetRecord = new CredentialSetRecord();
-                    credentialSetRecord.AddSdJwtData(record);
-                    await credentialSetStorage.Add(credentialSetRecord);
+                    if (string.IsNullOrWhiteSpace(record.CredentialSetId))
+                    {
+                        var credentialSetRecord = new CredentialSetRecord();
+                        credentialSetRecord.AddSdJwtData(record);
+                        await credentialSetStorage.Add(credentialSetRecord);
+                        record.CredentialSetId = credentialSetRecord.CredentialSetId;
+                    }
                     
                     record.RecordVersion = 2;
-                    record.CredentialSetId = credentialSetRecord.CredentialSetId;
                     var context = await agentProvider.GetContextAsync();
                     await sdJwtVcHolderService.UpdateAsync(context, record);
                 }
@@ -53,17 +57,21 @@ internal class MigrationStepsProvider(
         var mdocStep = new MigrationStep(
             1,
             2,
+            typeof(MdocRecord),
             async records =>
             {
                 var mdocRecords = records.OfType<MdocRecord>();
                 foreach (var record in mdocRecords)
                 {
-                    var credentialSetRecord = new CredentialSetRecord();
-                    credentialSetRecord.AddMdocData(record);
-                    await credentialSetStorage.Add(credentialSetRecord);
+                    if (string.IsNullOrWhiteSpace(record.CredentialSetId))
+                    {
+                        var credentialSetRecord = new CredentialSetRecord();
+                        credentialSetRecord.AddMdocData(record);
+                        await credentialSetStorage.Add(credentialSetRecord);
+                        record.CredentialSetId = credentialSetRecord.CredentialSetId;
+                    }
                     
                     record.RecordVersion = 2;
-                    record.CredentialSetId = credentialSetRecord.CredentialSetId;
                     await mdocStorage.Update(record);
                 }
             }, 

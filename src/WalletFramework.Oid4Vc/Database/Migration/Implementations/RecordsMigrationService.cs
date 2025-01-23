@@ -20,9 +20,7 @@ public class RecordsMigrationService : IRecordsMigrationService
 
     public async Task Migrate()
     {
-        var steps = _walletFrameworkMigrationSteps.Append(_migrationSteps);
-
-        var migrations = steps.Select(async step =>
+        var migrations = MigrationSteps.Select(async step =>
        {
             var pendingRecords = await step.GetPendingRecords();
             await pendingRecords.IfSomeAsync(async records =>
