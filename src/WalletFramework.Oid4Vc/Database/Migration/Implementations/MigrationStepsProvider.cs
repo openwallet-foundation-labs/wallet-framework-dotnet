@@ -77,10 +77,7 @@ internal class MigrationStepsProvider(
             }, 
             async () =>
             {
-                var query = SearchQuery.Less(
-                    nameof(MdocRecord.RecordVersion),
-                    "2");
-
+                var query = SearchQuery.Not(SearchQuery.Greater(nameof(MdocRecord.RecordVersion), "1"));
                 var someQuery = Option<ISearchQuery>.Some(query);
 
                 var mdocs = await mdocStorage.List(someQuery);

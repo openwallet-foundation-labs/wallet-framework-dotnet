@@ -122,6 +122,9 @@ public static class MdocRecordFun
     public static MdocRecord DecodeFromJson(JObject json)
     {
         var id = json[nameof(RecordBase.Id)]!.ToString();
+        var recordVersion = json.GetByKey(RecordVersionJsonKey).ToOption().Match(
+            value => value.ToObject<int>(),
+            () => 1);
         
         var mdocStr = json[MdocJsonKey]!.ToString();
         var mdoc = Mdoc
@@ -138,17 +141,15 @@ public static class MdocRecordFun
             .ValidKeyId(json[KeyIdJsonKey]!.ToString())
             .UnwrapOrThrow();
 
-        var credentialSetId = json[CredentialSetIdJsonKey]!.ToObject<string>()!;
+        var credentialSetId = recordVersion >= 2 ? json[CredentialSetIdJsonKey]!.ToObject<string>()! : string.Empty;
         
         var expiresAt = 
             from expires in json.GetByKey(ExpiresAtJsonKey).ToOption()
             select expires.ToObject<DateTime>();
 
-        var credentialState = Enum.Parse<CredentialState>(json[CredentialStateJsonKey]!.ToString());
-        
-        var recordVersion = json.GetByKey(RecordVersionJsonKey).ToOption().Match(
-            value => value.ToObject<int>(),
-            () => 1);
+        var credentialState = recordVersion >= 2
+            ? Enum.Parse<CredentialState>(json[CredentialStateJsonKey]!.ToString())
+            : CredentialState.Active;
         
         var oneTimeUse = json.GetByKey(OneTimeUseJsonKey).ToOption().Match(
             Some: value => value.ToObject<bool>(),
