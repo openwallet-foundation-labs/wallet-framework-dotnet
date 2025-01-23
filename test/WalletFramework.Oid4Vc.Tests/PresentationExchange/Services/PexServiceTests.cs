@@ -1,6 +1,7 @@
 using FluentAssertions;
 using Hyperledger.Aries.Agents;
 using Hyperledger.Aries.Storage;
+using LanguageExt;
 using Moq;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -52,13 +53,13 @@ public class PexServiceTests
             new DescriptorMap
             {
                 Id = presentationDefinition.InputDescriptors[0].Id,
-                Format = presentationDefinition.InputDescriptors[0].Formats.First().Key,
+                Format = presentationDefinition.InputDescriptors[0].Formats.SdJwtFormat.IssuerSignedJwtAlgValues.First(),
                 Path = "$.credentials[0]"
             },
             new DescriptorMap
             {
                 Id = presentationDefinition.InputDescriptors[1].Id,
-                Format = presentationDefinition.InputDescriptors[1].Formats.First().Key,
+                Format = presentationDefinition.InputDescriptors[1].Formats.SdJwtFormat.IssuerSignedJwtAlgValues.First(),
                 Path = "$.credentials[1]"
             },
         };
@@ -88,7 +89,7 @@ public class PexServiceTests
         var batchInputDescriptor = CreateInputDescriptor(
             CreateConstraints(new[]
                 { CreateField("$.id", idFilter), CreateField("$.issuer"), CreateField("$.batchExp") }),
-            new Dictionary<string, Format> { {"vc+sd-jwt", CreateFormat(new[] { "ES256" }) }},
+            CreateFormat(new[] { "ES256" }),
             Guid.NewGuid().ToString(),
             "EU Driver's License",
             "We can only accept digital driver's licenses issued by national authorities of member states or trusted notarial auditors.",
@@ -97,7 +98,7 @@ public class PexServiceTests
         var driverLicenseInputDescriptor = CreateInputDescriptor(
             CreateConstraints(new[]
                 { CreateField("$.id", idFilter), CreateField("$.issuer"), CreateField("$.dateOfBirth") }),
-            new Dictionary<string, Format> { {"vc+sd-jwt", CreateFormat(new[] { "ES256" }) }},
+            CreateFormat(new[] { "ES256" }),
             Guid.NewGuid().ToString(),
             "EU Driver's License",
             "We can only accept digital driver's licenses issued by national authorities of member states or trusted notarial auditors.",
@@ -105,7 +106,7 @@ public class PexServiceTests
 
         var universityInputDescriptor = CreateInputDescriptor(
             CreateConstraints(new[] { CreateField("$.degree") }),
-            new Dictionary<string, Format> { {"vc+sd-jwt", CreateFormat(new[] { "ES256" }) }},
+            CreateFormat(new[] { "ES256" }),
             Guid.NewGuid().ToString(),
             "University Degree",
             "We can only accept digital university degrees.");
@@ -135,7 +136,8 @@ public class PexServiceTests
 
         // Act
         var credentialCandidatesArray = await pexService.FindCredentialCandidates(
-            new[] { driverLicenseInputDescriptor, universityInputDescriptor , batchInputDescriptor});
+            [driverLicenseInputDescriptor, universityInputDescriptor, batchInputDescriptor],
+            Option<Formats>.None);
 
         // Assert
         credentialCandidatesArray.Should().BeEquivalentTo(expected);
@@ -154,7 +156,7 @@ public class PexServiceTests
         var identityCredentialInputDescriptor = CreateInputDescriptor(
             CreateConstraints(new[]
                 { CreateField("$.address.city", idFilter), CreateField("$.vct"), CreateField("$.iss") }),
-            new Dictionary<string, Format> { {"vc+sd-jwt", CreateFormat(new[] { "ES256" }) }},
+            CreateFormat(new[] { "ES256" }),
             Guid.NewGuid().ToString(),
             "Identity Credential",
             "We can only accept digital identity credentials.",
@@ -169,8 +171,7 @@ public class PexServiceTests
         var sdJwtVcHolderService = CreatePexService();
 
         // Act
-        var credentialCandidatesArray = await sdJwtVcHolderService.FindCredentialCandidates(
-            new[] { identityCredentialInputDescriptor });
+        var credentialCandidatesArray = await sdJwtVcHolderService.FindCredentialCandidates([identityCredentialInputDescriptor], Option<Formats>.None);
 
         // Assert
         credentialCandidatesArray.Should().BeEquivalentTo(expected);
@@ -190,7 +191,7 @@ public class PexServiceTests
         var identityCredentialInputDescriptor = CreateInputDescriptor(
             CreateConstraints(new[]
                 { CreateField("$.address.city"), CreateField("$.vct", vctFilter), CreateField("$.iss") }),
-            new Dictionary<string, Format> { {"vc+sd-jwt", CreateFormat(new[] { "ES256" }) }},
+            CreateFormat(new[] { "ES256" }),
             Guid.NewGuid().ToString(),
             "Identity Credential",
             "We can only accept digital identity credentials.",
@@ -205,8 +206,7 @@ public class PexServiceTests
         var sdJwtVcHolderService = CreatePexService();
 
         // Act
-        var credentialCandidatesArray = await sdJwtVcHolderService.FindCredentialCandidates(
-            new[] { identityCredentialInputDescriptor });
+        var credentialCandidatesArray = await sdJwtVcHolderService.FindCredentialCandidates([identityCredentialInputDescriptor], Option<Formats>.None);
 
         // Assert
         credentialCandidatesArray.Should().BeEquivalentTo(expected);
@@ -224,7 +224,7 @@ public class PexServiceTests
 
         var universityInputDescriptor = CreateInputDescriptor(
             CreateConstraints(new[] { CreateField("$.degree"), CreateField("$.vct", enumVctFilter) }),
-            new Dictionary<string, Format> { {"vc+sd-jwt", CreateFormat(new[] { "ES256" }) }},
+            CreateFormat(new[] { "ES256" }),
             Guid.NewGuid().ToString(),
             "University Degree",
             "We can only accept digital university degrees.");
@@ -238,8 +238,7 @@ public class PexServiceTests
         var sdJwtVcHolderService = CreatePexService();
 
         // Act
-        var credentialCandidatesArray = await sdJwtVcHolderService.FindCredentialCandidates(
-            new[] { universityInputDescriptor });
+        var credentialCandidatesArray = await sdJwtVcHolderService.FindCredentialCandidates([universityInputDescriptor], Option<Formats>.None);
 
         // Assert
         credentialCandidatesArray.Should().BeEquivalentTo(expected);
@@ -254,7 +253,7 @@ public class PexServiceTests
 
         var universityInputDescriptor = CreateInputDescriptor(
             CreateConstraints(new[] { CreateField("$.degree"), CreateField("$.vct", enumVctFilter) }),
-            new Dictionary<string, Format> { {"vc+sd-jwt", CreateFormat(new[] { "ES256" }) }},
+            CreateFormat(new[] { "ES256" }),
             Guid.NewGuid().ToString(),
             "University Degree",
             "We can only accept digital university degrees.");
@@ -262,8 +261,7 @@ public class PexServiceTests
         var sdJwtVcHolderService = CreatePexService();
 
         // Act
-        var credentialCandidatesArray = await sdJwtVcHolderService.FindCredentialCandidates(
-            new[] { universityInputDescriptor });
+        var credentialCandidatesArray = await sdJwtVcHolderService.FindCredentialCandidates([universityInputDescriptor], Option<Formats>.None);
 
         // Assert
         credentialCandidatesArray.Should().BeEmpty();
@@ -279,7 +277,7 @@ public class PexServiceTests
                 CreateField("$.id"), CreateField("$.issuer"),
                 CreateField("$.dateOfBirth"), CreateField("$.name")
             }),
-            new Dictionary<string, Format> { {"vc+sd-jwt", CreateFormat(new[] { "ES256" }) }},
+            CreateFormat(new[] { "ES256" }),
             Guid.NewGuid().ToString(),
             "EU Driver's License",
             "We can only accept digital driver's licenses issued by national authorities of member states or trusted notarial auditors.");
@@ -287,8 +285,7 @@ public class PexServiceTests
         var sdJwtVcHolderService = CreatePexService();
 
         // Act
-        var credentialCandidates = await sdJwtVcHolderService.FindCredentialCandidates(
-            new[] { driverLicenseInputDescriptor });
+        var credentialCandidates = await sdJwtVcHolderService.FindCredentialCandidates([driverLicenseInputDescriptor], Option<Formats>.None);
 
         // Assert
         credentialCandidates.Should().BeEmpty();
@@ -307,7 +304,7 @@ public class PexServiceTests
             {
                 CreateField("$.id", idFilter), CreateField("$.issuer"), CreateField("$.dateOfBirth")
             }),
-            new Dictionary<string, Format> { {"vc+sd-jwt", CreateFormat(new[] { "ES256" }) }},
+            CreateFormat(new[] { "ES256" }),
             Guid.NewGuid().ToString(),
             "EU Driver's License",
             "We can only accept digital driver's licenses issued by national authorities of member states or trusted notarial auditors.");
@@ -315,9 +312,7 @@ public class PexServiceTests
         var sdJwtVcHolderService = CreatePexService();
 
         // Act
-        var credentialCandidates = await sdJwtVcHolderService.FindCredentialCandidates(
-            new[] { driverLicenseInputDescriptor }
-        );
+        var credentialCandidates = await sdJwtVcHolderService.FindCredentialCandidates([driverLicenseInputDescriptor], Option<Formats>.None);
 
         // Assert
         credentialCandidates.Should().BeEmpty();
@@ -380,15 +375,20 @@ public class PexServiceTests
         return field;
     }
 
-    private static Format CreateFormat(string[] supportedAlg)
+    private static Formats CreateFormat(string[] supportedAlg)
     {
-        var format = new Format();
-        format.PrivateSet(x => x.Alg, supportedAlg);
-
+        var format = new Formats()
+        {
+            SdJwtFormat = new SdJwtFormat()
+            {
+                IssuerSignedJwtAlgValues = supportedAlg.ToList()
+            }
+        };
+        
         return format;
     }
 
-    private static InputDescriptor CreateInputDescriptor(Constraints constraints, Dictionary<string, Format> formats, string id,
+    private static InputDescriptor CreateInputDescriptor(Constraints constraints, Formats formats, string id,
         string name, string purpose, string[]? group = null)
     {
         var inputDescriptor = new InputDescriptor();

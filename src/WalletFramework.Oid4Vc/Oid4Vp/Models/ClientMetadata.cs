@@ -54,6 +54,12 @@ public record ClientMetadata
     /// </summary>
     [JsonProperty("tos_uri")]
     public string? TosUri { get; }
+    
+    /// <summary>
+    ///     The URI to a human-readable terms of service document for the client (verifier).
+    /// </summary>
+    [JsonProperty("vp_formats")]
+    public Formats Formats { get; }
 
     public ClientMetadata(
         string? clientName,
@@ -63,7 +69,8 @@ public record ClientMetadata
         string? policyUri,
         string? tosUri,
         string[] redirectUris,
-        List<JsonWebKey> jwks)
+        List<JsonWebKey> jwks,
+        Formats formats)
     {
         ClientName = clientName;
         ClientUri = clientUri;
@@ -73,5 +80,6 @@ public record ClientMetadata
         TosUri = tosUri;
         RedirectUris = redirectUris;
         Jwks = jwks;
+        Formats = formats;
     }
 }

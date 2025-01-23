@@ -1,11 +1,11 @@
 using Newtonsoft.Json;
 
-namespace WalletFramework.Oid4Vc.Oid4Vp.PresentationExchange.Models;
+namespace WalletFramework.Oid4Vc.Oid4Vp.Models;
 
 /// <summary>
 ///     Represents the claim format, encapsulating supported algorithms.
 /// </summary>
-public class Format
+public class MDocFormat
 {
     /// <summary>
     ///     Gets the names of supported algorithms.
