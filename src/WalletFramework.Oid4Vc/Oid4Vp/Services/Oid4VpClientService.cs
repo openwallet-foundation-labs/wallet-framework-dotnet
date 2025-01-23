@@ -283,7 +283,7 @@ public class Oid4VpClientService : IOid4VpClientService
                     result = new PresentedCredentialSet
                     {
                         MDocCredentialType = mdocRecord.DocType,
-                        CredentialSetId = mdocRecord.CredentialSetId,
+                        CredentialSetId = mdocRecord.GetCredentialSetId(),
                         PresentedClaims = claims.ToDictionary(
                             item => item.ElementId.ToString(),
                             item => new PresentedClaim { Value = item.Element.ToString() }
@@ -549,7 +549,7 @@ public class Oid4VpClientService : IOid4VpClientService
                     result = new PresentedCredentialSet
                     {
                         MDocCredentialType = mdocRecord.DocType,
-                        CredentialSetId = mdocRecord.CredentialSetId,
+                        CredentialSetId = mdocRecord.GetCredentialSetId(),
                         PresentedClaims = claims.ToDictionary(
                             item => item.ElementId.ToString(),
                             item => new PresentedClaim { Value = item.Element.ToString() }

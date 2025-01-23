@@ -44,11 +44,10 @@ public sealed class MdocRecord : RecordBase, ICredential
     
     public Option<DateTime> ExpiresAt { get; }
     
-    [JsonIgnore]
-    public CredentialSetId CredentialSetId
+    //TODO: Use CredentialSetId Type instead fo string
+    public string CredentialSetId
     {
-        get => CredentialSetId.ValidCredentialSetId(Get())
-            .UnwrapOrThrow(new InvalidOperationException("The CredentialSetId is corrupt"));
+        get => Get();
         set => Set(value, false);
     }
 
@@ -58,7 +57,7 @@ public sealed class MdocRecord : RecordBase, ICredential
         Mdoc mdoc, 
         Option<List<MdocDisplay>> displays, 
         KeyId keyId, 
-        CredentialSetId credentialSetId, 
+        string credentialSetId, 
         CredentialState credentialState, 
         Option<DateTime> expiresAt,
         bool isOneTimeUse = false)
@@ -81,8 +80,10 @@ public sealed class MdocRecord : RecordBase, ICredential
 #pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
 
     public CredentialId GetId() => CredentialId;
-    
-    public CredentialSetId GetCredentialSetId() => CredentialSetId;
+
+    public CredentialSetId GetCredentialSetId() => Core.Credentials.CredentialSetId
+        .ValidCredentialSetId(CredentialSetId)
+        .UnwrapOrThrow();
 
     public static implicit operator Mdoc(MdocRecord record) => record.Mdoc;
 }
@@ -137,7 +138,7 @@ public static class MdocRecordFun
             .ValidKeyId(json[KeyIdJsonKey]!.ToString())
             .UnwrapOrThrow();
 
-        var credentialSetId = CredentialSetId.ValidCredentialSetId(json[CredentialSetIdJsonKey]!.ToString()).UnwrapOrThrow();
+        var credentialSetId = json[CredentialSetIdJsonKey]!.ToObject<string>()!;
         
         var expiresAt = 
             from expires in json.GetByKey(ExpiresAtJsonKey).ToOption()
@@ -169,7 +170,7 @@ public static class MdocRecordFun
             { nameof(RecordBase.Id), record.Id },
             { MdocJsonKey, record.Mdoc.Encode() },
             { KeyIdJsonKey, record.KeyId.ToString() },
-            { CredentialSetIdJsonKey, record.CredentialSetId.ToString() },
+            { CredentialSetIdJsonKey, record.CredentialSetId },
             { CredentialStateJsonKey, record.CredentialState.ToString() },
             { OneTimeUseJsonKey, record.OneTimeUse }
         };
