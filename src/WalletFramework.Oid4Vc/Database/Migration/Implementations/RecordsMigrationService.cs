@@ -1,11 +1,25 @@
+using Hyperledger.Aries.Agents;
+using Hyperledger.Aries.Storage;
+using WalletFramework.MdocVc;
 using WalletFramework.Oid4Vc.Database.Migration.Abstraction;
+using WalletFramework.SdJwtVc.Models.Records;
+using WalletFramework.SdJwtVc.Services.SdJwtVcHolderService;
 
 namespace WalletFramework.Oid4Vc.Database.Migration.Implementations;
 
 public class RecordsMigrationService : IRecordsMigrationService
 {
-    public RecordsMigrationService(IMigrationStepsProvider migrationStepsProvider)
+    private readonly IAgentProvider _agentProvider;
+    private readonly IWalletRecordService _walletRecordService;
+
+    public RecordsMigrationService(
+        IMigrationStepsProvider migrationStepsProvider,
+        IAgentProvider agentProvider,
+        IWalletRecordService walletRecordService)
     {
+        _agentProvider = agentProvider;
+        _walletRecordService = walletRecordService;
+        
         var steps = migrationStepsProvider.Get();
         _walletFrameworkMigrationSteps.AddRange(steps);
     }
@@ -20,16 +34,30 @@ public class RecordsMigrationService : IRecordsMigrationService
 
     public async Task Migrate()
     {
-        var migrations = MigrationSteps.Select(async step =>
-       {
-            var pendingRecords = await step.GetPendingRecords();
-            await pendingRecords.IfSomeAsync(async records =>
+        var stepGroups = MigrationSteps.GroupBy(step => new { step.RecordType, step.OldVersion, step.NewVersion }).OrderBy(x => x.Key.OldVersion).ThenBy(x => x.Key.NewVersion);
+        foreach (var stepGroup in stepGroups)
+        {
+            var migratedRecords = new List<RecordBase>();
+            
+            foreach (var step in stepGroup)
             {
-                await step.Execute(records);
-            });
-        });
+                var stepPendingRecords = await step.GetPendingRecords();
+                await stepPendingRecords.IfSomeAsync(async pendingRecords =>
+                {
+                    var records = pendingRecords.ToList();
+                    
+                    await step.Execute(records);
+                    migratedRecords.AddRange(records);
+                });
+            }
 
-        await Task.WhenAll(migrations);
+            var context = await _agentProvider.GetContextAsync();
+            foreach (var record in migratedRecords)
+            {
+                record.RecordVersion = stepGroup.Key.NewVersion;
+                await _walletRecordService.UpdateAsync(context.Wallet, record);
+            }
+        }
     }
 
     public IEnumerable<MigrationStep> AddMigrationStep(MigrationStep migrationStep)

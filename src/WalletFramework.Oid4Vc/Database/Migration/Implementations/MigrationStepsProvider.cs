@@ -36,7 +36,6 @@ internal class MigrationStepsProvider(
                         record.CredentialSetId = credentialSetRecord.CredentialSetId;
                     }
                     
-                    record.RecordVersion = 2;
                     var context = await agentProvider.GetContextAsync();
                     await sdJwtVcHolderService.UpdateAsync(context, record);
                 }
@@ -71,7 +70,6 @@ internal class MigrationStepsProvider(
                         record.CredentialSetId = credentialSetRecord.CredentialSetId;
                     }
                     
-                    record.RecordVersion = 2;
                     await mdocStorage.Update(record);
                 }
             }, 
