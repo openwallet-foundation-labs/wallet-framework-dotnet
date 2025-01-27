@@ -49,16 +49,8 @@ public class RecordsMigrationService : IRecordsMigrationService
             var context = await _agentProvider.GetContextAsync();
             foreach (var record in migratedRecords)
             {
-                try
-                {
-                    record.RecordVersion = stepGroup.Key.NewVersion;
-                    await _walletRecordService.UpdateAsync(context.Wallet, record);
-                }
-                catch (Exception e)
-                {
-                    
-                }
-                
+                record.RecordVersion = stepGroup.Key.NewVersion;
+                await _walletRecordService.UpdateAsync(context.Wallet, record);
             }
         }
     }
