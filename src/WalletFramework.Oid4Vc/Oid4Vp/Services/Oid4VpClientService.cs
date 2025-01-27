@@ -297,12 +297,16 @@ public class Oid4VpClientService : IOid4VpClientService
             return result;
         });
 
-        await _oid4VpRecordService.StoreAsync(
-            context,
-            authorizationRequest.ClientId,
-            authorizationRequest.ClientMetadata,
-            authorizationRequest.PresentationDefinition.Name,
-            presentedCredentials.ToList());
+        var oidPresentationRecord = new OidPresentationRecord
+        {
+            Id = Guid.NewGuid().ToString(),
+            ClientId = authorizationRequest.ClientId,
+            ClientMetadata = authorizationRequest.ClientMetadata,
+            Name = authorizationRequest.PresentationDefinition.Name,
+            PresentedCredentialSets = presentedCredentials.ToList()
+        };
+        
+        await _oid4VpRecordService.StoreAsync(context, oidPresentationRecord);
 
         var redirectUriJson = await responseMessage.Content.ReadAsStringAsync();
 
@@ -565,12 +569,16 @@ public class Oid4VpClientService : IOid4VpClientService
 
         var context = await _agentProvider.GetContextAsync();
         
-        await _oid4VpRecordService.StoreAsync(
-            context,
-            authorizationRequest.ClientId,
-            authorizationRequest.ClientMetadata,
-            authorizationRequest.PresentationDefinition.Name,
-            presentedCredentials.ToList());
+        var oidPresentationRecord = new OidPresentationRecord
+        {
+            Id = Guid.NewGuid().ToString(),
+            ClientId = authorizationRequest.ClientId,
+            ClientMetadata = authorizationRequest.ClientMetadata,
+            Name = authorizationRequest.PresentationDefinition.Name,
+            PresentedCredentialSets = presentedCredentials.ToList()
+        };
+        
+        await _oid4VpRecordService.StoreAsync(context, oidPresentationRecord);
 
         var redirectUriJson = await responseMessage.Content.ReadAsStringAsync();
 

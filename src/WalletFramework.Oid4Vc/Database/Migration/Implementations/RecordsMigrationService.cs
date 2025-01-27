@@ -1,9 +1,6 @@
 using Hyperledger.Aries.Agents;
 using Hyperledger.Aries.Storage;
-using WalletFramework.MdocVc;
 using WalletFramework.Oid4Vc.Database.Migration.Abstraction;
-using WalletFramework.SdJwtVc.Models.Records;
-using WalletFramework.SdJwtVc.Services.SdJwtVcHolderService;
 
 namespace WalletFramework.Oid4Vc.Database.Migration.Implementations;
 

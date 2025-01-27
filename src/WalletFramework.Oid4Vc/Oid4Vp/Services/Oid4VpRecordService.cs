@@ -39,24 +39,11 @@ public class Oid4VpRecordService : IOid4VpRecordService
     }
 
     /// <inheritdoc />
-    public async Task<string> StoreAsync(
-        IAgentContext context,
-        string clientId,
-        ClientMetadata? clientMetadata,
-        string? name,
-        List<PresentedCredentialSet> presentedCredentialSets)
+    public async Task<string> StoreAsync(IAgentContext context, OidPresentationRecord oidPresentationRecord)
     {
-        var record = new OidPresentationRecord(
-            presentedCredentialSets,
-            clientId,
-            Guid.NewGuid().ToString(),
-            clientMetadata,
-            name
-        );
+        await RecordService.AddAsync(context.Wallet, oidPresentationRecord);
             
-        await RecordService.AddAsync(context.Wallet, record);
-            
-        return record.Id;
+        return oidPresentationRecord.Id;
     }
 
     /// <inheritdoc />

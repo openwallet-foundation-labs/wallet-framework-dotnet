@@ -7,5 +7,5 @@ public record MigrationStep(
     int OldVersion,
     int NewVersion,
     Type RecordType,
-    Func<IEnumerable<RecordBase>, Task> Execute,
+    Func<IEnumerable<RecordBase>, Task<IEnumerable<RecordBase>>> Execute,
     Func<Task<Option<IEnumerable<RecordBase>>>> GetPendingRecords);
