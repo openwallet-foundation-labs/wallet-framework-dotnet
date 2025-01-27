@@ -42,17 +42,23 @@ public class RecordsMigrationService : IRecordsMigrationService
                 await stepPendingRecords.IfSomeAsync(async pendingRecords =>
                 {
                     var records = pendingRecords.ToList();
-                    
-                    await step.Execute(records);
-                    migratedRecords.AddRange(records);
+                    migratedRecords.AddRange(await step.Execute(records));
                 });
             }
 
             var context = await _agentProvider.GetContextAsync();
             foreach (var record in migratedRecords)
             {
-                record.RecordVersion = stepGroup.Key.NewVersion;
-                await _walletRecordService.UpdateAsync(context.Wallet, record);
+                try
+                {
+                    record.RecordVersion = stepGroup.Key.NewVersion;
+                    await _walletRecordService.UpdateAsync(context.Wallet, record);
+                }
+                catch (Exception e)
+                {
+                    
+                }
+                
             }
         }
     }
