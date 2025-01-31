@@ -21,7 +21,7 @@ public static class X509CertificateExtensions
     {
         var leafCert = trustChain.First();
 
-        var subjects = trustChain.Select(cert => cert.SubjectDN);
+        var subjects = trustChain.Select(cert => cert.SubjectDN); 
         var rootCerts = new HashSet(
             trustChain
                 .Where(cert => cert.IsSelfSigned() || !subjects.Contains(cert.IssuerDN))
