@@ -283,7 +283,7 @@ public class Oid4VpClientService : IOid4VpClientService
                     result = new PresentedCredentialSet
                     {
                         MDocCredentialType = mdocRecord.DocType,
-                        CredentialSetId = mdocRecord.CredentialSetId,
+                        CredentialSetId = mdocRecord.GetCredentialSetId(),
                         PresentedClaims = claims.ToDictionary(
                             item => item.ElementId.ToString(),
                             item => new PresentedClaim { Value = item.Element.ToString() }
@@ -297,12 +297,16 @@ public class Oid4VpClientService : IOid4VpClientService
             return result;
         });
 
-        await _oid4VpRecordService.StoreAsync(
-            context,
-            authorizationRequest.ClientId,
-            authorizationRequest.ClientMetadata,
-            authorizationRequest.PresentationDefinition.Name,
-            presentedCredentials.ToList());
+        var oidPresentationRecord = new OidPresentationRecord
+        {
+            Id = Guid.NewGuid().ToString(),
+            ClientId = authorizationRequest.ClientId,
+            ClientMetadata = authorizationRequest.ClientMetadata,
+            Name = authorizationRequest.PresentationDefinition.Name,
+            PresentedCredentialSets = presentedCredentials.ToList()
+        };
+        
+        await _oid4VpRecordService.StoreAsync(context, oidPresentationRecord);
 
         var redirectUriJson = await responseMessage.Content.ReadAsStringAsync();
 
@@ -549,7 +553,7 @@ public class Oid4VpClientService : IOid4VpClientService
                     result = new PresentedCredentialSet
                     {
                         MDocCredentialType = mdocRecord.DocType,
-                        CredentialSetId = mdocRecord.CredentialSetId,
+                        CredentialSetId = mdocRecord.GetCredentialSetId(),
                         PresentedClaims = claims.ToDictionary(
                             item => item.ElementId.ToString(),
                             item => new PresentedClaim { Value = item.Element.ToString() }
@@ -565,12 +569,16 @@ public class Oid4VpClientService : IOid4VpClientService
 
         var context = await _agentProvider.GetContextAsync();
         
-        await _oid4VpRecordService.StoreAsync(
-            context,
-            authorizationRequest.ClientId,
-            authorizationRequest.ClientMetadata,
-            authorizationRequest.PresentationDefinition.Name,
-            presentedCredentials.ToList());
+        var oidPresentationRecord = new OidPresentationRecord
+        {
+            Id = Guid.NewGuid().ToString(),
+            ClientId = authorizationRequest.ClientId,
+            ClientMetadata = authorizationRequest.ClientMetadata,
+            Name = authorizationRequest.PresentationDefinition.Name,
+            PresentedCredentialSets = presentedCredentials.ToList()
+        };
+        
+        await _oid4VpRecordService.StoreAsync(context, oidPresentationRecord);
 
         var redirectUriJson = await responseMessage.Content.ReadAsStringAsync();
 

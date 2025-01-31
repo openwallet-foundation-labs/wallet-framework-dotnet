@@ -4,6 +4,8 @@ using WalletFramework.MdocLib.Device.Implementations;
 using WalletFramework.MdocLib.Security.Cose.Abstractions;
 using WalletFramework.MdocLib.Security.Cose.Implementations;
 using WalletFramework.Oid4Vc.CredentialSet;
+using WalletFramework.Oid4Vc.Database.Migration.Abstraction;
+using WalletFramework.Oid4Vc.Database.Migration.Implementations;
 using WalletFramework.Oid4Vc.Oid4Vci.Abstractions;
 using WalletFramework.Oid4Vc.Oid4Vci.AuthFlow.Abstractions;
 using WalletFramework.Oid4Vc.Oid4Vci.AuthFlow.Implementations;
@@ -23,9 +25,9 @@ using WalletFramework.Oid4Vc.Oid4Vp.Services;
 using WalletFramework.SdJwtVc;
 using WalletFramework.SdJwtVc.Services;
 
-namespace WalletFramework.Oid4Vc;
+namespace WalletFramework.Oid4Vc.DependencyInjection;
 
-public static class SeviceCollectionExtensions
+public static class ServiceCollectionExtensions
 {
     /// <summary>
     /// Adds the default OpenID services.
@@ -35,24 +37,27 @@ public static class SeviceCollectionExtensions
     {
         builder.AddSingleton<IAesGcmEncryption, AesGcmEncryption>();
         builder.AddSingleton<IAuthFlowSessionStorage, AuthFlowSessionStorage>();
+        builder.AddSingleton<IAuthorizationRequestService, AuthorizationRequestService>();
         builder.AddSingleton<ICoseSign1Signer, CoseSign1Signer>();
         builder.AddSingleton<ICredentialOfferService, CredentialOfferService>();
         builder.AddSingleton<ICredentialRequestService, CredentialRequestService>();
+        builder.AddSingleton<ICredentialSetService, CredentialSetService>();
+        builder.AddSingleton<ICredentialSetStorage, CredentialSetStorage>();
         builder.AddSingleton<IDPopHttpClient, DPopHttpClient>();
         builder.AddSingleton<IIssuerMetadataService, IssuerMetadataService>();
         builder.AddSingleton<IMdocAuthenticationService, MdocAuthenticationService>();
         builder.AddSingleton<IMdocCandidateService, MdocCandidateService>();
         builder.AddSingleton<IMdocStorage, MdocStorage>();
+        builder.AddSingleton<IMigrationStepsProvider, MigrationStepsProvider>();
         builder.AddSingleton<IOid4VciClientService, Oid4VciClientService>();
         builder.AddSingleton<IOid4VpClientService, Oid4VpClientService>();
         builder.AddSingleton<IOid4VpHaipClient, Oid4VpHaipClient>();
         builder.AddSingleton<IOid4VpRecordService, Oid4VpRecordService>();
         builder.AddSingleton<IPexService, PexService>();
-        builder.AddSingleton<ITokenService, TokenService>();
-        builder.AddSingleton<ICredentialSetService, CredentialSetService>();
-        builder.AddSingleton<IVctMetadataService, VctMetadataService>();
-        builder.AddSingleton<IAuthorizationRequestService, AuthorizationRequestService>();
+        builder.AddSingleton<IRecordsMigrationService, RecordsMigrationService>();
         builder.AddSingleton<IStatusListService, StatusListService>();
+        builder.AddSingleton<ITokenService, TokenService>();
+        builder.AddSingleton<IVctMetadataService, VctMetadataService>();
 
         builder.AddSdJwtVcServices();
         
@@ -82,11 +87,11 @@ public static class SeviceCollectionExtensions
     /// <returns>The extended CredentialSet credential service.</returns>
     /// <param name="builder">Builder.</param>
     /// <typeparam name="TImplementation">The 2nd type parameter.</typeparam>
-    public static IServiceCollection AddExtendedSdJwtHolderService<TImplementation>(this IServiceCollection builder)
-        where TImplementation : class, ICredentialSetService
+    public static IServiceCollection AddExtendedCredentialSetStorage<TImplementation>(this IServiceCollection builder)
+        where TImplementation : class, ICredentialSetStorage
     {
         builder.AddSingleton<TImplementation>();
-        builder.AddSingleton<ICredentialSetService>(x => x.GetService<TImplementation>());
+        builder.AddSingleton<ICredentialSetStorage>(x => x.GetService<TImplementation>());
         return builder;
     }
 }

@@ -20,6 +20,10 @@ namespace WalletFramework.Oid4Vc.CredentialSet.Models;
 [JsonConverter(typeof(CredentialSetRecordConverter))]
 public sealed class CredentialSetRecord : RecordBase
 {
+    public CredentialSetId CredentialSetId => CredentialSetId
+        .ValidCredentialSetId(Id)
+        .UnwrapOrThrow(new InvalidOperationException("The Id is corrupt"));
+    
     public Option<Vct> SdJwtCredentialType { get; set; }
 
     public Option<DocType> MDocCredentialType { get; set; }
@@ -34,7 +38,7 @@ public sealed class CredentialSetRecord : RecordBase
     
     public Option<DateTime> ExpiresAt { get; set; }
 
-    public Option<Status> StatusList { get; set; }
+    public Option<StatusListEntry> StatusListEntry { get; set; }
 
     public Option<DateTime> RevokedAt { get; set; }
 
@@ -55,7 +59,7 @@ public sealed class CredentialSetRecord : RecordBase
         Option<DocType> mDocCredentialType, 
         Dictionary<string, string> credentialAttributes, 
         CredentialState credentialState,
-        Option<Status> statusList,
+        Option<StatusListEntry> statusListEntry,
         Option<DateTime> expiresAt,
         Option<DateTime> issuedAt,
         Option<DateTime> notBefore,
@@ -69,7 +73,7 @@ public sealed class CredentialSetRecord : RecordBase
         MDocCredentialType = mDocCredentialType;
         CredentialAttributes = credentialAttributes;
         State = credentialState;
-        StatusList = statusList;
+        StatusListEntry = statusListEntry;
         ExpiresAt = expiresAt;
         IssuedAt = issuedAt;
         NotBefore = notBefore;
@@ -136,13 +140,12 @@ public static class CredentialSetRecordExtensions
         credentialSetRecord.IssuedAt = sdJwtRecord.IssuedAt.ToOption();
         credentialSetRecord.NotBefore = sdJwtRecord.NotBefore.ToOption();
         credentialSetRecord.IssuerId = sdJwtRecord.IssuerId;
-        credentialSetRecord.StatusList = sdJwtRecord.Status;
+        credentialSetRecord.StatusListEntry = sdJwtRecord.StatusListEntry;
     }
-    
-    public static void AddMDocData(
-        this CredentialSetRecord credentialSetRecord, 
-        MdocRecord mdocRecord,
-        CredentialIssuerId credentialIssuerId)
+
+    internal static void AddMdocData(
+        this CredentialSetRecord credentialSetRecord,
+        MdocRecord mdocRecord)
     {
         credentialSetRecord.MDocCredentialType = mdocRecord.DocType;
         credentialSetRecord.State = mdocRecord.CredentialState;
@@ -154,14 +157,18 @@ public static class CredentialSetRecordExtensions
         
         if (credentialSetRecord.ExpiresAt.IsNone)
             credentialSetRecord.ExpiresAt = mdocRecord.ExpiresAt.ToOption();
-
+    }
+    
+    public static void AddMDocData(
+        this CredentialSetRecord credentialSetRecord, 
+        MdocRecord mdocRecord,
+        CredentialIssuerId credentialIssuerId)
+    {
+        AddMdocData(credentialSetRecord, mdocRecord);
+        
         if (credentialSetRecord.IssuerId.IsNullOrEmpty())
             credentialSetRecord.IssuerId = credentialIssuerId.ToString();
     }
-    
-    public static CredentialSetId GetCredentialSetId(this CredentialSetRecord credentialSetRecord) =>
-        CredentialSetId.ValidCredentialSetId(credentialSetRecord.Id)
-            .UnwrapOrThrow(new InvalidOperationException("The Id is corrupt"));
     
     public static OneOf<Vct, DocType> GetCredentialType(this CredentialSetRecord credentialSetRecord)
     {
@@ -209,7 +216,7 @@ public static class CredentialSetRecordExtensions
         credentialSetRecord.DeletedAt.IfSome(deletedAt => result.Add(DeletedAtJsonKey, deletedAt));
         credentialSetRecord.CreatedAtUtc.IfSome(createdAtUtc => result.Add(CreatedAtJsonKey, createdAtUtc));
         credentialSetRecord.UpdatedAtUtc.IfSome(updatedAtUtc => result.Add(UpdatedAtJsonKey, updatedAtUtc));
-        credentialSetRecord.StatusList.IfSome(statusList => result.Add(StatusListJsonKey, JObject.FromObject(statusList)));
+        credentialSetRecord.StatusListEntry.IfSome(statusList => result.Add(StatusListJsonKey, JObject.FromObject(statusList)));
         result.Add(IssuerIdJsonKey, credentialSetRecord.IssuerId);
 
         return result;
@@ -235,7 +242,7 @@ public static class CredentialSetRecordExtensions
 
         var statusListType = 
             from jToken in json.GetByKey(StatusListJsonKey).ToOption()
-            select jToken.ToObject<Status>();
+            select jToken.ToObject<StatusListEntry>();
         
         var expiresAtType = 
             from jToken in json.GetByKey(ExpiresAtJsonKey).ToOption()

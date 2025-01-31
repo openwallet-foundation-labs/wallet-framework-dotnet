@@ -1,3 +1,3 @@
 namespace WalletFramework.SdJwtVc.Models.StatusList;
 
-public record Status(int Idx, string Uri);
+public record StatusListEntry(int Idx, string Uri);

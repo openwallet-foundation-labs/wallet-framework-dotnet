@@ -51,7 +51,7 @@ public class StatusListTests
         var httpClient = new HttpClient(_httpMessageHandlerMock.Object);
         _httpClientFactoryMock.Setup(f => f.CreateClient(It.IsAny<string>())).Returns(httpClient);
         
-        var status = new Status(statusListIntex, "https://example.com");
+        var status = new StatusListEntry(statusListIntex, "https://example.com");
         
         // Act
         var sut = await new StatusListService(_httpClientFactoryMock.Object).GetState(status);

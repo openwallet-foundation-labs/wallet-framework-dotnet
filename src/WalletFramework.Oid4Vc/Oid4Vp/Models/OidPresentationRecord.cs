@@ -13,6 +13,8 @@ namespace WalletFramework.Oid4Vc.Oid4Vp.Models;
 [JsonConverter(typeof(OidPresentationRecordConverter))]
 public sealed class OidPresentationRecord : RecordBase
 {
+    public const int CurrentVersion = 2;
+    
     /// <summary>
     ///     Gets or sets the credentials the Holder presented to the Verifier.
     /// </summary>
@@ -82,6 +84,7 @@ public sealed class OidPresentationRecord : RecordBase
         Id = id;
         Name = name;
         PresentedCredentialSets = presentedCredentialSets;
+        RecordVersion = CurrentVersion;
     }
 }
 
@@ -111,6 +114,7 @@ public static class OidPresentationRecordExtensions
     private const string ClientMetadataJsonKey = "client_metadata";
     private const string ClientIdJsonKey = "client_id";
     private const string NameJsonKey = "name";
+    private const string RecordVersionJsonKey = "record_version";
     
     public static JObject EncodeToJson(this OidPresentationRecord credentialSetRecord)
     {
@@ -137,7 +141,7 @@ public static class OidPresentationRecordExtensions
     public static OidPresentationRecord DecodeFromJson(JObject json)
     {
         var id = json[nameof(RecordBase.Id)]!.ToString();
-
+        
         var clientId = json[ClientIdJsonKey]!.ToString();
         
         var presentedCredentialSets =

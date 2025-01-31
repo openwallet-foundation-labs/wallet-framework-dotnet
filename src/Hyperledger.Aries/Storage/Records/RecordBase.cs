@@ -40,7 +40,7 @@ namespace Hyperledger.Aries.Storage
         ///     Get and set the schema version of a wallet record
         /// </summary>
         [JsonProperty(DefaultValueHandling = DefaultValueHandling.Populate)]
-        protected internal int RecordVersion
+        public int RecordVersion
         {
             get
             {

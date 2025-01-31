@@ -6,5 +6,5 @@ namespace WalletFramework.SdJwtVc.Services;
 
 public interface IStatusListService
 {
-    Task<Option<CredentialState>> GetState(Status status);
+    Task<Option<CredentialState>> GetState(StatusListEntry statusListEntry);
 }

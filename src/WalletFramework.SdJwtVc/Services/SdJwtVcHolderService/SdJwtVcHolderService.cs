@@ -1,8 +1,10 @@
 using Hyperledger.Aries;
 using Hyperledger.Aries.Agents;
 using Hyperledger.Aries.Storage;
+using LanguageExt;
 using SD_JWT.Models;
 using SD_JWT.Roles;
+using WalletFramework.Core.Credentials;
 using WalletFramework.SdJwtVc.Models.Records;
 
 namespace WalletFramework.SdJwtVc.Services.SdJwtVcHolderService;
@@ -88,6 +90,21 @@ public class SdJwtVcHolderService : ISdJwtVcHolderService
         ISearchQuery? query = null,
         int count = 100,
         int skip = 0) => _recordService.SearchAsync<SdJwtRecord>(context.Wallet, query, null, count, skip);
+
+    public async Task<Option<IEnumerable<SdJwtRecord>>> ListAsync(IAgentContext context, CredentialSetId id)
+    {
+        var sdJwtQuery = SearchQuery.Equal(
+            "~" + nameof(SdJwtRecord.CredentialSetId),
+            id);
+
+        var sdJwtRecords = await ListAsync(
+            context,
+            sdJwtQuery);
+
+        return sdJwtRecords.Any()
+            ? sdJwtRecords
+            : Option<IEnumerable<SdJwtRecord>>.None;
+    }
 
     /// <inheritdoc />
     public virtual async Task AddAsync(IAgentContext context, SdJwtRecord record) => 

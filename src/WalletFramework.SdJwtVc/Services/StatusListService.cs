@@ -13,10 +13,10 @@ namespace WalletFramework.SdJwtVc.Services;
 
 public class StatusListService(IHttpClientFactory httpClientFactory) : IStatusListService
 {
-    public async Task<Option<CredentialState>> GetState(Status status)
+    public async Task<Option<CredentialState>> GetState(StatusListEntry statusListEntry)
     {
         var client = httpClientFactory.CreateClient();
-        var response = await client.GetAsync(status.Uri);
+        var response = await client.GetAsync(statusListEntry.Uri);
 
         if (!response.IsSuccessStatusCode)
             return Option<CredentialState>.None;
@@ -45,10 +45,10 @@ public class StatusListService(IHttpClientFactory httpClientFactory) : IStatusLi
                                 var decompressedBytes = DecompressBytes(bytes);
                     
                                 var statusPerByte = 8 / bitSize;
-                                var relevantByteLocation = status.Idx / statusPerByte;
+                                var relevantByteLocation = statusListEntry.Idx / statusPerByte;
                                 var relevantByte = decompressedBytes[relevantByteLocation];
         
-                                var startPointByteIndex = status.Idx % statusPerByte;
+                                var startPointByteIndex = statusListEntry.Idx % statusPerByte;
                                 var startPointBitIndex = startPointByteIndex * bitSize;
         
                                 var sum = 0;
