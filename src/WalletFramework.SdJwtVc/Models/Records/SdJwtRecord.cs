@@ -207,8 +207,10 @@ public sealed class SdJwtRecord : RecordBase, ICredential
         Claims = sdJwtDoc.GetAllSubjectClaims();
         Display = display;
         DisplayedAttributes = displayedAttributes;
-        StatusListEntry = sdJwtDoc.UnsecuredPayload.SelectToken("status")?.ToObject<StatusListEntry>() is not null
-            ? sdJwtDoc.UnsecuredPayload.SelectToken("status")?.ToObject<StatusListEntry>()
+        StatusListEntry = (sdJwtDoc.UnsecuredPayload.SelectToken("status")?.SelectToken("status_list")?.ToObject<StatusListEntry>() 
+                           ?? sdJwtDoc.UnsecuredPayload.SelectToken("status")?.ToObject<StatusListEntry>()) is not null
+            ? sdJwtDoc.UnsecuredPayload.SelectToken("status")?.SelectToken("status_list")?.ToObject<StatusListEntry>() 
+              ?? sdJwtDoc.UnsecuredPayload.SelectToken("status")?.ToObject<StatusListEntry>()
             : null;
 
         CredentialSetId = credentialSetId;
@@ -248,8 +250,10 @@ public sealed class SdJwtRecord : RecordBase, ICredential
         Claims = sdJwtDoc.GetAllSubjectClaims();
         Display = display;
         DisplayedAttributes = displayedAttributes;
-        StatusListEntry = sdJwtDoc.UnsecuredPayload.SelectToken("status")?.ToObject<StatusListEntry>() is not null
-            ? sdJwtDoc.UnsecuredPayload.SelectToken("status")?.ToObject<StatusListEntry>()
+        StatusListEntry = (sdJwtDoc.UnsecuredPayload.SelectToken("status")?.SelectToken("status_list")?.ToObject<StatusListEntry>() 
+                           ?? sdJwtDoc.UnsecuredPayload.SelectToken("status")?.ToObject<StatusListEntry>()) is not null
+            ? sdJwtDoc.UnsecuredPayload.SelectToken("status")?.SelectToken("status_list")?.ToObject<StatusListEntry>() 
+              ?? sdJwtDoc.UnsecuredPayload.SelectToken("status")?.ToObject<StatusListEntry>()
             : null;
             
         CredentialSetId = credentialSetId;
