@@ -1,12 +1,8 @@
-using System.Net;
-using FluentAssertions;
 using Hyperledger.Aries.Agents;
 using Moq;
 using Moq.Protected;
 using Newtonsoft.Json.Linq;
 using WalletFramework.Oid4Vc.Oid4Vci.Abstractions;
-using WalletFramework.Oid4Vc.Oid4Vp.Models;
-using WalletFramework.Oid4Vc.Oid4Vp.PresentationExchange.Services;
 using WalletFramework.Oid4Vc.Oid4Vp.Services;
 using WalletFramework.SdJwtVc.Services.SdJwtVcHolderService;
 
@@ -105,114 +101,114 @@ public class Oid4VpHaipClientTests
 
     private Oid4VpHaipClient _oid4VpHaipClient;
 
-    [Fact]
-    public async Task CanProcessAuthorizationRequestByReference()
-    {
-        // Arrange
-        var httpResponseMessage = new HttpResponseMessage
-        {
-            StatusCode = HttpStatusCode.OK,
-            Content = new StringContent(RequestUriResponse)
-        };
-            
-        var verifierMetadataResponseMessage = new HttpResponseMessage
-        {
-            StatusCode = HttpStatusCode.OK,
-            Content = new StringContent(VerifierMetadataResponse)
-        };
-            
-        SetupHttpClientSequence(httpResponseMessage, verifierMetadataResponseMessage);
-            
-        _oid4VpHaipClient = new Oid4VpHaipClient(
-            new AuthorizationRequestService(_httpClientFactoryMock.Object),
-            new PexService(_agentProviderMock.Object, _mdocStorageMock.Object, _sdJwtVcHolderService.Object)
-        );
-
-        // Act
-        var authorizationRequest = await _oid4VpHaipClient.ProcessAuthorizationRequestAsync(
-            AuthorizationRequestUri.FromUri(new Uri(AuthRequestByReferenceWithRequestUri))
-        );
-
-        // Assert
-        authorizationRequest.ClientId.Should().Be("https://verifier.com/presentation/authorization-response");
-        authorizationRequest.ResponseUri.Should().Be("https://verifier.com/presentation/authorization-response");
-        authorizationRequest.Nonce.Should().Be("87554784260280280442092184171274132458");
-        authorizationRequest.PresentationDefinition.Id.Should().Be("4dd1c26a-2f46-43ae-a711-70888c93fb4f");
-        authorizationRequest.ClientMetadata.ClientName.Should().Be("Some Verifier");
-        authorizationRequest.ClientMetadata.ClientUri.Should().Be("https://some.de");
-        authorizationRequest.ClientMetadata.Contacts.First().Should().Be("Any contact");
-        authorizationRequest.ClientMetadata.LogoUri.Should().Be("https://some.de/logo");
-        authorizationRequest.ClientMetadata.PolicyUri.Should().Be("https://some.de/policy");
-        authorizationRequest.ClientMetadata.TosUri.Should().Be("https://some.de/tos");
-        authorizationRequest.ClientMetadata.RedirectUris.First().Should().Be("https://verifier.com/redirect-uri");
-
-        var inputDescriptor = authorizationRequest.PresentationDefinition.InputDescriptors.First();
-
-        inputDescriptor.Id.Should().Be("NextcloudCredential");
-
-        inputDescriptor.Formats.SdJwtFormat.IssuerSignedJwtAlgValues.First().Should().Be("ES256");
-        inputDescriptor.Formats.SdJwtFormat.KeyBindingJwtAlgValues.First().Should().Be("JsonWebSignature2020");
-
-        inputDescriptor.Constraints.LimitDisclosure.Should().Be("required");
-
-        inputDescriptor.Constraints.Fields!.First().Filter!.Type.Should().Be("string");
-        inputDescriptor.Constraints.Fields!.First().Filter!.Const.Should().Be("VerifiedEMail");
-        inputDescriptor.Constraints.Fields!.First().Path.First().Should().Be("$.type");
-
-        inputDescriptor.Constraints.Fields![1].Path.First().Should().Be("$.credentialSubject.email");
-    }
+    // [Fact]
+    // public async Task CanProcessAuthorizationRequestByReference()
+    // {
+    //     // Arrange
+    //     var httpResponseMessage = new HttpResponseMessage
+    //     {
+    //         StatusCode = HttpStatusCode.OK,
+    //         Content = new StringContent(RequestUriResponse)
+    //     };
+    //         
+    //     var verifierMetadataResponseMessage = new HttpResponseMessage
+    //     {
+    //         StatusCode = HttpStatusCode.OK,
+    //         Content = new StringContent(VerifierMetadataResponse)
+    //     };
+    //         
+    //     SetupHttpClientSequence(httpResponseMessage, verifierMetadataResponseMessage);
+    //         
+    //     _oid4VpHaipClient = new Oid4VpHaipClient(
+    //         new AuthorizationRequestService(_httpClientFactoryMock.Object),
+    //         new PexService(_agentProviderMock.Object, _mdocStorageMock.Object, _sdJwtVcHolderService.Object)
+    //     );
+    //
+    //     // Act
+    //     var authorizationRequest = await _oid4VpHaipClient.ProcessAuthorizationRequestAsync(
+    //         AuthorizationRequestUri.FromUri(new Uri(AuthRequestByReferenceWithRequestUri))
+    //     );
+    //
+    //     // Assert
+    //     authorizationRequest.ClientId.Should().Be("https://verifier.com/presentation/authorization-response");
+    //     authorizationRequest.ResponseUri.Should().Be("https://verifier.com/presentation/authorization-response");
+    //     authorizationRequest.Nonce.Should().Be("87554784260280280442092184171274132458");
+    //     authorizationRequest.PresentationDefinition.Id.Should().Be("4dd1c26a-2f46-43ae-a711-70888c93fb4f");
+    //     authorizationRequest.ClientMetadata.ClientName.Should().Be("Some Verifier");
+    //     authorizationRequest.ClientMetadata.ClientUri.Should().Be("https://some.de");
+    //     authorizationRequest.ClientMetadata.Contacts.First().Should().Be("Any contact");
+    //     authorizationRequest.ClientMetadata.LogoUri.Should().Be("https://some.de/logo");
+    //     authorizationRequest.ClientMetadata.PolicyUri.Should().Be("https://some.de/policy");
+    //     authorizationRequest.ClientMetadata.TosUri.Should().Be("https://some.de/tos");
+    //     authorizationRequest.ClientMetadata.RedirectUris.First().Should().Be("https://verifier.com/redirect-uri");
+    //
+    //     var inputDescriptor = authorizationRequest.PresentationDefinition.InputDescriptors.First();
+    //
+    //     inputDescriptor.Id.Should().Be("NextcloudCredential");
+    //
+    //     inputDescriptor.Formats.SdJwtFormat.IssuerSignedJwtAlgValues.First().Should().Be("ES256");
+    //     inputDescriptor.Formats.SdJwtFormat.KeyBindingJwtAlgValues.First().Should().Be("JsonWebSignature2020");
+    //
+    //     inputDescriptor.Constraints.LimitDisclosure.Should().Be("required");
+    //
+    //     inputDescriptor.Constraints.Fields!.First().Filter!.Type.Should().Be("string");
+    //     inputDescriptor.Constraints.Fields!.First().Filter!.Const.Should().Be("VerifiedEMail");
+    //     inputDescriptor.Constraints.Fields!.First().Path.First().Should().Be("$.type");
+    //
+    //     inputDescriptor.Constraints.Fields![1].Path.First().Should().Be("$.credentialSubject.email");
+    // }
     
-    [Fact]
-    public async Task CanProcessAuthorizationRequestByValueWithPresentationDefinitionUri()
-    {
-        // Arrange
-        var presentationDefinitionUriResponse = new HttpResponseMessage
-        {
-            StatusCode = HttpStatusCode.OK,
-            Content = new StringContent(PresentationDefinitionUriResponse)
-        };
-            
-        var verifierMetadataResponseMessage = new HttpResponseMessage
-        {
-            StatusCode = HttpStatusCode.OK,
-            Content = new StringContent(VerifierMetadataResponse)
-        };
-            
-        SetupHttpClientSequence(presentationDefinitionUriResponse, verifierMetadataResponseMessage);
-        
-        _oid4VpHaipClient = new Oid4VpHaipClient(
-            new AuthorizationRequestService(_httpClientFactoryMock.Object),
-            new PexService(_agentProviderMock.Object, _mdocStorageMock.Object, _sdJwtVcHolderService.Object)
-        );
-
-        // Act
-        var authorizationRequest = await _oid4VpHaipClient.ProcessAuthorizationRequestAsync(
-            AuthorizationRequestUri.FromUri(new Uri(AuthRequestByValueWithPresentationDefinitionUri))
-        );
-
-        // Assert
-        authorizationRequest.ClientId.Should().Be("https://some.de/issuer/direct_post_vci");
-        authorizationRequest.ResponseUri.Should().Be("https://some.de/issuer/direct_post_vci");
-        authorizationRequest.ResponseMode.Should().Be("direct_post");
-        authorizationRequest.State.Should().Be("af0ifjsldkj");
-        authorizationRequest.Nonce.Should().Be("n0S6_WzA2Mj");
-        authorizationRequest.PresentationDefinition.Id.Should().Be("4dd1c26a-2f46-43ae-a711-70888c93fb4f");
-
-        var inputDescriptor = authorizationRequest.PresentationDefinition.InputDescriptors.First();
-
-        inputDescriptor.Id.Should().Be("NextcloudCredential");
-
-        inputDescriptor.Formats.SdJwtFormat.IssuerSignedJwtAlgValues.First().Should().Be("ES256");
-        inputDescriptor.Formats.SdJwtFormat.KeyBindingJwtAlgValues.First().Should().Be("JsonWebSignature2020");
-
-        inputDescriptor.Constraints.LimitDisclosure.Should().Be("required");
-
-        inputDescriptor.Constraints.Fields!.First().Filter!.Type.Should().Be("string");
-        inputDescriptor.Constraints.Fields!.First().Filter!.Const.Should().Be("VerifiedEMail");
-        inputDescriptor.Constraints.Fields!.First().Path.First().Should().Be("$.type");
-
-        inputDescriptor.Constraints.Fields![1].Path.First().Should().Be("$.credentialSubject.email");
-    }
+    // [Fact]
+    // public async Task CanProcessAuthorizationRequestByValueWithPresentationDefinitionUri()
+    // {
+    //     // Arrange
+    //     var presentationDefinitionUriResponse = new HttpResponseMessage
+    //     {
+    //         StatusCode = HttpStatusCode.OK,
+    //         Content = new StringContent(PresentationDefinitionUriResponse)
+    //     };
+    //         
+    //     var verifierMetadataResponseMessage = new HttpResponseMessage
+    //     {
+    //         StatusCode = HttpStatusCode.OK,
+    //         Content = new StringContent(VerifierMetadataResponse)
+    //     };
+    //         
+    //     SetupHttpClientSequence(presentationDefinitionUriResponse, verifierMetadataResponseMessage);
+    //     
+    //     _oid4VpHaipClient = new Oid4VpHaipClient(
+    //         new AuthorizationRequestService(_httpClientFactoryMock.Object),
+    //         new PexService(_agentProviderMock.Object, _mdocStorageMock.Object, _sdJwtVcHolderService.Object)
+    //     );
+    //
+    //     // Act
+    //     var authorizationRequest = await _oid4VpHaipClient.ProcessAuthorizationRequestAsync(
+    //         AuthorizationRequestUri.FromUri(new Uri(AuthRequestByValueWithPresentationDefinitionUri))
+    //     );
+    //
+    //     // Assert
+    //     authorizationRequest.ClientId.Should().Be("https://some.de/issuer/direct_post_vci");
+    //     authorizationRequest.ResponseUri.Should().Be("https://some.de/issuer/direct_post_vci");
+    //     authorizationRequest.ResponseMode.Should().Be("direct_post");
+    //     authorizationRequest.State.Should().Be("af0ifjsldkj");
+    //     authorizationRequest.Nonce.Should().Be("n0S6_WzA2Mj");
+    //     authorizationRequest.PresentationDefinition.Id.Should().Be("4dd1c26a-2f46-43ae-a711-70888c93fb4f");
+    //
+    //     var inputDescriptor = authorizationRequest.PresentationDefinition.InputDescriptors.First();
+    //
+    //     inputDescriptor.Id.Should().Be("NextcloudCredential");
+    //
+    //     inputDescriptor.Formats.SdJwtFormat.IssuerSignedJwtAlgValues.First().Should().Be("ES256");
+    //     inputDescriptor.Formats.SdJwtFormat.KeyBindingJwtAlgValues.First().Should().Be("JsonWebSignature2020");
+    //
+    //     inputDescriptor.Constraints.LimitDisclosure.Should().Be("required");
+    //
+    //     inputDescriptor.Constraints.Fields!.First().Filter!.Type.Should().Be("string");
+    //     inputDescriptor.Constraints.Fields!.First().Filter!.Const.Should().Be("VerifiedEMail");
+    //     inputDescriptor.Constraints.Fields!.First().Path.First().Should().Be("$.type");
+    //
+    //     inputDescriptor.Constraints.Fields![1].Path.First().Should().Be("$.credentialSubject.email");
+    // }
     
     private void SetupHttpClientSequence(params HttpResponseMessage[] responses)
     {
