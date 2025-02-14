@@ -3,7 +3,9 @@ using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using WalletFramework.Oid4Vc.Oid4Vp.Extensions;
 using Org.BouncyCastle.X509;
+using WalletFramework.Core.Functional;
 using WalletFramework.Core.X509;
+using WalletFramework.Oid4Vc.Oid4Vp.Errors;
 using X509Certificate = Org.BouncyCastle.X509.X509Certificate;
 using static WalletFramework.Oid4Vc.Oid4Vp.Models.AuthorizationRequest;
 using static Newtonsoft.Json.Linq.JArray;
@@ -33,32 +35,39 @@ public readonly struct RequestObject
     /// <summary>
     ///     Creates a new instance of the <see cref="RequestObject" /> class.
     /// </summary>
-    public static implicit operator RequestObject(JwtSecurityToken token) => new(token);
-
-    /// <summary>
-    ///     Creates a new instance of the <see cref="RequestObject" /> class.
-    /// </summary>
     public static implicit operator JwtSecurityToken(RequestObject requestObject) => requestObject.Value;
 
-    private RequestObject(JwtSecurityToken token)
+    private RequestObject(JwtSecurityToken token, AuthorizationRequest authorizationRequest)
     {
-        AuthorizationRequest = CreateAuthorizationRequest(token.Payload.SerializeToJson());
+        AuthorizationRequest = authorizationRequest;
         Value = token;
     }
 
     /// <summary>
     ///     Creates a new instance of the <see cref="RequestObject" /> class.
     /// </summary>
-    public static RequestObject CreateRequestObject(string requestObjectJson)
+    public static Validation<RequestObject> CreateRequestObject(string requestObjectJson)
     {
         var tokenHandler = new JwtSecurityTokenHandler();
 
-        if (requestObjectJson.Split('.').Length == 2)
-            requestObjectJson += ".";
+        JwtSecurityToken jwt;
+        try
+        {
+            if (requestObjectJson.Split('.').Length == 2)
+                requestObjectJson += ".";
         
-        var jwt = tokenHandler.ReadJwtToken(requestObjectJson);
-
-        return new RequestObject(jwt);
+            jwt = tokenHandler.ReadJwtToken(requestObjectJson);
+        }
+        catch (Exception e)
+        {
+            return new InvalidRequestError("The request object is not a valid JWT", e);
+        }
+        
+        var json = jwt.Payload.SerializeToJson();
+        
+        return 
+            from authRequest in CreateAuthorizationRequest(json)
+            select new RequestObject(jwt, authRequest);
     }
 
     /// <summary>
