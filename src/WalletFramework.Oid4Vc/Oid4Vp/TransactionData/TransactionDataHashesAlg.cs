@@ -13,9 +13,9 @@ public readonly struct TransactionDataHashesAlg
         Value = value;
     }
 
-    public override string ToString() => Value;
+    public string AsString => Value;
 
-    public static implicit operator string(TransactionDataHashesAlg alg) => alg.Value;
+    public static implicit operator string(TransactionDataHashesAlg alg) => alg.AsString;
 
     public static Validation<TransactionDataHashesAlg> FromJToken(JToken jToken)
     {

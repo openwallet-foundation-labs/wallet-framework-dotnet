@@ -32,6 +32,7 @@ using WalletFramework.Oid4Vc.Oid4Vp.Errors;
 using WalletFramework.Oid4Vc.Oid4Vp.Models;
 using WalletFramework.Oid4Vc.Oid4Vp.PresentationExchange.Models;
 using WalletFramework.Oid4Vc.Oid4Vp.PresentationExchange.Services;
+using WalletFramework.Oid4Vc.Oid4Vp.TransactionData;
 using WalletFramework.SdJwtVc.Models;
 using WalletFramework.SdJwtVc.Models.Records;
 using WalletFramework.SdJwtVc.Services.SdJwtVcHolderService;
@@ -149,10 +150,14 @@ public class Oid4VpClientService : IOid4VpClientService
             {
                 case SdJwtRecord sdJwt:
                     format = FormatFun.CreateSdJwtFormat();
+
+                    var transactionDataHashesOption = authorizationRequest.TransactionData.OnSome(
+                        list => list.Select(data => data.Hash().AsString));
                     
                     presentation = await _sdJwtVcHolderService.CreatePresentation(
                         sdJwt,
                         claims.ToArray(),
+                        transactionDataHashesOption,
                         authorizationRequest.ClientId,
                         authorizationRequest.Nonce);
 
@@ -419,6 +424,7 @@ public class Oid4VpClientService : IOid4VpClientService
                     presentation = await _sdJwtVcHolderService.CreatePresentation(
                         sdJwt,
                         claims.ToArray(),
+                        Option<IEnumerable<string>>.None,
                         authorizationRequest.ClientId,
                         authorizationRequest.Nonce);
 

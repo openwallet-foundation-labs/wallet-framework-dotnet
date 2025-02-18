@@ -5,7 +5,7 @@ using WalletFramework.Oid4Vc.Oid4Vp.TransactionData;
 
 namespace WalletFramework.Oid4Vc.Payment;
 
-public record PaymentTransactionData(TransactionData TransactionData, PaymentData PaymentData)
+public record PaymentTransactionData(TransactionData TransactionData, PaymentData PaymentData, Base64UrlString Encoded)
 {
     public static Validation<PaymentTransactionData> FromBase64Url(Base64UrlString base64UrlString)
     {
@@ -24,7 +24,7 @@ public record PaymentTransactionData(TransactionData TransactionData, PaymentDat
         var result=
             from transactionData in transactionDataValidation
             from paymentData in paymentDataValidation
-            select new PaymentTransactionData(transactionData, paymentData);
+            select new PaymentTransactionData(transactionData, paymentData, base64UrlString);
 
         return result;
     }
