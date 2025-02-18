@@ -138,7 +138,8 @@ public record AuthorizationRequest
     /// <param name="authorizationRequestJson">The json representation of the authorization request.</param>
     /// <returns>A new instance of the <see cref="AuthorizationRequest" /> class.</returns>
     /// <exception cref="InvalidOperationException">Thrown when the request does not match the HAIP.</exception>
-    public static Validation<AuthorizationRequest> CreateAuthorizationRequest(string authorizationRequestJson)
+    public static Validation<AuthorizationRequestCancellation, AuthorizationRequest> CreateAuthorizationRequest(
+        string authorizationRequestJson)
     {
         JObject jObject;
         try
@@ -147,7 +148,9 @@ public record AuthorizationRequest
         }
         catch (Exception e)
         {
-            return new InvalidRequestError("The authorization request could not be parsed", e);
+            var responseUriOption = AuthorizationRequestExtensions.GetResponseUriMaybe(authorizationRequestJson);
+            var error = new InvalidRequestError("The authorization request could not be parsed", e);
+            return new AuthorizationRequestCancellation(responseUriOption, [error]);
         }
 
         try
@@ -156,11 +159,14 @@ public record AuthorizationRequest
         }
         catch (Exception e)
         {
-            return new InvalidRequestError("The authorization request could not be parsed", e);
+            var responseUriOption = AuthorizationRequestExtensions.GetResponseUriMaybe(authorizationRequestJson);
+            var error = new InvalidRequestError("The authorization request could not be parsed", e);
+            return new AuthorizationRequestCancellation(responseUriOption, [error]);
         }
     }
 
-    private static Validation<AuthorizationRequest> CreateAuthorizationRequest(JObject authRequestJObject)
+    private static Validation<AuthorizationRequestCancellation, AuthorizationRequest> CreateAuthorizationRequest(
+        JObject authRequestJObject)
     {
         if (IsHaipConform(authRequestJObject))
         {
@@ -168,27 +174,43 @@ public record AuthorizationRequest
                 authRequestJObject.ToObject<AuthorizationRequest>()
                 ?? new InvalidRequestError("Could not parse the Authorization Request")
                     .ToInvalid<AuthorizationRequest>();
-
+            
             var transactionDataPropertyFoundValidation =
                 from jToken in authRequestJObject.GetByKey("transaction_data")
                 from jObject in jToken.ToJArray()
                 select jObject;
+            
+            var responseUriOption = AuthorizationRequestExtensions.GetResponseUriMaybe(authRequestJObject);
 
             return transactionDataPropertyFoundValidation.Match(
-                jObject => 
-                    from transactionDataArray in TransactionDataArray.FromJObject(jObject)
-                    from paymentTransactionDataEnum in transactionDataArray.Decode()
-                    from authRequest in authRequestValidation
-                    select authRequest with
+                jArray =>
+                {
+                    var transactionDataValidation = 
+                        from transactionDataArray in TransactionDataArray.FromJObject(jArray)
+                        from transactionDataEnum in transactionDataArray.Decode()
+                        from authRequest in authRequestValidation
+                        select authRequest with
+                        {
+                            TransactionData = transactionDataEnum.ToList()
+                        };
+            
+                    return transactionDataValidation.Value.MapFail(error =>
                     {
-                        TransactionData = paymentTransactionDataEnum.ToList()
-                    },
-                _ => authRequestValidation);
+                        var vpError = error as VpError ?? new InvalidRequestError("Could not parse the Authorization Request");
+                        return new AuthorizationRequestCancellation(responseUriOption, [vpError]);
+                    });
+                },
+                _ => authRequestValidation.Value.MapFail(error =>
+                {
+                    var vpError = error as VpError ?? new InvalidRequestError("Could not parse the Authorization Request");
+                    return new AuthorizationRequestCancellation(responseUriOption, [vpError]);
+                }));
         }
         else
         {
-            return new InvalidRequestError(
-                "Invalid Authorization Request. The request does not match the HAIP");
+            var responseUriOption = AuthorizationRequestExtensions.GetResponseUriMaybe(authRequestJObject.ToString());
+            var error = new InvalidRequestError("The authorization request does not match the HAIP");
+            return new AuthorizationRequestCancellation(responseUriOption, [error]);
         }
     }
 
@@ -254,4 +276,45 @@ internal static class AuthorizationRequestExtensions
         this AuthorizationRequest authorizationRequest,
         Option<ClientMetadata> clientMetadata) 
         => authorizationRequest with { ClientMetadata = clientMetadata.ToNullable() };
+    
+    internal static Option<Uri> GetResponseUriMaybe(string authRequestJson)
+    {
+        try
+        {
+            var jObject = JObject.Parse(authRequestJson);
+            return GetResponseUriMaybe(jObject);
+        }
+        catch (Exception)
+        {
+            return Option<Uri>.None;
+        }
+    }
+    
+    internal static Option<Uri> GetResponseUriMaybe(JObject authRequestJObject)
+    {
+        try
+        {
+            var responseUri = authRequestJObject["response_uri"]!.ToString();
+            return new Uri(responseUri);
+        }
+        catch (Exception)
+        {
+            return Option<Uri>.None;
+        }
+    }
+}
+
+public static class AuthorizationRequestFun
+{
+    public static Option<Uri> GetResponseUriMaybe(this AuthorizationRequest authRequest)
+    {
+        try
+        {
+            return new Uri(authRequest.ResponseUri);
+        }
+        catch (Exception)
+        {
+            return Option<Uri>.None;
+        }
+    }
 }

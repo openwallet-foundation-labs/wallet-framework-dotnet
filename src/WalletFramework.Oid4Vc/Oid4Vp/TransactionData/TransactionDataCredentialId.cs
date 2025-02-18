@@ -13,9 +13,9 @@ public readonly struct TransactionDataCredentialId
         Value = value;
     }
 
-    public override string ToString() => Value;
+    public string AsString => Value;
 
-    public static implicit operator string(TransactionDataCredentialId id) => id.Value;
+    public static implicit operator string(TransactionDataCredentialId id) => id.AsString;
 
     public static Validation<TransactionDataCredentialId> FromJToken(JToken jToken)
     {

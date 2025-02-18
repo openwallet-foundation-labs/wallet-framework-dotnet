@@ -1,9 +1,9 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
+using LanguageExt;
 using WalletFramework.Oid4Vc.Oid4Vp.Extensions;
 using Org.BouncyCastle.X509;
-using WalletFramework.Core.Functional;
 using WalletFramework.Core.X509;
 using WalletFramework.Oid4Vc.Oid4Vp.Errors;
 using X509Certificate = Org.BouncyCastle.X509.X509Certificate;
@@ -46,7 +46,7 @@ public readonly struct RequestObject
     /// <summary>
     ///     Creates a new instance of the <see cref="RequestObject" /> class.
     /// </summary>
-    public static Validation<RequestObject> CreateRequestObject(string requestObjectJson)
+    public static Validation<AuthorizationRequestCancellation, RequestObject> CreateRequestObject(string requestObjectJson)
     {
         var tokenHandler = new JwtSecurityTokenHandler();
 
@@ -60,7 +60,8 @@ public readonly struct RequestObject
         }
         catch (Exception e)
         {
-            return new InvalidRequestError("The request object is not a valid JWT", e);
+            var error = new InvalidRequestError("The request object is not a valid JWT", e);
+            return new AuthorizationRequestCancellation(Option<Uri>.None, [error]);
         }
         
         var json = jwt.Payload.SerializeToJson();

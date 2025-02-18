@@ -1,8 +1,6 @@
 using LanguageExt;
-using WalletFramework.Core.Functional;
 using WalletFramework.Oid4Vc.ClientAttestation;
 using WalletFramework.Oid4Vc.Oid4Vci.AuthFlow.Models;
-using WalletFramework.Oid4Vc.Oid4Vp.Errors;
 using WalletFramework.Oid4Vc.Oid4Vp.Models;
 using WalletFramework.Oid4Vc.Oid4Vp.PresentationExchange.Models;
 
@@ -16,10 +14,10 @@ public interface IOid4VpClientService
     /// <summary>
     ///     Aborts an authorization request for example when the wallet wants to deny the request
     /// </summary>
-    /// <param name="error">The error that will be send to the relying party</param>
+    /// <param name="cancellation">Information for aborting the auth request</param>
     /// <remarks>The error is based on OpenID4VP and OAuth2</remarks>
     /// <returns>Maybe a callback URI from the relying party</returns>
-    Task<Option<Uri>> AbortAuthorizationRequest(VpError error);
+    Task<Option<Uri>> AbortAuthorizationRequest(AuthorizationRequestCancellation cancellation);
 
     /// <summary>
     /// 
@@ -53,7 +51,9 @@ public interface IOid4VpClientService
     ///     associated with the OpenID4VP Authorization Request Url and Credentials Candidates that can be used to answer the
     ///     request.
     /// </returns>
-    Task<Validation<AuthorizationRequestCandidates>> ProcessAuthorizationRequestUri(
+    // Task<Validation<AuthorizationRequestCandidates>> ProcessAuthorizationRequestUri(
+    //     AuthorizationRequestUri authorizationRequestUri);
+    Task<Validation<AuthorizationRequestCancellation, AuthorizationRequestCandidates>> ProcessAuthorizationRequestUri(
         AuthorizationRequestUri authorizationRequestUri);
 
     /// <summary>

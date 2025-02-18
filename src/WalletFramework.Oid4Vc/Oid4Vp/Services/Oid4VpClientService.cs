@@ -96,23 +96,26 @@ public class Oid4VpClientService : IOid4VpClientService
     private readonly IAuthFlowSessionStorage _authFlowSessionStorage;
     private readonly ISdJwtVcHolderService _sdJwtVcHolderService;
 
-    public async Task<Validation<AuthorizationRequestCandidates>> ProcessAuthorizationRequestUri(AuthorizationRequestUri requestUri)
+    public async Task<Validation<AuthorizationRequestCancellation, AuthorizationRequestCandidates>> ProcessAuthorizationRequestUri(
+        AuthorizationRequestUri requestUri)
     {
         var authorizationRequestValidation = await _authorizationRequestService.GetAuthorizationRequest(requestUri);
-        return await authorizationRequestValidation.OnSuccess(async authRequest =>
+        var result = authorizationRequestValidation.Map(async authRequest =>
         {
             var candidates = await _pexService.FindCredentialCandidates(
                 authRequest.PresentationDefinition.InputDescriptors,
                 authRequest.ClientMetadata?.Formats);
 
             var candidatesList = candidates.ToList();
-            
+
             var candidatesOption = candidatesList.Count == 0
                 ? Option<List<PresentationCandidates>>.None
                 : candidatesList;
 
             return new AuthorizationRequestCandidates(authRequest, candidatesOption);
         });
+
+        return await result.Traverse(candidates => candidates);
     }
 
     public async Task<Option<Uri>> AcceptAuthorizationRequest(
@@ -327,35 +330,36 @@ public class Oid4VpClientService : IOid4VpClientService
         }
     }
 
-    // TODO: Implement AbortAuthorizationRequest
-    public Task<Option<Uri>> AbortAuthorizationRequest(VpError error)
+    public async Task<Option<Uri>> AbortAuthorizationRequest(AuthorizationRequestCancellation cancellation)
     {
-        return Task.FromResult(Option<Uri>.None);
-        // var callbackTaskOption = error.ResponseUri.OnSome(
-        //     async uri =>
-        //     {
-        //         var message = new HttpRequestMessage(HttpMethod.Post, uri)
-        //         {
-        //             Content = error.ToResponse().ToFormUrlContent()
-        //         };
-        //
-        //         var httpClient = _httpClientFactory.CreateClient();
-        //         httpClient.DefaultRequestHeaders.Clear();
-        //
-        //         var responseMessage = await httpClient.SendAsync(message);
-        //         if (!responseMessage.IsSuccessStatusCode)
-        //         {
-        //             var str = await responseMessage.Content.ReadAsStringAsync();
-        //             throw new InvalidOperationException($"Authorization Error Response failed with message {str}");
-        //         }
-        //
-        //         var redirectUriJson = await responseMessage.Content.ReadAsStringAsync();
-        //         var callback = DeserializeObject<AuthorizationResponseCallback>(redirectUriJson);
-        //         return callback?.ToUri() ?? Option<Uri>.None;
-        //     });
-        //
-        // var callbackUriOption = await callbackTaskOption.Traverse(uri => uri);
-        // return callbackUriOption.Flatten();
+        var callbackTaskOption = cancellation.ResponseUri.OnSome(
+            async uri =>
+            {
+                var error = cancellation.Errors.First();
+                
+                var message = new HttpRequestMessage(HttpMethod.Post, uri)
+                {
+                    Content = error.ToResponse().ToFormUrlContent()
+                };
+        
+                var httpClient = _httpClientFactory.CreateClient();
+                httpClient.DefaultRequestHeaders.Clear();
+                
+                using var cancellationSource = new CancellationTokenSource(TimeSpan.FromSeconds(3)); 
+                var responseMessage = await httpClient.SendAsync(message, cancellationSource.Token);
+                if (!responseMessage.IsSuccessStatusCode)
+                {
+                    var str = await responseMessage.Content.ReadAsStringAsync();
+                    throw new InvalidOperationException($"Authorization Error Response failed with message {str}");
+                }
+        
+                var redirectUriJson = await responseMessage.Content.ReadAsStringAsync();
+                var callback = DeserializeObject<AuthorizationResponseCallback>(redirectUriJson);
+                return callback?.ToUri() ?? Option<Uri>.None;
+            });
+        
+        var callbackUriOption = await callbackTaskOption.Traverse(uri => uri);
+        return callbackUriOption.Flatten();
     }
 
     /// <inheritdoc />
