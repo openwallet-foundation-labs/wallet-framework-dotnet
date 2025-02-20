@@ -1,7 +1,6 @@
 using FluentAssertions;
 using Hyperledger.Aries.Agents;
 using Hyperledger.Aries.Storage;
-using LanguageExt;
 using Moq;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -9,6 +8,7 @@ using SD_JWT.Roles.Implementation;
 using WalletFramework.Core.Credentials;
 using WalletFramework.Core.Credentials.Abstractions;
 using WalletFramework.Core.Cryptography.Models;
+using WalletFramework.Core.Functional;
 using WalletFramework.Oid4Vc.Oid4Vci.Abstractions;
 using WalletFramework.Oid4Vc.Oid4Vp.Models;
 using WalletFramework.Oid4Vc.Oid4Vp.PresentationExchange.Models;
@@ -120,7 +120,7 @@ public class PexServiceTests
         var batchCredentialSetCandidate = new CredentialSetCandidate(BatchCredentialSetId,
             new List<ICredential> { _batchCredentialOne });
         
-        var expected = new List<PresentationCandidates>
+        var expected = new List<PresentationCandidate>
         {
             new(driverLicenseInputDescriptor.Id, 
                 new List<CredentialSetCandidate>
@@ -135,9 +135,10 @@ public class PexServiceTests
         var pexService = CreatePexService();
 
         // Act
-        var credentialCandidatesArray = await pexService.FindCredentialCandidates(
-            [driverLicenseInputDescriptor, universityInputDescriptor, batchInputDescriptor],
-            Option<Formats>.None);
+        var driverLicenseCandidate = (await pexService.FindCandidates(driverLicenseInputDescriptor)).UnwrapOrThrow();
+        var universityCandidate = (await pexService.FindCandidates(universityInputDescriptor)).UnwrapOrThrow();
+        var batchCandidate = (await pexService.FindCandidates(batchInputDescriptor)).UnwrapOrThrow();
+        var credentialCandidatesArray = new List<PresentationCandidate> { driverLicenseCandidate, universityCandidate, batchCandidate };
 
         // Assert
         credentialCandidatesArray.Should().BeEquivalentTo(expected);
@@ -162,7 +163,7 @@ public class PexServiceTests
             "We can only accept digital identity credentials.",
             new[] { "A" });
 
-        var expected = new List<PresentationCandidates>
+        var expected = new List<PresentationCandidate>
         {
             new(identityCredentialInputDescriptor.Id,
                 new List<CredentialSetCandidate> { alternativeNestedCredentialSetCandidate })
@@ -171,7 +172,9 @@ public class PexServiceTests
         var sdJwtVcHolderService = CreatePexService();
 
         // Act
-        var credentialCandidatesArray = await sdJwtVcHolderService.FindCredentialCandidates([identityCredentialInputDescriptor], Option<Formats>.None);
+        var candidate = 
+            (await sdJwtVcHolderService.FindCandidates(identityCredentialInputDescriptor)).UnwrapOrThrow();
+        var credentialCandidatesArray = new List<PresentationCandidate> { candidate };
 
         // Assert
         credentialCandidatesArray.Should().BeEquivalentTo(expected);
@@ -197,7 +200,7 @@ public class PexServiceTests
             "We can only accept digital identity credentials.",
             new[] { "A" });
 
-        var expected = new List<PresentationCandidates>
+        var expected = new List<PresentationCandidate>
         {
             new(identityCredentialInputDescriptor.Id,
                 new List<CredentialSetCandidate> { nestedCredentialSetCandidate, alternativeNestedCredentialSetCandidate }),
@@ -206,7 +209,10 @@ public class PexServiceTests
         var sdJwtVcHolderService = CreatePexService();
 
         // Act
-        var credentialCandidatesArray = await sdJwtVcHolderService.FindCredentialCandidates([identityCredentialInputDescriptor], Option<Formats>.None);
+        var candidate = 
+            (await sdJwtVcHolderService.FindCandidates(identityCredentialInputDescriptor)).UnwrapOrThrow();
+        
+        var credentialCandidatesArray = new List<PresentationCandidate> { candidate };
 
         // Assert
         credentialCandidatesArray.Should().BeEquivalentTo(expected);
@@ -229,7 +235,7 @@ public class PexServiceTests
             "University Degree",
             "We can only accept digital university degrees.");
 
-        var expected = new List<PresentationCandidates>
+        var expected = new List<PresentationCandidate>
         {
             new(universityInputDescriptor.Id,
                 new List<CredentialSetCandidate> { credentialSetCandidate }),
@@ -238,7 +244,10 @@ public class PexServiceTests
         var sdJwtVcHolderService = CreatePexService();
 
         // Act
-        var credentialCandidatesArray = await sdJwtVcHolderService.FindCredentialCandidates([universityInputDescriptor], Option<Formats>.None);
+        var candidate = 
+            (await sdJwtVcHolderService.FindCandidates(universityInputDescriptor)).UnwrapOrThrow();
+        
+        var credentialCandidatesArray = new List<PresentationCandidate> { candidate };
 
         // Assert
         credentialCandidatesArray.Should().BeEquivalentTo(expected);
@@ -261,10 +270,10 @@ public class PexServiceTests
         var sdJwtVcHolderService = CreatePexService();
 
         // Act
-        var credentialCandidatesArray = await sdJwtVcHolderService.FindCredentialCandidates([universityInputDescriptor], Option<Formats>.None);
+        var credentialCandidatesArray = await sdJwtVcHolderService.FindCandidates(universityInputDescriptor);
 
         // Assert
-        credentialCandidatesArray.Should().BeEmpty();
+        credentialCandidatesArray.IsNone.Should().BeTrue();
     }
 
     [Fact]
@@ -285,10 +294,10 @@ public class PexServiceTests
         var sdJwtVcHolderService = CreatePexService();
 
         // Act
-        var credentialCandidates = await sdJwtVcHolderService.FindCredentialCandidates([driverLicenseInputDescriptor], Option<Formats>.None);
+        var candidate = await sdJwtVcHolderService.FindCandidates(driverLicenseInputDescriptor);
 
         // Assert
-        credentialCandidates.Should().BeEmpty();
+        candidate.IsNone.Should().BeTrue();
     }
 
     [Fact]
@@ -300,11 +309,8 @@ public class PexServiceTests
         idFilter.PrivateSet(x => x.Const, "326");
 
         var driverLicenseInputDescriptor = CreateInputDescriptor(
-            CreateConstraints(new[]
-            {
-                CreateField("$.id", idFilter), CreateField("$.issuer"), CreateField("$.dateOfBirth")
-            }),
-            CreateFormat(new[] { "ES256" }),
+            CreateConstraints([CreateField("$.id", idFilter), CreateField("$.issuer"), CreateField("$.dateOfBirth")]),
+            CreateFormat(["ES256"]),
             Guid.NewGuid().ToString(),
             "EU Driver's License",
             "We can only accept digital driver's licenses issued by national authorities of member states or trusted notarial auditors.");
@@ -312,10 +318,10 @@ public class PexServiceTests
         var sdJwtVcHolderService = CreatePexService();
 
         // Act
-        var credentialCandidates = await sdJwtVcHolderService.FindCredentialCandidates([driverLicenseInputDescriptor], Option<Formats>.None);
+        var candidate = await sdJwtVcHolderService.FindCandidates(driverLicenseInputDescriptor);
 
         // Assert
-        credentialCandidates.Should().BeEmpty();
+        candidate.IsNone.Should().BeTrue();
     }
 
     #region Helper Methods

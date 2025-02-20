@@ -2,7 +2,7 @@ using Newtonsoft.Json.Linq;
 using WalletFramework.Core.Functional;
 using WalletFramework.Core.Json;
 
-namespace WalletFramework.Oid4Vc.Oid4Vp.TransactionData;
+namespace WalletFramework.Oid4Vc.Oid4Vp.TransactionDatas;
 
 public record TransactionData(
     TransactionDataType Type,
@@ -25,12 +25,12 @@ public record TransactionData(
         var hashesAlgValidation =
             from jToken in jObject.GetByKey("transaction_data_hashes_alg")
             from jArray in jToken.ToJArray()
-            from hashesAlgs in jArray.TraverseAll(Oid4Vp.TransactionData.TransactionDataHashesAlg.FromJToken)
+            from hashesAlgs in jArray.TraverseAll(TransactionDatas.TransactionDataHashesAlg.FromJToken)
             select hashesAlgs.ToList();
 
         var dataHashesAlgs = hashesAlgValidation.Match(
             algs => algs,
-            _ => [Oid4Vp.TransactionData.TransactionDataHashesAlg.CreateSha256Alg()]);
+            _ => [TransactionDatas.TransactionDataHashesAlg.CreateSha256Alg()]);
 
         return
             from transactionDataType in typesValidation

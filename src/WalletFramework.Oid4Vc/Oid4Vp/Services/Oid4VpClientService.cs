@@ -30,9 +30,9 @@ using WalletFramework.Oid4Vc.Oid4Vci.Implementations;
 using WalletFramework.Oid4Vc.Oid4Vp.AuthResponse.Encryption;
 using WalletFramework.Oid4Vc.Oid4Vp.Errors;
 using WalletFramework.Oid4Vc.Oid4Vp.Models;
-using WalletFramework.Oid4Vc.Oid4Vp.PresentationExchange.Models;
 using WalletFramework.Oid4Vc.Oid4Vp.PresentationExchange.Services;
-using WalletFramework.Oid4Vc.Oid4Vp.TransactionData;
+using WalletFramework.Oid4Vc.Oid4Vp.TransactionDatas;
+using WalletFramework.Oid4Vc.Oid4Vp.TransactionDatas.Errors;
 using WalletFramework.SdJwtVc.Models;
 using WalletFramework.SdJwtVc.Models.Records;
 using WalletFramework.SdJwtVc.Services.SdJwtVcHolderService;
@@ -97,26 +97,65 @@ public class Oid4VpClientService : IOid4VpClientService
     private readonly IAuthFlowSessionStorage _authFlowSessionStorage;
     private readonly ISdJwtVcHolderService _sdJwtVcHolderService;
 
-    public async Task<Validation<AuthorizationRequestCancellation, AuthorizationRequestCandidates>> ProcessAuthorizationRequestUri(
+    private Validation<AuthorizationRequestCancellation, PresentationCandidates> ProcessTransactionData(
+        PresentationCandidates presentationCandidates)
+    {
+        var result = presentationCandidates.AuthorizationRequest.TransactionData.Match(
+            transactionDatas =>
+            {
+                return presentationCandidates.Candidates.Match(
+                    candidates =>
+                    {
+                        var candidatesValidation = transactionDatas.TraverseAll(data =>
+                        {
+                            var first = candidates.FirstOrDefault(candidate =>
+                            {
+                                return data
+                                    .TransactionData
+                                    .CredentialIds
+                                    .Select(id => id.AsString)
+                                    .Contains(candidate.InputDescriptorId);
+                            });
+
+                            if (first is null)
+                            {
+                                return (Validation<PresentationCandidate>) new InvalidTransactionDataError(
+                                    $"No credentials found that satisfy the transaction data with type {data.TransactionData.Type.AsString}"
+                                );
+                            }
+                            else
+                            {
+                                return first.AddTransactionData(data);
+                            }
+                        });
+
+                        return candidatesValidation.OnSuccess(enumerable => presentationCandidates with { Candidates = enumerable.ToList() });
+                    },
+                    () => new InvalidTransactionDataError("No credentials found that satisfy the authorization request with transaction data").ToInvalid<PresentationCandidates>()
+                );
+            },
+            () => presentationCandidates);
+
+        return result.Value.MapFail(error =>
+        {
+            var responseUriOption = presentationCandidates.AuthorizationRequest.GetResponseUriMaybe();
+            var vpError = error as VpError ?? new InvalidRequestError("Could not parse the Authorization Request");
+            return new AuthorizationRequestCancellation(responseUriOption, [vpError]);
+        });
+    }
+    
+    public async Task<Validation<AuthorizationRequestCancellation, PresentationCandidates>> ProcessAuthorizationRequestUri(
         AuthorizationRequestUri requestUri)
     {
         var authorizationRequestValidation = await _authorizationRequestService.GetAuthorizationRequest(requestUri);
         var result = authorizationRequestValidation.Map(async authRequest =>
         {
-            var candidates = await _pexService.FindCredentialCandidates(
-                authRequest.PresentationDefinition.InputDescriptors,
-                authRequest.ClientMetadata?.Formats);
-
-            var candidatesList = candidates.ToList();
-
-            var candidatesOption = candidatesList.Count == 0
-                ? Option<List<PresentationCandidates>>.None
-                : candidatesList;
-
-            return new AuthorizationRequestCandidates(authRequest, candidatesOption);
+            var candidates = (await _pexService.FindCandidates(authRequest)).OnSome(enumerable => enumerable.ToList());
+            var presentationCandidates = new PresentationCandidates(authRequest, candidates);
+            return ProcessTransactionData(presentationCandidates);
         });
 
-        return await result.Traverse(candidates => candidates);
+        return (await result.Traverse(candidates => candidates)).Flatten();
     }
 
     public async Task<Option<Uri>> AcceptAuthorizationRequest(
@@ -142,6 +181,10 @@ public class Oid4VpClientService : IOid4VpClientService
                 from path in field.Path.Select(path => path.TrimStart('$', '.'))
                 select path;
 
+            var transactionDataHashesOption = credential
+                .TransactionData
+                .OnSome(list => list.Select(data => data.Hash().AsString));
+
             Format format;
             ICredential presentedCredential;
 
@@ -151,9 +194,6 @@ public class Oid4VpClientService : IOid4VpClientService
                 case SdJwtRecord sdJwt:
                     format = FormatFun.CreateSdJwtFormat();
 
-                    var transactionDataHashesOption = authorizationRequest.TransactionData.OnSome(
-                        list => list.Select(data => data.Hash().AsString));
-                    
                     presentation = await _sdJwtVcHolderService.CreatePresentation(
                         sdJwt,
                         claims.ToArray(),
@@ -367,19 +407,6 @@ public class Oid4VpClientService : IOid4VpClientService
         return callbackUriOption.Flatten();
     }
 
-    /// <inheritdoc />
-    public async Task<Option<PresentationCandidates>> FindCredentialCandidateForInputDescriptorAsync(InputDescriptor inputDescriptor)
-    {
-        var candidates = await _pexService.FindCredentialCandidates(
-            [inputDescriptor],
-            Option<Formats>.None);
-        
-        var list = candidates.ToList();
-        return list.Any() 
-            ? list.First() 
-            : Option<PresentationCandidates>.None;
-    }
-    
     //TODO: Refactor this C'' method into current flows (too much duplicate code)
     public async Task<Option<Uri>> AcceptOnDemandRequest(
         AuthorizationRequest authorizationRequest,

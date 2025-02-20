@@ -6,7 +6,7 @@ using WalletFramework.Core.Functional;
 using WalletFramework.Core.Json;
 using WalletFramework.Oid4Vc.Oid4Vp.Errors;
 using WalletFramework.Oid4Vc.Oid4Vp.PresentationExchange.Models;
-using WalletFramework.Oid4Vc.Oid4Vp.TransactionData;
+using WalletFramework.Oid4Vc.Oid4Vp.TransactionDatas;
 using WalletFramework.Oid4Vc.Payment;
 using static WalletFramework.Oid4Vc.Oid4Vp.Models.ClientIdScheme;
 
@@ -83,7 +83,7 @@ public record AuthorizationRequest
     public string? State { get; }
 
     [JsonIgnore]
-    public Option<List<PaymentTransactionData>> TransactionData { get; init; } = 
+    public Option<List<PaymentTransactionData>> TransactionData { get; private init; } = 
         Option<List<PaymentTransactionData>>.None;
 
     /// <summary>
@@ -200,11 +200,13 @@ public record AuthorizationRequest
                         return new AuthorizationRequestCancellation(responseUriOption, [vpError]);
                     });
                 },
-                _ => authRequestValidation.Value.MapFail(error =>
-                {
-                    var vpError = error as VpError ?? new InvalidRequestError("Could not parse the Authorization Request");
-                    return new AuthorizationRequestCancellation(responseUriOption, [vpError]);
-                }));
+                _ =>
+                    authRequestValidation.Value.MapFail(error =>
+                    {
+                        var vpError = error as VpError ?? new InvalidRequestError("Could not parse the Authorization Request");
+                        return new AuthorizationRequestCancellation(responseUriOption, [vpError]);
+                    })
+            );
         }
         else
         {

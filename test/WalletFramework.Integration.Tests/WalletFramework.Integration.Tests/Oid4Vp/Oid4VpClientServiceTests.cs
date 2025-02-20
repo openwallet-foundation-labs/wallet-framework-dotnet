@@ -16,6 +16,7 @@ using WalletFramework.Oid4Vc.Oid4Vci.AuthFlow.Abstractions;
 using WalletFramework.Oid4Vc.Oid4Vp.Models;
 using WalletFramework.Oid4Vc.Oid4Vp.PresentationExchange.Services;
 using WalletFramework.Oid4Vc.Oid4Vp.Services;
+using WalletFramework.Oid4Vc.Payment;
 using WalletFramework.SdJwtVc.Models.Records;
 using WalletFramework.SdJwtVc.Services.SdJwtVcHolderService;
 
@@ -107,12 +108,11 @@ public class Oid4VpClientServiceTests : IAsyncLifetime
             (await _oid4VpClientService.ProcessAuthorizationRequestUri(uri)).UnwrapOrThrow();
         var (authorizationRequest, credentials) =
             (authRequestCandidates.AuthorizationRequest, authRequestCandidates.Candidates.UnwrapOrThrow());
-        
-        var selectedCandidates = new SelectedCredential
-        {
-            InputDescriptorId = credentials.First().InputDescriptorId,
-            Credential = credentials.First().CredentialSetCandidates.First().Credentials.First()
-        };
+
+        var selectedCandidates = new SelectedCredential(
+            credentials.First().InputDescriptorId,
+            credentials.First().CredentialSetCandidates.First().Credentials.First(),
+            Option<List<PaymentTransactionData>>.None);
         
         SetupHttpClient(
             "{'redirect_uri':'https://client.example.org/cb#response_code=091535f699ea575c7937fa5f0f454aee'}"

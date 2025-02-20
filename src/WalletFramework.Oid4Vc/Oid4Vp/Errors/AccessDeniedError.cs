@@ -2,7 +2,7 @@ namespace WalletFramework.Oid4Vc.Oid4Vp.Errors;
 
 public record AccessDeniedError : VpError
 {
-    public const string Code = "access_denied";
+    private const string Code = "access_denied";
     
     public AccessDeniedError(string message) : base(Code, message)
     {

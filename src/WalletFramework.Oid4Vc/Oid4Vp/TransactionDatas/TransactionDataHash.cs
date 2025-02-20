@@ -1,7 +1,7 @@
 using WalletFramework.Core.Encoding;
 using WalletFramework.Oid4Vc.Payment;
 
-namespace WalletFramework.Oid4Vc.Oid4Vp.TransactionData;
+namespace WalletFramework.Oid4Vc.Oid4Vp.TransactionDatas;
 
 /// <summary>
 ///     The transaction data hash which will be put into the response

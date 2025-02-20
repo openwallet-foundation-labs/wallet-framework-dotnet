@@ -10,6 +10,7 @@ using WalletFramework.Oid4Vc.Oid4Vci.Abstractions;
 using WalletFramework.Oid4Vc.Oid4Vci.Implementations;
 using WalletFramework.Oid4Vc.Oid4Vp.Models;
 using WalletFramework.Oid4Vc.Oid4Vp.PresentationExchange.Models;
+using WalletFramework.Oid4Vc.Oid4Vp.TransactionDatas;
 using WalletFramework.SdJwtVc.Services.SdJwtVcHolderService;
 
 namespace WalletFramework.Oid4Vc.Oid4Vp.PresentationExchange.Services;
@@ -18,8 +19,7 @@ namespace WalletFramework.Oid4Vc.Oid4Vp.PresentationExchange.Services;
 public class PexService(
     IAgentProvider agentProvider,
     IMdocStorage mdocStorage,
-    ISdJwtVcHolderService sdJwtVcHolderService)
-    : IPexService
+    ISdJwtVcHolderService sdJwtVcHolderService) : IPexService
 {
     /// <inheritdoc />
     public Task<PresentationSubmission> CreatePresentationSubmission(
@@ -41,11 +41,37 @@ public class PexService(
         return Task.FromResult(presentationSubmission);
     }
 
-    /// <inheritdoc />
-    public virtual async Task<IEnumerable<PresentationCandidates>> FindCredentialCandidates(
-        IEnumerable<InputDescriptor> inputDescriptors, Option<Formats> supportedFormatSigningAlgorithms)
+    public async Task<Option<IEnumerable<PresentationCandidate>>> FindCandidates(AuthorizationRequest authRequest)
     {
-        var result = new List<PresentationCandidates>();
+        var candidates = await FindCandidates(
+            authRequest.PresentationDefinition.InputDescriptors,
+            authRequest.ClientMetadata?.Formats);
+
+        var list = candidates.ToList();
+
+        return list.Count == 0
+            ? Option<IEnumerable<PresentationCandidate>>.None
+            : list;
+    }
+
+    public async Task<Option<PresentationCandidate>> FindCandidates(InputDescriptor inputDescriptor)
+    {
+        var candidates = await FindCandidates(
+            [inputDescriptor],
+            Option<Formats>.None);
+
+        var candidatesList = candidates.ToList();
+
+        return candidatesList.Count == 0
+            ? Option<PresentationCandidate>.None
+            : candidatesList.First();
+    }
+
+    private async Task<IEnumerable<PresentationCandidate>> FindCandidates(
+        IEnumerable<InputDescriptor> inputDescriptors,
+        Option<Formats> supportedFormatSigningAlgorithms)
+    {
+        var result = new List<PresentationCandidate>();
 
         foreach (var inputDescriptor in inputDescriptors)
         {
@@ -54,8 +80,9 @@ public class PexService(
                 throw new InvalidOperationException("Fields cannot be null or empty");
             }
             
-            var matchingCredentialsOption = 
-                await GetMatchingCredentials(inputDescriptor, supportedFormatSigningAlgorithms);
+            var matchingCredentialsOption = await GetMatchingCredentials(
+                inputDescriptor,
+                supportedFormatSigningAlgorithms);
 
             matchingCredentialsOption.IfSome(matchingCredentials =>
             {
@@ -72,7 +99,7 @@ public class PexService(
                         return new CredentialSetCandidate(credentialSetId, [credentials]);
                     });
             
-                var credentialCandidates = new PresentationCandidates(
+                var credentialCandidates = new PresentationCandidate(
                     inputDescriptor.Id,
                     credentialSetCandidates,
                     limitDisclosuresRequired);

@@ -1,7 +1,7 @@
 using WalletFramework.Core.Base64Url;
 using WalletFramework.Core.Functional;
 using WalletFramework.Core.Json;
-using WalletFramework.Oid4Vc.Oid4Vp.TransactionData;
+using WalletFramework.Oid4Vc.Oid4Vp.TransactionDatas;
 
 namespace WalletFramework.Oid4Vc.Payment;
 

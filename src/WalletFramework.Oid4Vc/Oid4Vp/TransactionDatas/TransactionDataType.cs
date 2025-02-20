@@ -1,9 +1,9 @@
 using Newtonsoft.Json.Linq;
 using WalletFramework.Core.Functional;
-using WalletFramework.Oid4Vc.Oid4Vp.TransactionData.Errors;
-using static WalletFramework.Oid4Vc.Oid4Vp.TransactionData.TransactionDataTypeFun;
+using WalletFramework.Oid4Vc.Oid4Vp.TransactionDatas.Errors;
+using static WalletFramework.Oid4Vc.Oid4Vp.TransactionDatas.TransactionDataTypeFun;
 
-namespace WalletFramework.Oid4Vc.Oid4Vp.TransactionData;
+namespace WalletFramework.Oid4Vc.Oid4Vp.TransactionDatas;
 
 public readonly struct TransactionDataType
 {
@@ -14,7 +14,7 @@ public readonly struct TransactionDataType
         Value = value;
     }
 
-    public override string ToString() => Value;
+    public string AsString => Value;
 
     public static implicit operator string(TransactionDataType type) => type.Value;
 

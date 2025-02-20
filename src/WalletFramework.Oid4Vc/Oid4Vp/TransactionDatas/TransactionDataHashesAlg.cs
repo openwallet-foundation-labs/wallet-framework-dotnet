@@ -1,8 +1,8 @@
 using Newtonsoft.Json.Linq;
 using WalletFramework.Core.Functional;
-using WalletFramework.Oid4Vc.Oid4Vp.TransactionData.Errors;
+using WalletFramework.Oid4Vc.Oid4Vp.TransactionDatas.Errors;
 
-namespace WalletFramework.Oid4Vc.Oid4Vp.TransactionData;
+namespace WalletFramework.Oid4Vc.Oid4Vp.TransactionDatas;
 
 public readonly struct TransactionDataHashesAlg
 {
