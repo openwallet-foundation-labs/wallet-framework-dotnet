@@ -15,17 +15,20 @@ public static class PaymentTransactionDataSamples
             "credential-id-1",
             "credential-id-2"
         },
-        ["payee"] = "Merchant XYZ",
-        ["currency_amount"] = new JObject
+        ["payment_data"] = new JObject
         {
-            ["currency"] = "EUR",
-            ["value"] = "23.58"
-        },
-        ["recurring_schedule"] = new JObject
-        {
-            ["start_date"] = "2024-11-01",
-            ["expiry_date"] = "2025-10-31",
-            ["frequency"] = 30
+            ["payee"] = "Merchant XYZ",
+            ["currency_amount"] = new JObject
+            {
+                ["currency"] = "EUR",
+                ["value"] = "23.58"
+            },
+            ["recurring_schedule"] = new JObject
+            {
+                ["start_date"] = "2024-11-01",
+                ["expiry_date"] = "2025-10-31",
+                ["frequency"] = 30
+            }
         }
     }.ToString();
 
