@@ -10,7 +10,9 @@ public readonly struct Currency
         Value = value;
     }
     
-    public string Value { get; }
+    private string Value { get; }
+    
+    public string AsString => Value;
 
     public static Validation<Currency> FromString(string currency)
     {

@@ -18,7 +18,9 @@ public record PaymentTransactionData(TransactionData TransactionData, PaymentDat
 
         var paymentDataValidation =
             from jObject in jObjectValidation
-            from paymentData in PaymentData.FromJObject(jObject)
+            from transactionDataToken in jObject.GetByKey("payment_data")
+            from transactionDataJObject in transactionDataToken.ToJObject()
+            from paymentData in PaymentData.FromJObject(transactionDataJObject)
             select paymentData;
 
         var result=

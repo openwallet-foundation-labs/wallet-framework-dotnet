@@ -1,3 +1,4 @@
+using System.Globalization;
 using Newtonsoft.Json.Linq;
 using WalletFramework.Core.Functional;
 using WalletFramework.Core.Json;
@@ -19,7 +20,7 @@ public record CurrencyAmount(Currency Currency, decimal Value)
             var str = token.ToString();
             try
             {
-                return decimal.Parse(str);
+                return decimal.Parse(str, CultureInfo.InvariantCulture);
             }
             catch (Exception e)
             {

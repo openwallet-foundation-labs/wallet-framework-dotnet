@@ -135,12 +135,11 @@ public class PexService(
                    {
                        try
                        {
-                           if (doc.UnsecuredPayload.SelectToken(field.Path.First(), true) is not JValue value)
-                               return false;
+                           var value = doc.UnsecuredPayload.SelectToken(field.Path.First(), true)!;
                     
                            if (field.Filter?.Const != null || field.Filter?.Enum != null)
                            {
-                               return field.Filter?.Const == value.Value?.ToString() || field.Filter?.Enum?.Contains(value.Value?.ToString()) == true;
+                               return field.Filter?.Const == value.ToString() || field.Filter?.Enum?.Contains(value.ToString()) == true;
                            }
 
                            return true;

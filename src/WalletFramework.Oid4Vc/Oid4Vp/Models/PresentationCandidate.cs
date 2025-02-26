@@ -51,8 +51,7 @@ public static class PresentationCandidateFun
     {
         var td = candidate.TransactionData.Match(
             list => list.Append(transactionData),
-            () => [transactionData]
-        );
+            () => [transactionData]);
 
         return candidate with
         {

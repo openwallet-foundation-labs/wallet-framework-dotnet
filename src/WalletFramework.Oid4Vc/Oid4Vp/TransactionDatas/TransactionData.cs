@@ -30,7 +30,7 @@ public record TransactionData(
 
         var dataHashesAlgs = hashesAlgValidation.Match(
             algs => algs,
-            _ => [TransactionDatas.TransactionDataHashesAlg.CreateSha256Alg()]);
+            _ => [TransactionDatas.TransactionDataHashesAlg.Sha256]);
 
         return
             from transactionDataType in typesValidation

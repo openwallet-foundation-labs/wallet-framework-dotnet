@@ -36,7 +36,7 @@ public readonly struct TransactionDataHashesAlg
         }
     }
 
-    public static TransactionDataHashesAlg CreateSha256Alg() => new("sha-256");
+    public static TransactionDataHashesAlg Sha256 => new("sha-256");
 }
 
 public static class TransactionDataHashesAlgFun

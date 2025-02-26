@@ -21,7 +21,8 @@ public class SdJwtSigner : ISdJwtSigner
         string type,
         string? sdHash,
         string? clientId,
-        Option<IEnumerable<string>> transactionDataHashes)
+        Option<IEnumerable<string>> transactionDataHashes,
+        Option<string> transactionDataHashesAlg)
     {
         var header = new Dictionary<string, object>
         {
@@ -44,6 +45,10 @@ public class SdJwtSigner : ISdJwtSigner
 
         transactionDataHashes.IfSome(hashes => 
             payload.Add("transaction_data_hashes", hashes.ToArray())
+        );
+
+        transactionDataHashesAlg.IfSome(hashesAlg =>
+            payload.Add("transaction_data_hashes_alg", hashesAlg)
         );
 
         if (!sdHash.IsNullOrEmpty())

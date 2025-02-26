@@ -6,9 +6,11 @@ namespace WalletFramework.Oid4Vc.Payment;
 
 public record Payee
 {
-    public string Value { get; }
+    private string Value { get; }
 
     private Payee(string value) => Value = value;
+
+    public string AsString => Value;
 
     public static Validation<Payee> FromJson(string json)
     {

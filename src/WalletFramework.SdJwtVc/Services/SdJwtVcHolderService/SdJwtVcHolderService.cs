@@ -37,6 +37,7 @@ public class SdJwtVcHolderService : ISdJwtVcHolderService
         SdJwtRecord credential,
         string[] disclosedClaimPaths,
         Option<IEnumerable<string>> transactionDataHashes,
+        Option<string> transactionDataHashesAlg,
         string? audience = null,
         string? nonce = null)
     {
@@ -64,7 +65,8 @@ public class SdJwtVcHolderService : ISdJwtVcHolderService
                 "kb+jwt",
                 presentationFormat.ToSdHash(),
                 null,
-                transactionDataHashes);
+                transactionDataHashes,
+                transactionDataHashesAlg);
             
             return presentationFormat.AddKeyBindingJwt(keybindingJwt);
         }

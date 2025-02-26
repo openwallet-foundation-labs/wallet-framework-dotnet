@@ -8,27 +8,28 @@ namespace WalletFramework.Oid4Vc.Oid4Vp.TransactionDatas;
 /// </summary>
 /// <param name="hash">The hash</param>
 /// <remarks>Currently only supports sha-256</remarks>
-public readonly struct TransactionDataHash(Sha256Hash hash)
+public readonly struct TransactionDataHash(Sha256Hash hash, TransactionDataHashesAlg alg)
 {
-    public string AsString => hash.AsString;
+    public TransactionDataHashesAlg Alg { get; } = alg;
+    
+    public string AsHex => hash.AsHex;
 }    
 
 public static class TransactionDataHashFun
 {
-    public static TransactionDataHash Hash(this PaymentTransactionData transactionData)
+    public static TransactionDataHash Hash(this PaymentTransactionData transactionData, TransactionDataHashesAlg alg)
     {
         var hashWith256 = new Func<PaymentTransactionData, TransactionDataHash>(data =>
         {
             var bytes = data.Encoded.AsByteArray;
             var hash = Sha256Hash.ComputeHash(bytes);
-            return new TransactionDataHash(hash);
+            return new TransactionDataHash(hash, TransactionDataHashesAlg.Sha256);
         });
 
-        var hashAlg = transactionData.TransactionData.TransactionDataHashesAlg.First();
-        return hashAlg.AsString switch
+        return alg.AsString switch
         {
             "sha-256" => hashWith256(transactionData),
-            _ => throw new InvalidOperationException($"The transaction data hash alg {hashAlg.AsString} is not supported")
+            _ => throw new InvalidOperationException($"The transaction data hash alg {alg.AsString} is not supported")
         };
     }
 }

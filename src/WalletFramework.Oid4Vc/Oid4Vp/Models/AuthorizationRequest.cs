@@ -319,4 +319,7 @@ public static class AuthorizationRequestFun
             return Option<Uri>.None;
         }
     }
+
+    public static bool HasPaymentTransactionData(this AuthorizationRequest authRequest) 
+        => authRequest.TransactionData.IsSome;
 }
