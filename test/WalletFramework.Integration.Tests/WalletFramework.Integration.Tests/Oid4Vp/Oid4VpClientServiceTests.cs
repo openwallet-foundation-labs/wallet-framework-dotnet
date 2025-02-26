@@ -68,7 +68,8 @@ public class Oid4VpClientServiceTests : IAsyncLifetime
                     It.IsAny<string>(),
                     It.IsAny<string>(),
                     It.IsAny<string>(),
-                    Option<IEnumerable<string>>.None))
+                    Option<IEnumerable<string>>.None,
+                    Option<string>.None))
             .ReturnsAsync(KeyBindingJwtMock);
     }
 
