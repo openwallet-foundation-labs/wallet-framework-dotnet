@@ -30,12 +30,16 @@ public interface ISdJwtVcHolderService
     /// </remarks>
     /// <param name="disclosedClaimPaths">The claims to disclose</param>
     /// <param name="sdJwt">The SD-JWT credential</param>
+    /// <param name="transactionDataHashes">The transaction data hashes</param>
+    /// <param name="transactionDataHashesAlg">The transaction data hashes alg</param>
     /// <param name="audience">The targeted audience</param>
     /// <param name="nonce">The nonce</param>
     /// <returns>The SD-JWT in presentation format</returns>
     Task<string> CreatePresentation(
         SdJwtRecord sdJwt,
         string[] disclosedClaimPaths,
+        Option<IEnumerable<string>> transactionDataHashes,
+        Option<string> transactionDataHashesAlg,
         string? audience = null,
         string? nonce = null);
         

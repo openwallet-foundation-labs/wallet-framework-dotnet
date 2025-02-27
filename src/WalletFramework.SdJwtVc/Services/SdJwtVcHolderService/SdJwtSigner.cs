@@ -1,4 +1,5 @@
 using System.Text;
+using LanguageExt;
 using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json;
 using WalletFramework.Core.Cryptography.Abstractions;
@@ -13,7 +14,15 @@ public class SdJwtSigner : ISdJwtSigner
 
     public SdJwtSigner(IKeyStore keyStore) => _keyStore = keyStore;
 
-    public async Task<string> GenerateKbProofOfPossessionAsync(KeyId keyId, string audience, string nonce, string type, string? sdHash, string? clientId)
+    public async Task<string> GenerateKbProofOfPossessionAsync(
+        KeyId keyId,
+        string audience,
+        string nonce,
+        string type,
+        string? sdHash,
+        string? clientId,
+        Option<IEnumerable<string>> transactionDataHashes,
+        Option<string> transactionDataHashesAlg)
     {
         var header = new Dictionary<string, object>
         {
@@ -33,6 +42,14 @@ public class SdJwtSigner : ISdJwtSigner
             { "nonce", nonce },
             { "iat" , DateTimeOffset.UtcNow.ToUnixTimeSeconds() }
         };
+
+        transactionDataHashes.IfSome(hashes => 
+            payload.Add("transaction_data_hashes", hashes.ToArray())
+        );
+
+        transactionDataHashesAlg.IfSome(hashesAlg =>
+            payload.Add("transaction_data_hashes_alg", hashesAlg)
+        );
 
         if (!sdHash.IsNullOrEmpty())
             payload["sd_hash"] = sdHash!;

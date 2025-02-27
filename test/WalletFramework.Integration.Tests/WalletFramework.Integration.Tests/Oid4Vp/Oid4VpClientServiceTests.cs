@@ -3,17 +3,20 @@ using FluentAssertions;
 using Hyperledger.Aries.Agents;
 using Hyperledger.Aries.Storage;
 using Hyperledger.TestHarness.Mock;
+using LanguageExt;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Moq.Protected;
 using SD_JWT.Roles.Implementation;
 using WalletFramework.Core.Cryptography.Models;
+using WalletFramework.Core.Functional;
 using WalletFramework.MdocLib.Device.Abstractions;
 using WalletFramework.Oid4Vc.Oid4Vci.Abstractions;
 using WalletFramework.Oid4Vc.Oid4Vci.AuthFlow.Abstractions;
 using WalletFramework.Oid4Vc.Oid4Vp.Models;
 using WalletFramework.Oid4Vc.Oid4Vp.PresentationExchange.Services;
 using WalletFramework.Oid4Vc.Oid4Vp.Services;
+using WalletFramework.Oid4Vc.Payment;
 using WalletFramework.SdJwtVc.Models.Records;
 using WalletFramework.SdJwtVc.Services.SdJwtVcHolderService;
 
@@ -40,11 +43,13 @@ public class Oid4VpClientServiceTests : IAsyncLifetime
         var pexService = new PexService(_agentProviderMock.Object, _mdocStorageMock.Object, _sdJwtVcHolderService!);
        
         _sdJwtVcHolderService = new SdJwtVcHolderService(holder, _sdJwtSignerService.Object, walletRecordService);
-        var oid4VpHaipClient = new Oid4VpHaipClient(new AuthorizationRequestService(_httpClientFactoryMock.Object), pexService);
+        var authRequestService = new AuthorizationRequestService(_httpClientFactoryMock.Object);
+        var oid4VpHaipClient = new Oid4VpHaipClient(pexService);
         _oid4VpRecordService = new Oid4VpRecordService(walletRecordService);
         
         _oid4VpClientService = new Oid4VpClientService(
             _agentProviderMock.Object,
+            authRequestService,
             _httpClientFactoryMock.Object,
             _loggerMock.Object,
             _mdocAuthenticationService.Object,
@@ -54,7 +59,7 @@ public class Oid4VpClientServiceTests : IAsyncLifetime
             pexService,
             _authFlowSessionStorageMock.Object,
             _sdJwtVcHolderService);
-
+    
         _sdJwtSignerService.Setup(keyStore =>
                 keyStore.GenerateKbProofOfPossessionAsync(
                     It.IsAny<KeyId>(),
@@ -62,9 +67,9 @@ public class Oid4VpClientServiceTests : IAsyncLifetime
                     It.IsAny<string>(),
                     It.IsAny<string>(),
                     It.IsAny<string>(),
-                    It.IsAny<string>()
-                )
-            )
+                    It.IsAny<string>(),
+                    Option<IEnumerable<string>>.None,
+                    Option<string>.None))
             .ReturnsAsync(KeyBindingJwtMock);
     }
 
@@ -90,33 +95,38 @@ public class Oid4VpClientServiceTests : IAsyncLifetime
     {
         //Arrange
         SetupHttpClient(RequestUriResponse);
-
+    
         var sdJwt = new SdJwtRecord();
             
         await _sdJwtVcHolderService.AddAsync(_agent1!.Context, sdJwt);
+
+        var uri = AuthorizationRequestUri
+            .FromUri(new Uri(AuthRequestWithRequestUri))
+            .UnwrapOrThrow();
         
         //Act
+        var authRequestCandidates = 
+            (await _oid4VpClientService.ProcessAuthorizationRequestUri(uri)).UnwrapOrThrow();
         var (authorizationRequest, credentials) =
-            await _oid4VpClientService.ProcessAuthorizationRequestAsync(new Uri(AuthRequestWithRequestUri));
-        
-        var selectedCandidates = new SelectedCredential
-        {
-            InputDescriptorId = credentials.First().InputDescriptorId,
-            Credential = credentials.First().CredentialSetCandidates.First().Credentials.First()
-        };
+            (authRequestCandidates.AuthorizationRequest, authRequestCandidates.Candidates.UnwrapOrThrow());
+
+        var selectedCandidates = new SelectedCredential(
+            credentials.First().InputDescriptorId,
+            credentials.First().CredentialSetCandidates.First().Credentials.First(),
+            Option<List<PaymentTransactionData>>.None);
         
         SetupHttpClient(
             "{'redirect_uri':'https://client.example.org/cb#response_code=091535f699ea575c7937fa5f0f454aee'}"
         );
         
-        var response = await _oid4VpClientService.SendAuthorizationResponseAsync(
+        var response = await _oid4VpClientService.AcceptAuthorizationRequest(
             authorizationRequest,
-            new[] { selectedCandidates });
+            [selectedCandidates]);
         
         // Assert
         credentials.Length().Should().Be(1);
             
-        response.Should().BeEquivalentTo(new Uri(ExpectedRedirectUrl));
+        response.UnwrapOrThrow().Should().BeEquivalentTo(new Uri(ExpectedRedirectUrl));
             
         (await _oid4VpRecordService.ListAsync(_agent1.Context)).Count.Should().Be(1);
     }
