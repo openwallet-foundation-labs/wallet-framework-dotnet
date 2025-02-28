@@ -208,9 +208,16 @@ public class Oid4VpClientService : IOid4VpClientService
                         .ToDictionary(group => group.Key, group => group.ToList());
 
                     var mdoc = mdocRecord.Mdoc.SelectivelyDisclose(toDisclose);
+                    
+                    mdocNonce = authorizationRequest.ResponseMode switch
+                    {
+                        AuthorizationRequest.DirectPost => Option<Nonce>.None,
+                        AuthorizationRequest.DirectPostJwt => Nonce.GenerateNonce(),
+                        _ => throw new ArgumentOutOfRangeException(nameof(authorizationRequest.ResponseMode))
+                    };
 
-                    var handover = authorizationRequest.ToVpHandover();
-                    mdocNonce = handover.MdocGeneratedNonce;
+                    var handover = authorizationRequest.ToVpHandover(mdocNonce);
+                    
                     var sessionTranscript = handover.ToSessionTranscript();
                     var authenticatedMdoc = await _mdocAuthenticationService.Authenticate(
                         mdoc, sessionTranscript, mdocRecord.KeyId);
@@ -462,9 +469,15 @@ public class Oid4VpClientService : IOid4VpClientService
                         .ToDictionary(group => group.Key, group => group.ToList());
 
                     var mdoc = mdocRecord.Mdoc.SelectivelyDisclose(toDisclose);
+                    
+                    mdocNonce = authorizationRequest.ResponseMode switch
+                    {
+                        AuthorizationRequest.DirectPost => Option<Nonce>.None,
+                        AuthorizationRequest.DirectPostJwt => Nonce.GenerateNonce(),
+                        _ => throw new ArgumentOutOfRangeException(nameof(authorizationRequest.ResponseMode))
+                    };
 
-                    var handover = authorizationRequest.ToVpHandover();
-                    mdocNonce = handover.MdocGeneratedNonce;
+                    var handover = authorizationRequest.ToVpHandover(mdocNonce);
                     var sessionTranscript = handover.ToSessionTranscript();
 
                     var deviceNamespaces =
