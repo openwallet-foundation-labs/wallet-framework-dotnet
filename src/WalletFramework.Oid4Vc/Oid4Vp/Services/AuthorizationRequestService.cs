@@ -36,6 +36,9 @@ public class AuthorizationRequestService(
             RedirectUri => requestObject
                 .ToAuthorizationRequest()
                 .WithClientMetadata(clientMetadata),
+            Did => requestObject
+                .ToAuthorizationRequest()
+                .WithClientMetadata(clientMetadata),
             VerifierAttestation =>
                 throw new NotImplementedException("Verifier Attestation not yet implemented"),
             _ => throw new InvalidOperationException(
