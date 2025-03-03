@@ -55,7 +55,7 @@ jobs:
               run: dotnet restore $SOLUTION
                     
             - name: Build
-              run: dotnet build $SOLUTION --configuration $BUILD_CONFIG -p:Version=$APP_VERSION
+              run: dotnet build $SOLUTION --configuration $BUILD_CONFIG -p:Version=2.0.0-rc.253.1
 
             - name: Run tests
               run: |
@@ -63,7 +63,7 @@ jobs:
                 dotnet test test/WalletFramework.SdJwtVc.Tests --configuration $BUILD_CONFIG --no-restore --no-build
 
             - name: Pack WalletFramework
-              run: dotnet pack $SOLUTION --configuration $BUILD_CONFIG -p:Version=$APP_VERSION --no-build --output .
+              run: dotnet pack $SOLUTION --configuration $BUILD_CONFIG -p:Version=2.0.0-rc.253.1 --no-build --output .
 
             - name: Publish
               run: nuget push **\*.nupkg -Source 'https://api.nuget.org/v3/index.json' -ApiKey ${{secrets.NUGET_API_KEY}}
