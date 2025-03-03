@@ -5,6 +5,7 @@ on:
     push:
         branches:
             - main
+            - support-client-id-scheme-did
     pull_request:
         branches:
             - main
