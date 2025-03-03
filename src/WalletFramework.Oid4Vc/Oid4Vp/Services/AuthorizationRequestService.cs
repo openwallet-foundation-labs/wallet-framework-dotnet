@@ -36,6 +36,7 @@ public class AuthorizationRequestService(
             RedirectUri => requestObject
                 .ToAuthorizationRequest()
                 .WithClientMetadata(clientMetadata),
+            //TODO: Remove Did in the future (kept for now for compatibility)
             Did => requestObject
                 .ToAuthorizationRequest()
                 .WithClientMetadata(clientMetadata),
