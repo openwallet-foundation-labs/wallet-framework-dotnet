@@ -1,4 +1,5 @@
 using System.Security.Cryptography;
+using WalletFramework.Core.Base64Url;
 
 namespace WalletFramework.Core.Encoding;
 
@@ -13,7 +14,7 @@ public readonly struct Sha256Hash
 
     public byte[] AsBytes => Value;
 
-    public override string ToString() => Value.ToString();
+    public string AsHex => BitConverter.ToString(Value).Replace("-", "").ToLower();
     
     public static implicit operator byte[](Sha256Hash sha256Hash) => sha256Hash.Value;
 

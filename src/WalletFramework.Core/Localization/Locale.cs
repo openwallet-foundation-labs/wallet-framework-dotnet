@@ -22,6 +22,8 @@ public readonly record struct Locale
     
     public static implicit operator string(Locale locale) => locale.Value.ToString();
 
+    public CultureInfo AsCultureInfo => Value;
+
     [JsonConstructor]
     private Locale(string locale)
     {
@@ -89,5 +91,15 @@ public static class LocaleExtensions
                     .IfNone(() => displays.Keys.First()));
         
         return displays[matchedLocale];
+    }
+
+    public static bool IsGerman(this Locale locale)
+    {
+        return locale.ToString().Contains("de");
+    }
+    
+    public static bool IsEnglish(this Locale locale)
+    {
+        return locale.ToString().Contains("en");
     }
 }
