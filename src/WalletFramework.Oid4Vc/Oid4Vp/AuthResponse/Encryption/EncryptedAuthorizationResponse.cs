@@ -30,7 +30,7 @@ public static class EncryptedAuthorizationResponseFun
         authorizationRequest.ClientMetadata.AuthorizationEncryptedResponseEnc,
         mdocNonce);
 
-    private static EncryptedAuthorizationResponse Encrypt(
+    public static EncryptedAuthorizationResponse Encrypt(
         this AuthorizationResponse response,
         JsonWebKey verifierPubKey,
         string apv,

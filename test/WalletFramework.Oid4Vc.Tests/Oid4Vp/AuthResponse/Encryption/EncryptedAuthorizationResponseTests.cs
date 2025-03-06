@@ -18,6 +18,7 @@ public class EncryptedAuthorizationResponseTests
         var sut = authResponse.Encrypt(
             AuthResponseEncryptionSamples.Jwk,
             nonce.AsBase64Url.ToString(),
+            Option<string>.Some("A256GCM"),
             mdocNonce);
 
         sut.Jwe.Length().Should().Be(AuthResponseEncryptionSamples.ValidMdocJwe.Length);
@@ -32,6 +33,7 @@ public class EncryptedAuthorizationResponseTests
         var sut = authResponse.Encrypt(
             AuthResponseEncryptionSamples.Jwk,
             nonce.AsBase64Url.ToString(),
+            Option<string>.Some("A256GCM"),
             Option<Nonce>.None);
 
         sut.Jwe.Length.Should().Be(AuthResponseEncryptionSamples.ValidSdJwtJwe.Length);
