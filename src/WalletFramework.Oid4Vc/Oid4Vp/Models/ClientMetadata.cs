@@ -9,6 +9,12 @@ namespace WalletFramework.Oid4Vc.Oid4Vp.Models;
 public record ClientMetadata
 {
     /// <summary>
+    ///     Defined the encoding that should be used when an encrypted Auth Response is requested by the verifier.
+    /// </summary>
+    [JsonProperty("authorization_encrypted_response_enc")]
+    public string? AuthorizationEncryptedResponseEnc { get; }
+    
+    /// <summary>
     ///    The redirect URIs of the client (verifier).
     /// </summary>
     [JsonProperty("redirect_uris")]
@@ -62,6 +68,7 @@ public record ClientMetadata
     public Formats Formats { get; }
 
     public ClientMetadata(
+        string? authorizationEncryptedResponseEnc,
         string? clientName,
         string? clientUri,
         string[]? contacts,
@@ -72,6 +79,7 @@ public record ClientMetadata
         List<JsonWebKey> jwks,
         Formats formats)
     {
+        AuthorizationEncryptedResponseEnc = authorizationEncryptedResponseEnc;
         ClientName = clientName;
         ClientUri = clientUri;
         Contacts = contacts;
