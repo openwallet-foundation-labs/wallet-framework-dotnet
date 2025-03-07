@@ -410,24 +410,27 @@ public class Oid4VpClientService : IOid4VpClientService
                         sdJwt,
                         claims.ToArray(),
                         Option<IEnumerable<string>>.None,
+                        Option<string>.None,
                         authorizationRequest.ClientId,
                         authorizationRequest.Nonce);
-
+                    
                     var kbJwt = presentation[presentation.LastIndexOf('~')..][1..];
                     var kbJwtWithoutSignature = kbJwt[..kbJwt.LastIndexOf('.')];
 
                     var kbJwtWithoutSignatureHash = sha256.ComputeHash(kbJwtWithoutSignature.GetUTF8Bytes());
 
-                    var content = new JObject();
-                    content.Add("hash_bytes", Base64UrlEncoder.Encode(kbJwtWithoutSignatureHash));
+                    var content = new JObject
+                    {
+                        {
+                            "hash_bytes",
+                            Base64UrlEncoder.Encode(kbJwtWithoutSignatureHash)
+                        }
+                    };
 
-                    var sdJwtHttpContent =
-                        new StringContent
-                        (
-                            content.ToString(),
-                            Encoding.UTF8,
-                            MediaTypeNames.Application.Json
-                        );
+                    var sdJwtHttpContent = new StringContent(
+                        content.ToString(),
+                        Encoding.UTF8,
+                        MediaTypeNames.Application.Json);
 
                     var sdJwtSignatureResponse = await client.PostAsync(
                         session.AuthorizationData.IssuerMetadata.PresentationSigningEndpoint.UnwrapOrThrow(new Exception()), sdJwtHttpContent
