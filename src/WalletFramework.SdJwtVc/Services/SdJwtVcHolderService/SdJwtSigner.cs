@@ -21,6 +21,7 @@ public class SdJwtSigner : ISdJwtSigner
         string type,
         string? sdHash,
         string? clientId,
+        Option<IEnumerable<string>> transactionDataBase64UrlStrings,
         Option<IEnumerable<string>> transactionDataHashes,
         Option<string> transactionDataHashesAlg)
     {
@@ -42,6 +43,10 @@ public class SdJwtSigner : ISdJwtSigner
             { "nonce", nonce },
             { "iat" , DateTimeOffset.UtcNow.ToUnixTimeSeconds() }
         };
+
+        transactionDataBase64UrlStrings.IfSome(base64UrlStrings => 
+            payload.Add("transaction_data", base64UrlStrings.ToArray())
+        );
 
         transactionDataHashes.IfSome(hashes => 
             payload.Add("transaction_data_hashes", hashes.ToArray())

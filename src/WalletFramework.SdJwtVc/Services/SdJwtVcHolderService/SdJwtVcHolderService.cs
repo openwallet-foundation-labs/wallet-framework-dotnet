@@ -36,6 +36,7 @@ public class SdJwtVcHolderService : ISdJwtVcHolderService
     public async Task<string> CreatePresentation(
         SdJwtRecord credential,
         string[] disclosedClaimPaths,
+        Option<IEnumerable<string>> transactionDataBase64UrlStrings,
         Option<IEnumerable<string>> transactionDataHashes,
         Option<string> transactionDataHashesAlg,
         string? audience = null,
@@ -65,6 +66,7 @@ public class SdJwtVcHolderService : ISdJwtVcHolderService
                 "kb+jwt",
                 presentationFormat.ToSdHash(),
                 null,
+                transactionDataBase64UrlStrings,
                 transactionDataHashes,
                 transactionDataHashesAlg);
             

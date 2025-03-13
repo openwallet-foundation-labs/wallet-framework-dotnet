@@ -7,7 +7,7 @@ using WalletFramework.Core.Json;
 using WalletFramework.Oid4Vc.Oid4Vp.Errors;
 using WalletFramework.Oid4Vc.Oid4Vp.PresentationExchange.Models;
 using WalletFramework.Oid4Vc.Oid4Vp.TransactionDatas;
-using WalletFramework.Oid4Vc.Payment;
+using WalletFramework.Oid4Vc.Qes;
 using static WalletFramework.Oid4Vc.Oid4Vp.Models.ClientIdScheme;
 
 namespace WalletFramework.Oid4Vc.Oid4Vp.Models;
@@ -35,7 +35,7 @@ public record AuthorizationRequest
     ///     Gets the presentation definition. Contains the claims that the Verifier wants to receive.
     /// </summary>
     [JsonProperty("presentation_definition")]
-    public PresentationDefinition PresentationDefinition { get; }
+    public PresentationDefinition PresentationDefinition { get; init; }
 
     /// <summary>
     ///     Gets the client id. The Identifier of the Verifier.
@@ -83,8 +83,8 @@ public record AuthorizationRequest
     public string? State { get; }
 
     [JsonIgnore]
-    public Option<List<PaymentTransactionData>> TransactionData { get; private init; } = 
-        Option<List<PaymentTransactionData>>.None;
+    public Option<List<TransactionData>> TransactionData { get; private init; } = 
+        Option<List<TransactionData>>.None;
 
     /// <summary>
     ///     The X509 certificate of the verifier, this property is only set when ClientIDScheme is X509SanDNS.
@@ -177,36 +177,77 @@ public record AuthorizationRequest
             
             var transactionDataPropertyFoundValidation =
                 from jToken in authRequestJObject.GetByKey("transaction_data")
-                from jObject in jToken.ToJArray()
-                select jObject;
+                from jArray in jToken.ToJArray()
+                select jArray;
+
+            var uc5TxDataFoundValidation =
+                from presentationDefinitionToken in authRequestJObject.GetByKey("presentation_definition")
+                from inputDescriptorsToken in presentationDefinitionToken.GetByKey("input_descriptors")
+                from txDataArrays in inputDescriptorsToken.TraverseAny(descriptor =>
+                {
+                    return
+                        from txDataToken in descriptor.GetByKey("transaction_data")
+                        from txDataArray in txDataToken.ToJArray()
+                        select (descriptor, txDataArray);
+                })
+                select txDataArrays;
             
             var responseUriOption = AuthorizationRequestExtensions.GetResponseUriMaybe(authRequestJObject);
 
-            return transactionDataPropertyFoundValidation.Match(
-                jArray =>
+            switch (transactionDataPropertyFoundValidation.IsSuccess, uc5TxDataFoundValidation.IsSuccess)
+            {
+                case (true, false):
+                case (true, true):
                 {
-                    var transactionDataValidation = 
-                        from transactionDataArray in TransactionDataArray.FromJObject(jArray)
+                    var txDataJArray = transactionDataPropertyFoundValidation.UnwrapOrThrow();
+                    
+                    var txDataValidation = 
+                        from transactionDataArray in TransactionDataArray.FromJArray(txDataJArray)
                         from transactionDataEnum in transactionDataArray.Decode()
                         from authRequest in authRequestValidation
                         select authRequest with
                         {
                             TransactionData = transactionDataEnum.ToList()
                         };
-            
-                    return transactionDataValidation.Value.MapFail(error =>
+
+                    return txDataValidation.ToLangExtValidation(responseUriOption);
+                }
+                case (false, true):
+                {
+                    var uc5TxDataJArray = uc5TxDataFoundValidation.UnwrapOrThrow();
+
+                    var txDataValidation = uc5TxDataJArray.TraverseAll(tuple =>
                     {
-                        var vpError = error as VpError ?? new InvalidRequestError("Could not parse the Authorization Request");
-                        return new AuthorizationRequestCancellation(responseUriOption, [vpError]);
+                        var inputDescriptor = tuple.descriptor.ToObject<InputDescriptor>();
+                        var txDataArray = tuple.txDataArray;
+
+                        var inputDescriptorValidation =
+                            from transactionDataArray in Uc5QesTransactionData.FromJArray(txDataArray)
+                            let list = transactionDataArray.ToList()
+                            select inputDescriptor with
+                            {
+                                TransactionData = list
+                            };
+
+                        return inputDescriptorValidation;
                     });
-                },
-                _ =>
-                    authRequestValidation.Value.MapFail(error =>
-                    {
-                        var vpError = error as VpError ?? new InvalidRequestError("Could not parse the Authorization Request");
-                        return new AuthorizationRequestCancellation(responseUriOption, [vpError]);
-                    })
-            );
+
+                    var result =
+                        from authRequest in authRequestValidation
+                        from inputDescriptors in txDataValidation
+                        select authRequest with
+                        {
+                            PresentationDefinition = authRequest.PresentationDefinition with
+                            {
+                                InputDescriptors = inputDescriptors.ToArray()
+                            }
+                        };
+
+                    return result.ToLangExtValidation(responseUriOption);
+                }
+                default:
+                    return authRequestValidation.ToLangExtValidation(responseUriOption);
+            }
         }
         else
         {
@@ -320,6 +361,14 @@ public static class AuthorizationRequestFun
         }
     }
 
-    public static bool HasPaymentTransactionData(this AuthorizationRequest authRequest) 
-        => authRequest.TransactionData.IsSome;
+    public static Validation<AuthorizationRequestCancellation, AuthorizationRequest> ToLangExtValidation(
+        this Validation<AuthorizationRequest> authRequestValidation,
+        Option<Uri> responseUriOption)
+    {
+        return authRequestValidation.Value.MapFail(error =>
+        {
+            var vpError = error as VpError ?? new InvalidRequestError("Could not parse the Authorization Request", error);
+            return new AuthorizationRequestCancellation(responseUriOption, [vpError]);
+        });
+    }
 }

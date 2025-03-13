@@ -37,7 +37,12 @@ public class SdJwtVcHolderServiceTests
         var claimsToDisclose = new[] { "given_name", "address.street_address", "nationalities[0]" };
 
         // Act
-        var result = await _service.CreatePresentation(sdJwtRecord, claimsToDisclose, Option<IEnumerable<string>>.None, Option<string>.None);
+        var result = await _service.CreatePresentation(
+            sdJwtRecord,
+            claimsToDisclose,
+            Option<IEnumerable<string>>.None, 
+            Option<IEnumerable<string>>.None,
+            Option<string>.None);
 
         // Assert
         var doc = new SdJwtDoc(result);
