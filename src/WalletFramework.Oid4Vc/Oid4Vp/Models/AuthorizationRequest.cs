@@ -4,6 +4,7 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using WalletFramework.Core.Functional;
 using WalletFramework.Core.Json;
+using WalletFramework.Oid4Vc.Oid4Vp.Dcql.Models;
 using WalletFramework.Oid4Vc.Oid4Vp.Errors;
 using WalletFramework.Oid4Vc.Oid4Vp.PresentationExchange.Models;
 using WalletFramework.Oid4Vc.Oid4Vp.TransactionDatas;
@@ -36,6 +37,12 @@ public record AuthorizationRequest
     /// </summary>
     [JsonProperty("presentation_definition")]
     public PresentationDefinition PresentationDefinition { get; }
+    
+    /// <summary>
+    ///     Gets the DCQL query. Contains the claims that the Verifier wants to receive.
+    /// </summary>
+    [JsonProperty("dcql_query")]
+    public DcqlQuery DcqlQuery { get; }
 
     /// <summary>
     ///     Gets the client id. The Identifier of the Verifier.
@@ -102,6 +109,7 @@ public record AuthorizationRequest
     private AuthorizationRequest(
         ClientIdScheme clientIdScheme,
         PresentationDefinition presentationDefinition,
+        DcqlQuery dcqlQuery,
         string clientId,
         string nonce,
         string responseUri,
@@ -126,6 +134,7 @@ public record AuthorizationRequest
         ClientMetadataUri = clientMetadataUri;
         Nonce = nonce;
         PresentationDefinition = presentationDefinition;
+        DcqlQuery = dcqlQuery;
         ResponseUri = responseUri;
         ResponseMode = responseMode;
         Scope = scope;
