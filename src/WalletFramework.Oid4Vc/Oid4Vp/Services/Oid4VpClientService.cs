@@ -673,41 +673,36 @@ public class Oid4VpClientService : IOid4VpClientService
         {
             var candidates = (await _pexService.FindCandidates(authRequest)).OnSome(enumerable => enumerable.ToList());
             var presentationCandidates = new PresentationCandidates(authRequest, candidates);
-            return ProcessTransactionData(presentationCandidates);
+            
+            var vpTxDataOption = presentationCandidates.AuthorizationRequest.TransactionData;
+
+            var uc5TxDataOption = presentationCandidates
+                .AuthorizationRequest
+                .PresentationDefinition
+                .InputDescriptors
+                .TraverseAny(descriptor => 
+                    descriptor.TransactionData.OnSome(list => new InputDescriptorTransactionData(descriptor.Id, list))
+                );
+
+            switch (vpTxDataOption.IsSome, uc5TxDataOption.IsSome)
+            {
+                case (true, false):
+                case (true, true):
+                {
+                    var vpTxData = vpTxDataOption.UnwrapOrThrow();
+                    return ProcessVpTransactionData(presentationCandidates, vpTxData);
+                }
+                case (false, true):
+                {
+                    var uc5TxData = uc5TxDataOption.UnwrapOrThrow();
+                    return ProcessUc5TransactionData(presentationCandidates, uc5TxData);
+                }
+                default:
+                    return presentationCandidates;
+            }
         });
 
         return (await result.Traverse(candidates => candidates)).Flatten();
-    }
-
-    private static Validation<AuthorizationRequestCancellation, PresentationCandidates> ProcessTransactionData(
-        PresentationCandidates presentationCandidates)
-    {
-        var vpTxDataOption = presentationCandidates.AuthorizationRequest.TransactionData;
-
-        var uc5TxDataOption = presentationCandidates
-            .AuthorizationRequest
-            .PresentationDefinition
-            .InputDescriptors
-            .TraverseAny(descriptor => 
-                descriptor.TransactionData.OnSome(list => new InputDescriptorTransactionData(descriptor.Id, list))
-            );
-
-        switch (vpTxDataOption.IsSome, uc5TxDataOption.IsSome)
-        {
-            case (true, false):
-            case (true, true):
-            {
-                var vpTxData = vpTxDataOption.UnwrapOrThrow();
-                return ProcessVpTransactionData(presentationCandidates, vpTxData);
-            }
-            case (false, true):
-            {
-                var uc5TxData = uc5TxDataOption.UnwrapOrThrow();
-                return ProcessUc5TransactionData(presentationCandidates, uc5TxData);
-            }
-            default:
-                return presentationCandidates;
-        }
     }
 
     private static Validation<AuthorizationRequestCancellation, PresentationCandidates> ProcessVpTransactionData(

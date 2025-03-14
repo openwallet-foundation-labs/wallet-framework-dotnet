@@ -1,7 +1,6 @@
 using LanguageExt;
 using WalletFramework.Oid4Vc.Oid4Vp.TransactionDatas;
 using WalletFramework.Oid4Vc.Qes;
-using OneOf;
 
 namespace WalletFramework.Oid4Vc.Oid4Vp.Models;
 
