@@ -1,7 +1,7 @@
 using System.Reflection;
 using System.Runtime.CompilerServices;
 
-namespace WalletFramework.Oid4Vc.Tests.PresentationExchange.Models
+namespace WalletFramework.Oid4Vc.Tests.Oid4Vp.PresentationExchange.Models
 {
     public static class PexTestsDataProvider
     {

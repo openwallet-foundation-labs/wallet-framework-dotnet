@@ -23,17 +23,17 @@ public class CredentialQuery
     /// An object defining additional properties requested by the Verifier.
     /// </summary>
     [JsonProperty("meta")]
-    public CredentialQueryMeta Meta { get; set; } = null!;
+    public CredentialMetaQuery? Meta { get; set; }
     
     /// <summary>
     /// An object defining claims in the requested credential.
     /// </summary>
     [JsonProperty("claims")]
-    public CredentialQueryClaim[] Claims { get; set; } = null!;
+    public CredentialClaimQuery[]? Claims { get; set; }
     
     /// <summary>
     /// Represents a collection, where each value contains a collection of identifiers for elements in claims that specifies which combinations of claims for the credential are requested.
     /// </summary>
     [JsonProperty("claim_sets")]
-    public string[][] ClaimSets { get; set; } = null!;
+    public string[][]? ClaimSets { get; set; }
 }

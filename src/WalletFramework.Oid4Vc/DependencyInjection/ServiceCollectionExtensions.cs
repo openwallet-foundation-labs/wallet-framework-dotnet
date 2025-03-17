@@ -20,6 +20,7 @@ using WalletFramework.Oid4Vc.Oid4Vci.CredRequest.Implementations;
 using WalletFramework.Oid4Vc.Oid4Vci.Implementations;
 using WalletFramework.Oid4Vc.Oid4Vci.Issuer.Abstractions;
 using WalletFramework.Oid4Vc.Oid4Vci.Issuer.Implementations;
+using WalletFramework.Oid4Vc.Oid4Vp.Dcql.Services;
 using WalletFramework.Oid4Vc.Oid4Vp.PresentationExchange.Services;
 using WalletFramework.Oid4Vc.Oid4Vp.Services;
 using WalletFramework.SdJwtVc;
@@ -43,6 +44,7 @@ public static class ServiceCollectionExtensions
         builder.AddSingleton<ICredentialRequestService, CredentialRequestService>();
         builder.AddSingleton<ICredentialSetService, CredentialSetService>();
         builder.AddSingleton<ICredentialSetStorage, CredentialSetStorage>();
+        builder.AddSingleton<IDcqlService, DcqlService>();
         builder.AddSingleton<IDPopHttpClient, DPopHttpClient>();
         builder.AddSingleton<IIssuerMetadataService, IssuerMetadataService>();
         builder.AddSingleton<IMdocAuthenticationService, MdocAuthenticationService>();
@@ -54,6 +56,7 @@ public static class ServiceCollectionExtensions
         builder.AddSingleton<IOid4VpHaipClient, Oid4VpHaipClient>();
         builder.AddSingleton<IOid4VpRecordService, Oid4VpRecordService>();
         builder.AddSingleton<IPexService, PexService>();
+        builder.AddSingleton<IPresentationCandidateService, PresentationCandidateService>();
         builder.AddSingleton<IRecordsMigrationService, RecordsMigrationService>();
         builder.AddSingleton<IStatusListService, StatusListService>();
         builder.AddSingleton<ITokenService, TokenService>();

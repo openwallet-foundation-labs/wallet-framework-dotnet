@@ -56,6 +56,7 @@ public class Oid4VpClientService : IOid4VpClientService
     /// <param name="mdocAuthenticationService">The mdoc authentication service.</param>
     /// <param name="oid4VpHaipClient">The service responsible for OpenId4VP related operations.</param>
     /// <param name="logger">The ILogger.</param>
+    /// <param name="presentationCandidateService">The Presentation Candidate service.</param>
     /// <param name="authFlowSessionStorage">The Auth Flow Session Storage.</param>
     /// <param name="oid4VpRecordService">The service responsible for OidPresentationRecord related operations.</param>
     /// <param name="mDocStorage">The service responsible for mDOc storage operations.</param>
@@ -68,7 +69,7 @@ public class Oid4VpClientService : IOid4VpClientService
         IOid4VpHaipClient oid4VpHaipClient,
         IOid4VpRecordService oid4VpRecordService,
         IMdocStorage mDocStorage,
-        IPexService pexService,
+        IPresentationCandidateService presentationCandidateService,
         IAuthFlowSessionStorage authFlowSessionStorage,
         ISdJwtVcHolderService sdJwtVcHolderService)
     {
@@ -80,7 +81,7 @@ public class Oid4VpClientService : IOid4VpClientService
         _oid4VpHaipClient = oid4VpHaipClient;
         _oid4VpRecordService = oid4VpRecordService;
         _mDocStorage = mDocStorage;
-        _pexService = pexService;
+        _presentationCandidateService = presentationCandidateService;
         _authFlowSessionStorage = authFlowSessionStorage;
         _sdJwtVcHolderService = sdJwtVcHolderService;
     }
@@ -92,9 +93,9 @@ public class Oid4VpClientService : IOid4VpClientService
     private readonly ILogger<Oid4VpClientService> _logger;
     private readonly IMdocAuthenticationService _mdocAuthenticationService;
     private readonly IMdocStorage _mDocStorage;
+    private readonly IPresentationCandidateService _presentationCandidateService;
     private readonly IOid4VpHaipClient _oid4VpHaipClient;
     private readonly IOid4VpRecordService _oid4VpRecordService;
-    private readonly IPexService _pexService;
     private readonly ISdJwtVcHolderService _sdJwtVcHolderService;
 
     public async Task<Option<Uri>> AbortAuthorizationRequest(AuthorizationRequestCancellation cancellation)
@@ -145,7 +146,7 @@ public class Oid4VpClientService : IOid4VpClientService
         var presentationMapTasks = credentials.Select(async credential =>
         {
             var inputDescriptor = inputDescriptors.Single(descriptor =>
-                descriptor.Id == credential.InputDescriptorId);
+                descriptor.Id == credential.Identifier);
 
             var claims =
                 from field in inputDescriptor.Constraints.Fields
@@ -224,12 +225,12 @@ public class Oid4VpClientService : IOid4VpClientService
                     throw new ArgumentOutOfRangeException(nameof(credential.Credential));
             }
 
-            return (InputDescriptorId: inputDescriptor.Id, Presentation: presentation, Format: format,
+            return (Identifier: inputDescriptor.Id, Presentation: presentation, Format: format,
                 PresentedCredential: presentedCredential);
         });
 
         var presentationMaps =
-            new List<(string InputDescriptorId, string Presentation, Format Format, ICredential PresentedCredential)>();
+            new List<(string Identifier, string Presentation, Format Format, ICredential PresentedCredential)>();
         foreach (var task in presentationMapTasks)
         {
             var presentationMap = await task;
@@ -238,7 +239,7 @@ public class Oid4VpClientService : IOid4VpClientService
 
         var authorizationResponse = await _oid4VpHaipClient.CreateAuthorizationResponseAsync(
             authorizationRequest,
-            presentationMaps.Select(tuple => (tuple.InputDescriptorId, tuple.Presentation, tuple.Format)).ToArray()
+            presentationMaps.Select(tuple => (tuple.Identifier, tuple.Presentation, tuple.Format)).ToArray()
         );
 
         var content = authorizationRequest.ResponseMode switch
@@ -342,7 +343,7 @@ public class Oid4VpClientService : IOid4VpClientService
             Id = Guid.NewGuid().ToString(),
             ClientId = authorizationRequest.ClientId,
             ClientMetadata = authorizationRequest.ClientMetadata,
-            Name = authorizationRequest.PresentationDefinition.Name,
+            Name = authorizationRequest.PresentationDefinition?.Name,
             PresentedCredentialSets = presentedCredentials.ToList()
         };
 
@@ -382,7 +383,7 @@ public class Oid4VpClientService : IOid4VpClientService
         var presentationMapTasks = credentials.Select(async credential =>
         {
             var inputDescriptor = inputDescriptors.Single(descriptor =>
-                descriptor.Id == credential.InputDescriptorId);
+                descriptor.Id == credential.Identifier);
 
             var claims =
                 from field in inputDescriptor.Constraints.Fields
@@ -522,12 +523,12 @@ public class Oid4VpClientService : IOid4VpClientService
                     throw new ArgumentOutOfRangeException(nameof(credential.Credential));
             }
 
-            return (InputDescriptorId: inputDescriptor.Id, Presentation: presentation, Format: format,
+            return (Identifier: inputDescriptor.Id, Presentation: presentation, Format: format,
                 PresentedCredential: presentedCredential);
         });
 
         var presentationMaps =
-            new List<(string InputDescriptorId, string Presentation, Format Format, ICredential PresentedCredential)>();
+            new List<(string Identifier, string Presentation, Format Format, ICredential PresentedCredential)>();
         foreach (var task in presentationMapTasks)
         {
             var presentationMap = await task;
@@ -536,7 +537,7 @@ public class Oid4VpClientService : IOid4VpClientService
 
         var authorizationResponse = await _oid4VpHaipClient.CreateAuthorizationResponseAsync(
             authorizationRequest,
-            presentationMaps.Select(tuple => (tuple.InputDescriptorId, tuple.Presentation, tuple.Format)).ToArray()
+            presentationMaps.Select(tuple => (tuple.Identifier, tuple.Presentation, tuple.Format)).ToArray()
         );
 
         var content = authorizationRequest.ResponseMode switch
@@ -652,7 +653,7 @@ public class Oid4VpClientService : IOid4VpClientService
         var authorizationRequestValidation = await _authorizationRequestService.GetAuthorizationRequest(requestUri);
         var result = authorizationRequestValidation.Map(async authRequest =>
         {
-            var candidates = (await _pexService.FindCandidates(authRequest)).OnSome(enumerable => enumerable.ToList());
+            var candidates = (await _presentationCandidateService.FindPresentationCandidates(authRequest)).OnSome(enumerable => enumerable.ToList());
             var presentationCandidates = new PresentationCandidates(authRequest, candidates);
             return ProcessTransactionData(presentationCandidates);
         });
@@ -677,7 +678,7 @@ public class Oid4VpClientService : IOid4VpClientService
                                     .TransactionData
                                     .CredentialIds
                                     .Select(id => id.AsString)
-                                    .Contains(candidate.InputDescriptorId);
+                                    .Contains(candidate.Identifier);
                             });
 
                             if (first is null)

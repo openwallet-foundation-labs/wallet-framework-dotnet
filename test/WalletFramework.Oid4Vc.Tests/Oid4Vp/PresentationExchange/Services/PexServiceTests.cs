@@ -1,3 +1,4 @@
+using System.Data.Common;
 using FluentAssertions;
 using Hyperledger.Aries.Agents;
 using Hyperledger.Aries.Storage;
@@ -10,17 +11,18 @@ using WalletFramework.Core.Credentials.Abstractions;
 using WalletFramework.Core.Cryptography.Models;
 using WalletFramework.Core.Functional;
 using WalletFramework.Oid4Vc.Oid4Vci.Abstractions;
+using WalletFramework.Oid4Vc.Oid4Vci.CredConfiguration.Models;
 using WalletFramework.Oid4Vc.Oid4Vp.Models;
 using WalletFramework.Oid4Vc.Oid4Vp.PresentationExchange.Models;
 using WalletFramework.Oid4Vc.Oid4Vp.PresentationExchange.Services;
 using WalletFramework.Oid4Vc.Tests.Extensions;
-using WalletFramework.Oid4Vc.Tests.PresentationExchange.Models;
+using WalletFramework.Oid4Vc.Tests.Oid4Vp.PresentationExchange.Models;
 using WalletFramework.SdJwtVc.Models.Credential;
 using WalletFramework.SdJwtVc.Models.Credential.Attributes;
 using WalletFramework.SdJwtVc.Models.Records;
 using WalletFramework.SdJwtVc.Services.SdJwtVcHolderService;
 
-namespace WalletFramework.Oid4Vc.Tests.PresentationExchange.Services;
+namespace WalletFramework.Oid4Vc.Tests.Oid4Vp.PresentationExchange.Services;
 
 public class PexServiceTests
 {
@@ -44,37 +46,39 @@ public class PexServiceTests
     private readonly SdJwtRecord _batchCredentialTwo = CreateCredential(CredentialExamples.BatchCredential, BatchCredentialSetId);
 
     [Fact]
-    public async Task Can_Create_Presentation_Submission()
+    public async Task Can_Create_Authorization_Response()
     {
-        var presentationDefinition = JsonConvert.DeserializeObject<PresentationDefinition>(PexTestsDataProvider.GetJsonForTestCase());
-            
-        var credentials = new[]
+        var authRequest = JsonConvert.DeserializeObject<AuthorizationRequest>(PexTestsDataProvider.GetJsonForTestCase())!;
+        var presentationDefinition = authRequest.PresentationDefinition!;
+
+        var presentationMap = new (string Identifier, string Presentation, Format Format)[]
         {
-            new DescriptorMap
+            new()
             {
-                Id = presentationDefinition.InputDescriptors[0].Id,
-                Format = presentationDefinition.InputDescriptors[0].Formats.SdJwtFormat.IssuerSignedJwtAlgValues.First(),
-                Path = "$.credentials[0]"
+                Identifier = presentationDefinition.InputDescriptors[0].Id,
+                Presentation = Guid.NewGuid().ToString(),
+                Format = FormatFun.CreateSdJwtFormat()
             },
-            new DescriptorMap
+            new()
             {
-                Id = presentationDefinition.InputDescriptors[1].Id,
-                Format = presentationDefinition.InputDescriptors[1].Formats.SdJwtFormat.IssuerSignedJwtAlgValues.First(),
-                Path = "$.credentials[1]"
-            },
+                Identifier = presentationDefinition.InputDescriptors[1].Id,
+                Presentation = Guid.NewGuid().ToString(),
+                Format = FormatFun.CreateSdJwtFormat()
+            }
         };
             
-        var presentationSubmission = await CreatePexService().CreatePresentationSubmission(presentationDefinition, credentials);
+        var authResponse = await CreatePexService().CreateAuthorizationResponseAsync(authRequest, presentationMap);
+        var presentationSubmission = authResponse.PresentationSubmission;
 
         presentationSubmission.Id.Should().NotBeNullOrWhiteSpace();
         presentationSubmission.DefinitionId.Should().Be(presentationDefinition.Id);
-        presentationSubmission.DescriptorMap.Length.Should().Be(credentials.Length);
+        presentationSubmission.DescriptorMap.Length.Should().Be(presentationMap.Length);
 
         for (var i = 0; i < presentationDefinition.InputDescriptors.Length; i++)
         {
             presentationSubmission.DescriptorMap[i].Id.Should().Be(presentationDefinition.InputDescriptors[i].Id);
-            presentationSubmission.DescriptorMap[i].Format.Should().Be(credentials[i].Format);
-            presentationSubmission.DescriptorMap[i].Path.Should().Be(credentials[i].Path);   
+            presentationSubmission.DescriptorMap[i].Format.Should().Be(presentationMap[i].Format);
+            presentationSubmission.DescriptorMap[i].Path.Should().Be($"$[{i}]");   
         }
     }
         
@@ -169,11 +173,11 @@ public class PexServiceTests
                 new List<CredentialSetCandidate> { alternativeNestedCredentialSetCandidate })
         };
 
-        var sdJwtVcHolderService = CreatePexService();
+        var pexService = CreatePexService();
 
         // Act
         var candidate = 
-            (await sdJwtVcHolderService.FindCandidates(identityCredentialInputDescriptor)).UnwrapOrThrow();
+            (await pexService.FindCandidates(identityCredentialInputDescriptor)).UnwrapOrThrow();
         var credentialCandidatesArray = new List<PresentationCandidate> { candidate };
 
         // Assert
@@ -206,11 +210,11 @@ public class PexServiceTests
                 new List<CredentialSetCandidate> { nestedCredentialSetCandidate, alternativeNestedCredentialSetCandidate }),
         };
 
-        var sdJwtVcHolderService = CreatePexService();
+        var pexService = CreatePexService();
 
         // Act
         var candidate = 
-            (await sdJwtVcHolderService.FindCandidates(identityCredentialInputDescriptor)).UnwrapOrThrow();
+            (await pexService.FindCandidates(identityCredentialInputDescriptor)).UnwrapOrThrow();
         
         var credentialCandidatesArray = new List<PresentationCandidate> { candidate };
 
@@ -241,11 +245,11 @@ public class PexServiceTests
                 new List<CredentialSetCandidate> { credentialSetCandidate }),
         };
 
-        var sdJwtVcHolderService = CreatePexService();
+        var pexService = CreatePexService();
 
         // Act
         var candidate = 
-            (await sdJwtVcHolderService.FindCandidates(universityInputDescriptor)).UnwrapOrThrow();
+            (await pexService.FindCandidates(universityInputDescriptor)).UnwrapOrThrow();
         
         var credentialCandidatesArray = new List<PresentationCandidate> { candidate };
 
@@ -267,10 +271,10 @@ public class PexServiceTests
             "University Degree",
             "We can only accept digital university degrees.");
         
-        var sdJwtVcHolderService = CreatePexService();
+        var pexService = CreatePexService();
 
         // Act
-        var credentialCandidatesArray = await sdJwtVcHolderService.FindCandidates(universityInputDescriptor);
+        var credentialCandidatesArray = await pexService.FindCandidates(universityInputDescriptor);
 
         // Assert
         credentialCandidatesArray.IsNone.Should().BeTrue();
@@ -291,10 +295,10 @@ public class PexServiceTests
             "EU Driver's License",
             "We can only accept digital driver's licenses issued by national authorities of member states or trusted notarial auditors.");
 
-        var sdJwtVcHolderService = CreatePexService();
+        var pexService = CreatePexService();
 
         // Act
-        var candidate = await sdJwtVcHolderService.FindCandidates(driverLicenseInputDescriptor);
+        var candidate = await pexService.FindCandidates(driverLicenseInputDescriptor);
 
         // Assert
         candidate.IsNone.Should().BeTrue();
@@ -315,16 +319,15 @@ public class PexServiceTests
             "EU Driver's License",
             "We can only accept digital driver's licenses issued by national authorities of member states or trusted notarial auditors.");
 
-        var sdJwtVcHolderService = CreatePexService();
+        var pexService = CreatePexService();
 
         // Act
-        var candidate = await sdJwtVcHolderService.FindCandidates(driverLicenseInputDescriptor);
+        var candidate = await pexService.FindCandidates(driverLicenseInputDescriptor);
 
         // Assert
         candidate.IsNone.Should().BeTrue();
     }
 
-    #region Helper Methods
     private IPexService CreatePexService()
     {
         _sdJwtVcHolderServiceMock
@@ -412,5 +415,4 @@ public class PexServiceTests
 
         return inputDescriptor;
     }
-    #endregion
 }

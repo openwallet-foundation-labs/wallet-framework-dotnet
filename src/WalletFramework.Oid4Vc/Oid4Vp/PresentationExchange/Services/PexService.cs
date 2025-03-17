@@ -1,6 +1,7 @@
 using System.IdentityModel.Tokens.Jwt;
 using Hyperledger.Aries.Agents;
 using LanguageExt;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using WalletFramework.Core.Credentials.Abstractions;
 using WalletFramework.Core.Functional;
@@ -10,7 +11,6 @@ using WalletFramework.Oid4Vc.Oid4Vci.Abstractions;
 using WalletFramework.Oid4Vc.Oid4Vci.Implementations;
 using WalletFramework.Oid4Vc.Oid4Vp.Models;
 using WalletFramework.Oid4Vc.Oid4Vp.PresentationExchange.Models;
-using WalletFramework.Oid4Vc.Oid4Vp.TransactionDatas;
 using WalletFramework.SdJwtVc.Services.SdJwtVcHolderService;
 
 namespace WalletFramework.Oid4Vc.Oid4Vp.PresentationExchange.Services;
@@ -21,28 +21,11 @@ public class PexService(
     IMdocStorage mdocStorage,
     ISdJwtVcHolderService sdJwtVcHolderService) : IPexService
 {
-    /// <inheritdoc />
-    public Task<PresentationSubmission> CreatePresentationSubmission(
-        PresentationDefinition presentationDefinition,
-        DescriptorMap[] descriptorMaps)
-    {
-        var inputDescriptorIds = presentationDefinition.InputDescriptors.Select(x => x.Id);
-        if (!descriptorMaps.Select(x => x.Id).All(inputDescriptorIds.Contains))
-            throw new ArgumentException("Missing descriptors for given input descriptors in presentation definition.",
-                nameof(descriptorMaps));
-
-        var presentationSubmission = new PresentationSubmission
-        {
-            Id = Guid.NewGuid().ToString(),
-            DefinitionId = presentationDefinition.Id,
-            DescriptorMap = descriptorMaps.ToArray()
-        };
-
-        return Task.FromResult(presentationSubmission);
-    }
-
     public async Task<Option<IEnumerable<PresentationCandidate>>> FindCandidates(AuthorizationRequest authRequest)
     {
+        if(authRequest.PresentationDefinition is null)
+            return Option<IEnumerable<PresentationCandidate>>.None;
+        
         var candidates = await FindCandidates(
             authRequest.PresentationDefinition.InputDescriptors,
             authRequest.ClientMetadata?.Formats);
@@ -65,6 +48,40 @@ public class PexService(
         return candidatesList.Count == 0
             ? Option<PresentationCandidate>.None
             : candidatesList.First();
+    }
+    
+    /// <inheritdoc />
+    public async Task<AuthorizationResponse> CreateAuthorizationResponseAsync(
+        AuthorizationRequest authorizationRequest,
+        (string Identifier, string Presentation, Oid4Vci.CredConfiguration.Models.Format Format)[] presentationMap)
+    {
+        var descriptorMaps = new List<DescriptorMap>();
+        var vpToken = new List<string>();
+            
+        for (var index = 0; index < presentationMap.Length; index++)
+        {
+            vpToken.Add(presentationMap[index].Presentation);
+
+            var descriptorMap = new DescriptorMap
+            {
+                Format = presentationMap[index].Format.ToString(),
+                Path = presentationMap.Length > 1 ? "$[" + index + "]" : "$",
+                Id = presentationMap[index].Identifier,
+                PathNested = null
+            };
+            descriptorMaps.Add(descriptorMap);
+        }
+
+        var presentationSubmission = await CreatePresentationSubmission(
+            authorizationRequest.PresentationDefinition,
+            descriptorMaps.ToArray());
+
+        return new AuthorizationResponse
+        {
+            PresentationSubmission = presentationSubmission,
+            VpToken = vpToken.Count > 1 ? JsonConvert.SerializeObject(vpToken) : vpToken[0],
+            State = authorizationRequest.State
+        };
     }
 
     private async Task<IEnumerable<PresentationCandidate>> FindCandidates(
@@ -199,5 +216,24 @@ public class PexService(
         return candidates.Any() 
             ? candidates 
             : Option<IEnumerable<ICredential>>.None;
+    }
+    
+    private Task<PresentationSubmission> CreatePresentationSubmission(
+        PresentationDefinition presentationDefinition,
+        DescriptorMap[] descriptorMaps)
+    {
+        var inputDescriptorIds = presentationDefinition.InputDescriptors.Select(x => x.Id);
+        if (!descriptorMaps.Select(x => x.Id).All(inputDescriptorIds.Contains))
+            throw new ArgumentException("Missing descriptors for given input descriptors in presentation definition.",
+                nameof(descriptorMaps));
+
+        var presentationSubmission = new PresentationSubmission
+        {
+            Id = Guid.NewGuid().ToString(),
+            DefinitionId = presentationDefinition.Id,
+            DescriptorMap = descriptorMaps.ToArray()
+        };
+
+        return Task.FromResult(presentationSubmission);
     }
 }

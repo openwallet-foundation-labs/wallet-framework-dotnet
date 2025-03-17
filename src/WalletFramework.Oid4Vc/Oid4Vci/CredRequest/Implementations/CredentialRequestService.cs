@@ -66,7 +66,7 @@ public class CredentialRequestService : ICredentialRequestService
         await authorizationRequest.Match(
             Some: _ =>
             {
-                if (format == "mso_mdoc")
+                if (format == Constants.MdocFormat)
                     sessionTranscript = authorizationRequest.UnwrapOrThrow(new Exception()).ToVpHandover()
                         .ToSessionTranscript();
                 return Task.CompletedTask;

@@ -5,7 +5,7 @@ namespace WalletFramework.Oid4Vc.Oid4Vp.Dcql.Models;
 /// <summary>
 /// The credential query claim.
 /// </summary>
-public class CredentialQueryClaim
+public class CredentialClaimQuery
 {
     /// <summary>
     /// This MUST be a string identifying the particular claim.
@@ -23,5 +23,5 @@ public class CredentialQueryClaim
     /// A collection of strings, integers or booleans values that specifies the expected values of the claim.
     /// </summary>
     [JsonProperty("values")]
-    public string[] Values { get; set; } = null!;
+    public string[]? Values { get; set; }
 }

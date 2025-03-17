@@ -1,3 +1,4 @@
+using WalletFramework.Oid4Vc.Oid4Vp.Dcql.Services;
 using WalletFramework.Oid4Vc.Oid4Vp.Models;
 using WalletFramework.Oid4Vc.Oid4Vp.PresentationExchange.Models;
 using WalletFramework.Oid4Vc.Oid4Vp.PresentationExchange.Services;
@@ -13,44 +14,24 @@ internal class Oid4VpHaipClient : IOid4VpHaipClient
     ///     Initializes a new instance of the <see cref="Oid4VpHaipClient" /> class.
     /// </summary>
     /// <param name="pexService">The service responsible for presentation exchange protocol operations.</param>
-    public Oid4VpHaipClient(IPexService pexService)
+    /// <param name="dcqlService">The service responsibl for DCQL operations.</param>
+    public Oid4VpHaipClient(IPexService pexService,
+        IDcqlService dcqlService)
     {
         _pexService = pexService;
+        _dcqlService = dcqlService;
     }
 
     private readonly IPexService _pexService;
+    private readonly IDcqlService _dcqlService;
 
     /// <inheritdoc />
-    public async Task<AuthorizationResponse> CreateAuthorizationResponseAsync(
+    public Task<AuthorizationResponse> CreateAuthorizationResponseAsync(
         AuthorizationRequest authorizationRequest,
-        (string InputDescriptorId, string Presentation, Format Format)[] presentationMap)
+        (string Identifier, string Presentation, Format Format)[] presentationMap)
     {
-        var descriptorMaps = new List<DescriptorMap>();
-        var vpToken = new List<string>();
-            
-        for (var index = 0; index < presentationMap.Length; index++)
-        {
-            vpToken.Add(presentationMap[index].Presentation);
-
-            var descriptorMap = new DescriptorMap
-            {
-                Format = presentationMap[index].Format.ToString(),
-                Path = presentationMap.Length > 1 ? "$[" + index + "]" : "$",
-                Id = presentationMap[index].InputDescriptorId,
-                PathNested = null
-            };
-            descriptorMaps.Add(descriptorMap);
-        }
-
-        var presentationSubmission = await _pexService.CreatePresentationSubmission(
-            authorizationRequest.PresentationDefinition,
-            descriptorMaps.ToArray());
-
-        return new AuthorizationResponse
-        {
-            PresentationSubmission = presentationSubmission,
-            VpToken = vpToken.Count > 1 ? SerializeObject(vpToken) : vpToken[0],
-            State = authorizationRequest.State
-        };
+        return authorizationRequest.IsPexRequest()
+            ? _pexService.CreateAuthorizationResponseAsync(authorizationRequest, presentationMap)
+            : Task.FromResult(_dcqlService.CreateAuthorizationResponse(authorizationRequest, presentationMap));
     }
 }

@@ -1,7 +1,7 @@
 using System.Reflection;
 using System.Runtime.CompilerServices;
 
-namespace WalletFramework.Oid4Vc.Tests.Dcql.Models
+namespace WalletFramework.Oid4Vc.Tests.Oid4Vp.Dcql.Models
 {
     public static class DcqlTestsDataProvider
     {

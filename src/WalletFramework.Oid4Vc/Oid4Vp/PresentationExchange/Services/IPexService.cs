@@ -1,4 +1,5 @@
 using LanguageExt;
+using WalletFramework.Oid4Vc.Oid4Vci.CredConfiguration.Models;
 using WalletFramework.Oid4Vc.Oid4Vp.Models;
 using WalletFramework.Oid4Vc.Oid4Vp.PresentationExchange.Models;
 
@@ -10,22 +11,26 @@ namespace WalletFramework.Oid4Vc.Oid4Vp.PresentationExchange.Services;
 public interface IPexService
 {
     /// <summary>
-    /// Creates a presentation submission.
-    /// </summary>
-    /// <param name="presentationDefinition">The presentation definition.</param>
-    /// <param name="descriptorMaps">Data used to build Descriptor Maps.</param>
-    /// <returns>
-    ///     A task representing the asynchronous operation. The task result contains the Presentation Submission.
-    /// </returns>
-    Task<PresentationSubmission> CreatePresentationSubmission(
-        PresentationDefinition presentationDefinition,
-        DescriptorMap[] descriptorMaps);
-
-    /// <summary>
-    ///     Finds the credential candidates based on the provided credentials and input descriptors.
+    ///     Finds the presentation candidates based on the provided credentials and input descriptors.
     /// </summary>
     /// <returns>An array of credential candidates, each containing a list of credentials that match the input descriptors.</returns>
     Task<Option<IEnumerable<PresentationCandidate>>> FindCandidates(AuthorizationRequest authRequest);
     
+    /// <summary>
+    ///     Finds a presentation candidate based on the provided input descriptor.
+    /// </summary>
+    /// <returns>A presentation candidate that matches the input descriptor.</returns>
     Task<Option<PresentationCandidate>> FindCandidates(InputDescriptor inputDescriptor);
+    
+    /// <summary>
+    ///     Creates the Parameters that are necessary to send an OpenId4VP Authorization Response.
+    /// </summary>
+    /// <param name="authorizationRequest"></param>
+    /// <param name="presentationMap"></param>
+    /// <returns>
+    ///     A task representing the asynchronous operation. The task result contains the Presentation Submission and the VP Token.
+    /// </returns>
+    Task<AuthorizationResponse> CreateAuthorizationResponseAsync(
+        AuthorizationRequest authorizationRequest,
+        (string Identifier, string Presentation, Format Format)[] presentationMap);
 }

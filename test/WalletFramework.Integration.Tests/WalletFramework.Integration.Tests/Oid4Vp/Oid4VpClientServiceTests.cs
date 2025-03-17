@@ -13,6 +13,7 @@ using WalletFramework.Core.Functional;
 using WalletFramework.MdocLib.Device.Abstractions;
 using WalletFramework.Oid4Vc.Oid4Vci.Abstractions;
 using WalletFramework.Oid4Vc.Oid4Vci.AuthFlow.Abstractions;
+using WalletFramework.Oid4Vc.Oid4Vp.Dcql.Services;
 using WalletFramework.Oid4Vc.Oid4Vp.Models;
 using WalletFramework.Oid4Vc.Oid4Vp.PresentationExchange.Services;
 using WalletFramework.Oid4Vc.Oid4Vp.Services;
@@ -41,10 +42,12 @@ public class Oid4VpClientServiceTests : IAsyncLifetime
         var holder = new Holder();
         var walletRecordService = new DefaultWalletRecordService();
         var pexService = new PexService(_agentProviderMock.Object, _mdocStorageMock.Object, _sdJwtVcHolderService!);
+        var dcqlService = new DcqlService(_agentProviderMock.Object, _mdocStorageMock.Object, _sdJwtVcHolderService!);
+        var presentationCandidateService = new PresentationCandidateService(pexService, dcqlService);
        
         _sdJwtVcHolderService = new SdJwtVcHolderService(holder, _sdJwtSignerService.Object, walletRecordService);
         var authRequestService = new AuthorizationRequestService(_httpClientFactoryMock.Object);
-        var oid4VpHaipClient = new Oid4VpHaipClient(pexService);
+        var oid4VpHaipClient = new Oid4VpHaipClient(pexService, dcqlService);
         _oid4VpRecordService = new Oid4VpRecordService(walletRecordService);
         
         _oid4VpClientService = new Oid4VpClientService(
@@ -56,7 +59,7 @@ public class Oid4VpClientServiceTests : IAsyncLifetime
             oid4VpHaipClient,
             _oid4VpRecordService,
             _mdocStorageMock.Object,
-            pexService,
+            presentationCandidateService,
             _authFlowSessionStorageMock.Object,
             _sdJwtVcHolderService);
     
@@ -111,7 +114,7 @@ public class Oid4VpClientServiceTests : IAsyncLifetime
             (authRequestCandidates.AuthorizationRequest, authRequestCandidates.Candidates.UnwrapOrThrow());
 
         var selectedCandidates = new SelectedCredential(
-            credentials.First().InputDescriptorId,
+            credentials.First().Identifier,
             credentials.First().CredentialSetCandidates.First().Credentials.First(),
             Option<List<PaymentTransactionData>>.None);
         

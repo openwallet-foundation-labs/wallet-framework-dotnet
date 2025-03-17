@@ -11,20 +11,11 @@ public class DcqlQuery
     ///     Represents a collection of Credential queries
     /// </summary>
     [JsonProperty("credentials", Required = Required.Always)]
-    public CredentialQuery[] Credentials { get; }
+    public CredentialQuery[] CredentialQueries { get; set; } = null!;
 
     /// <summary>
     ///     Represents credential set queries that specifies additional constraints
     /// </summary>
     [JsonProperty("credential_sets")]
-    public CredentialSetQuery[] CredentialSets { get; }
-    
-    [JsonConstructor]
-    private DcqlQuery(
-        CredentialQuery[] credentials,
-        CredentialSetQuery[] credentialSets)
-    {
-        Credentials = credentials;
-        CredentialSets = credentialSets;
-    }
+    public CredentialSetQuery[]? CredentialSetQueries { get; set; }
 }

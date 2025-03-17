@@ -1,0 +1,158 @@
+{
+    "response_uri": "https://demo.certification.openid.net/test/a/x509SanDns_with_single_self_certificate/responseuri",
+    "aud": "https://self-issued.me/v2",
+    "client_id_scheme": "x509_san_dns",
+    "presentation_definition": {
+        "id": "123",
+        "name": "Parse example",
+        "input_descriptors": [
+            {
+                "id": "citizenship_input_1",
+                "name": "EU Driver's License",
+                "group": [
+                    "A"
+                ],
+                "format": {
+                    "vc+sd-jwt": {
+                        "sd-jwt_alg_values": ["ES256", "ES256K", "ES384"]
+                    }
+                },
+                "constraints": {
+                    "fields": [
+                        {
+                            "path": [
+                                "$.credentialSchema.id",
+                                "$.vc.credentialSchema.id"
+                            ],
+                            "filter": {
+                                "type": "string",
+                                "const": "https://eu.com/claims/DriversLicense.json"
+                            }
+                        },
+                        {
+                            "path": [
+                                "$.issuer",
+                                "$.vc.issuer",
+                                "$.iss"
+                            ],
+                            "purpose": "We can only accept digital driver's licenses issued by national authorities of member states or trusted notarial auditors.",
+                            "filter": {
+                                "type": "string",
+                                "pattern": "did:example:gov1|did:example:gov2"
+                            }
+                        },
+                        {
+                            "path": [
+                                "$.credentialSubject.dob",
+                                "$.vc.credentialSubject.dob",
+                                "$.dob"
+                            ],
+                            "filter": {
+                                "type": "string",
+                                "format": "date"
+                            }
+                        }
+                    ]
+                }
+            },
+            {
+                "id": "citizenship_input_2",
+                "name": "US Passport",
+                "group": [
+                    "A"
+                ],
+                "format": {
+                    "vc+sd-jwt": {
+                        "sd-jwt_alg_values": ["ES256", "ES256K", "ES384"]
+                    }
+                },
+                "constraints": {
+                    "fields": [
+                        {
+                            "path": [
+                                "$.credentialSchema.id",
+                                "$.vc.credentialSchema.id"
+                            ],
+                            "filter": {
+                                "type": "string",
+                                "const": "hub://did:foo:123/Collections/schema.us.gov/passport.json"
+                            }
+                        },
+                        {
+                            "path": [
+                                "$.credentialSubject.birth_date",
+                                "$.vc.credentialSubject.birth_date",
+                                "$.birth_date"
+                            ],
+                            "filter": {
+                                "type": "string",
+                                "format": "date"
+                            }
+                        }
+                    ]
+                }
+            }
+        ],
+        "format": {
+            "jwt": {
+                "alg": ["EdDSA", "ES256K", "ES384"]
+            },
+            "jwt_vc": {
+                "alg": ["ES256K", "ES384"]
+            },
+            "jwt_vp": {
+                "alg": ["EdDSA", "ES256K"]
+            },
+            "ldp_vc": {
+                "proof_type": [
+                    "JsonWebSignature2020",
+                    "Ed25519Signature2018",
+                    "EcdsaSecp256k1Signature2019",
+                    "RsaSignature2018"
+                ]
+            },
+            "ldp_vp": {
+                "proof_type": ["Ed25519Signature2018"]
+            },
+            "ldp": {
+                "proof_type": ["RsaSignature2018"]
+            }
+        }
+    },
+    "response_type": "vp_token",
+    "nonce": "X01kNvFjgkKx-._~",
+    "client_id": "demo.certification.openid.net",
+    "client_metadata": {
+        "vp_formats": {
+            "vc+sd-jwt": {
+                "sd-jwt_alg_values": [
+                    "RS256",
+                    "RS384",
+                    "RS512",
+                    "PS256",
+                    "PS384",
+                    "PS512",
+                    "ES256",
+                    "ES256K",
+                    "ES384",
+                    "ES512",
+                    "EdDSA"
+                ],
+                "kb-jwt_alg_values": [
+                    "RS256",
+                    "RS384",
+                    "RS512",
+                    "PS256",
+                    "PS384",
+                    "PS512",
+                    "ES256",
+                    "ES256K",
+                    "ES384",
+                    "ES512",
+                    "EdDSA"
+                ]
+            }
+        }
+    },
+    "response_mode": "direct_post"
+}

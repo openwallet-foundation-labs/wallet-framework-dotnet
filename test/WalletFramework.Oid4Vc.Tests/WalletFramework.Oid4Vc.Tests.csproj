@@ -24,10 +24,10 @@
   </ItemGroup>
 
   <ItemGroup>
-    <EmbeddedResource Include="Dcql\Models\Can_Parse_Dcql_Query.json" />
-    <EmbeddedResource Include="PresentationExchange\Models\Can_Create_Presentation_Submission.json" />
-    <EmbeddedResource Include="PresentationExchange\Models\Can_Parse_Presentation_Definition.json" />
-    <EmbeddedResource Include="PresentationExchange\Models\Throws_Exception_When_Descriptors_Are_Missing.json" />
+    <EmbeddedResource Include="Oid4Vp\Dcql\Models\Can_Parse_Dcql_Query.json" />
+    <EmbeddedResource Include="Oid4Vp\PresentationExchange\Models\Can_Create_Authorization_Response.json" />
+    <EmbeddedResource Include="Oid4Vp\PresentationExchange\Models\Can_Parse_Presentation_Definition.json" />
+    <EmbeddedResource Include="Oid4Vp\PresentationExchange\Models\Throws_Exception_When_Descriptors_Are_Missing.json" />
   </ItemGroup>
 
 

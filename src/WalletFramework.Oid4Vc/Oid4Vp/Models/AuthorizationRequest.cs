@@ -36,13 +36,13 @@ public record AuthorizationRequest
     ///     Gets the presentation definition. Contains the claims that the Verifier wants to receive.
     /// </summary>
     [JsonProperty("presentation_definition")]
-    public PresentationDefinition PresentationDefinition { get; }
+    public PresentationDefinition? PresentationDefinition { get; }
     
     /// <summary>
     ///     Gets the DCQL query. Contains the claims that the Verifier wants to receive.
     /// </summary>
     [JsonProperty("dcql_query")]
-    public DcqlQuery DcqlQuery { get; }
+    public DcqlQuery? DcqlQuery { get; }
 
     /// <summary>
     ///     Gets the client id. The Identifier of the Verifier.
@@ -331,4 +331,7 @@ public static class AuthorizationRequestFun
 
     public static bool HasPaymentTransactionData(this AuthorizationRequest authRequest) 
         => authRequest.TransactionData.IsSome;
+
+    public static bool IsPexRequest(this AuthorizationRequest authRequest)
+        => authRequest.DcqlQuery is null && authRequest.PresentationDefinition is not null;
 }
