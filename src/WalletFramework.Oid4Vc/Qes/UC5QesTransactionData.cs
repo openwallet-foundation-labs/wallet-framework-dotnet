@@ -11,10 +11,7 @@ public record Uc5QesTransactionData(
 {
     public static Validation<IEnumerable<Uc5QesTransactionData>> FromJArray(JArray jArray)
     {
-        var base64UrlStringsValidation = jArray.TraverseAll(token =>
-        {
-            return Base64UrlString.FromString(token.ToString());
-        });
+        var base64UrlStringsValidation = jArray.TraverseAll(token => Base64UrlString.FromString(token.ToString()));
 
         return 
             from base64UrlStrings in base64UrlStringsValidation

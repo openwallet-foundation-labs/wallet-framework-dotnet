@@ -34,9 +34,9 @@ public readonly struct TransactionDataType
 
     private TransactionDataType(TransactionDataTypeValue value) => Value = value;
 
-    public string AsString => Value.AsString();
+    public string AsString() => Value.AsString();
 
-    public static implicit operator string(TransactionDataType type) => type.AsString;
+    public static implicit operator string(TransactionDataType type) => type.AsString();
 
     public static Validation<TransactionDataType> FromJToken(JToken jToken)
     {

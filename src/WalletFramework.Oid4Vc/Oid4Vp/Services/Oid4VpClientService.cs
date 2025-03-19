@@ -161,8 +161,7 @@ public class Oid4VpClientService : IOid4VpClientService
                     {
                         return txData.Match(
                             _ => Option<string>.None,
-                            uc5QesTxData => uc5QesTxData.Encoded.AsString
-                        );
+                            uc5QesTxData => uc5QesTxData.TransactionDataProperties.Encoded.AsString);
                     });
                 });
             
@@ -170,16 +169,10 @@ public class Oid4VpClientService : IOid4VpClientService
                 .TransactionData
                 .OnSome(list =>
                 {
-                    return list.TraverseAll(txData =>
+                    return list.Select(txData =>
                     {
-                        return txData.Match(
-                            vpTxData =>
-                            {
-                                var hashesAlg = vpTxData.GetHashesAlg().First();
-                                return vpTxData.Hash(hashesAlg);
-                            },
-                            _ => Option<TransactionDataHash>.None
-                        );
+                        var hashesAlg = txData.GetHashesAlg().First();
+                        return txData.Hash(hashesAlg);
                     });
                 });
             
@@ -440,20 +433,21 @@ public class Oid4VpClientService : IOid4VpClientService
 
                     var kbJwtWithoutSignatureHash = sha256.ComputeHash(kbJwtWithoutSignature.GetUTF8Bytes());
 
-                    var content = new JObject();
-                    content.Add("hash_bytes", Base64UrlEncoder.Encode(kbJwtWithoutSignatureHash));
+                    var content = new JObject
+                    {
+                        { "hash_bytes", Base64UrlEncoder.Encode(kbJwtWithoutSignatureHash) }
+                    };
 
-                    var sdJwtHttpContent =
-                        new StringContent
-                        (
-                            content.ToString(),
-                            Encoding.UTF8,
-                            MediaTypeNames.Application.Json
-                        );
+                    var sdJwtHttpContent = new StringContent
+                    (
+                        content.ToString(),
+                        Encoding.UTF8,
+                        MediaTypeNames.Application.Json
+                    );
 
                     var sdJwtSignatureResponse = await client.PostAsync(
-                        session.AuthorizationData.IssuerMetadata.PresentationSigningEndpoint.UnwrapOrThrow(new Exception()), sdJwtHttpContent
-                    );
+                        session.AuthorizationData.IssuerMetadata.PresentationSigningEndpoint.UnwrapOrThrow(new Exception()),
+                        sdJwtHttpContent);
 
                     if (sdJwtSignatureResponse.IsSuccessStatusCode)
                     {
@@ -717,7 +711,7 @@ public class Oid4VpClientService : IOid4VpClientService
                     return candidates.FindCandidateForTransactionData(transactionData).Match(
                         candidate => candidate.AddTransactionData(transactionData),
                         () => (Validation<PresentationCandidate>)new InvalidTransactionDataError(
-                            $"No credentials found that satisfy the transaction data with type {transactionData.GetTransactionDataType().AsString}"));
+                            $"No credentials found that satisfy the transaction data with type {transactionData.GetTransactionDataType().AsString()}"));
                 });
         
                 return candidatesValidation.OnSuccess(enumerable => presentationCandidates with
@@ -742,28 +736,26 @@ public class Oid4VpClientService : IOid4VpClientService
         PresentationCandidates presentationCandidates,
         IEnumerable<InputDescriptorTransactionData> txData)
     {
-        var result =
-            presentationCandidates.Candidates.Match(
-                candidates =>
+        var result = presentationCandidates.Candidates.Match(
+            candidates =>
+            {
+                var candidatesValidation = txData.TraverseAll(inputDescriptorTxData =>
                 {
-                    var candidatesValidation = txData.TraverseAll(inputDescriptorTxData =>
-                    {
-                        Option<PresentationCandidate> candidateOption = candidates.FirstOrDefault(
-                            candidate => string.Equals(candidate.InputDescriptorId, inputDescriptorTxData.InputDescriptorId));
+                    Option<PresentationCandidate> candidateOption = candidates.FirstOrDefault(
+                        candidate => string.Equals(candidate.InputDescriptorId, inputDescriptorTxData.InputDescriptorId));
 
-                        return candidateOption.Match(
-                            candidate => candidate.AddUc5TransactionData(inputDescriptorTxData.TransactionData),
-                            () => (Validation<PresentationCandidate>)new InvalidTransactionDataError("No credentials found that satisfy the authorization request with transaction data") 
-                        );
-                    });
+                    return candidateOption.Match(
+                        candidate => candidate.AddUc5TransactionData(inputDescriptorTxData.TransactionData),
+                        () => (Validation<PresentationCandidate>)new InvalidTransactionDataError("No credentials found that satisfy the authorization request with transaction data") 
+                    );
+                });
                     
-                    return candidatesValidation.OnSuccess(enumerable => presentationCandidates with
-                    {
-                        Candidates = enumerable.ToList()
-                    });
-                },
-                () => presentationCandidates
-            );
+                return candidatesValidation.OnSuccess(enumerable => presentationCandidates with
+                {
+                    Candidates = enumerable.ToList()
+                });
+            },
+            () => presentationCandidates);
 
         return result.Value.MapFail(error =>
         {

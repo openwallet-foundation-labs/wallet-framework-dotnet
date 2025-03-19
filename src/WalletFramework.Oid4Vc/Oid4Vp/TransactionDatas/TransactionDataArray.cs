@@ -8,10 +8,7 @@ public record TransactionDataArray(Base64UrlString[] EncodedTransactionDataStrin
 {
     public static Validation<TransactionDataArray> FromJArray(JArray jArray)
     {
-        var arrayValidation = jArray.TraverseAll(jToken =>
-        {
-            return Base64UrlString.FromString(jToken.ToString());
-        });
+        var arrayValidation = jArray.TraverseAll(jToken => Base64UrlString.FromString(jToken.ToString()));
 
         return
             from base64UrlStrings in arrayValidation
