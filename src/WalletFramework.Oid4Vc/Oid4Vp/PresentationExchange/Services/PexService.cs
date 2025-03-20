@@ -156,8 +156,8 @@ public class PexService(
             {
                 return record.Mdoc.IssuerSigned.IssuerAuth.ProtectedHeaders.Value.TryGetValue(new CoseLabel(1), out var alg)
                        && supportedFormatSigningAlgorithms.Match(
-                           formats => formats.MDocFormat?.Alg.Contains(alg.ToString()) ?? true,
-                           () => inputDescriptor.Formats?.MDocFormat?.Alg.Contains(alg.ToString()) ?? true)
+                           formats => formats.MDocFormat?.Alg?.Contains(alg.ToString()) ?? true,
+                           () => inputDescriptor.Formats?.MDocFormat?.Alg?.Contains(alg.ToString()) ?? true)
                        && inputDescriptor.Constraints.Fields!.All(field =>
                        {
                            try
