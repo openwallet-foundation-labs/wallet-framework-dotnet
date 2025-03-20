@@ -1,8 +1,7 @@
-using Org.BouncyCastle.Asn1;
-using Org.BouncyCastle.Crypto.Parameters;
-using Org.BouncyCastle.Math;
 using System.IdentityModel.Tokens.Jwt;
+using Org.BouncyCastle.Asn1;
 using Org.BouncyCastle.Crypto;
+using Org.BouncyCastle.Math;
 using static Microsoft.IdentityModel.Tokens.Base64UrlEncoder;
 using static Org.BouncyCastle.Security.SignerUtilities;
 using static System.Text.Encoding;
@@ -23,37 +22,39 @@ public static class JwtSecurityTokenExtensions
     public static bool IsSignatureValid(this JwtSecurityToken token, AsymmetricKeyParameter publicKeyParameters)
     {
         var encodedHeaderAndPayload = UTF8.GetBytes(token.EncodedHeader + "." + token.EncodedPayload);
-                
-        switch (publicKeyParameters)
+        return token.Header.Alg switch
         {
-            case RsaKeyParameters:
-                var rsaSigner = GetSigner("SHA-256withRSA");
-                rsaSigner.Init(false, publicKeyParameters);
-                rsaSigner.BlockUpdate(encodedHeaderAndPayload, 0, encodedHeaderAndPayload.Length);
-                return rsaSigner.VerifySignature(DecodeBytes(token.RawSignature));
-            case ECPublicKeyParameters:
-                var ecdsaSigner = GetSigner("SHA-256withECDSA");
-                ecdsaSigner.Init(false, publicKeyParameters);
-                ecdsaSigner.BlockUpdate(encodedHeaderAndPayload, 0, encodedHeaderAndPayload.Length);
-                return ecdsaSigner.VerifySignature(ConvertRawToDerFormat(DecodeBytes(token.RawSignature)));
-            default:
-                throw new InvalidOperationException("Unsupported public key type");
-        }
+            "RS256" => GetSigner("SHA-256withRSA").Sign(encodedHeaderAndPayload, publicKeyParameters, token.RawSignature),
+            "ES256" => GetSigner("SHA-256withECDSA").Sign(encodedHeaderAndPayload, publicKeyParameters, token.RawSignature),
+            "ES512" => GetSigner("SHA-512withECDSA").Sign(encodedHeaderAndPayload, publicKeyParameters, token.RawSignature),
+            _ => throw new InvalidOperationException("Unsupported JWT alg")
+        };
     }
 
     private static byte[] ConvertRawToDerFormat(byte[] rawSignature)
     {
-        if (rawSignature.Length != 64)
-            throw new ArgumentException("Raw signature should be 64 bytes long", nameof(rawSignature));
+        var bytesLength = rawSignature.Length / 2;
 
-        var r = new BigInteger(1, rawSignature.Take(32).ToArray());
-        var s = new BigInteger(1, rawSignature.Skip(32).ToArray());
+        var r = new BigInteger(1, rawSignature.Take(bytesLength).ToArray());
+        var s = new BigInteger(1, rawSignature.Skip(bytesLength).ToArray());
 
-        var derSignature = new DerSequence(
-            new DerInteger(r),
-            new DerInteger(s)
-        ).GetDerEncoded();
+        var derSignature = new DerSequence(new DerInteger(r), new DerInteger(s));
 
-        return derSignature;
+        return derSignature.GetDerEncoded();
+    }
+
+    private static bool Sign(
+        this ISigner signer,
+        IEnumerable<byte> bytes,
+        AsymmetricKeyParameter publicKeyParameters,
+        string rawSignature)
+    {
+        var bytesArray = bytes.ToArray();
+        var rawBytes = DecodeBytes(rawSignature);
+        var derBytes = ConvertRawToDerFormat(rawBytes);
+
+        signer.Init(false, publicKeyParameters);
+        signer.BlockUpdate(bytesArray, 0, bytesArray.Length);
+        return signer.VerifySignature(derBytes);
     }
 }
