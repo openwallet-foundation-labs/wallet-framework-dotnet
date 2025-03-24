@@ -85,9 +85,9 @@ public class DcqlServiceTests
         var dcqlService = CreateDcqlService();
 
         // Act
-        var driverLicenseCandidate = (await dcqlService.FindCandidates(driverLicenseCredentialQuery)).UnwrapOrThrow();
-        var universityCandidate = (await dcqlService.FindCandidates(universityCredentialQuery)).UnwrapOrThrow();
-        var batchCandidate = (await dcqlService.FindCandidates(batchCredentialQuery)).UnwrapOrThrow();
+        var driverLicenseCandidate = (await dcqlService.FindPresentationCandidateAsync(driverLicenseCredentialQuery)).UnwrapOrThrow();
+        var universityCandidate = (await dcqlService.FindPresentationCandidateAsync(universityCredentialQuery)).UnwrapOrThrow();
+        var batchCandidate = (await dcqlService.FindPresentationCandidateAsync(batchCredentialQuery)).UnwrapOrThrow();
         var credentialCandidatesArray = new List<PresentationCandidate> { driverLicenseCandidate, universityCandidate, batchCandidate };
 
         // Assert
@@ -117,7 +117,7 @@ public class DcqlServiceTests
     
         // Act
         var candidate = 
-            (await dcqlService.FindCandidates(identityCredentialCredentialQuery)).UnwrapOrThrow();
+            (await dcqlService.FindPresentationCandidateAsync(identityCredentialCredentialQuery)).UnwrapOrThrow();
         var credentialCandidatesArray = new List<PresentationCandidate> { candidate };
     
         // Assert
@@ -149,7 +149,7 @@ public class DcqlServiceTests
     
         // Act
         var candidate = 
-            (await dcqlService.FindCandidates(identityCredentialCredentialQuery)).UnwrapOrThrow();
+            (await dcqlService.FindPresentationCandidateAsync(identityCredentialCredentialQuery)).UnwrapOrThrow();
         
         var credentialCandidatesArray = new List<PresentationCandidate> { candidate };
     
@@ -174,7 +174,7 @@ public class DcqlServiceTests
         var dcqlService = CreateDcqlService();
     
         // Act
-        var candidate = await dcqlService.FindCandidates(driverLicenseCredentialQuery);
+        var candidate = await dcqlService.FindPresentationCandidateAsync(driverLicenseCredentialQuery);
     
         // Assert
         candidate.IsNone.Should().BeTrue();
@@ -194,7 +194,7 @@ public class DcqlServiceTests
         var dcqlService = CreateDcqlService();
     
         // Act
-        var candidate = await dcqlService.FindCandidates(driverLicenseCredentialQuery);
+        var candidate = await dcqlService.FindPresentationCandidateAsync(driverLicenseCredentialQuery);
     
         // Assert
         candidate.IsNone.Should().BeTrue();

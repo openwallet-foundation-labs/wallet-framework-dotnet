@@ -139,9 +139,9 @@ public class PexServiceTests
         var pexService = CreatePexService();
 
         // Act
-        var driverLicenseCandidate = (await pexService.FindCandidates(driverLicenseInputDescriptor)).UnwrapOrThrow();
-        var universityCandidate = (await pexService.FindCandidates(universityInputDescriptor)).UnwrapOrThrow();
-        var batchCandidate = (await pexService.FindCandidates(batchInputDescriptor)).UnwrapOrThrow();
+        var driverLicenseCandidate = (await pexService.FindPresentationCandidateAsync(driverLicenseInputDescriptor)).UnwrapOrThrow();
+        var universityCandidate = (await pexService.FindPresentationCandidateAsync(universityInputDescriptor)).UnwrapOrThrow();
+        var batchCandidate = (await pexService.FindPresentationCandidateAsync(batchInputDescriptor)).UnwrapOrThrow();
         var credentialCandidatesArray = new List<PresentationCandidate> { driverLicenseCandidate, universityCandidate, batchCandidate };
 
         // Assert
@@ -177,7 +177,7 @@ public class PexServiceTests
 
         // Act
         var candidate = 
-            (await pexService.FindCandidates(identityCredentialInputDescriptor)).UnwrapOrThrow();
+            (await pexService.FindPresentationCandidateAsync(identityCredentialInputDescriptor)).UnwrapOrThrow();
         var credentialCandidatesArray = new List<PresentationCandidate> { candidate };
 
         // Assert
@@ -214,7 +214,7 @@ public class PexServiceTests
 
         // Act
         var candidate = 
-            (await pexService.FindCandidates(identityCredentialInputDescriptor)).UnwrapOrThrow();
+            (await pexService.FindPresentationCandidateAsync(identityCredentialInputDescriptor)).UnwrapOrThrow();
         
         var credentialCandidatesArray = new List<PresentationCandidate> { candidate };
 
@@ -249,7 +249,7 @@ public class PexServiceTests
 
         // Act
         var candidate = 
-            (await pexService.FindCandidates(universityInputDescriptor)).UnwrapOrThrow();
+            (await pexService.FindPresentationCandidateAsync(universityInputDescriptor)).UnwrapOrThrow();
         
         var credentialCandidatesArray = new List<PresentationCandidate> { candidate };
 
@@ -274,7 +274,7 @@ public class PexServiceTests
         var pexService = CreatePexService();
 
         // Act
-        var credentialCandidatesArray = await pexService.FindCandidates(universityInputDescriptor);
+        var credentialCandidatesArray = await pexService.FindPresentationCandidateAsync(universityInputDescriptor);
 
         // Assert
         credentialCandidatesArray.IsNone.Should().BeTrue();
@@ -298,7 +298,7 @@ public class PexServiceTests
         var pexService = CreatePexService();
 
         // Act
-        var candidate = await pexService.FindCandidates(driverLicenseInputDescriptor);
+        var candidate = await pexService.FindPresentationCandidateAsync(driverLicenseInputDescriptor);
 
         // Assert
         candidate.IsNone.Should().BeTrue();
@@ -322,7 +322,7 @@ public class PexServiceTests
         var pexService = CreatePexService();
 
         // Act
-        var candidate = await pexService.FindCandidates(driverLicenseInputDescriptor);
+        var candidate = await pexService.FindPresentationCandidateAsync(driverLicenseInputDescriptor);
 
         // Assert
         candidate.IsNone.Should().BeTrue();
