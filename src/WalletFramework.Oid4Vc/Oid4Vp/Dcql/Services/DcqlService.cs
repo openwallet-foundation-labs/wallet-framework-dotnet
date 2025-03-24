@@ -49,22 +49,11 @@ public class DcqlService(IAgentProvider agentProvider,
             presentationItem => presentationItem.Identifier,
             presentationItem => presentationItem.Presentation);
         
-        var response = new AuthorizationResponse
+        return new AuthorizationResponse
         {
             VpToken = JsonConvert.SerializeObject(vpToken),
             State = authorizationRequest.State
         };
-
-        // ToDo: remove workaround for connector requirement on presentation_submission for Dcql
-        var fakePresentationSubmission = new PresentationSubmission
-        {
-            Id = Guid.NewGuid().ToString(),
-            DefinitionId = Guid.NewGuid().ToString(),
-            DescriptorMap = []
-        };
-        response.PresentationSubmission = fakePresentationSubmission;
-        
-        return response;
     }
 
     private async Task<IEnumerable<PresentationCandidate>> FindCandidates(CredentialQuery[] credentialQueries)
