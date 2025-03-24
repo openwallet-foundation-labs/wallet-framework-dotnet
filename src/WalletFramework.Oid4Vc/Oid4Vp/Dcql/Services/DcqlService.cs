@@ -9,6 +9,7 @@ using WalletFramework.Oid4Vc.Oid4Vci.CredConfiguration.Models;
 using WalletFramework.Oid4Vc.Oid4Vci.Implementations;
 using WalletFramework.Oid4Vc.Oid4Vp.Dcql.Models;
 using WalletFramework.Oid4Vc.Oid4Vp.Models;
+using WalletFramework.Oid4Vc.Oid4Vp.PresentationExchange.Models;
 using WalletFramework.SdJwtVc.Services.SdJwtVcHolderService;
 
 namespace WalletFramework.Oid4Vc.Oid4Vp.Dcql.Services;
@@ -17,7 +18,7 @@ public class DcqlService(IAgentProvider agentProvider,
     IMdocStorage mdocStorage,
     ISdJwtVcHolderService sdJwtVcHolderService) : IDcqlService
 {
-    public async Task<Option<IEnumerable<PresentationCandidate>>> FindCandidates(DcqlQuery query)
+    public async Task<Option<IEnumerable<PresentationCandidate>>> FindPresentationCandidatesAsync(DcqlQuery query)
     {
         var candidates = await FindCandidates(
             query.CredentialQueries);
@@ -29,7 +30,7 @@ public class DcqlService(IAgentProvider agentProvider,
             : list;
     }
 
-    public async Task<Option<PresentationCandidate>> FindCandidates(CredentialQuery credentialQuery)
+    public async Task<Option<PresentationCandidate>> FindPresentationCandidateAsync(CredentialQuery credentialQuery)
     {
         var candidates = await FindCandidates(
             [credentialQuery]);
@@ -47,12 +48,23 @@ public class DcqlService(IAgentProvider agentProvider,
         var vpToken = presentationMap.ToDictionary(
             presentationItem => presentationItem.Identifier,
             presentationItem => presentationItem.Presentation);
-
-        return new AuthorizationResponse
+        
+        var response = new AuthorizationResponse
         {
             VpToken = JsonConvert.SerializeObject(vpToken),
             State = authorizationRequest.State
         };
+
+        // ToDo: remove workaround for connector requirement on presentation_submission for Dcql
+        var fakePresentationSubmission = new PresentationSubmission
+        {
+            Id = Guid.NewGuid().ToString(),
+            DefinitionId = Guid.NewGuid().ToString(),
+            DescriptorMap = []
+        };
+        response.PresentationSubmission = fakePresentationSubmission;
+        
+        return response;
     }
 
     private async Task<IEnumerable<PresentationCandidate>> FindCandidates(CredentialQuery[] credentialQueries)
@@ -95,15 +107,19 @@ public class DcqlService(IAgentProvider agentProvider,
         switch (credentialQuery.Format)
         {
             case Constants.SdJwtFormat:
-                return await GetMatchingSdJwtCredentials(credentialQuery);
+                candidates.AddRange(await GetMatchingSdJwtCredentials(credentialQuery));
+                break;
             case Constants.MdocFormat:
-                return await GetMatchingMdocCredentials(credentialQuery);
+                candidates.AddRange(await GetMatchingMdocCredentials(credentialQuery));
+                break;
         }
 
-        return candidates;
+        return candidates.Any() 
+            ? candidates 
+            : Option<IEnumerable<ICredential>>.None;
     }
 
-    private async Task<Option<IEnumerable<ICredential>>> GetMatchingSdJwtCredentials(
+    private async Task<IEnumerable<ICredential>> GetMatchingSdJwtCredentials(
         CredentialQuery credentialQuery)
     {
         var context = await agentProvider.GetContextAsync();
@@ -115,7 +131,7 @@ public class DcqlService(IAgentProvider agentProvider,
             return (credentialQuery.Meta?.Vcts?.Any(vct => record.Vct == vct) ?? true)
                  && (credentialQuery.Claims?.All(requestedClaim =>
                  {
-                     var claimPath = ClaimPath.ValidClaimPath(requestedClaim.Path);
+                     var claimPath = ClaimPath.ValidClaimPath(requestedClaim.Path!);
                      return claimPath.Match(
                          path =>
                          {
@@ -141,24 +157,33 @@ public class DcqlService(IAgentProvider agentProvider,
                          },
                          _ => false);
                  }) ?? true);
-        }).Cast<ICredential>().AsOption();
+        });
     }
     
-    private async Task<Option<IEnumerable<ICredential>>> GetMatchingMdocCredentials(
+    private async Task<IEnumerable<ICredential>> GetMatchingMdocCredentials(
         CredentialQuery credentialQuery)
     {
         var mdocRecords = await mdocStorage.ListAll();
-        return mdocRecords.OnSome(records => records.Where(record =>
-        {
-            return (credentialQuery.Meta?.Doctype == null || credentialQuery.Meta?.Doctype == record.DocType)
-                   && (credentialQuery.Claims?.All(requestedClaim =>
-                   {
-                       var claimPath = ClaimPath.ValidClaimPath(requestedClaim.Path);
-                       return claimPath.Match(
-                           path => record.Mdoc.IssuerSigned.IssuerNameSpaces.Value.First().Value
-                               .Select(x => x.ElementId.Value).Contains(path.ToJsonPath()),
-                           _ => false);
-                   }) ?? true);
-        }).Cast<ICredential>());
+        return mdocRecords.Match(
+            records => records.Where(record =>
+            {
+                return (credentialQuery.Meta?.Doctype == null || credentialQuery.Meta?.Doctype == record.DocType)
+                       && (credentialQuery.Claims?.All(requestedClaim =>
+                       {
+                           // backward compatible Draft 24 & Draft 23
+                           var nameSpace = requestedClaim.Path?[0] ?? requestedClaim.Namespace;
+                           var claimName = requestedClaim.Path?[1] ?? requestedClaim.ClaimName;
+                           
+                           return record.Mdoc.IssuerSigned.IssuerNameSpaces.Value
+                               .Any(x => x.Key == nameSpace
+                                         && x.Value.Select(value => value.ElementId.Value).Contains(claimName)
+                                         && x.Value.Select(value => value.Element.Value)
+                                             .Any(value => value.Match(
+                                                 elementValue => requestedClaim.Values?.Contains(elementValue.Value) ?? true,
+                                                 elementArray => false,
+                                                 elementMap => false)));
+                       }) ?? true);
+            }),
+            () => []);
     }
 }

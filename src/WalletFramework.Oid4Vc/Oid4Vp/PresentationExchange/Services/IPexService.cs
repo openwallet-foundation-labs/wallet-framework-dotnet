@@ -14,13 +14,13 @@ public interface IPexService
     ///     Finds the presentation candidates based on the provided credentials and input descriptors.
     /// </summary>
     /// <returns>An array of credential candidates, each containing a list of credentials that match the input descriptors.</returns>
-    Task<Option<IEnumerable<PresentationCandidate>>> FindCandidates(AuthorizationRequest authRequest);
+    Task<Option<IEnumerable<PresentationCandidate>>> FindPresentationCandidatesAsync(PresentationDefinition presentationDefinition, Option<Formats> supportedFormatSigningAlgorithms);
     
     /// <summary>
     ///     Finds a presentation candidate based on the provided input descriptor.
     /// </summary>
     /// <returns>A presentation candidate that matches the input descriptor.</returns>
-    Task<Option<PresentationCandidate>> FindCandidates(InputDescriptor inputDescriptor);
+    Task<Option<PresentationCandidate>> FindPresentationCandidateAsync(InputDescriptor inputDescriptor);
     
     /// <summary>
     ///     Creates the Parameters that are necessary to send an OpenId4VP Authorization Response.

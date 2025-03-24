@@ -7,6 +7,7 @@ using LanguageExt;
 using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json.Linq;
+using OneOf;
 using SD_JWT.Models;
 using WalletFramework.Core.Credentials;
 using WalletFramework.Core.Credentials.Abstractions;
@@ -28,9 +29,10 @@ using WalletFramework.Oid4Vc.Oid4Vci.CredConfiguration.Models;
 using WalletFramework.Oid4Vc.Oid4Vci.Extensions;
 using WalletFramework.Oid4Vc.Oid4Vci.Implementations;
 using WalletFramework.Oid4Vc.Oid4Vp.AuthResponse.Encryption;
+using WalletFramework.Oid4Vc.Oid4Vp.Dcql.Models;
 using WalletFramework.Oid4Vc.Oid4Vp.Errors;
 using WalletFramework.Oid4Vc.Oid4Vp.Models;
-using WalletFramework.Oid4Vc.Oid4Vp.PresentationExchange.Services;
+using WalletFramework.Oid4Vc.Oid4Vp.PresentationExchange.Models;
 using WalletFramework.Oid4Vc.Oid4Vp.TransactionDatas;
 using WalletFramework.Oid4Vc.Oid4Vp.TransactionDatas.Errors;
 using WalletFramework.SdJwtVc.Models;
@@ -137,21 +139,22 @@ public class Oid4VpClientService : IOid4VpClientService
     {
         var credentials = selectedCredentials.ToList();
 
-        var inputDescriptors = authorizationRequest
-            .PresentationDefinition
-            .InputDescriptors;
-
         var mdocNonce = Option<Nonce>.None;
 
-        var presentationMapTasks = credentials.Select(async credential =>
+        var presentationMaps = new List<(string Identifier, string Presentation, Format Format, ICredential PresentedCredential)>();
+        foreach (var credential in credentials)
         {
-            var inputDescriptor = inputDescriptors.Single(descriptor =>
-                descriptor.Id == credential.Identifier);
+            var credentialRequirement = authorizationRequest.Requirements.Match<OneOf<CredentialQuery, InputDescriptor>>(
+                dcqlQuery => dcqlQuery.CredentialQueries.Single(credentialQuery => credentialQuery.Id == credential.Identifier),
+                presentationDefinition => presentationDefinition.InputDescriptors.Single(inputDescriptor => inputDescriptor.Id == credential.Identifier));
+            
+            var credentialRequirementId = credentialRequirement.Match(
+                credentialQuery => credentialQuery.Id,
+                inputDescriptor => inputDescriptor.Id);
 
-            var claims =
-                from field in inputDescriptor.Constraints.Fields
-                from path in field.Path.Select(path => path.TrimStart('$', '.'))
-                select path;
+            var claims = credentialRequirement.Match(
+                credentialQuery => credentialQuery.GetRequestedAttributes(),
+                inputDescriptor => inputDescriptor.GetRequestedAttributes());
 
             var txDataHashesOption = credential
                 .TransactionData
@@ -225,16 +228,8 @@ public class Oid4VpClientService : IOid4VpClientService
                     throw new ArgumentOutOfRangeException(nameof(credential.Credential));
             }
 
-            return (Identifier: inputDescriptor.Id, Presentation: presentation, Format: format,
-                PresentedCredential: presentedCredential);
-        });
-
-        var presentationMaps =
-            new List<(string Identifier, string Presentation, Format Format, ICredential PresentedCredential)>();
-        foreach (var task in presentationMapTasks)
-        {
-            var presentationMap = await task;
-            presentationMaps.Add(presentationMap);
+            presentationMaps.Add((Identifier: credentialRequirementId, Presentation: presentation, Format: format,
+                PresentedCredential: presentedCredential));
         }
 
         var authorizationResponse = await _oid4VpHaipClient.CreateAuthorizationResponseAsync(
@@ -374,26 +369,33 @@ public class Oid4VpClientService : IOid4VpClientService
     {
         var credentials = selectedCredentials.ToList();
 
-        var inputDescriptors = authorizationRequest
-            .PresentationDefinition
-            .InputDescriptors;
-
         var mdocNonce = Option<Nonce>.None;
-
-        var presentationMapTasks = credentials.Select(async credential =>
+        
+        var context = await _agentProvider.GetContextAsync();
+        
+        var presentationMaps = new List<(string Identifier, string Presentation, Format Format, ICredential PresentedCredential)>();
+        foreach (var credential in credentials)
         {
-            var inputDescriptor = inputDescriptors.Single(descriptor =>
-                descriptor.Id == credential.Identifier);
+            var credentialRequirement =
+                authorizationRequest.Requirements.Match<OneOf<CredentialQuery, InputDescriptor>>(
+                    dcqlQuery =>
+                        dcqlQuery.CredentialQueries.Single(credentialQuery =>
+                            credentialQuery.Id == credential.Identifier),
+                    presentationDefinition =>
+                        presentationDefinition.InputDescriptors.Single(inputDescriptor =>
+                            inputDescriptor.Id == credential.Identifier));
 
-            var claims =
-                from field in inputDescriptor.Constraints.Fields
-                from path in field.Path.Select(path => path.TrimStart('$', '.'))
-                select path;
+            var credentialRequirementId = credentialRequirement.Match(
+                credentialQuery => credentialQuery.Id,
+                inputDescriptor => inputDescriptor.Id);
+
+            var claims = credentialRequirement.Match(
+                credentialQuery => credentialQuery.GetRequestedAttributes(),
+                inputDescriptor => inputDescriptor.GetRequestedAttributes());
 
             Format format;
             ICredential presentedCredential;
 
-            var context = await _agentProvider.GetContextAsync();
             var session = await _authFlowSessionStorage.GetAsync(context, issuanceSession.AuthFlowSessionState);
 
             var client = _httpClientFactory.CreateClient();
@@ -414,13 +416,13 @@ public class Oid4VpClientService : IOid4VpClientService
                         Option<string>.None,
                         authorizationRequest.ClientId,
                         authorizationRequest.Nonce);
-                    
+
                     var kbJwt = presentation[presentation.LastIndexOf('~')..][1..];
                     var kbJwtWithoutSignature = kbJwt[..kbJwt.LastIndexOf('.')];
 
                     var kbJwtWithoutSignatureHash = sha256.ComputeHash(kbJwtWithoutSignature.GetUTF8Bytes());
 
-                    var content = new JObject
+                    var sdJwtContent = new JObject
                     {
                         {
                             "hash_bytes",
@@ -429,12 +431,13 @@ public class Oid4VpClientService : IOid4VpClientService
                     };
 
                     var sdJwtHttpContent = new StringContent(
-                        content.ToString(),
+                        sdJwtContent.ToString(),
                         Encoding.UTF8,
                         MediaTypeNames.Application.Json);
 
                     var sdJwtSignatureResponse = await client.PostAsync(
-                        session.AuthorizationData.IssuerMetadata.PresentationSigningEndpoint.UnwrapOrThrow(new Exception()), sdJwtHttpContent
+                        session.AuthorizationData.IssuerMetadata.PresentationSigningEndpoint.UnwrapOrThrow(
+                            new Exception()), sdJwtHttpContent
                     );
 
                     if (sdJwtSignatureResponse.IsSuccessStatusCode)
@@ -523,16 +526,8 @@ public class Oid4VpClientService : IOid4VpClientService
                     throw new ArgumentOutOfRangeException(nameof(credential.Credential));
             }
 
-            return (Identifier: inputDescriptor.Id, Presentation: presentation, Format: format,
-                PresentedCredential: presentedCredential);
-        });
-
-        var presentationMaps =
-            new List<(string Identifier, string Presentation, Format Format, ICredential PresentedCredential)>();
-        foreach (var task in presentationMapTasks)
-        {
-            var presentationMap = await task;
-            presentationMaps.Add(presentationMap);
+            presentationMaps.Add((Identifier: credentialRequirementId, Presentation: presentation, Format: format,
+                PresentedCredential: presentedCredential));
         }
 
         var authorizationResponse = await _oid4VpHaipClient.CreateAuthorizationResponseAsync(
@@ -617,8 +612,6 @@ public class Oid4VpClientService : IOid4VpClientService
             return result;
         });
 
-        var context = await _agentProvider.GetContextAsync();
-
         var oidPresentationRecord = new OidPresentationRecord
         {
             Id = Guid.NewGuid().ToString(),
@@ -653,7 +646,7 @@ public class Oid4VpClientService : IOid4VpClientService
         var authorizationRequestValidation = await _authorizationRequestService.GetAuthorizationRequest(requestUri);
         var result = authorizationRequestValidation.Map(async authRequest =>
         {
-            var candidates = (await _presentationCandidateService.FindPresentationCandidates(authRequest)).OnSome(enumerable => enumerable.ToList());
+            var candidates = (await _presentationCandidateService.FindPresentationCandidatesAsync(authRequest)).OnSome(enumerable => enumerable.ToList());
             var presentationCandidates = new PresentationCandidates(authRequest, candidates);
             return ProcessTransactionData(presentationCandidates);
         });

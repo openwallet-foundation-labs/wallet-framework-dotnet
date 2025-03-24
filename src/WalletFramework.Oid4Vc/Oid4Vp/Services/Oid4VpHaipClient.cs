@@ -17,8 +17,8 @@ internal class Oid4VpHaipClient(
         AuthorizationRequest authorizationRequest,
         (string Identifier, string Presentation, Format Format)[] presentationMap)
     {
-        return authorizationRequest.IsPexRequest()
-            ? pexService.CreateAuthorizationResponseAsync(authorizationRequest, presentationMap)
-            : Task.FromResult(dcqlService.CreateAuthorizationResponse(authorizationRequest, presentationMap));
+        return authorizationRequest.Requirements.Match(
+            dcqlQuery => Task.FromResult(dcqlService.CreateAuthorizationResponse(authorizationRequest, presentationMap)),
+            presentationDefinition => pexService.CreateAuthorizationResponseAsync(authorizationRequest, presentationMap));
     }
 }

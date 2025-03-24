@@ -2,6 +2,7 @@ using System.Security.Cryptography.X509Certificates;
 using LanguageExt;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using OneOf;
 using WalletFramework.Core.Functional;
 using WalletFramework.Core.Json;
 using WalletFramework.Oid4Vc.Oid4Vp.Dcql.Models;
@@ -104,6 +105,10 @@ public record AuthorizationRequest
     /// </summary>
     [JsonIgnore]
     public X509Chain? X509TrustChain { get; init; }
+
+    [JsonIgnore]
+    public OneOf<DcqlQuery, PresentationDefinition> Requirements =>
+        DcqlQuery is not null ? DcqlQuery : PresentationDefinition!;
 
     [JsonConstructor]
     private AuthorizationRequest(
@@ -331,7 +336,4 @@ public static class AuthorizationRequestFun
 
     public static bool HasPaymentTransactionData(this AuthorizationRequest authRequest) 
         => authRequest.TransactionData.IsSome;
-
-    public static bool IsPexRequest(this AuthorizationRequest authRequest)
-        => authRequest.DcqlQuery is null && authRequest.PresentationDefinition is not null;
 }

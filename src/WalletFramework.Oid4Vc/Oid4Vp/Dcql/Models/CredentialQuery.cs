@@ -37,3 +37,22 @@ public class CredentialQuery
     [JsonProperty("claim_sets")]
     public string[][]? ClaimSets { get; set; }
 }
+
+public static class CredentialQueryFun
+{
+    public static IEnumerable<string> GetRequestedAttributes(this CredentialQuery credentialQuery) =>
+        credentialQuery.Format switch
+        {
+            Constants.SdJwtFormat
+                => credentialQuery.Claims?.Select(claim => string.Join('.', claim.Path)) ?? [],
+            Constants.MdocFormat =>
+                credentialQuery.Claims?.Select(claim =>
+                {
+                    // backward compatible Draft 24 & Draft 23
+                    var nameSpace = claim.Path?[0] ?? claim.Namespace;
+                    var claimName = claim.Path?[1] ?? claim.ClaimName;
+                    return $"['{nameSpace}']['{claimName}']";
+                }) ?? [],
+            _ => []
+        };
+}

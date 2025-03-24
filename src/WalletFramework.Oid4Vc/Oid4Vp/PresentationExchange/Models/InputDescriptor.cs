@@ -114,3 +114,11 @@ public class Filter
     [JsonProperty("type")]
     public string Type { get; private set; } = null!;
 }
+
+public static class InputDescriptorFun
+{
+    public static IEnumerable<string> GetRequestedAttributes(this InputDescriptor inputDescriptor) =>
+        inputDescriptor.Constraints.Fields?
+            .SelectMany(field => field.Path)
+            .Select(s => s.TrimStart('$', '.')) ?? [];
+}

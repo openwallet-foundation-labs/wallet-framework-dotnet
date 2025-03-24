@@ -21,14 +21,11 @@ public class PexService(
     IMdocStorage mdocStorage,
     ISdJwtVcHolderService sdJwtVcHolderService) : IPexService
 {
-    public async Task<Option<IEnumerable<PresentationCandidate>>> FindCandidates(AuthorizationRequest authRequest)
+    public async Task<Option<IEnumerable<PresentationCandidate>>> FindPresentationCandidatesAsync(PresentationDefinition presentationDefinition, Option<Formats> supportedFormatSigningAlgorithms)
     {
-        if(authRequest.PresentationDefinition is null)
-            return Option<IEnumerable<PresentationCandidate>>.None;
-        
         var candidates = await FindCandidates(
-            authRequest.PresentationDefinition.InputDescriptors,
-            authRequest.ClientMetadata?.Formats);
+            presentationDefinition.InputDescriptors,
+            supportedFormatSigningAlgorithms);
 
         var list = candidates.ToList();
 
@@ -37,7 +34,7 @@ public class PexService(
             : list;
     }
 
-    public async Task<Option<PresentationCandidate>> FindCandidates(InputDescriptor inputDescriptor)
+    public async Task<Option<PresentationCandidate>> FindPresentationCandidateAsync(InputDescriptor inputDescriptor)
     {
         var candidates = await FindCandidates(
             [inputDescriptor],

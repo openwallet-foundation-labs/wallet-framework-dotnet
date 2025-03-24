@@ -1,6 +1,9 @@
 using LanguageExt;
+using OneOf;
+using WalletFramework.Oid4Vc.Oid4Vp.Dcql.Models;
 using WalletFramework.Oid4Vc.Oid4Vp.Dcql.Services;
 using WalletFramework.Oid4Vc.Oid4Vp.Models;
+using WalletFramework.Oid4Vc.Oid4Vp.PresentationExchange.Models;
 using WalletFramework.Oid4Vc.Oid4Vp.PresentationExchange.Services;
 
 namespace WalletFramework.Oid4Vc.Oid4Vp.Services;
@@ -9,14 +12,17 @@ public class PresentationCandidateService(
     IPexService pexService,
     IDcqlService dcqlService) : IPresentationCandidateService
 {
-    public async Task<Option<IEnumerable<PresentationCandidate>>> FindPresentationCandidates(AuthorizationRequest authRequest)
+    public async Task<Option<IEnumerable<PresentationCandidate>>> FindPresentationCandidatesAsync(AuthorizationRequest authRequest)
     {
-        if (authRequest.DcqlQuery is not null)
-            return await dcqlService.FindCandidates(authRequest.DcqlQuery);
-
-        if (authRequest.PresentationDefinition is not null)
-            return await pexService.FindCandidates(authRequest);
-
-        return Option<IEnumerable<PresentationCandidate>>.None;
+        return await authRequest.Requirements.Match(
+            dcqlService.FindPresentationCandidatesAsync,
+            presentationDefinition => pexService.FindPresentationCandidatesAsync(presentationDefinition, authRequest.ClientMetadata?.Formats));
+    }
+    
+    public async Task<Option<PresentationCandidate>> FindPresentationCandidateAsync(OneOf<CredentialQuery, InputDescriptor> credentialRequirement)
+    {
+        return await credentialRequirement.Match(
+            dcqlService.FindPresentationCandidateAsync,
+            pexService.FindPresentationCandidateAsync);
     }
 }
