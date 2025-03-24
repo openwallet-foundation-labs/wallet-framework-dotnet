@@ -4,9 +4,9 @@ namespace WalletFramework.Core.Path;
 
 public readonly struct JsonPath
 {
-    private string Value { get; }
-
     private JsonPath(string path) => Value = path;
+    
+    public string Value { get; }
 
     public override string ToString() => Value;
     

@@ -27,16 +27,16 @@ public readonly struct Format
             : new FormatNotSupportedError(str).ToInvalid<Format>();
     });
 
-    private static List<string> SupportedFormats => new()
-    {
-        "vc+sd-jwt",
-        "mso_mdoc"
-    };
+    private static List<string> SupportedFormats =>
+    [
+        Constants.SdJwtFormat,
+        Constants.MdocFormat
+    ];
 }
 
 public static class FormatFun
 {
-    public static Format CreateSdJwtFormat() => Format.ValidFormat("vc+sd-jwt").UnwrapOrThrow();
+    public static Format CreateSdJwtFormat() => Format.ValidFormat(Constants.SdJwtFormat).UnwrapOrThrow();
     
-    public static Format CreateMdocFormat() => Format.ValidFormat("mso_mdoc").UnwrapOrThrow();
+    public static Format CreateMdocFormat() => Format.ValidFormat(Constants.MdocFormat).UnwrapOrThrow();
 }

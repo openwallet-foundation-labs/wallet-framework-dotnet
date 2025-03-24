@@ -16,5 +16,5 @@ public interface IOid4VpHaipClient
     /// <returns>
     ///     A task representing the asynchronous operation. The task result contains the Presentation Submission and the VP Token.
     /// </returns>
-    Task<AuthorizationResponse> CreateAuthorizationResponseAsync(AuthorizationRequest authorizationRequest, (string InputDescriptorId, string Presentation, Format Format)[] presentationMap);
+    Task<AuthorizationResponse> CreateAuthorizationResponseAsync(AuthorizationRequest authorizationRequest, (string Identifier, string Presentation, Format Format)[] presentationMap);
 }
