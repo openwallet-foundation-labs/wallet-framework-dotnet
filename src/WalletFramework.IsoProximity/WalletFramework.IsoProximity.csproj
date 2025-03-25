@@ -8,8 +8,4 @@
     <ItemGroup>
       <ProjectReference Include="..\WalletFramework.MdocVc\WalletFramework.MdocVc.csproj" />
     </ItemGroup>
-
-    <ItemGroup>
-      <Folder Include="EngagementPhase\Errors\" />
-    </ItemGroup>
 </Project>

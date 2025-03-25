@@ -10,27 +10,14 @@ using WalletFramework.SdJwtVc.Models.Records;
 namespace WalletFramework.SdJwtVc.Services.SdJwtVcHolderService;
 
 /// <inheritdoc />
-public class SdJwtVcHolderService : ISdJwtVcHolderService
+public class SdJwtVcHolderService(
+    IHolder holder,
+    ISdJwtSigner signer,
+    IWalletRecordService recordService) : ISdJwtVcHolderService
 {
-    /// <summary>
-    ///     Initializes a new instance of the <see cref="SdJwtVcHolderService" /> class.
-    /// </summary>
-    /// <param name="sdJwtSigner">The service responsible for SD-JWT signature related operations.</param>
-    /// <param name="recordService">The service responsible for wallet record operations.</param>
-    /// <param name="holder">The service responsible for holder operations.</param>
-    public SdJwtVcHolderService(
-        IHolder holder,
-        ISdJwtSigner sdJwtSigner,
-        IWalletRecordService recordService)
-    {
-        _holder = holder;
-        _sdJwtSigner = sdJwtSigner;
-        _recordService = recordService;
-    }
-
-    private readonly IHolder _holder;
-    private readonly ISdJwtSigner _sdJwtSigner;
-    private readonly IWalletRecordService _recordService;
+    /// <inheritdoc />
+    public virtual async Task AddAsync(IAgentContext context, SdJwtRecord record) =>
+        await recordService.AddAsync(context.Wallet, record);
 
     /// <inheritdoc />
     public async Task<string> CreatePresentation(
@@ -51,15 +38,15 @@ public class SdJwtVcHolderService : ISdJwtVcHolderService
                 disclosures.Add(disclosure);
             }
         }
-    
+
         var presentationFormat =
-            _holder.CreatePresentationFormat(credential.EncodedIssuerSignedJwt, disclosures.ToArray());
-    
-        if (!string.IsNullOrEmpty(credential.KeyId) 
-            && !string.IsNullOrEmpty(nonce) 
+            holder.CreatePresentationFormat(credential.EncodedIssuerSignedJwt, disclosures.ToArray());
+
+        if (!string.IsNullOrEmpty(credential.KeyId)
+            && !string.IsNullOrEmpty(nonce)
             && !string.IsNullOrEmpty(audience))
         {
-            var keybindingJwt = await _sdJwtSigner.GenerateKbProofOfPossessionAsync(
+            var keybindingJwt = await signer.GenerateKbProofOfPossessionAsync(
                 credential.KeyId,
                 audience,
                 nonce,
@@ -69,21 +56,21 @@ public class SdJwtVcHolderService : ISdJwtVcHolderService
                 transactionDataBase64UrlStrings,
                 transactionDataHashes,
                 transactionDataHashesAlg);
-            
+
             return presentationFormat.AddKeyBindingJwt(keybindingJwt);
         }
-    
+
         return presentationFormat.Value;
     }
 
     /// <inheritdoc />
     public virtual async Task<bool> DeleteAsync(IAgentContext context, string recordId) =>
-        await _recordService.DeleteAsync<SdJwtRecord>(context.Wallet, recordId);
+        await recordService.DeleteAsync<SdJwtRecord>(context.Wallet, recordId);
 
     /// <inheritdoc />
     public async Task<SdJwtRecord> GetAsync(IAgentContext context, string credentialId)
     {
-        var record = await _recordService.GetAsync<SdJwtRecord>(context.Wallet, credentialId);
+        var record = await recordService.GetAsync<SdJwtRecord>(context.Wallet, credentialId);
         if (record == null)
             throw new AriesFrameworkException(ErrorCode.RecordNotFound, "SD-JWT Credential record not found");
 
@@ -95,7 +82,7 @@ public class SdJwtVcHolderService : ISdJwtVcHolderService
         IAgentContext context,
         ISearchQuery? query = null,
         int count = 100,
-        int skip = 0) => _recordService.SearchAsync<SdJwtRecord>(context.Wallet, query, null, count, skip);
+        int skip = 0) => recordService.SearchAsync<SdJwtRecord>(context.Wallet, query, null, count, skip);
 
     public async Task<Option<IEnumerable<SdJwtRecord>>> ListAsync(IAgentContext context, CredentialSetId id)
     {
@@ -113,13 +100,8 @@ public class SdJwtVcHolderService : ISdJwtVcHolderService
     }
 
     /// <inheritdoc />
-    public virtual async Task AddAsync(IAgentContext context, SdJwtRecord record) => 
-            await _recordService.AddAsync(context.Wallet, record);
-    
-    /// <inheritdoc />
-    public virtual async Task UpdateAsync(IAgentContext context, SdJwtRecord record) => 
-        await _recordService.UpdateAsync(context.Wallet, record);
-        
+    public virtual async Task UpdateAsync(IAgentContext context, SdJwtRecord record) =>
+        await recordService.UpdateAsync(context.Wallet, record);
 }
 
 internal static class SdJwtRecordExtensions

@@ -116,7 +116,8 @@ public class Oid4VpClientServiceTests : IAsyncLifetime
         var selectedCandidates = new SelectedCredential(
             credentials.First().InputDescriptorId,
             credentials.First().CredentialSetCandidates.First().Credentials.First(),
-            Option<List<OneOf<TransactionData, Uc5QesTransactionData>>>.None);
+            Option<List<TransactionData>>.None,
+            Option<List<Uc5QesTransactionData>>.None);
         
         SetupHttpClient(
             "{'redirect_uri':'https://client.example.org/cb#response_code=091535f699ea575c7937fa5f0f454aee'}"
