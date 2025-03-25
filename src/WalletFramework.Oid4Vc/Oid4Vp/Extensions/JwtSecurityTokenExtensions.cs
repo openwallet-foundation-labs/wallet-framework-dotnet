@@ -24,9 +24,9 @@ public static class JwtSecurityTokenExtensions
         var encodedHeaderAndPayload = UTF8.GetBytes(token.EncodedHeader + "." + token.EncodedPayload);
         return token.Header.Alg switch
         {
-            "RS256" => GetSigner("SHA-256withRSA").Sign(encodedHeaderAndPayload, publicKeyParameters, token.RawSignature),
-            "ES256" => GetSigner("SHA-256withECDSA").Sign(encodedHeaderAndPayload, publicKeyParameters, token.RawSignature),
-            "ES512" => GetSigner("SHA-512withECDSA").Sign(encodedHeaderAndPayload, publicKeyParameters, token.RawSignature),
+            "RS256" => GetSigner("SHA-256withRSA").SignWithRaw(encodedHeaderAndPayload, publicKeyParameters, token.RawSignature),
+            "ES256" => GetSigner("SHA-256withECDSA").SignWithDer(encodedHeaderAndPayload, publicKeyParameters, token.RawSignature),
+            "ES512" => GetSigner("SHA-512withECDSA").SignWithDer(encodedHeaderAndPayload, publicKeyParameters, token.RawSignature),
             _ => throw new InvalidOperationException("Unsupported JWT alg")
         };
     }
@@ -43,7 +43,7 @@ public static class JwtSecurityTokenExtensions
         return derSignature.GetDerEncoded();
     }
 
-    private static bool Sign(
+    private static bool SignWithDer(
         this ISigner signer,
         IEnumerable<byte> bytes,
         AsymmetricKeyParameter publicKeyParameters,
@@ -56,5 +56,19 @@ public static class JwtSecurityTokenExtensions
         signer.Init(false, publicKeyParameters);
         signer.BlockUpdate(bytesArray, 0, bytesArray.Length);
         return signer.VerifySignature(derBytes);
+    }
+    
+    private static bool SignWithRaw(
+        this ISigner signer,
+        IEnumerable<byte> bytes,
+        AsymmetricKeyParameter publicKeyParameters,
+        string rawSignature)
+    {
+        var bytesArray = bytes.ToArray();
+        var rawBytes = DecodeBytes(rawSignature);
+
+        signer.Init(false, publicKeyParameters);
+        signer.BlockUpdate(bytesArray, 0, bytesArray.Length);
+        return signer.VerifySignature(rawBytes);
     }
 }
