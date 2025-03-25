@@ -25,7 +25,12 @@ public record ClientIdScheme
         /// <summary>
         ///     The Redirect Uri scheme.
         /// </summary>
-        RedirectUri
+        RedirectUri,
+        
+        /// <summary>
+        ///     The Did client ID scheme.
+        /// </summary>
+        Did,
     }
 
     /// <summary>
@@ -42,6 +47,11 @@ public record ClientIdScheme
     ///     The Redirect Uri scheme.
     /// </summary>
     public const string RedirectUriScheme = "redirect_uri";
+    
+    /// <summary>
+    ///     The Did client ID scheme.
+    /// </summary>
+    public const string DidScheme = "did";
 
     /// <summary>
     ///     The client ID scheme value.
@@ -64,6 +74,7 @@ public record ClientIdScheme
         {
             X509SanDnsScheme => new ClientIdScheme(X509SanDns),
             RedirectUriScheme => new ClientIdScheme(RedirectUri),
+            DidScheme => new ClientIdScheme(Did),
             VerifierAttestationScheme =>
                 throw new NotImplementedException("Verifier Attestation not yet implemented"),
             _ => throw new InvalidOperationException($"Client ID Scheme {input} is not supported")

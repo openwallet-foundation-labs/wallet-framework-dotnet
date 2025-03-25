@@ -435,15 +435,16 @@ public class Oid4VpClientService : IOid4VpClientService
 
                     var content = new JObject
                     {
-                        { "hash_bytes", Base64UrlEncoder.Encode(kbJwtWithoutSignatureHash) }
+                        {
+                            "hash_bytes",
+                            Base64UrlEncoder.Encode(kbJwtWithoutSignatureHash)
+                        }
                     };
 
-                    var sdJwtHttpContent = new StringContent
-                    (
+                    var sdJwtHttpContent = new StringContent(
                         content.ToString(),
                         Encoding.UTF8,
-                        MediaTypeNames.Application.Json
-                    );
+                        MediaTypeNames.Application.Json);
 
                     var sdJwtSignatureResponse = await client.PostAsync(
                         session.AuthorizationData.IssuerMetadata.PresentationSigningEndpoint.UnwrapOrThrow(new Exception()),

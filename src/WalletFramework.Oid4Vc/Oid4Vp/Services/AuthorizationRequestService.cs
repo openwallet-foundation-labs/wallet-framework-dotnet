@@ -54,6 +54,10 @@ public class AuthorizationRequestService(IHttpClientFactory httpClientFactory) :
                         RedirectUri => requestObject
                             .ToAuthorizationRequest()
                             .WithClientMetadata(clientMetadataOption),
+                        //TODO: Remove Did in the future (kept for now for compatibility)
+                        Did => requestObject
+                            .ToAuthorizationRequest()
+                            .WithClientMetadata(clientMetadataOption),
                         _ => new AuthorizationRequestCancellation(authRequest.GetResponseUriMaybe(), [error])
                     };
 
