@@ -11,7 +11,9 @@ public readonly struct Nonce
     {
         Value = value;
     }
-
+    
+    public string AsHex => BitConverter.ToString(Value).Replace("-", string.Empty);
+    
     public Base64UrlString AsBase64Url => Base64UrlString.CreateBase64UrlString(Value);
 
     public static Nonce GenerateNonce()

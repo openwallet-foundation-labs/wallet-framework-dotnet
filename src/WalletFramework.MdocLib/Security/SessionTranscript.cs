@@ -1,7 +1,6 @@
 using LanguageExt;
 using PeterO.Cbor;
 using WalletFramework.Core.Cryptography.Models;
-using WalletFramework.Core.Functional;
 using WalletFramework.MdocLib.Cbor;
 using WalletFramework.MdocLib.Device;
 using WalletFramework.MdocLib.Security.Abstractions;
@@ -21,23 +20,31 @@ public static class SessionTranscriptFun
     {
         var result = CBORObject.NewArray();
 
-        sessionTranscript.DeviceEngagement.OnSome(engagement =>
-        {
-            var deviceEngagementBytes = engagement.ToCbor().ToTaggedCborByteString();
+        sessionTranscript.DeviceEngagement.Match(
+            engagement =>
+            {
+                var deviceEngagementBytes = engagement.ToCbor().ToTaggedCborByteString();
 
-            result.Add(deviceEngagementBytes.AsCbor);
+                result.Add(deviceEngagementBytes.AsCbor);
+            },
+            () =>
+            {
+                result.Add(CBORObject.Null);
+            }
+        );
 
-            return Unit.Default;
-        });
-
-        sessionTranscript.ReaderKey.OnSome(key =>
-        {
-            var keyBytes = key.ToCoseKey().ToCbor().ToTaggedCborByteString();
-            
-            result.Add(keyBytes.AsCbor);
-            
-            return Unit.Default;
-        });
+        sessionTranscript.ReaderKey.Match(
+            key =>
+            {
+                var keyBytes = key.ToCoseKey().ToCbor().ToTaggedCborByteString();
+        
+                result.Add(keyBytes.AsCbor);
+            },
+            () =>
+            {
+                result.Add(CBORObject.Null);
+            }
+        );
         
         result.Add(sessionTranscript.Handover.ToCbor());
 

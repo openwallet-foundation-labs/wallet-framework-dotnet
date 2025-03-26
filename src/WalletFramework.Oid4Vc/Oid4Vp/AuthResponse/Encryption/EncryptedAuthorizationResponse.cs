@@ -45,7 +45,11 @@ public static class EncryptedAuthorizationResponseFun
             { "kid", verifierPubKey.Kid }
         };
 
-        mdocNonce.IfSome(nonce => headers.Add("apu", nonce.AsBase64Url.ToString()));
+        mdocNonce.IfSome(nonce =>
+        {
+            var base64Url = Base64UrlEncoder.Encode(nonce.AsHex);
+            headers.Add("apu", base64Url);
+        });
 
         var settings = new JwtSettings();
         settings.RegisterJwe(JweEncryption.A256GCM, new AesGcmEncryption());
