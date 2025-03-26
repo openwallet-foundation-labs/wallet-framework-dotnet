@@ -51,7 +51,6 @@ public class AuthorizationRequestService(IHttpClientFactory httpClientFactory) :
                             .ToAuthorizationRequest()
                             .WithX509(requestObject)
                             .WithClientMetadata(clientMetadataOption),
-                        //TODO: Remove Redirect URi in the future (kept for now for compatibility)
                         RedirectUri => requestObject
                             .ToAuthorizationRequest()
                             .WithClientMetadata(clientMetadataOption),

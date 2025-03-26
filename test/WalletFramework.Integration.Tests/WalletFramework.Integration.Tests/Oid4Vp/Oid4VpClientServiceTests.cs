@@ -7,6 +7,7 @@ using LanguageExt;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Moq.Protected;
+using OneOf;
 using SD_JWT.Roles.Implementation;
 using WalletFramework.Core.Cryptography.Models;
 using WalletFramework.Core.Functional;
@@ -16,7 +17,8 @@ using WalletFramework.Oid4Vc.Oid4Vci.AuthFlow.Abstractions;
 using WalletFramework.Oid4Vc.Oid4Vp.Models;
 using WalletFramework.Oid4Vc.Oid4Vp.PresentationExchange.Services;
 using WalletFramework.Oid4Vc.Oid4Vp.Services;
-using WalletFramework.Oid4Vc.Payment;
+using WalletFramework.Oid4Vc.Oid4Vp.TransactionDatas;
+using WalletFramework.Oid4Vc.Qes;
 using WalletFramework.SdJwtVc.Models.Records;
 using WalletFramework.SdJwtVc.Services.SdJwtVcHolderService;
 
@@ -68,6 +70,7 @@ public class Oid4VpClientServiceTests : IAsyncLifetime
                     It.IsAny<string>(),
                     It.IsAny<string>(),
                     It.IsAny<string>(),
+                    Option<IEnumerable<string>>.None, 
                     Option<IEnumerable<string>>.None,
                     Option<string>.None))
             .ReturnsAsync(KeyBindingJwtMock);
@@ -113,7 +116,8 @@ public class Oid4VpClientServiceTests : IAsyncLifetime
         var selectedCandidates = new SelectedCredential(
             credentials.First().InputDescriptorId,
             credentials.First().CredentialSetCandidates.First().Credentials.First(),
-            Option<List<PaymentTransactionData>>.None);
+            Option<List<TransactionData>>.None,
+            Option<List<Uc5QesTransactionData>>.None);
         
         SetupHttpClient(
             "{'redirect_uri':'https://client.example.org/cb#response_code=091535f699ea575c7937fa5f0f454aee'}"

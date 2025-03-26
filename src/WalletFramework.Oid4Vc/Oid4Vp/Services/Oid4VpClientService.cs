@@ -33,6 +33,7 @@ using WalletFramework.Oid4Vc.Oid4Vp.Models;
 using WalletFramework.Oid4Vc.Oid4Vp.PresentationExchange.Services;
 using WalletFramework.Oid4Vc.Oid4Vp.TransactionDatas;
 using WalletFramework.Oid4Vc.Oid4Vp.TransactionDatas.Errors;
+using WalletFramework.Oid4Vc.Qes;
 using WalletFramework.SdJwtVc.Models;
 using WalletFramework.SdJwtVc.Models.Records;
 using WalletFramework.SdJwtVc.Services.SdJwtVcHolderService;
@@ -152,23 +153,34 @@ public class Oid4VpClientService : IOid4VpClientService
                 from path in field.Path.Select(path => path.TrimStart('$', '.'))
                 select path;
 
+            var txDataBase64UrlStringsOption = credential
+                .TransactionData
+                .OnSome(list =>
+                {
+                    return list.TraverseAll(txData =>
+                    {
+                        return txData.Match(
+                            _ => Option<string>.None,
+                            uc5QesTxData => uc5QesTxData.TransactionDataProperties.Encoded.AsString);
+                    });
+                });
+            
             var txDataHashesOption = credential
                 .TransactionData
                 .OnSome(list =>
                 {
-                    var alg = list.First().TransactionData.TransactionDataHashesAlg.First();
-                    return list.Select(data => data.Hash(alg));
+                    return list.Select(txData =>
+                    {
+                        var hashesAlg = txData.GetHashesAlg().First();
+                        return txData.Hash(hashesAlg);
+                    });
                 });
+            
+            var txDataHashesAsHexOption = txDataHashesOption
+                .OnSome(hashes => hashes.Select(hash => hash.AsHex));
 
-            var txDataHashesAsHexOption = txDataHashesOption.OnSome(hashes =>
-            {
-                return hashes.Select(hash => hash.AsHex);
-            });
-
-            var txDataHashesAlgOption = txDataHashesOption.OnSome(hashes =>
-            {
-                return hashes.First().Alg.AsString;
-            });
+            var txDataHashesAlgOption = txDataHashesOption
+                .OnSome(hashes => hashes.First().Alg.AsString);
 
             Format format;
             ICredential presentedCredential;
@@ -182,6 +194,7 @@ public class Oid4VpClientService : IOid4VpClientService
                     presentation = await _sdJwtVcHolderService.CreatePresentation(
                         sdJwt,
                         claims.ToArray(),
+                        txDataBase64UrlStringsOption,
                         txDataHashesAsHexOption,
                         txDataHashesAlgOption,
                         authorizationRequest.ClientId,
@@ -410,10 +423,11 @@ public class Oid4VpClientService : IOid4VpClientService
                         sdJwt,
                         claims.ToArray(),
                         Option<IEnumerable<string>>.None,
+                        Option<IEnumerable<string>>.None,
                         Option<string>.None,
                         authorizationRequest.ClientId,
                         authorizationRequest.Nonce);
-                    
+
                     var kbJwt = presentation[presentation.LastIndexOf('~')..][1..];
                     var kbJwtWithoutSignature = kbJwt[..kbJwt.LastIndexOf('.')];
 
@@ -433,8 +447,8 @@ public class Oid4VpClientService : IOid4VpClientService
                         MediaTypeNames.Application.Json);
 
                     var sdJwtSignatureResponse = await client.PostAsync(
-                        session.AuthorizationData.IssuerMetadata.PresentationSigningEndpoint.UnwrapOrThrow(new Exception()), sdJwtHttpContent
-                    );
+                        session.AuthorizationData.IssuerMetadata.PresentationSigningEndpoint.UnwrapOrThrow(new Exception()),
+                        sdJwtHttpContent);
 
                     if (sdJwtSignatureResponse.IsSuccessStatusCode)
                     {
@@ -654,51 +668,93 @@ public class Oid4VpClientService : IOid4VpClientService
         {
             var candidates = (await _pexService.FindCandidates(authRequest)).OnSome(enumerable => enumerable.ToList());
             var presentationCandidates = new PresentationCandidates(authRequest, candidates);
-            return ProcessTransactionData(presentationCandidates);
+            
+            var vpTxDataOption = presentationCandidates.AuthorizationRequest.TransactionData;
+
+            var uc5TxDataOption = presentationCandidates
+                .AuthorizationRequest
+                .PresentationDefinition
+                .InputDescriptors
+                .TraverseAny(descriptor => 
+                    descriptor.TransactionData.OnSome(list => new InputDescriptorTransactionData(descriptor.Id, list))
+                );
+
+            switch (vpTxDataOption.IsSome, uc5TxDataOption.IsSome)
+            {
+                case (true, false):
+                case (true, true):
+                {
+                    var vpTxData = vpTxDataOption.UnwrapOrThrow();
+                    return ProcessVpTransactionData(presentationCandidates, vpTxData);
+                }
+                case (false, true):
+                {
+                    var uc5TxData = uc5TxDataOption.UnwrapOrThrow();
+                    return ProcessUc5TransactionData(presentationCandidates, uc5TxData);
+                }
+                default:
+                    return presentationCandidates;
+            }
         });
 
         return (await result.Traverse(candidates => candidates)).Flatten();
     }
 
-    private static Validation<AuthorizationRequestCancellation, PresentationCandidates> ProcessTransactionData(
-        PresentationCandidates presentationCandidates)
+    private static Validation<AuthorizationRequestCancellation, PresentationCandidates> ProcessVpTransactionData(
+        PresentationCandidates presentationCandidates,
+        IEnumerable<TransactionData> transactionDatas)
     {
-        var result = presentationCandidates.AuthorizationRequest.TransactionData.Match(
-            transactionDatas =>
+        var result = presentationCandidates.Candidates.Match(
+            candidates =>
             {
-                return presentationCandidates.Candidates.Match(
-                    candidates =>
-                    {
-                        var candidatesValidation = transactionDatas.TraverseAll(data =>
-                        {
-                            var first = candidates.FirstOrDefault(candidate =>
-                            {
-                                return data
-                                    .TransactionData
-                                    .CredentialIds
-                                    .Select(id => id.AsString)
-                                    .Contains(candidate.InputDescriptorId);
-                            });
+                var candidatesValidation = transactionDatas.TraverseAll(transactionData =>
+                {
+                    return candidates.FindCandidateForTransactionData(transactionData).Match(
+                        candidate => candidate.AddTransactionData(transactionData),
+                        () => (Validation<PresentationCandidate>)new InvalidTransactionDataError(
+                            $"No credentials found that satisfy the transaction data with type {transactionData.GetTransactionDataType().AsString()}"));
+                });
+        
+                return candidatesValidation.OnSuccess(enumerable => presentationCandidates with
+                {
+                    Candidates = enumerable.ToList()
+                });
+            },
+            () => new InvalidTransactionDataError(
+                    "No credentials found that satisfy the authorization request with transaction data")
+                .ToInvalid<PresentationCandidates>()
+        );
+        
+        return result.Value.MapFail(error =>
+        {
+            var responseUriOption = presentationCandidates.AuthorizationRequest.GetResponseUriMaybe();
+            var vpError = error as VpError ?? new InvalidRequestError("Could not parse the Authorization Request");
+            return new AuthorizationRequestCancellation(responseUriOption, [vpError]);
+        });
+    }
 
-                            if (first is null)
-                            {
-                                return (Validation<PresentationCandidate>)new InvalidTransactionDataError(
-                                    $"No credentials found that satisfy the transaction data with type {data.TransactionData.Type.AsString}"
-                                );
-                            }
-                            else
-                            {
-                                return first.AddTransactionData(data);
-                            }
-                        });
+    private static Validation<AuthorizationRequestCancellation, PresentationCandidates> ProcessUc5TransactionData(
+        PresentationCandidates presentationCandidates,
+        IEnumerable<InputDescriptorTransactionData> txData)
+    {
+        var result = presentationCandidates.Candidates.Match(
+            candidates =>
+            {
+                var candidatesValidation = txData.TraverseAll(inputDescriptorTxData =>
+                {
+                    Option<PresentationCandidate> candidateOption = candidates.FirstOrDefault(
+                        candidate => string.Equals(candidate.InputDescriptorId, inputDescriptorTxData.InputDescriptorId));
 
-                        return candidatesValidation.OnSuccess(enumerable =>
-                            presentationCandidates with { Candidates = enumerable.ToList() });
-                    },
-                    () => new InvalidTransactionDataError(
-                            "No credentials found that satisfy the authorization request with transaction data")
-                        .ToInvalid<PresentationCandidates>()
-                );
+                    return candidateOption.Match(
+                        candidate => candidate.AddUc5TransactionData(inputDescriptorTxData.TransactionData),
+                        () => (Validation<PresentationCandidate>)new InvalidTransactionDataError("No credentials found that satisfy the authorization request with transaction data") 
+                    );
+                });
+                    
+                return candidatesValidation.OnSuccess(enumerable => presentationCandidates with
+                {
+                    Candidates = enumerable.ToList()
+                });
             },
             () => presentationCandidates);
 
