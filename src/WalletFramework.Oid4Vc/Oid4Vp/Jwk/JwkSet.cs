@@ -35,3 +35,8 @@ public record JwkSet
         return FromJObject(jObject);
     }
 }
+
+public static class JwkSetFun
+{
+    public static JsonWebKey GetFirst(this JwkSet jwkSet) => jwkSet.AsEnum().First();
+}

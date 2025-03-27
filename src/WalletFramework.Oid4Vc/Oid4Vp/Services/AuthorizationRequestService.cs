@@ -38,7 +38,7 @@ public class AuthorizationRequestService(IHttpClientFactory httpClientFactory) :
                 var authRequest = requestObject.ToAuthorizationRequest();
                 var clientMetadataOption = 
                     await FetchClientMetadata(authRequest).OnException(_ => Option<ClientMetadata>.None);
-
+        
                 var error = new InvalidRequestError($"Client ID Scheme {requestObject.ClientIdScheme} is not supported");
             
                 Validation<AuthorizationRequestCancellation, AuthorizationRequest> result = 
@@ -60,7 +60,7 @@ public class AuthorizationRequestService(IHttpClientFactory httpClientFactory) :
                             .WithClientMetadata(clientMetadataOption),
                         _ => new AuthorizationRequestCancellation(authRequest.GetResponseUriMaybe(), [error])
                     };
-
+        
                 return result;
             },
             seq => seq);

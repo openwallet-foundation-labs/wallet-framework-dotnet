@@ -1,40 +1,27 @@
-using Microsoft.IdentityModel.Tokens;
+using LanguageExt;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using WalletFramework.Core.Functional;
-using WalletFramework.Core.Json;
+using WalletFramework.Oid4Vc.Oid4Vp.Jwk;
 
 namespace WalletFramework.Oid4Vc.Oid4Vp.Models;
 
-public class ClientJwksConverter : JsonConverter<List<JsonWebKey>>
+public class ClientJwksConverter : JsonConverter<Option<JwkSet>>
 {
     public override bool CanRead => true;
 
     public override bool CanWrite => false;
 
-    public override void WriteJson(JsonWriter writer, List<JsonWebKey>? value, JsonSerializer serializer)
-    {
-        throw new NotImplementedException();
-    }
-
-    public override List<JsonWebKey> ReadJson(
-        JsonReader reader,
-        Type objectType,
-        List<JsonWebKey>? existingValue,
+    public override Option<JwkSet> ReadJson(JsonReader reader, Type objectType, Option<JwkSet> existingValue,
         bool hasExistingValue,
         JsonSerializer serializer)
     {
-        var json = JObject.Load(reader);
-        var validKeysArray =
-            from keys in json.GetByKey("keys")
-            from keysArray in keys.ToJArray()
-            select keysArray;
+        var jObject = JObject.Load(reader);
+        return JwkSet.FromJObject(jObject).ToOption();
+    }
 
-        var result = validKeysArray.OnSuccess(keysArray =>
-        {
-            return keysArray.Select(keyToken => JsonWebKey.Create(keyToken.ToString())).ToList();
-        }).UnwrapOrThrow();
-
-        return result;
+    public override void WriteJson(JsonWriter writer, Option<JwkSet> value, JsonSerializer serializer)
+    {
+        throw new NotImplementedException();
     }
 }

@@ -5,6 +5,7 @@ using Newtonsoft.Json.Linq;
 using WalletFramework.Core.Functional;
 using WalletFramework.Core.Json;
 using WalletFramework.Oid4Vc.Oid4Vp.Errors;
+using WalletFramework.Oid4Vc.Oid4Vp.Jwk;
 using WalletFramework.Oid4Vc.Oid4Vp.PresentationExchange.Models;
 using WalletFramework.Oid4Vc.Oid4Vp.TransactionDatas;
 using WalletFramework.Oid4Vc.Qes;
@@ -20,16 +21,26 @@ public record AuthorizationRequest
     public const string DirectPost = "direct_post";
     public const string DirectPostJwt = "direct_post.jwt";
 
+    private const string VpToken = "vp_token";
+
     public static readonly string[] SupportedClientIdSchemes =
         [RedirectUriScheme, VerifierAttestationScheme, X509SanDnsScheme];
-
-    private const string VpToken = "vp_token";
 
     /// <summary>
     ///     Gets the client id scheme.
     /// </summary>
     [JsonProperty("client_id_scheme")]
     public ClientIdScheme ClientIdScheme { get; }
+
+    /// <summary>
+    ///     Gets the client metadata. Contains the Verifier metadata.
+    /// </summary>
+    [JsonProperty("client_metadata")]
+    public ClientMetadata? ClientMetadata { get; init; }
+
+    [JsonIgnore]
+    public Option<List<TransactionData>> TransactionData { get; private init; } = 
+        Option<List<TransactionData>>.None;
 
     /// <summary>
     ///     Gets the presentation definition. Contains the claims that the Verifier wants to receive.
@@ -49,20 +60,14 @@ public record AuthorizationRequest
     [JsonProperty("nonce")]
     public string Nonce { get; }
 
+    [JsonProperty("response_mode")] 
+    public string ResponseMode { get; }
+
     /// <summary>
     ///     Gets the response mode. Determines where to send the Authorization Response to.
     /// </summary>
     [JsonProperty("response_uri")]
     public string ResponseUri { get; }
-    
-    [JsonProperty("response_mode")]
-    public string ResponseMode { get; }
-
-    /// <summary>
-    ///     Gets the client metadata. Contains the Verifier metadata.
-    /// </summary>
-    [JsonProperty("client_metadata")]
-    public ClientMetadata? ClientMetadata { get; init; }
 
     /// <summary>
     ///     Gets the client metadata uri. Can be used to retrieve the verifier metadata.
@@ -81,10 +86,6 @@ public record AuthorizationRequest
     /// </summary>
     [JsonProperty("state")]
     public string? State { get; }
-
-    [JsonIgnore]
-    public Option<List<TransactionData>> TransactionData { get; private init; } = 
-        Option<List<TransactionData>>.None;
 
     /// <summary>
     ///     The X509 certificate of the verifier, this property is only set when ClientIDScheme is X509SanDNS.
@@ -111,7 +112,8 @@ public record AuthorizationRequest
         string? scope,
         string? state)
     {
-        if (SupportedClientIdSchemes.Exists(supportedClientIdScheme => clientId.StartsWith($"{supportedClientIdScheme}:")))
+        if (SupportedClientIdSchemes.Exists(supportedClientIdScheme =>
+                clientId.StartsWith($"{supportedClientIdScheme}:")))
         {
             ClientIdScheme = clientId.Split(':')[0];
             ClientId = clientId.Split(':')[1];
@@ -119,9 +121,9 @@ public record AuthorizationRequest
         else
         {
             ClientId = clientId;
-            ClientIdScheme = clientIdScheme;    
+            ClientIdScheme = clientIdScheme;
         }
-        
+
         ClientMetadata = clientMetadata;
         ClientMetadataUri = clientMetadataUri;
         Nonce = nonce;
@@ -267,29 +269,62 @@ public record AuthorizationRequest
 
         string clientId;
         string clientIdScheme;
-        if (SupportedClientIdSchemes.Exists(supportedClientIdScheme => authorizationRequestClientId.StartsWith($"{supportedClientIdScheme}:")))
+        if (SupportedClientIdSchemes.Exists(supportedClientIdScheme =>
+                authorizationRequestClientId.StartsWith($"{supportedClientIdScheme}:")))
         {
-            clientIdScheme = authorizationRequestClientId.Split(':')[0]; 
+            clientIdScheme = authorizationRequestClientId.Split(':')[0];
             clientId = authorizationRequestClientId.Split(':')[1];
         }
         else
         {
             clientIdScheme = authorizationRequestJson["client_id_scheme"]!.ToString();
-            clientId = authorizationRequestClientId;    
+            clientId = authorizationRequestClientId;
         }
 
         return
-            responseType == VpToken
-            && responseMode == DirectPost || responseMode == DirectPostJwt
-            && !string.IsNullOrEmpty(responseUri)
-            && redirectUri is null
-            && (clientIdScheme is X509SanDnsScheme or VerifierAttestationScheme
-                || (clientIdScheme is RedirectUriScheme && clientId == responseUri));
+            (responseType == VpToken
+             && responseMode == DirectPost) || (responseMode == DirectPostJwt
+                                                && !string.IsNullOrEmpty(responseUri)
+                                                && redirectUri is null
+                                                && (clientIdScheme is X509SanDnsScheme or VerifierAttestationScheme
+                                                    || (clientIdScheme is RedirectUriScheme &&
+                                                        clientId == responseUri)));
     }
 }
 
 internal static class AuthorizationRequestExtensions
 {
+    internal static Option<Uri> GetResponseUriMaybe(string authRequestJson)
+    {
+        try
+        {
+            var jObject = JObject.Parse(authRequestJson);
+            return GetResponseUriMaybe(jObject);
+        }
+        catch (Exception)
+        {
+            return Option<Uri>.None;
+        }
+    }
+
+    internal static Option<Uri> GetResponseUriMaybe(JObject authRequestJObject)
+    {
+        try
+        {
+            var responseUri = authRequestJObject["response_uri"]!.ToString();
+            return new Uri(responseUri);
+        }
+        catch (Exception)
+        {
+            return Option<Uri>.None;
+        }
+    }
+
+    internal static AuthorizationRequest WithClientMetadata(
+        this AuthorizationRequest authorizationRequest,
+        Option<ClientMetadata> clientMetadata)
+        => authorizationRequest with { ClientMetadata = clientMetadata.ToNullable() };
+
     internal static AuthorizationRequest WithX509(
         this AuthorizationRequest authorizationRequest,
         RequestObject requestObject)
@@ -313,37 +348,6 @@ internal static class AuthorizationRequestExtensions
             X509Certificate = new X509Certificate2(encodedCertificate),
             X509TrustChain = trustChain
         };
-    }
-        
-    internal static AuthorizationRequest WithClientMetadata(
-        this AuthorizationRequest authorizationRequest,
-        Option<ClientMetadata> clientMetadata) 
-        => authorizationRequest with { ClientMetadata = clientMetadata.ToNullable() };
-    
-    internal static Option<Uri> GetResponseUriMaybe(string authRequestJson)
-    {
-        try
-        {
-            var jObject = JObject.Parse(authRequestJson);
-            return GetResponseUriMaybe(jObject);
-        }
-        catch (Exception)
-        {
-            return Option<Uri>.None;
-        }
-    }
-    
-    internal static Option<Uri> GetResponseUriMaybe(JObject authRequestJObject)
-    {
-        try
-        {
-            var responseUri = authRequestJObject["response_uri"]!.ToString();
-            return new Uri(responseUri);
-        }
-        catch (Exception)
-        {
-            return Option<Uri>.None;
-        }
     }
 }
 

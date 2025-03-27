@@ -22,16 +22,6 @@ public static class EncryptedAuthorizationResponseFun
 {
     public static EncryptedAuthorizationResponse Encrypt(
         this AuthorizationResponse response,
-        AuthorizationRequest authorizationRequest,
-        Option<Nonce> mdocNonce) => Encrypt(
-        response,
-        authorizationRequest.ClientMetadata!.Jwks.First(),
-        authorizationRequest.Nonce,
-        authorizationRequest.ClientMetadata.AuthorizationEncryptedResponseEnc,
-        mdocNonce);
-
-    public static EncryptedAuthorizationResponse Encrypt(
-        this AuthorizationResponse response,
         JsonWebKey verifierPubKey,
         string apv,
         Option<string> authorizationEncryptedResponseEnc,
@@ -56,7 +46,7 @@ public static class EncryptedAuthorizationResponseFun
 
         var jwe = JWE.EncryptBytes(
             response.ToJson().GetUTF8Bytes(),
-            new[] { new JweRecipient(JweAlgorithm.ECDH_ES, verifierPubKey.ToEcdh()) },
+            [new JweRecipient(JweAlgorithm.ECDH_ES, verifierPubKey.ToEcdh())],
             authorizationEncryptedResponseEnc.ToNullable() switch {
                 "A256GCM" => JweEncryption.A256GCM,
                 "A128CBC-HS256" => JweEncryption.A128CBC_HS256,

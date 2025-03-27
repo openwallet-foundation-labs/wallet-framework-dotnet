@@ -28,6 +28,7 @@ using WalletFramework.Oid4Vc.Oid4Vci.CredConfiguration.Models;
 using WalletFramework.Oid4Vc.Oid4Vci.Extensions;
 using WalletFramework.Oid4Vc.Oid4Vci.Implementations;
 using WalletFramework.Oid4Vc.Oid4Vp.AuthResponse.Encryption;
+using WalletFramework.Oid4Vc.Oid4Vp.AuthResponse.Encryption.Abstractions;
 using WalletFramework.Oid4Vc.Oid4Vp.Errors;
 using WalletFramework.Oid4Vc.Oid4Vp.Models;
 using WalletFramework.Oid4Vc.Oid4Vp.PresentationExchange.Services;
@@ -51,6 +52,7 @@ public class Oid4VpClientService : IOid4VpClientService
     /// </summary>
     /// <param name="agentProvider">The agent provider</param>
     /// <param name="authorizationRequestService">The authorization request service.</param>
+    /// <param name="authorizationResponseEncryptionService">The authorization response encryption service.</param>
     /// <param name="httpClientFactory">The http client factory to create http clients.</param>
     /// <param name="sdJwtVcHolderService">The service responsible for SD-JWT related operations.</param>
     /// <param name="pexService">The Presentation Exchange service.</param>
@@ -62,33 +64,36 @@ public class Oid4VpClientService : IOid4VpClientService
     /// <param name="mDocStorage">The service responsible for mDOc storage operations.</param>
     public Oid4VpClientService(
         IAgentProvider agentProvider,
+        IAuthFlowSessionStorage authFlowSessionStorage,
         IAuthorizationRequestService authorizationRequestService,
+        IAuthorizationResponseEncryptionService authorizationResponseEncryptionService,
         IHttpClientFactory httpClientFactory,
         ILogger<Oid4VpClientService> logger,
         IMdocAuthenticationService mdocAuthenticationService,
+        IMdocStorage mDocStorage,
         IOid4VpHaipClient oid4VpHaipClient,
         IOid4VpRecordService oid4VpRecordService,
-        IMdocStorage mDocStorage,
         IPexService pexService,
-        IAuthFlowSessionStorage authFlowSessionStorage,
         ISdJwtVcHolderService sdJwtVcHolderService)
     {
         _agentProvider = agentProvider;
+        _authFlowSessionStorage = authFlowSessionStorage;
         _authorizationRequestService = authorizationRequestService;
+        _authorizationResponseEncryptionService = authorizationResponseEncryptionService;
         _httpClientFactory = httpClientFactory;
         _logger = logger;
+        _mDocStorage = mDocStorage;
         _mdocAuthenticationService = mdocAuthenticationService;
         _oid4VpHaipClient = oid4VpHaipClient;
         _oid4VpRecordService = oid4VpRecordService;
-        _mDocStorage = mDocStorage;
         _pexService = pexService;
-        _authFlowSessionStorage = authFlowSessionStorage;
         _sdJwtVcHolderService = sdJwtVcHolderService;
     }
 
     private readonly IAgentProvider _agentProvider;
     private readonly IAuthFlowSessionStorage _authFlowSessionStorage;
     private readonly IAuthorizationRequestService _authorizationRequestService;
+    private readonly IAuthorizationResponseEncryptionService _authorizationResponseEncryptionService;
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly ILogger<Oid4VpClientService> _logger;
     private readonly IMdocAuthenticationService _mdocAuthenticationService;
@@ -257,8 +262,8 @@ public class Oid4VpClientService : IOid4VpClientService
         var content = authorizationRequest.ResponseMode switch
         {
             AuthorizationRequest.DirectPost => authorizationResponse.ToFormUrl(),
-            AuthorizationRequest.DirectPostJwt => authorizationResponse.Encrypt(authorizationRequest, mdocNonce)
-                .ToFormUrl(),
+            AuthorizationRequest.DirectPostJwt => 
+                (await _authorizationResponseEncryptionService.Encrypt(authorizationResponse, authorizationRequest, mdocNonce)).ToFormUrl(),
             _ => throw new ArgumentOutOfRangeException(nameof(authorizationRequest.ResponseMode))
         };
 
@@ -556,7 +561,8 @@ public class Oid4VpClientService : IOid4VpClientService
         var content = authorizationRequest.ResponseMode switch
         {
             AuthorizationRequest.DirectPost => authorizationResponse.ToFormUrl(),
-            AuthorizationRequest.DirectPostJwt => authorizationResponse.Encrypt(authorizationRequest, mdocNonce).ToFormUrl(),
+            AuthorizationRequest.DirectPostJwt => 
+                (await _authorizationResponseEncryptionService.Encrypt(authorizationResponse, authorizationRequest, mdocNonce)).ToFormUrl(),
             _ => throw new ArgumentOutOfRangeException(nameof(authorizationRequest.ResponseMode))
         };
 
