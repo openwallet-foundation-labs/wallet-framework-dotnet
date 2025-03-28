@@ -14,6 +14,7 @@ using WalletFramework.Core.Functional;
 using WalletFramework.MdocLib.Device.Abstractions;
 using WalletFramework.Oid4Vc.Oid4Vci.Abstractions;
 using WalletFramework.Oid4Vc.Oid4Vci.AuthFlow.Abstractions;
+using WalletFramework.Oid4Vc.Oid4Vp.AuthResponse.Encryption.Abstractions;
 using WalletFramework.Oid4Vc.Oid4Vp.Models;
 using WalletFramework.Oid4Vc.Oid4Vp.PresentationExchange.Services;
 using WalletFramework.Oid4Vc.Oid4Vp.Services;
@@ -51,15 +52,16 @@ public class Oid4VpClientServiceTests : IAsyncLifetime
         
         _oid4VpClientService = new Oid4VpClientService(
             _agentProviderMock.Object,
+            _authFlowSessionStorageMock.Object,
             authRequestService,
+            _authorizationResponseEncryptionServiceMock.Object,
             _httpClientFactoryMock.Object,
             _loggerMock.Object,
             _mdocAuthenticationService.Object,
+            _mdocStorageMock.Object,
             oid4VpHaipClient,
             _oid4VpRecordService,
-            _mdocStorageMock.Object,
             pexService,
-            _authFlowSessionStorageMock.Object,
             _sdJwtVcHolderService);
     
         _sdJwtSignerService.Setup(keyStore =>
@@ -76,6 +78,7 @@ public class Oid4VpClientServiceTests : IAsyncLifetime
             .ReturnsAsync(KeyBindingJwtMock);
     }
 
+    private readonly Mock<IAuthorizationResponseEncryptionService> _authorizationResponseEncryptionServiceMock = new();
     private readonly Mock<IAgentProvider> _agentProviderMock = new();
     private readonly Mock<HttpMessageHandler> _httpMessageHandlerMock = new();
     private readonly Mock<IHttpClientFactory> _httpClientFactoryMock = new();
