@@ -1,4 +1,3 @@
-using System.Diagnostics;
 using LanguageExt;
 using Microsoft.IdentityModel.Tokens;
 using WalletFramework.Core.Functional;

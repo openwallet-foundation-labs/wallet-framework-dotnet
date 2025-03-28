@@ -8,7 +8,7 @@ namespace WalletFramework.Oid4Vc.Oid4Vp.Jwk;
 
 public record JwkSet
 {
-    public JwkSet(IEnumerable<JsonWebKey> jwkSet) => Value = jwkSet.ToList();
+    private JwkSet(IEnumerable<JsonWebKey> jwkSet) => Value = jwkSet.ToList();
 
     private List<JsonWebKey> Value { get; }
 

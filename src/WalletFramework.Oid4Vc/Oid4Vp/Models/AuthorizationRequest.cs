@@ -5,7 +5,6 @@ using Newtonsoft.Json.Linq;
 using WalletFramework.Core.Functional;
 using WalletFramework.Core.Json;
 using WalletFramework.Oid4Vc.Oid4Vp.Errors;
-using WalletFramework.Oid4Vc.Oid4Vp.Jwk;
 using WalletFramework.Oid4Vc.Oid4Vp.PresentationExchange.Models;
 using WalletFramework.Oid4Vc.Oid4Vp.TransactionDatas;
 using WalletFramework.Oid4Vc.Qes;
