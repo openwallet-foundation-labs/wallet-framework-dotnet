@@ -9,7 +9,7 @@ namespace WalletFramework.Oid4Vc.Oid4Vp.Models;
 ///     Represents a credential that the Holder chose to present to the Verifier.
 /// </summary>
 public record SelectedCredential(
-    string InputDescriptorId,
+    string Identifier,
     ICredential Credential,
     Option<List<TransactionData>> TransactionData,
     Option<List<Uc5QesTransactionData>> Uc5TransactionData);

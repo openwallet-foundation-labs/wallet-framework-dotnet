@@ -15,14 +15,14 @@ public record PresentationCandidate
     public bool LimitDisclosuresRequired { get; }
 
     /// <summary>
-    ///     Gets the array of credentials matching the input descriptor.
+    ///     Gets the array of credentials matching the request.
     /// </summary>
     public CredentialSetCandidate[] CredentialSetCandidates { get; }
 
     /// <summary>
-    ///     Gets the ID of the input descriptor.
+    ///     Gets the Identifier of the candidate.
     /// </summary>
-    public string InputDescriptorId { get; }
+    public string Identifier { get; }
     
     public Option<List<TransactionData>> TransactionData { get; init; } = 
         Option<List<TransactionData>>.None;
@@ -33,15 +33,15 @@ public record PresentationCandidate
     /// <summary>
     ///     Initializes a new instance of the <see cref="PresentationCandidate" /> class.
     /// </summary>
-    /// <param name="inputDescriptorId">The ID of the input descriptor.</param>
-    /// <param name="credentialSets">The credentials matching the input descriptor.</param>
+    /// <param name="identifier">The ID of the candidate.</param>
+    /// <param name="credentialSets">The credentials matching the request.</param>
     /// <param name="limitDisclosuresRequired">Specifies whether disclosures should be limited.</param>
     public PresentationCandidate(
-        string inputDescriptorId,
+        string identifier,
         IEnumerable<CredentialSetCandidate> credentialSets,
         bool limitDisclosuresRequired = false)
     {
-        InputDescriptorId = inputDescriptorId;
+        Identifier = identifier;
         CredentialSetCandidates = credentialSets.ToArray();
         LimitDisclosuresRequired = limitDisclosuresRequired;
     }

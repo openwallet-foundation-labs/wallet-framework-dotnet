@@ -169,7 +169,7 @@ public class Oid4VciClientService : IOid4VciClientService
     {
         var locale = language.Match(
             some => some,
-            () => Constants.DefaultLocale);
+            () => Core.Localization.Constants.DefaultLocale);
         
         var issuerMetadata = _issuerMetadataService.ProcessMetadata(uri, locale);
         
@@ -334,7 +334,7 @@ public class Oid4VciClientService : IOid4VciClientService
     {
         var locale = language.Match(
             some => some,
-            () => Constants.DefaultLocale);
+            () => Core.Localization.Constants.DefaultLocale);
         
         var result =
             from offer in _credentialOfferService.ProcessCredentialOffer(credentialOffer, locale)
