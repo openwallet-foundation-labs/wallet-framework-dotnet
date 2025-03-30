@@ -30,11 +30,13 @@ using WalletFramework.Oid4Vc.Oid4Vci.Extensions;
 using WalletFramework.Oid4Vc.Oid4Vci.Implementations;
 using WalletFramework.Oid4Vc.Oid4Vp.AuthResponse.Encryption;
 using WalletFramework.Oid4Vc.Oid4Vp.Dcql.Models;
+using WalletFramework.Oid4Vc.Oid4Vp.AuthResponse.Encryption.Abstractions;
 using WalletFramework.Oid4Vc.Oid4Vp.Errors;
 using WalletFramework.Oid4Vc.Oid4Vp.Models;
 using WalletFramework.Oid4Vc.Oid4Vp.PresentationExchange.Models;
 using WalletFramework.Oid4Vc.Oid4Vp.TransactionDatas;
 using WalletFramework.Oid4Vc.Oid4Vp.TransactionDatas.Errors;
+using WalletFramework.Oid4Vc.Qes;
 using WalletFramework.SdJwtVc.Models;
 using WalletFramework.SdJwtVc.Models.Records;
 using WalletFramework.SdJwtVc.Services.SdJwtVcHolderService;
@@ -52,6 +54,7 @@ public class Oid4VpClientService : IOid4VpClientService
     /// </summary>
     /// <param name="agentProvider">The agent provider</param>
     /// <param name="authorizationRequestService">The authorization request service.</param>
+    /// <param name="authorizationResponseEncryptionService">The authorization response encryption service.</param>
     /// <param name="httpClientFactory">The http client factory to create http clients.</param>
     /// <param name="sdJwtVcHolderService">The service responsible for SD-JWT related operations.</param>
     /// <param name="pexService">The Presentation Exchange service.</param>
@@ -64,33 +67,36 @@ public class Oid4VpClientService : IOid4VpClientService
     /// <param name="mDocStorage">The service responsible for mDOc storage operations.</param>
     public Oid4VpClientService(
         IAgentProvider agentProvider,
+        IAuthFlowSessionStorage authFlowSessionStorage,
         IAuthorizationRequestService authorizationRequestService,
+        IAuthorizationResponseEncryptionService authorizationResponseEncryptionService,
         IHttpClientFactory httpClientFactory,
         ILogger<Oid4VpClientService> logger,
         IMdocAuthenticationService mdocAuthenticationService,
+        IMdocStorage mDocStorage,
         IOid4VpHaipClient oid4VpHaipClient,
         IOid4VpRecordService oid4VpRecordService,
-        IMdocStorage mDocStorage,
         IPresentationCandidateService presentationCandidateService,
-        IAuthFlowSessionStorage authFlowSessionStorage,
         ISdJwtVcHolderService sdJwtVcHolderService)
     {
         _agentProvider = agentProvider;
+        _authFlowSessionStorage = authFlowSessionStorage;
         _authorizationRequestService = authorizationRequestService;
+        _authorizationResponseEncryptionService = authorizationResponseEncryptionService;
         _httpClientFactory = httpClientFactory;
         _logger = logger;
+        _mDocStorage = mDocStorage;
         _mdocAuthenticationService = mdocAuthenticationService;
         _oid4VpHaipClient = oid4VpHaipClient;
         _oid4VpRecordService = oid4VpRecordService;
-        _mDocStorage = mDocStorage;
         _presentationCandidateService = presentationCandidateService;
-        _authFlowSessionStorage = authFlowSessionStorage;
         _sdJwtVcHolderService = sdJwtVcHolderService;
     }
 
     private readonly IAgentProvider _agentProvider;
     private readonly IAuthFlowSessionStorage _authFlowSessionStorage;
     private readonly IAuthorizationRequestService _authorizationRequestService;
+    private readonly IAuthorizationResponseEncryptionService _authorizationResponseEncryptionService;
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly ILogger<Oid4VpClientService> _logger;
     private readonly IMdocAuthenticationService _mdocAuthenticationService;
@@ -156,23 +162,34 @@ public class Oid4VpClientService : IOid4VpClientService
                 credentialQuery => credentialQuery.GetRequestedAttributes(),
                 inputDescriptor => inputDescriptor.GetRequestedAttributes());
 
+            var txDataBase64UrlStringsOption = credential
+                .TransactionData
+                .OnSome(list =>
+                {
+                    return list.TraverseAll(txData =>
+                    {
+                        return txData.Match(
+                            _ => Option<string>.None,
+                            uc5QesTxData => uc5QesTxData.TransactionDataProperties.Encoded.AsString);
+                    });
+                });
+            
             var txDataHashesOption = credential
                 .TransactionData
                 .OnSome(list =>
                 {
-                    var alg = list.First().TransactionData.TransactionDataHashesAlg.First();
-                    return list.Select(data => data.Hash(alg));
+                    return list.Select(txData =>
+                    {
+                        var hashesAlg = txData.GetHashesAlg().First();
+                        return txData.Hash(hashesAlg);
+                    });
                 });
+            
+            var txDataHashesAsHexOption = txDataHashesOption
+                .OnSome(hashes => hashes.Select(hash => hash.AsHex));
 
-            var txDataHashesAsHexOption = txDataHashesOption.OnSome(hashes =>
-            {
-                return hashes.Select(hash => hash.AsHex);
-            });
-
-            var txDataHashesAlgOption = txDataHashesOption.OnSome(hashes =>
-            {
-                return hashes.First().Alg.AsString;
-            });
+            var txDataHashesAlgOption = txDataHashesOption
+                .OnSome(hashes => hashes.First().Alg.AsString);
 
             Format format;
             ICredential presentedCredential;
@@ -186,6 +203,7 @@ public class Oid4VpClientService : IOid4VpClientService
                     presentation = await _sdJwtVcHolderService.CreatePresentation(
                         sdJwt,
                         claims.ToArray(),
+                        txDataBase64UrlStringsOption,
                         txDataHashesAsHexOption,
                         txDataHashesAlgOption,
                         authorizationRequest.ClientId,
@@ -240,8 +258,8 @@ public class Oid4VpClientService : IOid4VpClientService
         var content = authorizationRequest.ResponseMode switch
         {
             AuthorizationRequest.DirectPost => authorizationResponse.ToFormUrl(),
-            AuthorizationRequest.DirectPostJwt => authorizationResponse.Encrypt(authorizationRequest, mdocNonce)
-                .ToFormUrl(),
+            AuthorizationRequest.DirectPostJwt => 
+                (await _authorizationResponseEncryptionService.Encrypt(authorizationResponse, authorizationRequest, mdocNonce)).ToFormUrl(),
             _ => throw new ArgumentOutOfRangeException(nameof(authorizationRequest.ResponseMode))
         };
 
@@ -413,6 +431,7 @@ public class Oid4VpClientService : IOid4VpClientService
                         sdJwt,
                         claims.ToArray(),
                         Option<IEnumerable<string>>.None,
+                        Option<IEnumerable<string>>.None,
                         Option<string>.None,
                         authorizationRequest.ClientId,
                         authorizationRequest.Nonce);
@@ -538,7 +557,8 @@ public class Oid4VpClientService : IOid4VpClientService
         var content = authorizationRequest.ResponseMode switch
         {
             AuthorizationRequest.DirectPost => authorizationResponse.ToFormUrl(),
-            AuthorizationRequest.DirectPostJwt => authorizationResponse.Encrypt(authorizationRequest, mdocNonce).ToFormUrl(),
+            AuthorizationRequest.DirectPostJwt => 
+                (await _authorizationResponseEncryptionService.Encrypt(authorizationResponse, authorizationRequest, mdocNonce)).ToFormUrl(),
             _ => throw new ArgumentOutOfRangeException(nameof(authorizationRequest.ResponseMode))
         };
 
@@ -648,51 +668,93 @@ public class Oid4VpClientService : IOid4VpClientService
         {
             var candidates = (await _presentationCandidateService.FindPresentationCandidatesAsync(authRequest)).OnSome(enumerable => enumerable.ToList());
             var presentationCandidates = new PresentationCandidates(authRequest, candidates);
-            return ProcessTransactionData(presentationCandidates);
+            
+            var vpTxDataOption = presentationCandidates.AuthorizationRequest.TransactionData;
+
+            var uc5TxDataOption = presentationCandidates
+                .AuthorizationRequest
+                .PresentationDefinition
+                .InputDescriptors
+                .TraverseAny(descriptor => 
+                    descriptor.TransactionData.OnSome(list => new InputDescriptorTransactionData(descriptor.Id, list))
+                );
+
+            switch (vpTxDataOption.IsSome, uc5TxDataOption.IsSome)
+            {
+                case (true, false):
+                case (true, true):
+                {
+                    var vpTxData = vpTxDataOption.UnwrapOrThrow();
+                    return ProcessVpTransactionData(presentationCandidates, vpTxData);
+                }
+                case (false, true):
+                {
+                    var uc5TxData = uc5TxDataOption.UnwrapOrThrow();
+                    return ProcessUc5TransactionData(presentationCandidates, uc5TxData);
+                }
+                default:
+                    return presentationCandidates;
+            }
         });
 
         return (await result.Traverse(candidates => candidates)).Flatten();
     }
 
-    private static Validation<AuthorizationRequestCancellation, PresentationCandidates> ProcessTransactionData(
-        PresentationCandidates presentationCandidates)
+    private static Validation<AuthorizationRequestCancellation, PresentationCandidates> ProcessVpTransactionData(
+        PresentationCandidates presentationCandidates,
+        IEnumerable<TransactionData> transactionDatas)
     {
-        var result = presentationCandidates.AuthorizationRequest.TransactionData.Match(
-            transactionDatas =>
+        var result = presentationCandidates.Candidates.Match(
+            candidates =>
             {
-                return presentationCandidates.Candidates.Match(
-                    candidates =>
-                    {
-                        var candidatesValidation = transactionDatas.TraverseAll(data =>
-                        {
-                            var first = candidates.FirstOrDefault(candidate =>
-                            {
-                                return data
-                                    .TransactionData
-                                    .CredentialIds
-                                    .Select(id => id.AsString)
-                                    .Contains(candidate.Identifier);
-                            });
+                var candidatesValidation = transactionDatas.TraverseAll(transactionData =>
+                {
+                    return candidates.FindCandidateForTransactionData(transactionData).Match(
+                        candidate => candidate.AddTransactionData(transactionData),
+                        () => (Validation<PresentationCandidate>)new InvalidTransactionDataError(
+                            $"No credentials found that satisfy the transaction data with type {transactionData.GetTransactionDataType().AsString()}"));
+                });
+        
+                return candidatesValidation.OnSuccess(enumerable => presentationCandidates with
+                {
+                    Candidates = enumerable.ToList()
+                });
+            },
+            () => new InvalidTransactionDataError(
+                    "No credentials found that satisfy the authorization request with transaction data")
+                .ToInvalid<PresentationCandidates>()
+        );
+        
+        return result.Value.MapFail(error =>
+        {
+            var responseUriOption = presentationCandidates.AuthorizationRequest.GetResponseUriMaybe();
+            var vpError = error as VpError ?? new InvalidRequestError("Could not parse the Authorization Request");
+            return new AuthorizationRequestCancellation(responseUriOption, [vpError]);
+        });
+    }
 
-                            if (first is null)
-                            {
-                                return (Validation<PresentationCandidate>)new InvalidTransactionDataError(
-                                    $"No credentials found that satisfy the transaction data with type {data.TransactionData.Type.AsString}"
-                                );
-                            }
-                            else
-                            {
-                                return first.AddTransactionData(data);
-                            }
-                        });
+    private static Validation<AuthorizationRequestCancellation, PresentationCandidates> ProcessUc5TransactionData(
+        PresentationCandidates presentationCandidates,
+        IEnumerable<InputDescriptorTransactionData> txData)
+    {
+        var result = presentationCandidates.Candidates.Match(
+            candidates =>
+            {
+                var candidatesValidation = txData.TraverseAll(inputDescriptorTxData =>
+                {
+                    Option<PresentationCandidate> candidateOption = candidates.FirstOrDefault(
+                        candidate => string.Equals(candidate.InputDescriptorId, inputDescriptorTxData.InputDescriptorId));
 
-                        return candidatesValidation.OnSuccess(enumerable =>
-                            presentationCandidates with { Candidates = enumerable.ToList() });
-                    },
-                    () => new InvalidTransactionDataError(
-                            "No credentials found that satisfy the authorization request with transaction data")
-                        .ToInvalid<PresentationCandidates>()
-                );
+                    return candidateOption.Match(
+                        candidate => candidate.AddUc5TransactionData(inputDescriptorTxData.TransactionData),
+                        () => (Validation<PresentationCandidate>)new InvalidTransactionDataError("No credentials found that satisfy the authorization request with transaction data") 
+                    );
+                });
+                    
+                return candidatesValidation.OnSuccess(enumerable => presentationCandidates with
+                {
+                    Candidates = enumerable.ToList()
+                });
             },
             () => presentationCandidates);
 

@@ -7,6 +7,7 @@ using LanguageExt;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Moq.Protected;
+using OneOf;
 using SD_JWT.Roles.Implementation;
 using WalletFramework.Core.Cryptography.Models;
 using WalletFramework.Core.Functional;
@@ -14,10 +15,12 @@ using WalletFramework.MdocLib.Device.Abstractions;
 using WalletFramework.Oid4Vc.Oid4Vci.Abstractions;
 using WalletFramework.Oid4Vc.Oid4Vci.AuthFlow.Abstractions;
 using WalletFramework.Oid4Vc.Oid4Vp.Dcql.Services;
+using WalletFramework.Oid4Vc.Oid4Vp.AuthResponse.Encryption.Abstractions;
 using WalletFramework.Oid4Vc.Oid4Vp.Models;
 using WalletFramework.Oid4Vc.Oid4Vp.PresentationExchange.Services;
 using WalletFramework.Oid4Vc.Oid4Vp.Services;
-using WalletFramework.Oid4Vc.Payment;
+using WalletFramework.Oid4Vc.Oid4Vp.TransactionDatas;
+using WalletFramework.Oid4Vc.Qes;
 using WalletFramework.SdJwtVc.Models.Records;
 using WalletFramework.SdJwtVc.Services.SdJwtVcHolderService;
 
@@ -52,10 +55,13 @@ public class Oid4VpClientServiceTests : IAsyncLifetime
         
         _oid4VpClientService = new Oid4VpClientService(
             _agentProviderMock.Object,
+            _authFlowSessionStorageMock.Object,
             authRequestService,
+            _authorizationResponseEncryptionServiceMock.Object,
             _httpClientFactoryMock.Object,
             _loggerMock.Object,
             _mdocAuthenticationService.Object,
+            _mdocStorageMock.Object,
             oid4VpHaipClient,
             _oid4VpRecordService,
             _mdocStorageMock.Object,
@@ -71,11 +77,13 @@ public class Oid4VpClientServiceTests : IAsyncLifetime
                     It.IsAny<string>(),
                     It.IsAny<string>(),
                     It.IsAny<string>(),
+                    Option<IEnumerable<string>>.None, 
                     Option<IEnumerable<string>>.None,
                     Option<string>.None))
             .ReturnsAsync(KeyBindingJwtMock);
     }
 
+    private readonly Mock<IAuthorizationResponseEncryptionService> _authorizationResponseEncryptionServiceMock = new();
     private readonly Mock<IAgentProvider> _agentProviderMock = new();
     private readonly Mock<HttpMessageHandler> _httpMessageHandlerMock = new();
     private readonly Mock<IHttpClientFactory> _httpClientFactoryMock = new();
@@ -116,7 +124,8 @@ public class Oid4VpClientServiceTests : IAsyncLifetime
         var selectedCandidates = new SelectedCredential(
             credentials.First().Identifier,
             credentials.First().CredentialSetCandidates.First().Credentials.First(),
-            Option<List<PaymentTransactionData>>.None);
+            Option<List<TransactionData>>.None,
+            Option<List<Uc5QesTransactionData>>.None);
         
         SetupHttpClient(
             "{'redirect_uri':'https://client.example.org/cb#response_code=091535f699ea575c7937fa5f0f454aee'}"

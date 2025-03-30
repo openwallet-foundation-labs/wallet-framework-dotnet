@@ -1,5 +1,7 @@
+using LanguageExt;
 using Newtonsoft.Json;
 using WalletFramework.Oid4Vc.Oid4Vp.Models;
+using WalletFramework.Oid4Vc.Qes;
 
 namespace WalletFramework.Oid4Vc.Oid4Vp.PresentationExchange.Models;
 
@@ -7,7 +9,7 @@ namespace WalletFramework.Oid4Vc.Oid4Vp.PresentationExchange.Models;
 ///     Represents details about an input descriptor. This class encapsulates properties for the top-level
 ///     of an Input Descriptor Object.
 /// </summary>
-public class InputDescriptor
+public record InputDescriptor
 {
     /// <summary>
     ///     Gets or sets the constraints for the input descriptor.
@@ -50,6 +52,10 @@ public class InputDescriptor
     /// </summary>
     [JsonProperty("group")]
     public string[]? Group { get; private set; }
+    
+    [JsonIgnore]
+    public Option<List<Uc5QesTransactionData>> TransactionData { get; init; }
+        = Option<List<Uc5QesTransactionData>>.None;
 }
 
 /// <summary>
@@ -100,13 +106,13 @@ public class Filter
     ///     Gets the constant value which the selected value is evaluated against.
     /// </summary>
     [JsonProperty("const")]
-    public string? Const { get; private set; } = null!;
+    public string? Const { get; private set; }
     
     /// <summary>
     ///     Gets the constant value which the selected value is evaluated against.
     /// </summary>
     [JsonProperty("enum")]
-    public string[]? Enum { get; private set; } = null!;
+    public string[]? Enum { get; private set; }
 
     /// <summary>
     ///     Gets the type of filter applied.

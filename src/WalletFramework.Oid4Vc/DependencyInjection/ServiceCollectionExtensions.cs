@@ -21,6 +21,8 @@ using WalletFramework.Oid4Vc.Oid4Vci.Implementations;
 using WalletFramework.Oid4Vc.Oid4Vci.Issuer.Abstractions;
 using WalletFramework.Oid4Vc.Oid4Vci.Issuer.Implementations;
 using WalletFramework.Oid4Vc.Oid4Vp.Dcql.Services;
+using WalletFramework.Oid4Vc.Oid4Vp.AuthResponse.Encryption.Abstractions;
+using WalletFramework.Oid4Vc.Oid4Vp.AuthResponse.Encryption.Implementations;
 using WalletFramework.Oid4Vc.Oid4Vp.PresentationExchange.Services;
 using WalletFramework.Oid4Vc.Oid4Vp.Services;
 using WalletFramework.SdJwtVc;
@@ -38,6 +40,7 @@ public static class ServiceCollectionExtensions
     {
         builder.AddSingleton<IAesGcmEncryption, AesGcmEncryption>();
         builder.AddSingleton<IAuthFlowSessionStorage, AuthFlowSessionStorage>();
+        builder.AddSingleton<IAuthorizationResponseEncryptionService, AuthorizationResponseEncryptionService>();
         builder.AddSingleton<IAuthorizationRequestService, AuthorizationRequestService>();
         builder.AddSingleton<ICoseSign1Signer, CoseSign1Signer>();
         builder.AddSingleton<ICredentialOfferService, CredentialOfferService>();

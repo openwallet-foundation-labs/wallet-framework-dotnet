@@ -6,11 +6,12 @@ using OneOf;
 using WalletFramework.Core.Functional;
 using WalletFramework.Core.Json;
 using WalletFramework.Oid4Vc.Oid4Vp.Dcql.Models;
+using WalletFramework.Oid4Vc.Oid4Vp.Dcql.Models;
 using WalletFramework.Oid4Vc.Oid4Vp.Errors;
 using WalletFramework.Oid4Vc.Oid4Vp.PresentationExchange.Models;
 using WalletFramework.Oid4Vc.Oid4Vp.TransactionDatas;
-using WalletFramework.Oid4Vc.Payment;
 using static WalletFramework.Oid4Vc.Oid4Vp.Models.ClientIdScheme;
+using WalletFramework.Oid4Vc.Qes;
 
 namespace WalletFramework.Oid4Vc.Oid4Vp.Models;
 
@@ -22,10 +23,10 @@ public record AuthorizationRequest
     public const string DirectPost = "direct_post";
     public const string DirectPostJwt = "direct_post.jwt";
 
+    private const string VpToken = "vp_token";
+
     public static readonly string[] SupportedClientIdSchemes =
         [RedirectUriScheme, VerifierAttestationScheme, X509SanDnsScheme];
-
-    private const string VpToken = "vp_token";
 
     /// <summary>
     ///     Gets the client id scheme.
@@ -34,10 +35,20 @@ public record AuthorizationRequest
     public ClientIdScheme ClientIdScheme { get; }
 
     /// <summary>
+    ///     Gets the client metadata. Contains the Verifier metadata.
+    /// </summary>
+    [JsonProperty("client_metadata")]
+    public ClientMetadata? ClientMetadata { get; init; }
+
+    [JsonIgnore]
+    public Option<List<TransactionData>> TransactionData { get; private init; } = 
+        Option<List<TransactionData>>.None;
+
+    /// <summary>
     ///     Gets the presentation definition. Contains the claims that the Verifier wants to receive.
     /// </summary>
     [JsonProperty("presentation_definition")]
-    public PresentationDefinition? PresentationDefinition { get; }
+    public PresentationDefinition PresentationDefinition { get; init; }
     
     /// <summary>
     ///     Gets the DCQL query. Contains the claims that the Verifier wants to receive.
@@ -57,20 +68,14 @@ public record AuthorizationRequest
     [JsonProperty("nonce")]
     public string Nonce { get; }
 
+    [JsonProperty("response_mode")] 
+    public string ResponseMode { get; }
+
     /// <summary>
     ///     Gets the response mode. Determines where to send the Authorization Response to.
     /// </summary>
     [JsonProperty("response_uri")]
     public string ResponseUri { get; }
-    
-    [JsonProperty("response_mode")]
-    public string ResponseMode { get; }
-
-    /// <summary>
-    ///     Gets the client metadata. Contains the Verifier metadata.
-    /// </summary>
-    [JsonProperty("client_metadata")]
-    public ClientMetadata? ClientMetadata { get; init; }
 
     /// <summary>
     ///     Gets the client metadata uri. Can be used to retrieve the verifier metadata.
@@ -89,10 +94,6 @@ public record AuthorizationRequest
     /// </summary>
     [JsonProperty("state")]
     public string? State { get; }
-
-    [JsonIgnore]
-    public Option<List<PaymentTransactionData>> TransactionData { get; private init; } = 
-        Option<List<PaymentTransactionData>>.None;
 
     /// <summary>
     ///     The X509 certificate of the verifier, this property is only set when ClientIDScheme is X509SanDNS.
@@ -124,7 +125,8 @@ public record AuthorizationRequest
         string? scope,
         string? state)
     {
-        if (SupportedClientIdSchemes.Exists(supportedClientIdScheme => clientId.StartsWith($"{supportedClientIdScheme}:")))
+        if (SupportedClientIdSchemes.Exists(supportedClientIdScheme =>
+                clientId.StartsWith($"{supportedClientIdScheme}:")))
         {
             ClientIdScheme = clientId.Split(':')[0];
             ClientId = clientId.Split(':')[1];
@@ -132,9 +134,9 @@ public record AuthorizationRequest
         else
         {
             ClientId = clientId;
-            ClientIdScheme = clientIdScheme;    
+            ClientIdScheme = clientIdScheme;
         }
-        
+
         ClientMetadata = clientMetadata;
         ClientMetadataUri = clientMetadataUri;
         Nonce = nonce;
@@ -191,36 +193,77 @@ public record AuthorizationRequest
             
             var transactionDataPropertyFoundValidation =
                 from jToken in authRequestJObject.GetByKey("transaction_data")
-                from jObject in jToken.ToJArray()
-                select jObject;
+                from jArray in jToken.ToJArray()
+                select jArray;
+
+            var uc5TxDataFoundValidation =
+                from presentationDefinitionToken in authRequestJObject.GetByKey("presentation_definition")
+                from inputDescriptorsToken in presentationDefinitionToken.GetByKey("input_descriptors")
+                from txDataArrays in inputDescriptorsToken.TraverseAny(descriptor =>
+                {
+                    return
+                        from txDataToken in descriptor.GetByKey("transaction_data")
+                        from txDataArray in txDataToken.ToJArray()
+                        select (descriptor, txDataArray);
+                })
+                select txDataArrays;
             
             var responseUriOption = AuthorizationRequestExtensions.GetResponseUriMaybe(authRequestJObject);
 
-            return transactionDataPropertyFoundValidation.Match(
-                jArray =>
+            switch (transactionDataPropertyFoundValidation.IsSuccess, uc5TxDataFoundValidation.IsSuccess)
+            {
+                case (true, false):
+                case (true, true):
                 {
-                    var transactionDataValidation = 
-                        from transactionDataArray in TransactionDataArray.FromJObject(jArray)
+                    var txDataJArray = transactionDataPropertyFoundValidation.UnwrapOrThrow();
+                    
+                    var txDataValidation = 
+                        from transactionDataArray in TransactionDataArray.FromJArray(txDataJArray)
                         from transactionDataEnum in transactionDataArray.Decode()
                         from authRequest in authRequestValidation
                         select authRequest with
                         {
                             TransactionData = transactionDataEnum.ToList()
                         };
-            
-                    return transactionDataValidation.Value.MapFail(error =>
+
+                    return txDataValidation.ToLangExtValidation(responseUriOption);
+                }
+                case (false, true):
+                {
+                    var uc5TxDataJArray = uc5TxDataFoundValidation.UnwrapOrThrow();
+
+                    var txDataValidation = uc5TxDataJArray.TraverseAll(tuple =>
                     {
-                        var vpError = error as VpError ?? new InvalidRequestError("Could not parse the Authorization Request");
-                        return new AuthorizationRequestCancellation(responseUriOption, [vpError]);
+                        var inputDescriptor = tuple.descriptor.ToObject<InputDescriptor>();
+                        var txDataArray = tuple.txDataArray;
+
+                        var inputDescriptorValidation =
+                            from transactionDataArray in Uc5QesTransactionData.FromJArray(txDataArray)
+                            let list = transactionDataArray.ToList()
+                            select inputDescriptor with
+                            {
+                                TransactionData = list
+                            };
+
+                        return inputDescriptorValidation;
                     });
-                },
-                _ =>
-                    authRequestValidation.Value.MapFail(error =>
-                    {
-                        var vpError = error as VpError ?? new InvalidRequestError("Could not parse the Authorization Request");
-                        return new AuthorizationRequestCancellation(responseUriOption, [vpError]);
-                    })
-            );
+
+                    var result =
+                        from authRequest in authRequestValidation
+                        from inputDescriptors in txDataValidation
+                        select authRequest with
+                        {
+                            PresentationDefinition = authRequest.PresentationDefinition with
+                            {
+                                InputDescriptors = inputDescriptors.ToArray()
+                            }
+                        };
+
+                    return result.ToLangExtValidation(responseUriOption);
+                }
+                default:
+                    return authRequestValidation.ToLangExtValidation(responseUriOption);
+            }
         }
         else
         {
@@ -240,29 +283,62 @@ public record AuthorizationRequest
 
         string clientId;
         string clientIdScheme;
-        if (SupportedClientIdSchemes.Exists(supportedClientIdScheme => authorizationRequestClientId.StartsWith($"{supportedClientIdScheme}:")))
+        if (SupportedClientIdSchemes.Exists(supportedClientIdScheme =>
+                authorizationRequestClientId.StartsWith($"{supportedClientIdScheme}:")))
         {
-            clientIdScheme = authorizationRequestClientId.Split(':')[0]; 
+            clientIdScheme = authorizationRequestClientId.Split(':')[0];
             clientId = authorizationRequestClientId.Split(':')[1];
         }
         else
         {
             clientIdScheme = authorizationRequestJson["client_id_scheme"]!.ToString();
-            clientId = authorizationRequestClientId;    
+            clientId = authorizationRequestClientId;
         }
 
         return
-            responseType == VpToken
-            && responseMode == DirectPost || responseMode == DirectPostJwt
-            && !string.IsNullOrEmpty(responseUri)
-            && redirectUri is null
-            && (clientIdScheme is X509SanDnsScheme or VerifierAttestationScheme
-                || (clientIdScheme is RedirectUriScheme && clientId == responseUri));
+            (responseType == VpToken
+             && responseMode == DirectPost) || (responseMode == DirectPostJwt
+                                                && !string.IsNullOrEmpty(responseUri)
+                                                && redirectUri is null
+                                                && (clientIdScheme is X509SanDnsScheme or VerifierAttestationScheme
+                                                    || (clientIdScheme is RedirectUriScheme &&
+                                                        clientId == responseUri)));
     }
 }
 
 internal static class AuthorizationRequestExtensions
 {
+    internal static Option<Uri> GetResponseUriMaybe(string authRequestJson)
+    {
+        try
+        {
+            var jObject = JObject.Parse(authRequestJson);
+            return GetResponseUriMaybe(jObject);
+        }
+        catch (Exception)
+        {
+            return Option<Uri>.None;
+        }
+    }
+
+    internal static Option<Uri> GetResponseUriMaybe(JObject authRequestJObject)
+    {
+        try
+        {
+            var responseUri = authRequestJObject["response_uri"]!.ToString();
+            return new Uri(responseUri);
+        }
+        catch (Exception)
+        {
+            return Option<Uri>.None;
+        }
+    }
+
+    internal static AuthorizationRequest WithClientMetadata(
+        this AuthorizationRequest authorizationRequest,
+        Option<ClientMetadata> clientMetadata)
+        => authorizationRequest with { ClientMetadata = clientMetadata.ToNullable() };
+
     internal static AuthorizationRequest WithX509(
         this AuthorizationRequest authorizationRequest,
         RequestObject requestObject)
@@ -287,37 +363,6 @@ internal static class AuthorizationRequestExtensions
             X509TrustChain = trustChain
         };
     }
-        
-    internal static AuthorizationRequest WithClientMetadata(
-        this AuthorizationRequest authorizationRequest,
-        Option<ClientMetadata> clientMetadata) 
-        => authorizationRequest with { ClientMetadata = clientMetadata.ToNullable() };
-    
-    internal static Option<Uri> GetResponseUriMaybe(string authRequestJson)
-    {
-        try
-        {
-            var jObject = JObject.Parse(authRequestJson);
-            return GetResponseUriMaybe(jObject);
-        }
-        catch (Exception)
-        {
-            return Option<Uri>.None;
-        }
-    }
-    
-    internal static Option<Uri> GetResponseUriMaybe(JObject authRequestJObject)
-    {
-        try
-        {
-            var responseUri = authRequestJObject["response_uri"]!.ToString();
-            return new Uri(responseUri);
-        }
-        catch (Exception)
-        {
-            return Option<Uri>.None;
-        }
-    }
 }
 
 public static class AuthorizationRequestFun
@@ -334,6 +379,14 @@ public static class AuthorizationRequestFun
         }
     }
 
-    public static bool HasPaymentTransactionData(this AuthorizationRequest authRequest) 
-        => authRequest.TransactionData.IsSome;
+    public static Validation<AuthorizationRequestCancellation, AuthorizationRequest> ToLangExtValidation(
+        this Validation<AuthorizationRequest> authRequestValidation,
+        Option<Uri> responseUriOption)
+    {
+        return authRequestValidation.Value.MapFail(error =>
+        {
+            var vpError = error as VpError ?? new InvalidRequestError("Could not parse the Authorization Request", error);
+            return new AuthorizationRequestCancellation(responseUriOption, [vpError]);
+        });
+    }
 }

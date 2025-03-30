@@ -1,5 +1,5 @@
 using WalletFramework.Core.Functional;
-using WalletFramework.Oid4Vc.Payment;
+using WalletFramework.Oid4Vc.Oid4Vp.TransactionDatas;
 using WalletFramework.Oid4Vc.Tests.Payment.Samples;
 
 namespace WalletFramework.Oid4Vc.Tests.Payment;
@@ -11,7 +11,7 @@ public class PaymentTests
     {
         var sample = PaymentTransactionDataSamples.GetBase64UrlStringSample();
 
-        var sut = PaymentTransactionData.FromBase64Url(sample);
+        var sut = TransactionData.FromBase64Url(sample);
         sut.Match(
             _ =>
             {

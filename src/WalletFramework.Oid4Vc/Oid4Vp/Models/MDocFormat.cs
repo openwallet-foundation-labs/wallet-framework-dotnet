@@ -11,11 +11,11 @@ public class MDocFormat
     ///     Gets the names of supported algorithms.
     /// </summary>
     [JsonProperty("alg")]
-    public string[] Alg { get; private set; } = null!;
+    public string[]? Alg { get; private set; }
         
     /// <summary>
     ///     Gets the names of supported proof types.
     /// </summary>
     [JsonProperty("proof_type")]
-    public string[] ProofTypes { get; private set; } = null!;
+    public string[]? ProofTypes { get; private set; }
 }

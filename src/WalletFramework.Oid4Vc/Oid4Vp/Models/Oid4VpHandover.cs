@@ -42,14 +42,16 @@ public static class Oid4VpHandoverFun
 
         var clientIdToHash = CBORObject.NewArray();
         var clientId = CBORObject.FromObject(request.ClientId);
+        
         clientIdToHash.Add(clientId);
-        clientIdToHash.Add(mdocGeneratedNonce.AsBase64Url.ToString());
+        clientIdToHash.Add(mdocGeneratedNonce.AsHex);
         var clientIdToHashBytes = clientIdToHash.EncodeToBytes();
         
         var responseUriToHash = CBORObject.NewArray();
         var responseUri = CBORObject.FromObject(request.ResponseUri);
+        
         responseUriToHash.Add(responseUri);
-        responseUriToHash.Add(mdocGeneratedNonce.AsBase64Url.ToString());
+        responseUriToHash.Add(mdocGeneratedNonce.AsHex);
         var responseUriToHashBytes = responseUriToHash.EncodeToBytes();
 
         var clientIdHash = ComputeHash(clientIdToHashBytes);

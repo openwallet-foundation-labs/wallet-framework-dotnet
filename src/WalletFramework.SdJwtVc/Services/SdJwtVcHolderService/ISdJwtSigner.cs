@@ -14,6 +14,7 @@ public interface ISdJwtSigner
         string type,
         string? sdHash,
         string? clientId,
+        Option<IEnumerable<string>> transactionDataBase64UrlStrings,
         Option<IEnumerable<string>> transactionDataHashes,
         Option<string> transactionDataHashesAlg);
 }

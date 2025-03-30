@@ -22,16 +22,6 @@ public static class EncryptedAuthorizationResponseFun
 {
     public static EncryptedAuthorizationResponse Encrypt(
         this AuthorizationResponse response,
-        AuthorizationRequest authorizationRequest,
-        Option<Nonce> mdocNonce) => Encrypt(
-        response,
-        authorizationRequest.ClientMetadata!.Jwks.First(),
-        authorizationRequest.Nonce,
-        authorizationRequest.ClientMetadata.AuthorizationEncryptedResponseEnc,
-        mdocNonce);
-
-    public static EncryptedAuthorizationResponse Encrypt(
-        this AuthorizationResponse response,
         JsonWebKey verifierPubKey,
         string apv,
         Option<string> authorizationEncryptedResponseEnc,
@@ -45,14 +35,18 @@ public static class EncryptedAuthorizationResponseFun
             { "kid", verifierPubKey.Kid }
         };
 
-        mdocNonce.IfSome(nonce => headers.Add("apu", nonce.AsBase64Url.ToString()));
+        mdocNonce.IfSome(nonce =>
+        {
+            var base64Url = Base64UrlEncoder.Encode(nonce.AsHex);
+            headers.Add("apu", base64Url);
+        });
 
         var settings = new JwtSettings();
         settings.RegisterJwe(JweEncryption.A256GCM, new AesGcmEncryption());
 
         var jwe = JWE.EncryptBytes(
             response.ToJson().GetUTF8Bytes(),
-            new[] { new JweRecipient(JweAlgorithm.ECDH_ES, verifierPubKey.ToEcdh()) },
+            [new JweRecipient(JweAlgorithm.ECDH_ES, verifierPubKey.ToEcdh())],
             authorizationEncryptedResponseEnc.ToNullable() switch {
                 "A256GCM" => JweEncryption.A256GCM,
                 "A128CBC-HS256" => JweEncryption.A128CBC_HS256,

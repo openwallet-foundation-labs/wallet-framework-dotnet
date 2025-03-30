@@ -1,5 +1,4 @@
 using WalletFramework.Core.Encoding;
-using WalletFramework.Oid4Vc.Payment;
 
 namespace WalletFramework.Oid4Vc.Oid4Vp.TransactionDatas;
 
@@ -17,11 +16,11 @@ public readonly struct TransactionDataHash(Sha256Hash hash, TransactionDataHashe
 
 public static class TransactionDataHashFun
 {
-    public static TransactionDataHash Hash(this PaymentTransactionData transactionData, TransactionDataHashesAlg alg)
+    public static TransactionDataHash Hash(this TransactionData transactionData, TransactionDataHashesAlg alg)
     {
-        var hashWith256 = new Func<PaymentTransactionData, TransactionDataHash>(data =>
+        var hashWith256 = new Func<TransactionData, TransactionDataHash>(data =>
         {
-            var bytes = data.Encoded.AsByteArray;
+            var bytes = data.GetEncoded().AsByteArray;
             var hash = Sha256Hash.ComputeHash(bytes);
             return new TransactionDataHash(hash, TransactionDataHashesAlg.Sha256);
         });
