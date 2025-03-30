@@ -7,7 +7,6 @@ using LanguageExt;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Moq.Protected;
-using OneOf;
 using SD_JWT.Roles.Implementation;
 using WalletFramework.Core.Cryptography.Models;
 using WalletFramework.Core.Functional;
@@ -64,9 +63,7 @@ public class Oid4VpClientServiceTests : IAsyncLifetime
             _mdocStorageMock.Object,
             oid4VpHaipClient,
             _oid4VpRecordService,
-            _mdocStorageMock.Object,
             presentationCandidateService,
-            _authFlowSessionStorageMock.Object,
             _sdJwtVcHolderService);
     
         _sdJwtSignerService.Setup(keyStore =>

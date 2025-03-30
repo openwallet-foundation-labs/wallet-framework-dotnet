@@ -50,6 +50,6 @@ public static class TransactionDataFun
             payment => payment.TransactionDataProperties.CredentialIds.Select(id => id.AsString),
             qes => qes.TransactionDataProperties.CredentialIds.Select(id => id.AsString));
         
-        return candidates.FirstOrDefault(candidate => credentialIds.Contains(candidate.InputDescriptorId));
+        return candidates.FirstOrDefault(candidate => credentialIds.Contains(candidate.Identifier));
     }
 }

@@ -57,7 +57,6 @@ public class Oid4VpClientService : IOid4VpClientService
     /// <param name="authorizationResponseEncryptionService">The authorization response encryption service.</param>
     /// <param name="httpClientFactory">The http client factory to create http clients.</param>
     /// <param name="sdJwtVcHolderService">The service responsible for SD-JWT related operations.</param>
-    /// <param name="pexService">The Presentation Exchange service.</param>
     /// <param name="mdocAuthenticationService">The mdoc authentication service.</param>
     /// <param name="oid4VpHaipClient">The service responsible for OpenId4VP related operations.</param>
     /// <param name="logger">The ILogger.</param>
@@ -356,7 +355,7 @@ public class Oid4VpClientService : IOid4VpClientService
             Id = Guid.NewGuid().ToString(),
             ClientId = authorizationRequest.ClientId,
             ClientMetadata = authorizationRequest.ClientMetadata,
-            Name = authorizationRequest.PresentationDefinition?.Name,
+            Name = authorizationRequest.PresentationDefinition.Name,
             PresentedCredentialSets = presentedCredentials.ToList()
         };
 
@@ -743,7 +742,7 @@ public class Oid4VpClientService : IOid4VpClientService
                 var candidatesValidation = txData.TraverseAll(inputDescriptorTxData =>
                 {
                     Option<PresentationCandidate> candidateOption = candidates.FirstOrDefault(
-                        candidate => string.Equals(candidate.InputDescriptorId, inputDescriptorTxData.InputDescriptorId));
+                        candidate => string.Equals(candidate.Identifier, inputDescriptorTxData.InputDescriptorId));
 
                     return candidateOption.Match(
                         candidate => candidate.AddUc5TransactionData(inputDescriptorTxData.TransactionData),
