@@ -1,5 +1,4 @@
 using LanguageExt;
-using WalletFramework.Oid4Vc.Oid4Vci.CredConfiguration.Models;
 using WalletFramework.Oid4Vc.Oid4Vp.Models;
 using WalletFramework.Oid4Vc.Oid4Vp.PresentationExchange.Models;
 
@@ -26,11 +25,11 @@ public interface IPexService
     ///     Creates the Parameters that are necessary to send an OpenId4VP Authorization Response.
     /// </summary>
     /// <param name="authorizationRequest"></param>
-    /// <param name="presentationMap"></param>
+    /// <param name="presentationMaps"></param>
     /// <returns>
     ///     A task representing the asynchronous operation. The task result contains the Presentation Submission and the VP Token.
     /// </returns>
     Task<AuthorizationResponse> CreateAuthorizationResponseAsync(
         AuthorizationRequest authorizationRequest,
-        (string Identifier, string Presentation, Format Format)[] presentationMap);
+        PresentationMap[] presentationMaps);
 }

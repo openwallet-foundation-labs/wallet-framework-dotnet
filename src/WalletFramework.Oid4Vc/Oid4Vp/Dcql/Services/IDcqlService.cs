@@ -1,5 +1,4 @@
 using LanguageExt;
-using WalletFramework.Oid4Vc.Oid4Vci.CredConfiguration.Models;
 using WalletFramework.Oid4Vc.Oid4Vp.Dcql.Models;
 using WalletFramework.Oid4Vc.Oid4Vp.Models;
 
@@ -23,11 +22,11 @@ public interface IDcqlService
     ///     Creates the Parameters that are necessary to send an OpenId4VP Authorization Response.
     /// </summary>
     /// <param name="authorizationRequest"></param>
-    /// <param name="presentationMap"></param>
+    /// <param name="presentationMaps"></param>
     /// <returns>
     ///     An authorization response including the VP Token.
     /// </returns>
     AuthorizationResponse CreateAuthorizationResponse(
         AuthorizationRequest authorizationRequest,
-        (string Identifier, string Presentation, Format Format)[] presentationMap);
+        PresentationMap[] presentationMaps);
 }

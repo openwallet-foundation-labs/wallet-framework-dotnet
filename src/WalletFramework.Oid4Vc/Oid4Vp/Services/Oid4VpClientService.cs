@@ -146,7 +146,7 @@ public class Oid4VpClientService : IOid4VpClientService
 
         var mdocNonce = Option<Nonce>.None;
 
-        var presentationMaps = new List<(string Identifier, string Presentation, Format Format, ICredential PresentedCredential)>();
+        var presentations = new List<(PresentationMap PresentationMap, ICredential PresentedCredential)>();
         foreach (var credential in credentials)
         {
             var credentialRequirement = authorizationRequest.Requirements.Match<OneOf<CredentialQuery, InputDescriptor>>(
@@ -245,13 +245,12 @@ public class Oid4VpClientService : IOid4VpClientService
                     throw new ArgumentOutOfRangeException(nameof(credential.Credential));
             }
 
-            presentationMaps.Add((Identifier: credentialRequirementId, Presentation: presentation, Format: format,
-                PresentedCredential: presentedCredential));
+            presentations.Add((PresentationMap: new PresentationMap(credentialRequirementId, presentation, format), PresentedCredential: presentedCredential));
         }
 
         var authorizationResponse = await _oid4VpHaipClient.CreateAuthorizationResponseAsync(
             authorizationRequest,
-            presentationMaps.Select(tuple => (tuple.Identifier, tuple.Presentation, tuple.Format)).ToArray()
+            presentations.Select(tuple => tuple.PresentationMap).ToArray()
         );
 
         var content = authorizationRequest.ResponseMode switch
@@ -297,20 +296,20 @@ public class Oid4VpClientService : IOid4VpClientService
             throw new InvalidOperationException($"Authorization Response failed with message {str}");
         }
 
-        var presentedCredentials = presentationMaps.Select(presentationMap =>
+        var presentedCredentials = presentations.Select(presentation =>
         {
             PresentedCredentialSet result;
 
-            switch (presentationMap.PresentedCredential)
+            switch (presentation.PresentedCredential)
             {
                 case SdJwtRecord sdJwtRecord:
                     var issuanceSdJwtDoc = sdJwtRecord.ToSdJwtDoc();
-                    var presentation = new SdJwtDoc(presentationMap.Presentation);
+                    var sdJwtDoc = new SdJwtDoc(presentation.PresentationMap.Presentation);
 
                     var nonDisclosed =
                         from disclosure in issuanceSdJwtDoc.Disclosures
                         let base64Encoded = disclosure.Base64UrlEncoded
-                        where presentation.Disclosures.All(itm => itm.Base64UrlEncoded != base64Encoded)
+                        where sdJwtDoc.Disclosures.All(itm => itm.Base64UrlEncoded != base64Encoded)
                         select disclosure;
 
                     var presentedClaims =
@@ -344,7 +343,7 @@ public class Oid4VpClientService : IOid4VpClientService
                     };
                     break;
                 default:
-                    throw new ArgumentOutOfRangeException(nameof(presentationMap.PresentedCredential));
+                    throw new ArgumentOutOfRangeException(nameof(presentation.PresentedCredential));
             }
 
             return result;
@@ -355,7 +354,9 @@ public class Oid4VpClientService : IOid4VpClientService
             Id = Guid.NewGuid().ToString(),
             ClientId = authorizationRequest.ClientId,
             ClientMetadata = authorizationRequest.ClientMetadata,
-            Name = authorizationRequest.PresentationDefinition.Name,
+            Name = authorizationRequest.Requirements.Match(
+                dcqlQuery => Option<string>.None,
+                presentationDefinition => presentationDefinition.Name),
             PresentedCredentialSets = presentedCredentials.ToList()
         };
 
@@ -390,7 +391,7 @@ public class Oid4VpClientService : IOid4VpClientService
         
         var context = await _agentProvider.GetContextAsync();
         
-        var presentationMaps = new List<(string Identifier, string Presentation, Format Format, ICredential PresentedCredential)>();
+        var presentations = new List<(PresentationMap PresentationMap, ICredential PresentedCredential)>();
         foreach (var credential in credentials)
         {
             var credentialRequirement =
@@ -544,13 +545,12 @@ public class Oid4VpClientService : IOid4VpClientService
                     throw new ArgumentOutOfRangeException(nameof(credential.Credential));
             }
 
-            presentationMaps.Add((Identifier: credentialRequirementId, Presentation: presentation, Format: format,
-                PresentedCredential: presentedCredential));
+            presentations.Add((PresentationMap: new PresentationMap(credentialRequirementId, presentation, format), PresentedCredential: presentedCredential));
         }
 
         var authorizationResponse = await _oid4VpHaipClient.CreateAuthorizationResponseAsync(
             authorizationRequest,
-            presentationMaps.Select(tuple => (tuple.Identifier, tuple.Presentation, tuple.Format)).ToArray()
+            presentations.Select(tuple => tuple.PresentationMap).ToArray()
         );
 
         var content = authorizationRequest.ResponseMode switch
@@ -578,20 +578,20 @@ public class Oid4VpClientService : IOid4VpClientService
             throw new InvalidOperationException($"Authorization Response failed with message {str}");
         }
 
-        var presentedCredentials = presentationMaps.Select(presentationMap =>
+        var presentedCredentials = presentations.Select(presentation =>
         {
             PresentedCredentialSet result;
 
-            switch (presentationMap.PresentedCredential)
+            switch (presentation.PresentedCredential)
             {
                 case SdJwtRecord sdJwtRecord:
                     var issuanceSdJwtDoc = sdJwtRecord.ToSdJwtDoc();
-                    var presentation = new SdJwtDoc(presentationMap.Presentation);
+                    var sdJwtDoc = new SdJwtDoc(presentation.PresentationMap.Presentation);
 
                     var nonDisclosed =
                         from disclosure in issuanceSdJwtDoc.Disclosures
                         let base64Encoded = disclosure.Base64UrlEncoded
-                        where presentation.Disclosures.All(itm => itm.Base64UrlEncoded != base64Encoded)
+                        where sdJwtDoc.Disclosures.All(itm => itm.Base64UrlEncoded != base64Encoded)
                         select disclosure;
 
                     var presentedClaims =
@@ -625,7 +625,7 @@ public class Oid4VpClientService : IOid4VpClientService
                     };
                     break;
                 default:
-                    throw new ArgumentOutOfRangeException(nameof(presentationMap.PresentedCredential));
+                    throw new ArgumentOutOfRangeException(nameof(presentation.PresentedCredential));
             }
 
             return result;
@@ -636,7 +636,9 @@ public class Oid4VpClientService : IOid4VpClientService
             Id = Guid.NewGuid().ToString(),
             ClientId = authorizationRequest.ClientId,
             ClientMetadata = authorizationRequest.ClientMetadata,
-            Name = authorizationRequest.PresentationDefinition.Name,
+            Name = authorizationRequest.Requirements.Match(
+                dcqlQuery => Option<string>.None,
+                presentationDefinition => presentationDefinition.Name),
             PresentedCredentialSets = presentedCredentials.ToList()
         };
 
@@ -672,11 +674,11 @@ public class Oid4VpClientService : IOid4VpClientService
 
             var uc5TxDataOption = presentationCandidates
                 .AuthorizationRequest
-                .PresentationDefinition
-                .InputDescriptors
-                .TraverseAny(descriptor => 
-                    descriptor.TransactionData.OnSome(list => new InputDescriptorTransactionData(descriptor.Id, list))
-                );
+                .Requirements.Match(
+                    dcqlQuery => Option<IEnumerable<InputDescriptorTransactionData>>.None,
+                    presentationDefinition => presentationDefinition.InputDescriptors.TraverseAny(descriptor =>
+                        descriptor.TransactionData.OnSome(list =>
+                            new InputDescriptorTransactionData(descriptor.Id, list))));
 
             switch (vpTxDataOption.IsSome, uc5TxDataOption.IsSome)
             {
