@@ -50,20 +50,20 @@ public class PexService(
     /// <inheritdoc />
     public async Task<AuthorizationResponse> CreateAuthorizationResponseAsync(
         AuthorizationRequest authorizationRequest,
-        (string Identifier, string Presentation, Oid4Vci.CredConfiguration.Models.Format Format)[] presentationMap)
+        PresentationMap[] presentationMaps)
     {
         var descriptorMaps = new List<DescriptorMap>();
         var vpToken = new List<string>();
             
-        for (var index = 0; index < presentationMap.Length; index++)
+        for (var index = 0; index < presentationMaps.Length; index++)
         {
-            vpToken.Add(presentationMap[index].Presentation);
+            vpToken.Add(presentationMaps[index].Presentation);
 
             var descriptorMap = new DescriptorMap
             {
-                Format = presentationMap[index].Format.ToString(),
-                Path = presentationMap.Length > 1 ? "$[" + index + "]" : "$",
-                Id = presentationMap[index].Identifier,
+                Format = presentationMaps[index].Format.ToString(),
+                Path = presentationMaps.Length > 1 ? "$[" + index + "]" : "$",
+                Id = presentationMaps[index].Identifier,
                 PathNested = null
             };
             descriptorMaps.Add(descriptorMap);

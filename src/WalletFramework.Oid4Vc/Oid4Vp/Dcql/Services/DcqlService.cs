@@ -5,11 +5,9 @@ using WalletFramework.Core.Credentials.Abstractions;
 using WalletFramework.Core.Functional;
 using WalletFramework.Core.Path;
 using WalletFramework.Oid4Vc.Oid4Vci.Abstractions;
-using WalletFramework.Oid4Vc.Oid4Vci.CredConfiguration.Models;
 using WalletFramework.Oid4Vc.Oid4Vci.Implementations;
 using WalletFramework.Oid4Vc.Oid4Vp.Dcql.Models;
 using WalletFramework.Oid4Vc.Oid4Vp.Models;
-using WalletFramework.Oid4Vc.Oid4Vp.PresentationExchange.Models;
 using WalletFramework.SdJwtVc.Services.SdJwtVcHolderService;
 
 namespace WalletFramework.Oid4Vc.Oid4Vp.Dcql.Services;
@@ -43,9 +41,9 @@ public class DcqlService(IAgentProvider agentProvider,
     }
 
     public AuthorizationResponse CreateAuthorizationResponse(AuthorizationRequest authorizationRequest,
-        (string Identifier, string Presentation, Format Format)[] presentationMap)
+        PresentationMap[] presentationMaps)
     {
-        var vpToken = presentationMap.ToDictionary(
+        var vpToken = presentationMaps.ToDictionary(
             presentationItem => presentationItem.Identifier,
             presentationItem => presentationItem.Presentation);
         

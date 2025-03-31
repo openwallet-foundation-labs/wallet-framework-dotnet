@@ -1,4 +1,3 @@
-using System.Data.Common;
 using FluentAssertions;
 using Hyperledger.Aries.Agents;
 using Hyperledger.Aries.Storage;
@@ -51,20 +50,10 @@ public class PexServiceTests
         var authRequest = JsonConvert.DeserializeObject<AuthorizationRequest>(PexTestsDataProvider.GetJsonForTestCase())!;
         var presentationDefinition = authRequest.PresentationDefinition!;
 
-        var presentationMap = new (string Identifier, string Presentation, Format Format)[]
+        var presentationMap = new PresentationMap[]
         {
-            new()
-            {
-                Identifier = presentationDefinition.InputDescriptors[0].Id,
-                Presentation = Guid.NewGuid().ToString(),
-                Format = FormatFun.CreateSdJwtFormat()
-            },
-            new()
-            {
-                Identifier = presentationDefinition.InputDescriptors[1].Id,
-                Presentation = Guid.NewGuid().ToString(),
-                Format = FormatFun.CreateSdJwtFormat()
-            }
+            new(presentationDefinition.InputDescriptors[0].Id,Guid.NewGuid().ToString(),FormatFun.CreateSdJwtFormat()),
+            new(presentationDefinition.InputDescriptors[1].Id,Guid.NewGuid().ToString(),FormatFun.CreateSdJwtFormat())
         };
             
         var authResponse = await CreatePexService().CreateAuthorizationResponseAsync(authRequest, presentationMap);
