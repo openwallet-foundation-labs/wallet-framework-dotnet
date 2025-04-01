@@ -4,6 +4,7 @@ on:
     push:
         branches:
             - main
+            - bugfix/jwks-parsing
     pull_request:
         branches:
             - main
