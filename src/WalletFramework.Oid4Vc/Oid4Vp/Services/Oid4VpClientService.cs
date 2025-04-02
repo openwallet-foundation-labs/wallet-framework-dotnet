@@ -197,8 +197,19 @@ public class Oid4VpClientService : IOid4VpClientService
             switch (credential.Credential)
             {
                 case SdJwtRecord sdJwt:
-                    format = FormatFun.CreateSdJwtFormat();
-
+                    format = credentialRequirement.Match(
+                        credentialQuery => credentialQuery.Format switch
+                        {
+                            Constants.SdJwtDcFormat => FormatFun.CreateSdJwtDcFormat(),
+                            Constants.SdJwtVcFormat => FormatFun.CreateSdJwtVcFormat(),
+                            _ => throw new InvalidOperationException("Invalid format identifier in InputDescriptor")
+                        },
+                        inputDescriptor => inputDescriptor.Formats?.SdJwtDcFormat != null 
+                            ? FormatFun.CreateSdJwtDcFormat()
+                            : inputDescriptor.Formats?.SdJwtVcFormat != null 
+                                ? FormatFun.CreateSdJwtVcFormat()
+                                : throw new InvalidOperationException("Missing format identifier in InputDescriptor"));
+                    
                     presentation = await _sdJwtVcHolderService.CreatePresentation(
                         sdJwt,
                         claims.ToArray(),
@@ -425,7 +436,18 @@ public class Oid4VpClientService : IOid4VpClientService
             switch (credential.Credential)
             {
                 case SdJwtRecord sdJwt:
-                    format = FormatFun.CreateSdJwtFormat();
+                    format = credentialRequirement.Match(
+                        credentialQuery => credentialQuery.Format switch
+                        {
+                            Constants.SdJwtDcFormat => FormatFun.CreateSdJwtDcFormat(),
+                            Constants.SdJwtVcFormat => FormatFun.CreateSdJwtVcFormat(),
+                            _ => throw new InvalidOperationException("Invalid format identifier in InputDescriptor")
+                        },
+                        inputDescriptor => inputDescriptor.Formats?.SdJwtDcFormat != null 
+                            ? FormatFun.CreateSdJwtDcFormat()
+                            : inputDescriptor.Formats?.SdJwtVcFormat != null 
+                                ? FormatFun.CreateSdJwtVcFormat()
+                                : throw new InvalidOperationException("Missing format identifier in InputDescriptor"));
 
                     presentation = await _sdJwtVcHolderService.CreatePresentation(
                         sdJwt,
