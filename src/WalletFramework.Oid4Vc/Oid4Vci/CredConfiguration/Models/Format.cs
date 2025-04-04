@@ -7,7 +7,7 @@ using WalletFramework.Oid4Vc.Oid4Vci.CredConfiguration.Errors;
 namespace WalletFramework.Oid4Vc.Oid4Vci.CredConfiguration.Models;
 
 /// <summary>
-///     The format of the credential e.g. SD-JWT(vc+sd-jwt) or Mdoc(mso_mdoc)
+///     The format of the credential e.g. SD-JWT(dc+sd-jwt) or SD-JWT(vc+sd-jwt) or Mdoc(mso_mdoc)
 /// </summary>
 public readonly struct Format
 {
@@ -29,14 +29,17 @@ public readonly struct Format
 
     private static List<string> SupportedFormats =>
     [
-        Constants.SdJwtFormat,
+        Constants.SdJwtVcFormat,
+        Constants.SdJwtDcFormat,
         Constants.MdocFormat
     ];
 }
 
 public static class FormatFun
 {
-    public static Format CreateSdJwtFormat() => Format.ValidFormat(Constants.SdJwtFormat).UnwrapOrThrow();
+    public static Format CreateSdJwtVcFormat() => Format.ValidFormat(Constants.SdJwtVcFormat).UnwrapOrThrow();
+    
+    public static Format CreateSdJwtDcFormat() => Format.ValidFormat(Constants.SdJwtDcFormat).UnwrapOrThrow();
     
     public static Format CreateMdocFormat() => Format.ValidFormat(Constants.MdocFormat).UnwrapOrThrow();
 }

@@ -10,6 +10,7 @@ using WalletFramework.Oid4Vc.CredentialSet;
 using WalletFramework.Oid4Vc.CredentialSet.Models;
 using WalletFramework.Oid4Vc.Database.Migration.Abstraction;
 using WalletFramework.Oid4Vc.Oid4Vci.Abstractions;
+using WalletFramework.Oid4Vc.Oid4Vci.CredConfiguration.Models;
 using WalletFramework.Oid4Vc.Oid4Vp.Models;
 using WalletFramework.Oid4Vc.Oid4Vp.Services;
 using WalletFramework.SdJwtVc.Models;
@@ -189,7 +190,45 @@ internal class MigrationStepsProvider(
                 var context = await agentProvider.GetContextAsync();
                 return await walletRecordService.SearchAsync<Oid4Vp.Models.v1.OidPresentationRecord>(context.Wallet, query, null, 100);
             });
+        
+        var addCredentialFormatToSdJwtStep = new MigrationStep(
+            2,
+            3,
+            typeof(SdJwtRecord),
+            async records =>
+            {
+                var sdJwtRecords = records.OfType<SdJwtRecord>().ToList();
+                foreach (var record in sdJwtRecords)
+                {
+                    if (string.IsNullOrWhiteSpace(record.Format))
+                    {
+                        record.Format = FormatFun.CreateSdJwtVcFormat();
+                    }
+                    
+                    var context = await agentProvider.GetContextAsync();
+                    await sdJwtVcHolderService.UpdateAsync(context, record);
+                }
+        
+                return sdJwtRecords;
+            },
+            async () =>
+            {
+                var query = SearchQuery.And(
+                    SearchQuery.Not(SearchQuery.Less(
+                        nameof(SdJwtRecord.Format),
+                        "2")),
+                    SearchQuery.Not(SearchQuery.Greater(
+                        nameof(SdJwtRecord.Format),
+                        "2"))
+                    );
+        
+                var context = await agentProvider.GetContextAsync();
+                var records = await sdJwtVcHolderService.ListAsync(context, query);
+                return records.Any() 
+                    ? records.Cast<RecordBase>().ToList() 
+                    : Option<IEnumerable<RecordBase>>.None;
+            });
 
-        return [sdJwtStep, mdocStep, presentationRecordStep];
+        return [sdJwtStep, mdocStep, presentationRecordStep, addCredentialFormatToSdJwtStep];
     }
 }

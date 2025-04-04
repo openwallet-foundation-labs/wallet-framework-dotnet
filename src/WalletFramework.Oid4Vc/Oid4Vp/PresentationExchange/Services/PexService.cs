@@ -143,8 +143,10 @@ public class PexService(
 
             return issuerSignedJwt.Header.TryGetValue("alg", out var alg)
                    && supportedFormatSigningAlgorithms.Match(
-                       formats => formats.SdJwtFormat?.IssuerSignedJwtAlgValues?.Contains(alg.ToString()) ?? true,
-                       () => inputDescriptor.Formats?.SdJwtFormat?.IssuerSignedJwtAlgValues?.Contains(alg.ToString()) ?? true)
+                       formats => (formats.SdJwtVcFormat?.IssuerSignedJwtAlgValues?.Contains(alg.ToString()) ?? true) 
+                                  || (formats.SdJwtDcFormat?.IssuerSignedJwtAlgValues?.Contains(alg.ToString()) ?? true),
+                       () => (inputDescriptor.Formats?.SdJwtVcFormat?.IssuerSignedJwtAlgValues?.Contains(alg.ToString()) ?? true) 
+                           || (inputDescriptor.Formats?.SdJwtDcFormat?.IssuerSignedJwtAlgValues?.Contains(alg.ToString()) ?? true))
                    && inputDescriptor.Constraints.Fields!.All(field =>
                    {
                        try

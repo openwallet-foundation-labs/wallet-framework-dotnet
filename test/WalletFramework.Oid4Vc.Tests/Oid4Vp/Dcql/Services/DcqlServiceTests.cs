@@ -48,17 +48,17 @@ public class DcqlServiceTests
 
         var batchCredentialQuery = CreateCredentialQuery(
             Guid.NewGuid().ToString(),
-            Constants.SdJwtFormat,
+            Constants.SdJwtDcFormat,
             [idClaimQuery, CreateCredentialClaimQuery(["issuer"]), CreateCredentialClaimQuery(["batchExp"])]);
 
         var driverLicenseCredentialQuery = CreateCredentialQuery(
             Guid.NewGuid().ToString(),
-            Constants.SdJwtFormat,
+            Constants.SdJwtDcFormat,
             [idClaimQuery, CreateCredentialClaimQuery(["issuer"]), CreateCredentialClaimQuery(["dateOfBirth"])]);
 
         var universityCredentialQuery = CreateCredentialQuery(
             Guid.NewGuid().ToString(),
-            Constants.SdJwtFormat,
+            Constants.SdJwtDcFormat,
             [CreateCredentialClaimQuery(["degree"])]);
         
         var driverLicenseCredentialSetCandidate = new CredentialSetCandidate(DriverLicenseCredentialSetId,
@@ -104,7 +104,7 @@ public class DcqlServiceTests
     
         var identityCredentialCredentialQuery = CreateCredentialQuery(
             Guid.NewGuid().ToString(),
-            Constants.SdJwtFormat,
+            Constants.SdJwtDcFormat,
             [cityClaimQuery, CreateCredentialClaimQuery(["vct"]), CreateCredentialClaimQuery(["iss"])]);
     
         var expected = new List<PresentationCandidate>
@@ -136,7 +136,7 @@ public class DcqlServiceTests
         
         var identityCredentialCredentialQuery = CreateCredentialQuery(
             Guid.NewGuid().ToString(),
-            Constants.SdJwtFormat,
+            Constants.SdJwtDcFormat,
             [vctClaimQuery, CreateCredentialClaimQuery(["address", "city"]), CreateCredentialClaimQuery(["iss"])]);
     
         var expected = new List<PresentationCandidate>
@@ -163,7 +163,7 @@ public class DcqlServiceTests
         // Arrange
         var driverLicenseCredentialQuery = CreateCredentialQuery(
             Guid.NewGuid().ToString(),
-            Constants.SdJwtFormat,
+            Constants.SdJwtDcFormat,
             [
                 CreateCredentialClaimQuery(["id"]),
                 CreateCredentialClaimQuery(["iss"]),
@@ -188,7 +188,7 @@ public class DcqlServiceTests
     
         var driverLicenseCredentialQuery = CreateCredentialQuery(
             Guid.NewGuid().ToString(),
-            Constants.SdJwtFormat,
+            Constants.SdJwtDcFormat,
             [idClaimQuery, CreateCredentialClaimQuery(["issuer"]), CreateCredentialClaimQuery(["dateOfBirth"])]);
     
         var dcqlService = CreateDcqlService();

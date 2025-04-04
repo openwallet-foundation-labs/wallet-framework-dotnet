@@ -43,7 +43,9 @@ public static class CredentialQueryFun
     public static IEnumerable<string> GetRequestedAttributes(this CredentialQuery credentialQuery) =>
         credentialQuery.Format switch
         {
-            Constants.SdJwtFormat
+            Constants.SdJwtVcFormat
+                => credentialQuery.Claims?.Select(claim => string.Join('.', claim.Path)) ?? [],
+            Constants.SdJwtDcFormat
                 => credentialQuery.Claims?.Select(claim => string.Join('.', claim.Path)) ?? [],
             Constants.MdocFormat =>
                 credentialQuery.Claims?.Select(claim =>

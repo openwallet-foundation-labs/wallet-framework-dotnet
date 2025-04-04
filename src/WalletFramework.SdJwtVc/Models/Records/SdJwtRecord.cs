@@ -1,4 +1,5 @@
 using System.Collections.Immutable;
+using System.IdentityModel.Tokens.Jwt;
 using Hyperledger.Aries.Storage;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -19,7 +20,7 @@ namespace WalletFramework.SdJwtVc.Models.Records;
 /// </summary>
 public sealed class SdJwtRecord : RecordBase, ICredential
 {
-    public const int CurrentVersion = 2;
+    public const int CurrentVersion = 3;
     
     /// <summary>
     ///     Gets or sets the attributes that should be displayed.
@@ -76,6 +77,11 @@ public sealed class SdJwtRecord : RecordBase, ICredential
     ///     Tracks when the Sd-JWT was issued
     /// </summary>
     public StatusListEntry? StatusListEntry { get; set; }
+    
+    /// <summary>
+    ///     Tracks the Credential Format Identifier
+    /// </summary>
+    public string Format { get; set; }
     
     /// <summary>
     ///     Tracks when the Sd-JWT is valid from
@@ -156,6 +162,7 @@ public sealed class SdJwtRecord : RecordBase, ICredential
     /// <param name="issuedAt">The Issued at date.</param>
     /// <param name="notBefore">The valid after date.</param>
     /// <param name="recordVersion"></param>
+    /// <param name="format">The credential format identifier.</param>
     /// <param name="isOneTimeUse">Indicator whether the credential should be sued only once.</param>
     [JsonConstructor]
     public SdJwtRecord(
@@ -171,6 +178,7 @@ public sealed class SdJwtRecord : RecordBase, ICredential
         DateTime? issuedAt,
         DateTime? notBefore,
         int recordVersion,
+        string format,
         bool isOneTimeUse = false)
     {
         Claims = claims;
@@ -189,6 +197,7 @@ public sealed class SdJwtRecord : RecordBase, ICredential
         OneTimeUse = isOneTimeUse;
         StatusListEntry = statusListEntry;
         RecordVersion = recordVersion;
+        Format = format;
     }
     
     public SdJwtRecord(
@@ -203,6 +212,11 @@ public sealed class SdJwtRecord : RecordBase, ICredential
             
         var sdJwtDoc = new SdJwtDoc(serializedSdJwtWithDisclosures);
         EncodedIssuerSignedJwt = sdJwtDoc.IssuerSignedJwt;
+
+        var tokenHandler = new JwtSecurityTokenHandler();
+        var token = tokenHandler.ReadJwtToken(EncodedIssuerSignedJwt);
+        Format = token.Header.Typ;
+        
         Disclosures = sdJwtDoc.Disclosures.Select(x => x.Serialize()).ToImmutableArray();
         Claims = sdJwtDoc.GetAllSubjectClaims();
         Display = display;
@@ -246,6 +260,11 @@ public sealed class SdJwtRecord : RecordBase, ICredential
         Id = Guid.NewGuid().ToString();
             
         EncodedIssuerSignedJwt = sdJwtDoc.IssuerSignedJwt;
+        
+        var tokenHandler = new JwtSecurityTokenHandler();
+        var token = tokenHandler.ReadJwtToken(EncodedIssuerSignedJwt);
+        Format = token.Header.Typ;
+        
         Disclosures = sdJwtDoc.Disclosures.Select(disclosure => disclosure.Serialize()).ToImmutableArray();
         Claims = sdJwtDoc.GetAllSubjectClaims();
         Display = display;

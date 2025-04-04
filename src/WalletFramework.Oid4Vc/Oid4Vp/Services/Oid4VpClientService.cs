@@ -197,8 +197,8 @@ public class Oid4VpClientService : IOid4VpClientService
             switch (credential.Credential)
             {
                 case SdJwtRecord sdJwt:
-                    format = FormatFun.CreateSdJwtFormat();
-
+                    format = Format.ValidFormat(sdJwt.Format).UnwrapOrThrow();
+                    
                     presentation = await _sdJwtVcHolderService.CreatePresentation(
                         sdJwt,
                         claims.ToArray(),
@@ -425,7 +425,7 @@ public class Oid4VpClientService : IOid4VpClientService
             switch (credential.Credential)
             {
                 case SdJwtRecord sdJwt:
-                    format = FormatFun.CreateSdJwtFormat();
+                    format = Format.ValidFormat(sdJwt.Format).UnwrapOrThrow();
 
                     presentation = await _sdJwtVcHolderService.CreatePresentation(
                         sdJwt,

@@ -8,7 +8,7 @@ namespace WalletFramework.Oid4Vc.Tests.Oid4Vci.CredConfiguration.SdJwt.Samples;
 public static class SdJwtConfigurationSample
 {
     public static Format Format => Format
-        .ValidFormat(Constants.SdJwtFormat)
+        .ValidFormat(Constants.SdJwtDcFormat)
         .UnwrapOrThrow(new InvalidOperationException());
     
     public static Vct Vct => Vct
