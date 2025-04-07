@@ -377,7 +377,7 @@ public class PexServiceTests
     {
         var format = new Formats()
         {
-            SdJwtVcFormat = new SdJwtFormat()
+            SdJwtDcFormat = new SdJwtFormat()
             {
                 IssuerSignedJwtAlgValues = supportedAlg.ToList()
             }
