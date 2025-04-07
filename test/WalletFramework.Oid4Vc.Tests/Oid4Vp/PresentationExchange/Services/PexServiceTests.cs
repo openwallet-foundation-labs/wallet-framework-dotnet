@@ -52,8 +52,8 @@ public class PexServiceTests
 
         var presentationMap = new PresentationMap[]
         {
-            new(presentationDefinition.InputDescriptors[0].Id,Guid.NewGuid().ToString(),FormatFun.CreateSdJwtFormat()),
-            new(presentationDefinition.InputDescriptors[1].Id,Guid.NewGuid().ToString(),FormatFun.CreateSdJwtFormat())
+            new(presentationDefinition.InputDescriptors[0].Id,Guid.NewGuid().ToString(),FormatFun.CreateSdJwtDcFormat()),
+            new(presentationDefinition.InputDescriptors[1].Id,Guid.NewGuid().ToString(),FormatFun.CreateSdJwtDcFormat())
         };
             
         var authResponse = await CreatePexService().CreateAuthorizationResponseAsync(authRequest, presentationMap);
@@ -377,7 +377,7 @@ public class PexServiceTests
     {
         var format = new Formats()
         {
-            SdJwtFormat = new SdJwtFormat()
+            SdJwtDcFormat = new SdJwtFormat()
             {
                 IssuerSignedJwtAlgValues = supportedAlg.ToList()
             }
