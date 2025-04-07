@@ -213,7 +213,7 @@ internal class MigrationStepsProvider(
             },
             async () =>
             {
-                var query = SearchQuery.Equal("~" + nameof(MdocRecord.RecordVersion), "2");
+                var query = SearchQuery.Equal("~" + nameof(SdJwtRecord.RecordVersion), "2");
         
                 var context = await agentProvider.GetContextAsync();
                 var records = await sdJwtVcHolderService.ListAsync(context, query);
