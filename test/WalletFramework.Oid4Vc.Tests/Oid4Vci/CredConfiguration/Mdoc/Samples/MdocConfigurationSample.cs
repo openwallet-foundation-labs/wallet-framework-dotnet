@@ -39,7 +39,7 @@ public static class MdocConfigurationSample
     public static ElementIdentifier GivenName =>
         ElementIdentifier.ValidElementIdentifier("given_name").UnwrapOrThrow(new InvalidOperationException());
 
-    public static Format Format => ValidFormat("mso_mdoc").UnwrapOrThrow(new InvalidOperationException());
+    public static Format Format => ValidFormat(Constants.MdocFormat).UnwrapOrThrow(new InvalidOperationException());
 
     public static JObject Valid => new()
     {

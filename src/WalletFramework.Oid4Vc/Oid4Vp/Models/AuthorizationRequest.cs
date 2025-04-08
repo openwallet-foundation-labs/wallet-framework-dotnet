@@ -2,13 +2,16 @@ using System.Security.Cryptography.X509Certificates;
 using LanguageExt;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using OneOf;
 using WalletFramework.Core.Functional;
 using WalletFramework.Core.Json;
+using WalletFramework.Oid4Vc.Oid4Vp.Dcql.Models;
+using WalletFramework.Oid4Vc.Oid4Vp.Dcql.Models;
 using WalletFramework.Oid4Vc.Oid4Vp.Errors;
 using WalletFramework.Oid4Vc.Oid4Vp.PresentationExchange.Models;
 using WalletFramework.Oid4Vc.Oid4Vp.TransactionDatas;
-using WalletFramework.Oid4Vc.Qes;
 using static WalletFramework.Oid4Vc.Oid4Vp.Models.ClientIdScheme;
+using WalletFramework.Oid4Vc.Qes;
 
 namespace WalletFramework.Oid4Vc.Oid4Vp.Models;
 
@@ -46,6 +49,12 @@ public record AuthorizationRequest
     /// </summary>
     [JsonProperty("presentation_definition")]
     public PresentationDefinition PresentationDefinition { get; init; }
+    
+    /// <summary>
+    ///     Gets the DCQL query. Contains the claims that the Verifier wants to receive.
+    /// </summary>
+    [JsonProperty("dcql_query")]
+    public DcqlQuery? DcqlQuery { get; }
 
     /// <summary>
     ///     Gets the client id. The Identifier of the Verifier.
@@ -98,10 +107,15 @@ public record AuthorizationRequest
     [JsonIgnore]
     public X509Chain? X509TrustChain { get; init; }
 
+    [JsonIgnore]
+    public OneOf<DcqlQuery, PresentationDefinition> Requirements =>
+        DcqlQuery is not null ? DcqlQuery : PresentationDefinition!;
+
     [JsonConstructor]
     private AuthorizationRequest(
         ClientIdScheme clientIdScheme,
         PresentationDefinition presentationDefinition,
+        DcqlQuery dcqlQuery,
         string clientId,
         string nonce,
         string responseUri,
@@ -127,6 +141,7 @@ public record AuthorizationRequest
         ClientMetadataUri = clientMetadataUri;
         Nonce = nonce;
         PresentationDefinition = presentationDefinition;
+        DcqlQuery = dcqlQuery;
         ResponseUri = responseUri;
         ResponseMode = responseMode;
         Scope = scope;

@@ -10,17 +10,18 @@ using WalletFramework.Core.Credentials.Abstractions;
 using WalletFramework.Core.Cryptography.Models;
 using WalletFramework.Core.Functional;
 using WalletFramework.Oid4Vc.Oid4Vci.Abstractions;
+using WalletFramework.Oid4Vc.Oid4Vci.CredConfiguration.Models;
 using WalletFramework.Oid4Vc.Oid4Vp.Models;
 using WalletFramework.Oid4Vc.Oid4Vp.PresentationExchange.Models;
 using WalletFramework.Oid4Vc.Oid4Vp.PresentationExchange.Services;
 using WalletFramework.Oid4Vc.Tests.Extensions;
-using WalletFramework.Oid4Vc.Tests.PresentationExchange.Models;
+using WalletFramework.Oid4Vc.Tests.Oid4Vp.PresentationExchange.Models;
 using WalletFramework.SdJwtVc.Models.Credential;
 using WalletFramework.SdJwtVc.Models.Credential.Attributes;
 using WalletFramework.SdJwtVc.Models.Records;
 using WalletFramework.SdJwtVc.Services.SdJwtVcHolderService;
 
-namespace WalletFramework.Oid4Vc.Tests.PresentationExchange.Services;
+namespace WalletFramework.Oid4Vc.Tests.Oid4Vp.PresentationExchange.Services;
 
 public class PexServiceTests
 {
@@ -44,37 +45,29 @@ public class PexServiceTests
     private readonly SdJwtRecord _batchCredentialTwo = CreateCredential(CredentialExamples.BatchCredential, BatchCredentialSetId);
 
     [Fact]
-    public async Task Can_Create_Presentation_Submission()
+    public async Task Can_Create_Authorization_Response()
     {
-        var presentationDefinition = JsonConvert.DeserializeObject<PresentationDefinition>(PexTestsDataProvider.GetJsonForTestCase());
-            
-        var credentials = new[]
+        var authRequest = JsonConvert.DeserializeObject<AuthorizationRequest>(PexTestsDataProvider.GetJsonForTestCase())!;
+        var presentationDefinition = authRequest.PresentationDefinition!;
+
+        var presentationMap = new PresentationMap[]
         {
-            new DescriptorMap
-            {
-                Id = presentationDefinition.InputDescriptors[0].Id,
-                Format = presentationDefinition.InputDescriptors[0].Formats.SdJwtFormat.IssuerSignedJwtAlgValues.First(),
-                Path = "$.credentials[0]"
-            },
-            new DescriptorMap
-            {
-                Id = presentationDefinition.InputDescriptors[1].Id,
-                Format = presentationDefinition.InputDescriptors[1].Formats.SdJwtFormat.IssuerSignedJwtAlgValues.First(),
-                Path = "$.credentials[1]"
-            },
+            new(presentationDefinition.InputDescriptors[0].Id,Guid.NewGuid().ToString(),FormatFun.CreateSdJwtDcFormat()),
+            new(presentationDefinition.InputDescriptors[1].Id,Guid.NewGuid().ToString(),FormatFun.CreateSdJwtDcFormat())
         };
             
-        var presentationSubmission = await CreatePexService().CreatePresentationSubmission(presentationDefinition, credentials);
+        var authResponse = await CreatePexService().CreateAuthorizationResponseAsync(authRequest, presentationMap);
+        var presentationSubmission = authResponse.PresentationSubmission;
 
         presentationSubmission.Id.Should().NotBeNullOrWhiteSpace();
         presentationSubmission.DefinitionId.Should().Be(presentationDefinition.Id);
-        presentationSubmission.DescriptorMap.Length.Should().Be(credentials.Length);
+        presentationSubmission.DescriptorMap.Length.Should().Be(presentationMap.Length);
 
         for (var i = 0; i < presentationDefinition.InputDescriptors.Length; i++)
         {
             presentationSubmission.DescriptorMap[i].Id.Should().Be(presentationDefinition.InputDescriptors[i].Id);
-            presentationSubmission.DescriptorMap[i].Format.Should().Be(credentials[i].Format);
-            presentationSubmission.DescriptorMap[i].Path.Should().Be(credentials[i].Path);   
+            presentationSubmission.DescriptorMap[i].Format.Should().Be(presentationMap[i].Format);
+            presentationSubmission.DescriptorMap[i].Path.Should().Be($"$[{i}]");   
         }
     }
         
@@ -135,9 +128,9 @@ public class PexServiceTests
         var pexService = CreatePexService();
 
         // Act
-        var driverLicenseCandidate = (await pexService.FindCandidates(driverLicenseInputDescriptor)).UnwrapOrThrow();
-        var universityCandidate = (await pexService.FindCandidates(universityInputDescriptor)).UnwrapOrThrow();
-        var batchCandidate = (await pexService.FindCandidates(batchInputDescriptor)).UnwrapOrThrow();
+        var driverLicenseCandidate = (await pexService.FindPresentationCandidateAsync(driverLicenseInputDescriptor)).UnwrapOrThrow();
+        var universityCandidate = (await pexService.FindPresentationCandidateAsync(universityInputDescriptor)).UnwrapOrThrow();
+        var batchCandidate = (await pexService.FindPresentationCandidateAsync(batchInputDescriptor)).UnwrapOrThrow();
         var credentialCandidatesArray = new List<PresentationCandidate> { driverLicenseCandidate, universityCandidate, batchCandidate };
 
         // Assert
@@ -169,11 +162,11 @@ public class PexServiceTests
                 new List<CredentialSetCandidate> { alternativeNestedCredentialSetCandidate })
         };
 
-        var sdJwtVcHolderService = CreatePexService();
+        var pexService = CreatePexService();
 
         // Act
         var candidate = 
-            (await sdJwtVcHolderService.FindCandidates(identityCredentialInputDescriptor)).UnwrapOrThrow();
+            (await pexService.FindPresentationCandidateAsync(identityCredentialInputDescriptor)).UnwrapOrThrow();
         var credentialCandidatesArray = new List<PresentationCandidate> { candidate };
 
         // Assert
@@ -206,11 +199,11 @@ public class PexServiceTests
                 new List<CredentialSetCandidate> { nestedCredentialSetCandidate, alternativeNestedCredentialSetCandidate }),
         };
 
-        var sdJwtVcHolderService = CreatePexService();
+        var pexService = CreatePexService();
 
         // Act
         var candidate = 
-            (await sdJwtVcHolderService.FindCandidates(identityCredentialInputDescriptor)).UnwrapOrThrow();
+            (await pexService.FindPresentationCandidateAsync(identityCredentialInputDescriptor)).UnwrapOrThrow();
         
         var credentialCandidatesArray = new List<PresentationCandidate> { candidate };
 
@@ -241,11 +234,11 @@ public class PexServiceTests
                 new List<CredentialSetCandidate> { credentialSetCandidate }),
         };
 
-        var sdJwtVcHolderService = CreatePexService();
+        var pexService = CreatePexService();
 
         // Act
         var candidate = 
-            (await sdJwtVcHolderService.FindCandidates(universityInputDescriptor)).UnwrapOrThrow();
+            (await pexService.FindPresentationCandidateAsync(universityInputDescriptor)).UnwrapOrThrow();
         
         var credentialCandidatesArray = new List<PresentationCandidate> { candidate };
 
@@ -267,10 +260,10 @@ public class PexServiceTests
             "University Degree",
             "We can only accept digital university degrees.");
         
-        var sdJwtVcHolderService = CreatePexService();
+        var pexService = CreatePexService();
 
         // Act
-        var credentialCandidatesArray = await sdJwtVcHolderService.FindCandidates(universityInputDescriptor);
+        var credentialCandidatesArray = await pexService.FindPresentationCandidateAsync(universityInputDescriptor);
 
         // Assert
         credentialCandidatesArray.IsNone.Should().BeTrue();
@@ -291,10 +284,10 @@ public class PexServiceTests
             "EU Driver's License",
             "We can only accept digital driver's licenses issued by national authorities of member states or trusted notarial auditors.");
 
-        var sdJwtVcHolderService = CreatePexService();
+        var pexService = CreatePexService();
 
         // Act
-        var candidate = await sdJwtVcHolderService.FindCandidates(driverLicenseInputDescriptor);
+        var candidate = await pexService.FindPresentationCandidateAsync(driverLicenseInputDescriptor);
 
         // Assert
         candidate.IsNone.Should().BeTrue();
@@ -315,16 +308,15 @@ public class PexServiceTests
             "EU Driver's License",
             "We can only accept digital driver's licenses issued by national authorities of member states or trusted notarial auditors.");
 
-        var sdJwtVcHolderService = CreatePexService();
+        var pexService = CreatePexService();
 
         // Act
-        var candidate = await sdJwtVcHolderService.FindCandidates(driverLicenseInputDescriptor);
+        var candidate = await pexService.FindPresentationCandidateAsync(driverLicenseInputDescriptor);
 
         // Assert
         candidate.IsNone.Should().BeTrue();
     }
 
-    #region Helper Methods
     private IPexService CreatePexService()
     {
         _sdJwtVcHolderServiceMock
@@ -385,7 +377,7 @@ public class PexServiceTests
     {
         var format = new Formats()
         {
-            SdJwtFormat = new SdJwtFormat()
+            SdJwtDcFormat = new SdJwtFormat()
             {
                 IssuerSignedJwtAlgValues = supportedAlg.ToList()
             }
@@ -412,5 +404,4 @@ public class PexServiceTests
 
         return inputDescriptor;
     }
-    #endregion
 }

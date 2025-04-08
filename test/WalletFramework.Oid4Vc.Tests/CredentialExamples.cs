@@ -1,7 +1,7 @@
 using Newtonsoft.Json.Linq;
 using SD_JWT.Roles.Issuer;
 
-namespace WalletFramework.Oid4Vc.Tests.PresentationExchange.Services;
+namespace WalletFramework.Oid4Vc.Tests;
 
 public static class CredentialExamples
 {

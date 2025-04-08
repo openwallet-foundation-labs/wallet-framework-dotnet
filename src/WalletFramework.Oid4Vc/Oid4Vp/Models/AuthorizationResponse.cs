@@ -18,7 +18,7 @@ public class AuthorizationResponse
     ///   Gets or sets the Presentation Submission.
     /// </summary>
     [JsonProperty("presentation_submission")]
-    public PresentationSubmission PresentationSubmission { get; set; } = null!;
+    public PresentationSubmission? PresentationSubmission { get; set; }
         
     /// <summary>
     ///     Gets or sets the State.
@@ -34,9 +34,11 @@ public static class AuthorizationResponseFun
         var dict = new Dictionary<string, string>
         {
             { "vp_token", authorizationResponse.VpToken },
-            { "presentation_submission", JsonConvert.SerializeObject(authorizationResponse.PresentationSubmission) },
             { "state", authorizationResponse.State ?? string.Empty }
         };
+        
+        if(authorizationResponse.PresentationSubmission is not null)
+            dict.Add("presentation_submission", JsonConvert.SerializeObject(authorizationResponse.PresentationSubmission));
 
         return new FormUrlEncodedContent(dict);
     }
