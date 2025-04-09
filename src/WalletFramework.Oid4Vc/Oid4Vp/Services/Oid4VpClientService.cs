@@ -355,7 +355,7 @@ public class Oid4VpClientService : IOid4VpClientService
             ClientId = authorizationRequest.ClientId,
             ClientMetadata = authorizationRequest.ClientMetadata,
             Name = authorizationRequest.Requirements.Match(
-                dcqlQuery => Option<string>.None,
+                _ => Option<string>.None,
                 presentationDefinition => presentationDefinition.Name),
             PresentedCredentialSets = presentedCredentials.ToList()
         };
@@ -637,7 +637,7 @@ public class Oid4VpClientService : IOid4VpClientService
             ClientId = authorizationRequest.ClientId,
             ClientMetadata = authorizationRequest.ClientMetadata,
             Name = authorizationRequest.Requirements.Match(
-                dcqlQuery => Option<string>.None,
+                _ => Option<string>.None,
                 presentationDefinition => presentationDefinition.Name),
             PresentedCredentialSets = presentedCredentials.ToList()
         };
@@ -675,7 +675,7 @@ public class Oid4VpClientService : IOid4VpClientService
             var uc5TxDataOption = presentationCandidates
                 .AuthorizationRequest
                 .Requirements.Match(
-                    dcqlQuery => Option<IEnumerable<InputDescriptorTransactionData>>.None,
+                    _ => Option<IEnumerable<InputDescriptorTransactionData>>.None,
                     presentationDefinition => presentationDefinition.InputDescriptors.TraverseAny(descriptor =>
                         descriptor.TransactionData.OnSome(list =>
                             new InputDescriptorTransactionData(descriptor.Id, list))));
@@ -713,7 +713,8 @@ public class Oid4VpClientService : IOid4VpClientService
                     return candidates.FindCandidateForTransactionData(transactionData).Match(
                         candidate => candidate.AddTransactionData(transactionData),
                         () => (Validation<PresentationCandidate>)new InvalidTransactionDataError(
-                            $"No credentials found that satisfy the transaction data with type {transactionData.GetTransactionDataType().AsString()}"));
+                            $"No credentials found that satisfy the transaction data with type {transactionData.GetTransactionDataType().AsString()}",
+                            presentationCandidates));
                 });
         
                 return candidatesValidation.OnSuccess(enumerable => presentationCandidates with
@@ -722,7 +723,8 @@ public class Oid4VpClientService : IOid4VpClientService
                 });
             },
             () => new InvalidTransactionDataError(
-                    "No credentials found that satisfy the authorization request with transaction data")
+                    "No credentials found that satisfy the authorization request with transaction data",
+                    presentationCandidates)
                 .ToInvalid<PresentationCandidates>()
         );
         
@@ -748,7 +750,9 @@ public class Oid4VpClientService : IOid4VpClientService
 
                     return candidateOption.Match(
                         candidate => candidate.AddUc5TransactionData(inputDescriptorTxData.TransactionData),
-                        () => (Validation<PresentationCandidate>)new InvalidTransactionDataError("No credentials found that satisfy the authorization request with transaction data") 
+                        () => (Validation<PresentationCandidate>)new InvalidTransactionDataError(
+                            "No credentials found that satisfy the authorization request with transaction data",
+                            presentationCandidates) 
                     );
                 });
                     
