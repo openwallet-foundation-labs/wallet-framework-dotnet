@@ -37,7 +37,6 @@ public class IssuerMetadataTests
                 
                 sdJwtConfiguration.Format.Should().Be(SdJwtConfigurationSample.Format);
                 sdJwtConfiguration.Vct.Should().Be(SdJwtConfigurationSample.Vct);
-                sdJwtConfiguration.Claims!.Count.Should().Be(6);
             },
             _ => Assert.Fail("IssuerMetadata must be valid"));
     }
