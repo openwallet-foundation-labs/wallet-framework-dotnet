@@ -11,10 +11,10 @@ namespace WalletFramework.Oid4Vc.Tests.Oid4Vci.Issuer;
 public class IssuerMetadataTests
 {
     [Fact]
-    public void Can_Decode_From_Json()
+    public void Can_Decode_Draft14_From_Json()
     {
         // Arrange
-        var sample = IssuerMetadataSample.EncodedAsJson;
+        var sample = IssuerMetadataSample.EncodedAsJsonDraft14AndLower;
     
         // Act
         ValidIssuerMetadata(sample).Match(
@@ -37,6 +37,7 @@ public class IssuerMetadataTests
                 
                 sdJwtConfiguration.Format.Should().Be(SdJwtConfigurationSample.Format);
                 sdJwtConfiguration.Vct.Should().Be(SdJwtConfigurationSample.Vct);
+                sdJwtConfiguration.Claims!.Count.Should().Be(6);
             },
             _ => Assert.Fail("IssuerMetadata must be valid"));
     }
@@ -44,18 +45,18 @@ public class IssuerMetadataTests
     [Fact]
     public void Can_Encode_To_Json()
     {
-        var issuerMetadata = IssuerMetadataSample.Decoded;
+        var issuerMetadata = IssuerMetadataSample.DecodedDraft14AndLower;
 
         var sut = issuerMetadata.EncodeToJson();
 
-        sut.Should().BeEquivalentTo(IssuerMetadataSample.EncodedAsJson);
+        sut.Should().BeEquivalentTo(IssuerMetadataSample.EncodedAsJsonDraft14AndLower);
     }
 
     [Fact]
-    public void Can_Decode_And_Encode_From_Json()
+    public void Can_Decode_And_Encode_From_Json_Draft14()
     {
         // Arrange
-        var sample = IssuerMetadataSample.EncodedAsJson;
+        var sample = IssuerMetadataSample.EncodedAsJsonDraft14AndLower;
 
         // Act
         ValidIssuerMetadata(sample).Match(
@@ -64,6 +65,24 @@ public class IssuerMetadataTests
             {
                 var sut = issuerMetadata.EncodeToJson();
                 sut.Should().BeEquivalentTo(sample);
+            },
+            _ => Assert.Fail("IssuerMetadata must be valid"));
+    }
+    
+    [Fact]
+    public void Can_Decode_And_Encode_From_Json_Draft15()
+    {
+        // Arrange
+        var sampleDraft15 = IssuerMetadataSample.EncodedAsJsonDraft15;
+        var sampleDraft14 = IssuerMetadataSample.EncodedAsJsonDraft14AndLower;
+        
+        // Act
+        ValidIssuerMetadata(sampleDraft15).Match(
+            // Assert
+            issuerMetadata =>
+            {
+                var sut = issuerMetadata.EncodeToJson();
+                sut.Should().BeEquivalentTo(sampleDraft14);
             },
             _ => Assert.Fail("IssuerMetadata must be valid"));
     }
