@@ -7,9 +7,8 @@ using Newtonsoft.Json.Linq;
 using WalletFramework.Core.Credentials;
 using WalletFramework.Core.Functional;
 using WalletFramework.Core.Json;
-using WalletFramework.SdJwtVc.Models.StatusList;
 
-namespace WalletFramework.SdJwtVc.Services;
+namespace WalletFramework.Core.StatusList;
 
 public class StatusListService(IHttpClientFactory httpClientFactory) : IStatusListService
 {

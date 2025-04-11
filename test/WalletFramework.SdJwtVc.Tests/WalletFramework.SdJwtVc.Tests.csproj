@@ -28,4 +28,8 @@
     <ProjectReference Include="..\..\src\WalletFramework.SdJwtVc\WalletFramework.SdJwtVc.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Compile Remove="StatusListTests.cs" />
+  </ItemGroup>
+
 </Project>

@@ -4,13 +4,13 @@ using Newtonsoft.Json;
 using WalletFramework.Core.Credentials.Abstractions;
 using WalletFramework.Core.Functional;
 using WalletFramework.Core.Path;
+using WalletFramework.Oid4Vc.Dcql.Models;
 using WalletFramework.Oid4Vc.Oid4Vci.Abstractions;
 using WalletFramework.Oid4Vc.Oid4Vci.Implementations;
-using WalletFramework.Oid4Vc.Oid4Vp.Dcql.Models;
 using WalletFramework.Oid4Vc.Oid4Vp.Models;
 using WalletFramework.SdJwtVc.Services.SdJwtVcHolderService;
 
-namespace WalletFramework.Oid4Vc.Oid4Vp.Dcql.Services;
+namespace WalletFramework.Oid4Vc.Dcql.Services;
 
 public class DcqlService(IAgentProvider agentProvider,
     IMdocStorage mdocStorage,

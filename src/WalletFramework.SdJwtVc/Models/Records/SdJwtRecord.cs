@@ -7,9 +7,9 @@ using WalletFramework.Core.Credentials;
 using WalletFramework.Core.Credentials.Abstractions;
 using WalletFramework.Core.Cryptography.Models;
 using WalletFramework.Core.Functional;
+using WalletFramework.Core.StatusList;
 using WalletFramework.SdJwtVc.Models.Credential;
 using WalletFramework.SdJwtVc.Models.Credential.Attributes;
-using WalletFramework.SdJwtVc.Models.StatusList;
 
 namespace WalletFramework.SdJwtVc.Models.Records;
 

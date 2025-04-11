@@ -1,6 +1,7 @@
 using Hyperledger.Aries.Storage;
 using LanguageExt;
 using WalletFramework.Core.Credentials;
+using WalletFramework.Core.StatusList;
 using WalletFramework.Oid4Vc.CredentialSet.Models;
 using WalletFramework.SdJwtVc.Services;
 
