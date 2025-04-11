@@ -15,7 +15,7 @@ public record RegistrationCertificate(
     Option<IEnumerable<CredentialSetQuery>> CredentialSets,
     Contact Contact,
     Sub Sub,
-    IssuedAt IssuedAt,
+    Option<IssuedAt> IssuedAt,
     Option<StatusListEntry> Status)
 {
     public static Validation<RegistrationCertificate> FromJObject(JObject json)
@@ -49,9 +49,10 @@ public record RegistrationCertificate(
         
         var issuedAt = json.GetByKey(IssuedAtJsonKey)
             .OnSuccess(token => token.ToJValue())
-            .OnSuccess(IssuedAt.ValidIssuedAt);
+            .OnSuccess(RelyingPartyAuthentication.RegistrationCertificate.IssuedAt.ValidIssuedAt)
+            .ToOption();
 
-        var statusList = json.GetByKey(IssuedAtJsonKey)
+        var statusList = json.GetByKey(StatusJsonKey)
             .OnSuccess(token => token.ToJObject())
             .OnSuccess(StatusListEntry.FromJObject)
             .ToOption();
@@ -72,7 +73,7 @@ public record RegistrationCertificate(
         Option<IEnumerable<CredentialSetQuery>> credentialSets,
         Contact contact,
         Sub sub,
-        IssuedAt issuedAt,
+        Option<IssuedAt> issuedAt,
         Option<StatusListEntry> status) =>
         new(purpose, credentials, credentialSets, contact, sub, issuedAt, status);
 }

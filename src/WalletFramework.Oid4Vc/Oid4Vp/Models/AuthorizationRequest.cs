@@ -93,6 +93,9 @@ public record AuthorizationRequest
     /// </summary>
     [JsonProperty("state")]
     public string? State { get; }
+    
+    [JsonProperty("attachements")]
+    public Attachment[] Attachments { get; }
 
     /// <summary>
     ///     The X509 certificate of the verifier, this property is only set when ClientIDScheme is X509SanDNS.
@@ -122,7 +125,8 @@ public record AuthorizationRequest
         ClientMetadata? clientMetadata,
         string? clientMetadataUri,
         string? scope,
-        string? state)
+        string? state,
+        Attachment[] attachments)
     {
         if (SupportedClientIdSchemes.Exists(supportedClientIdScheme =>
                 clientId.StartsWith($"{supportedClientIdScheme}:")))
@@ -145,6 +149,7 @@ public record AuthorizationRequest
         ResponseMode = responseMode;
         Scope = scope;
         State = state;
+        Attachments = attachments;
     }
 
     /// <summary>
