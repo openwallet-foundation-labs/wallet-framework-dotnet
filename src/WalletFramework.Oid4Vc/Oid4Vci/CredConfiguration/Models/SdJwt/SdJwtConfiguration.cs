@@ -41,20 +41,15 @@ public record SdJwtConfiguration
         var vct = config.GetByKey(VctJsonName).OnSuccess(Vct.ValidVct);
 
         var order = config[OrderJsonName]?.ToObject<List<string>>();
-        
-        Dictionary<string, ClaimMetadata>? claimMetadatas = null;
-        try
+
+        var claimToken = config[ClaimsJsonName];
+        var claimMetadatas = claimToken switch
         {
-            var claims = config[ClaimsJsonName]?.ToObject<List<ClaimMetadata>>();
-            
             //Used to map the ListRepresentation from Vci Draft15 to DictionaryRepresentation of Draft14 and older
-            if (claims != null)
-                claimMetadatas = ConvertToDictionaryRepresentation(claims);
-        }
-        catch (Exception _)
-        {
-            claimMetadatas = config[ClaimsJsonName]?.ToObject<Dictionary<string, ClaimMetadata>>();
-        }
+            JArray => ConvertToDictionaryRepresentation(claimToken.ToObject<List<ClaimMetadata>>()),
+            JObject => claimToken.ToObject<Dictionary<string, ClaimMetadata>>(),
+            _ => new Dictionary<string, ClaimMetadata>()
+        };
         
         var result = ValidationFun.Valid(Create)
             .Apply(credentialConfiguration)
@@ -68,10 +63,13 @@ public record SdJwtConfiguration
         return result;
     }
 
-    private static Dictionary<string, ClaimMetadata> ConvertToDictionaryRepresentation(List<ClaimMetadata> claimsV2)
+    private static Dictionary<string, ClaimMetadata> ConvertToDictionaryRepresentation(List<ClaimMetadata>? claimsV2)
     {
         var result = new Dictionary<string, ClaimMetadata>();
 
+        if (claimsV2 == null)
+            return result;
+        
         foreach (var claim in claimsV2)
         {
             if (claim.Path == null || claim.Path.Count == 0)

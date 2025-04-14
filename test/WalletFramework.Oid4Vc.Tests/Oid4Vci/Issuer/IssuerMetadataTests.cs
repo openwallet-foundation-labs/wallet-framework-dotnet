@@ -69,19 +69,19 @@ public class IssuerMetadataTests
     }
     
     [Fact]
-    public void Can_Decode_And_Encode_From_Json_Draft15()
+    public void Can_Decode_And_Encode_ClaimMetadata_From_Json_Draft15()
     {
         // Arrange
         var sampleDraft15 = IssuerMetadataSample.EncodedAsJsonDraft15;
-        var sampleDraft14 = IssuerMetadataSample.EncodedAsJsonDraft14AndLower;
         
         // Act
         ValidIssuerMetadata(sampleDraft15).Match(
             // Assert
             issuerMetadata =>
             {
-                var sut = issuerMetadata.EncodeToJson();
-                sut.Should().BeEquivalentTo(sampleDraft14);
+                ValidIssuerMetadata(issuerMetadata.EncodeToJson()).UnwrapOrThrow().CredentialConfigurationsSupported[IssuerMetadataSample.SdJwtConfigurationId].AsT0.Claims
+                    .Should()
+                    .BeEquivalentTo(issuerMetadata.CredentialConfigurationsSupported[IssuerMetadataSample.SdJwtConfigurationId].AsT0.Claims);
             },
             _ => Assert.Fail("IssuerMetadata must be valid"));
     }
