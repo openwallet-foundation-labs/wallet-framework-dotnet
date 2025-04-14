@@ -130,10 +130,10 @@ public static class CredentialQueryFun
     public const string ClaimsJsonKey = "claims";
     public const string ClaimSetsJsonKey = "claim_sets";
     
-    public static IEnumerable<string> GetRequestedAttributes(this CredentialQuery credentialQuery) =>
+    public static IEnumerable<string> GetRequestedClaims(this CredentialQuery credentialQuery) =>
         credentialQuery.Format switch
         {
-            Constants.SdJwtFormat
+            Constants.SdJwtVcFormat or Constants.SdJwtDcFormat
                 => credentialQuery.Claims?.Select(claim => string.Join('.', claim.Path)) ?? [],
             Constants.MdocFormat =>
                 credentialQuery.Claims?.Select(claim =>

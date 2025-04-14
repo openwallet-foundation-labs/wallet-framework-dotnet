@@ -107,6 +107,6 @@ public static class RegistrationCertificateFun
     public const string PrivacyPolicyJsonKey = "privacy_policy";
     public const string IssuedAtJsonKey = "iat";
     public const string CredentialsJsonKey = "credentials";
-    public const string CredentialSetsJsonKey = "credentialSets";
+    public const string CredentialSetsJsonKey = "credential_sets";
     public const string StatusJsonKey = "status";
 }

@@ -17,18 +17,20 @@ public static class X509CertificateExtensions
     /// </summary>
     /// <param name="trustChain">The trust chain to validate.</param>
     /// <returns>True if the trust chain is valid, otherwise false.</returns>
-    public static bool IsTrustChainValid(this List<X509Certificate> trustChain)
+    public static bool IsTrustChainValid(this IEnumerable<X509Certificate> trustChain)
     {
-        var leafCert = trustChain.First();
+        var chain = trustChain.ToList();
+        
+        var leafCert = chain.First();
 
-        var subjects = trustChain.Select(cert => cert.SubjectDN); 
+        var subjects = chain.Select(cert => cert.SubjectDN); 
         var rootCerts = new HashSet(
-            trustChain
+            chain
                 .Where(cert => cert.IsSelfSigned() || !subjects.Contains(cert.IssuerDN))
                 .Select(cert => new TrustAnchor(cert, null)));
 
         var intermediateCerts = new HashSet(
-            trustChain
+            chain
                 .Where(cert => !cert.IsSelfSigned())
                 .Append(leafCert));
 

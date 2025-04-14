@@ -18,7 +18,7 @@ public class CredentialClaimQuery
     /// This MUST be a string identifying the particular claim.
     /// </summary>
     [JsonProperty(IdJsonKey)]
-    public string Id { get; set; } = null!;
+    public string? Id { get; set; }
     
     /// <summary>
     /// A collection of strings representing a claims path pointer that specifies the path to a claim.
@@ -61,8 +61,9 @@ public class CredentialClaimQuery
                     return new StringIsNullOrWhitespaceError<CredentialQuery>();
                 }
 
-                return ValidationFun.Valid(value.Value.ToString());;
-            });
+                return ValidationFun.Valid(value.Value.ToString());
+            })
+            .ToOption();
         
         var path = json.GetByKey(PathJsonKey)
             .OnSuccess(token => token.ToJArray())
@@ -147,14 +148,14 @@ public class CredentialClaimQuery
     }
     
     private static CredentialClaimQuery Create(
-        string id,
+        Option<string> id,
         Option<IEnumerable<string>> path,
         Option<IEnumerable<string>> values,
         Option<IEnumerable<Purpose>> purpose,
         Option<string> @namespace,
         Option<string> claimName) => new()
     {
-        Id = id,
+        Id = id.ToNullable(),
         Path = path.ToNullable()?.ToArray(),
         Values = values.ToNullable()?.ToArray(),
         Purpose = purpose.ToNullable()?.ToArray(),

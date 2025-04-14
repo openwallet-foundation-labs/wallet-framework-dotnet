@@ -28,6 +28,22 @@
                     }
                 ]
             }
+        ],
+        "credential_sets": [
+            {
+                "options": [
+                    [
+                        "pid"
+                    ]
+                ],
+                "required": true,
+                "purpose": [
+                    {
+                        "locale": "en-US",
+                        "name": "To register a new user"
+                    }
+                ]
+            }
         ]
     },
     "client_metadata": {
