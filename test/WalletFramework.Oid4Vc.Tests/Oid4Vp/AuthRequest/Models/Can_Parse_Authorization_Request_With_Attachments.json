@@ -1,99 +1,88 @@
 {
-    "response_type" : "vp_token",
-    "client_id" : "x509_san_dns:funke-wallet.de",
-    "response_uri" : "https://funke-wallet.de/oid4vp/response",
-    "response_mode" : "direct_post",
-    "nonce" : "860303407528324526871313",
-    "dcql_query" : {
-        "credentials" : [ {
-            "id" : "pid",
-            "format" : "dc+sd-jwt",
-            "meta" : {
-                "vct_values" : [ "https://demo.pid-issuer.bundesdruckerei.de/credentials/pid/1.0", "urn:eu.europa.ec.eudi:pid:1" ]
-            },
-            "claims" : [ {
-                "path" : [ "family_name" ]
-            }, {
-                "path" : [ "given_name" ]
-            } ]
-        } ]
+    "response_type": "vp_token",
+    "client_id": "x509_san_dns:funke-wallet.de",
+    "response_uri": "https://funke-wallet.de/oid4vp/response",
+    "response_mode": "direct_post",
+    "nonce": "860303407528324526871313",
+    "dcql_query": {
+        "credentials": [
+            {
+                "id": "pid",
+                "format": "dc+sd-jwt",
+                "meta": {
+                    "vct_values": [
+                        "https://demo.pid-issuer.bundesdruckerei.de/credentials/pid/1.0",
+                        "urn:eu.europa.ec.eudi:pid:1"
+                    ]
+                },
+                "claims": [
+                    {
+                        "path": [
+                            "family_name"
+                        ]
+                    },
+                    {
+                        "path": [
+                            "given_name"
+                        ]
+                    }
+                ]
+            }
+        ]
     },
-    "client_metadata" : {
-        "vp_formats" : {
-            "mso_mdoc" : {
-                "alg" : [ "EdDSA", "ES256", "ES384" ]
+    "client_metadata": {
+        "vp_formats": {
+            "mso_mdoc": {
+                "alg": [
+                    "EdDSA",
+                    "ES256",
+                    "ES384"
+                ]
             },
-            "vc+sd-jwt" : {
-                "kb-jwt_alg_values" : [ "EdDSA", "ES256", "ES384", "ES256K" ],
-                "sd-jwt_alg_values" : [ "EdDSA", "ES256", "ES384", "ES256K" ]
+            "vc+sd-jwt": {
+                "kb-jwt_alg_values": [
+                    "EdDSA",
+                    "ES256",
+                    "ES384",
+                    "ES256K"
+                ],
+                "sd-jwt_alg_values": [
+                    "EdDSA",
+                    "ES256",
+                    "ES384",
+                    "ES256K"
+                ]
             },
-            "dc+sd-jwt" : {
-                "kb-jwt_alg_values" : [ "EdDSA", "ES256", "ES384", "ES256K" ],
-                "sd-jwt_alg_values" : [ "EdDSA", "ES256", "ES384", "ES256K" ]
+            "dc+sd-jwt": {
+                "kb-jwt_alg_values": [
+                    "EdDSA",
+                    "ES256",
+                    "ES384",
+                    "ES256K"
+                ],
+                "sd-jwt_alg_values": [
+                    "EdDSA",
+                    "ES256",
+                    "ES384",
+                    "ES256K"
+                ]
             }
         },
-        "authorization_encrypted_response_alg" : "ECDH-ES",
-        "authorization_encrypted_response_enc" : "A128GCM",
-        "client_name" : "German Registrar",
-        "response_types_supported" : [ "vp_token" ]
+        "authorization_encrypted_response_alg": "ECDH-ES",
+        "authorization_encrypted_response_enc": "A128GCM",
+        "client_name": "German Registrar",
+        "response_types_supported": [
+            "vp_token"
+        ]
     },
-    "state" : "764143516933320540744584",
-    "aud" : "https://funke-wallet.de/oid4vp/valid-request",
-    "exp" : 1744362364,
-    "iat" : 1744362064,
-    "attachements" : [ {
-        "format" : "eudi_registration_certificate",
-        "data" : {
-            "protected" : {
-                "alg" : "ES256",
-                "x5c" : [ "MIIBdTCCARugAwIBAgIUHsSmbGuWAVZVXjqoidqAVClGx4YwCgYIKoZIzj0EAwIwGzEZMBcGA1UEAwwQR2VybWFuIFJlZ2lzdHJhcjAeFw0yNTAzMzAxOTU4NTFaFw0yNjAzMzAxOTU4NTFaMBsxGTAXBgNVBAMMEEdlcm1hbiBSZWdpc3RyYXIwWTATBgcqhkjOPQIBBggqhkjOPQMBBwNCAASQWCESFd0Ywm9sK87XxqxDP4wOAadEKgcZFVX7npe3ALFkbjsXYZJsTGhVp0+B5ZtUao2NsyzJCKznPwTz2wJcoz0wOzAaBgNVHREEEzARgg9mdW5rZS13YWxsZXQuZGUwHQYDVR0OBBYEFMxnKLkGifbTKrxbGXcFXK6RFQd3MAoGCCqGSM49BAMCA0gAMEUCIQD4RiLJeuVDrEHSvkPiPfBvMxAXRC6PuExopUGCFdfNLQIgHGSa5u5ZqUtCrnMiaEageO71rjzBlov0YUH4+6ELioY=" ],
-                "b64" : true,
-                "crit" : [ "b64" ]
-            },
-            "header" : {
-                "etsiU" : [ "https://uri.etsi.org/01903/v1.2.2#JAdES-B" ],
-                "scts" : [ {
-                    "sth" : "eyJhbGciOiJFUzI1NiIsImtpZCI6ImRkMmE3MjAwLTc2OWUtNDgzZi05MjA4LTI3MmRmMzAwYWVmMCJ9.eyJ0cmVlSGVhZCI6ImZIOUVZU2lEaXlkSTlJOWpjY3UvRFlFTkQrbXRCRldaM1F3VHFBMXB6ZTA9IiwidHJlZVNpemUiOjE3LCJpYXQiOjE3NDM0NTA3OTY5ODMsImlzcyI6Imh0dHBzOi8vbG9nLmZ1bmtlLXdhbGxldC5kZSJ9.IFJL0F7-oix5ThjFDpVcfn-ObFQWlOBlbj3uJiFsil65MFTrPSXbqofcBcQbA6FgJsLdIpJhNTVWTp92Hygn4w",
-                    "mip" : {
-                        "leafIndex" : 16,
-                        "inclusionPath" : [ "qssUVSDMDByuVPs0nxJ3GCp1enwGHUKk8qzSUuPHivs=" ],
-                        "treeSize" : 17
-                    }
-                } ]
-            },
-            "payload" : {
-                "privacy_policy" : "https://example.com/privacy-policy",
-                "purpose" : [ {
-                    "locale" : "en-US",
-                    "name" : "To register a new user"
-                } ],
-                "contact" : {
-                    "email" : "privacy@example.com",
-                    "address" : "1 Mustrstr, Berlin, Germany",
-                    "phone" : "+1234567890"
-                },
-                "credentials" : [ {
-                    "id" : "pid",
-                    "format" : "dc+sd-jwt",
-                    "meta" : {
-                        "vct_values" : [ "https://demo.pid-issuer.bundesdruckerei.de/credentials/pid/1.0", "urn:eu.europa.ec.eudi:pid:1" ]
-                    },
-                    "claims" : [ {
-                        "path" : [ "family_name" ]
-                    }, {
-                        "path" : [ "given_name" ]
-                    } ]
-                } ],
-                "sub" : "CN=Demo RP",
-                "jti" : "382292ec-2ff4-4d59-85f7-92bab2a74150",
-                "status" : {
-                    "status_list" : {
-                        "idx" : 8308,
-                        "uri" : "https://funke-wallet.de/status-management/status-list"
-                    }
-                }
-            },
-            "signature" : "orpRRdaHkw4CqyQkaJr_35m8JPMrDUADwVQsh8HEZCKafY18WMRI_2wf2YL-WU8l-Awf5IagJjrYvQPhuejR2g"
+    "state": "764143516933320540744584",
+    "aud": "https://funke-wallet.de/oid4vp/valid-request",
+    "exp": 1744618112,
+    "iat": 1744617812,
+    "attachments": [
+        {
+            "format": "eudi_registration_certificate",
+            "data": "eyJ4NWMiOlsiTUlJQmRUQ0NBUnVnQXdJQkFnSVVIc1NtYkd1V0FWWlZYanFvaWRxQVZDbEd4NFl3Q2dZSUtvWkl6ajBFQXdJd0d6RVpNQmNHQTFVRUF3d1FSMlZ5YldGdUlGSmxaMmx6ZEhKaGNqQWVGdzB5TlRBek16QXhPVFU0TlRGYUZ3MHlOakF6TXpBeE9UVTROVEZhTUJzeEdUQVhCZ05WQkFNTUVFZGxjbTFoYmlCU1pXZHBjM1J5WVhJd1dUQVRCZ2NxaGtqT1BRSUJCZ2dxaGtqT1BRTUJCd05DQUFTUVdDRVNGZDBZd205c0s4N1h4cXhEUDR3T0FhZEVLZ2NaRlZYN25wZTNBTEZrYmpzWFlaSnNUR2hWcDArQjVadFVhbzJOc3l6SkNLem5Qd1R6MndKY296MHdPekFhQmdOVkhSRUVFekFSZ2c5bWRXNXJaUzEzWVd4c1pYUXVaR1V3SFFZRFZSME9CQllFRk14bktMa0dpZmJUS3J4YkdYY0ZYSzZSRlFkM01Bb0dDQ3FHU000OUJBTUNBMGdBTUVVQ0lRRDRSaUxKZXVWRHJFSFN2a1BpUGZCdk14QVhSQzZQdUV4b3BVR0NGZGZOTFFJZ0hHU2E1dTVacVV0Q3JuTWlhRWFnZU83MXJqekJsb3YwWVVINCs2RUxpb1k9Il0sImFsZyI6IkVTMjU2In0.eyJwcml2YWN5X3BvbGljeSI6Imh0dHBzOi8vZXhhbXBsZS5jb20vcHJpdmFjeS1wb2xpY3kiLCJwdXJwb3NlIjpbeyJsb2NhbGUiOiJlbi1VUyIsIm5hbWUiOiJUbyByZWdpc3RlciBhIG5ldyB1c2VyIn1dLCJjb250YWN0Ijp7IndlYnNpdGUiOiJwcml2YWN5QGV4YW1wbGUuY29tIiwiZS1tYWlsIjoiMSBNdXN0cnN0ciwgQmVybGluLCBHZXJtYW55IiwicGhvbmUiOiIrMTIzNDU2Nzg5MCJ9LCJjcmVkZW50aWFscyI6W3siaWQiOiJwaWQiLCJmb3JtYXQiOiJkYytzZC1qd3QiLCJtZXRhIjp7InZjdF92YWx1ZXMiOlsiaHR0cHM6Ly9kZW1vLnBpZC1pc3N1ZXIuYnVuZGVzZHJ1Y2tlcmVpLmRlL2NyZWRlbnRpYWxzL3BpZC8xLjAiLCJ1cm46ZXUuZXVyb3BhLmVjLmV1ZGk6cGlkOjEiXX0sImNsYWltcyI6W3sicGF0aCI6WyJmYW1pbHlfbmFtZSJdfSx7InBhdGgiOlsiZ2l2ZW5fbmFtZSJdfV19XSwiY3JlZGVudGlhbF9zZXRzIjpbeyJvcHRpb25zIjpbWyJwaWQiXV0sInJlcXVpcmVkIjp0cnVlLCJwdXJwb3NlIjpbeyJsb2NhbGUiOiJlbi1VUyIsIm5hbWUiOiJUbyByZWdpc3RlciBhIG5ldyB1c2VyIn1dfV0sInN1YiI6IkNOPURlbW8gUlAiLCJqdGkiOiIzMzU4YjkwOS1iMThjLTQ0NDgtOWQ0YS0yYzE4ZDU2MGExZmQiLCJzdGF0dXMiOnsic3RhdHVzX2xpc3QiOnsiaWR4IjozNjMzLCJ1cmkiOiJodHRwczovL2Z1bmtlLXdhbGxldC5kZS9zdGF0dXMtbWFuYWdlbWVudC9zdGF0dXMtbGlzdCJ9fX0.pbuKfJeyTP9Gtu4N3bttIT1x9xbmdDtlD_r-G7lKCElL5jW4k584AL0LEwdR1YvMEWTD9rCDsdrAtqgrxt68Lw"
         }
-    } ]
+    ]
 }

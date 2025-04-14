@@ -9,7 +9,7 @@ public class RegistrationCertificateTests
     [Fact]
     public void Can_Parse_Registration_Certificate_Data()
     {
-        var sut = RegistrationCertificate.FromJObject(RegistrationCertificateSamples.JsonSample);
+        var sut = RegistrationCertificate.FromJwtToken(RegistrationCertificateSamples.JwtSample);
         sut.Match(
             _ =>
             {
@@ -17,7 +17,7 @@ public class RegistrationCertificateTests
             },
             errors =>
             {
-                Assert.Fail("PaymentTransactionData Validation failed");
+                Assert.Fail("RegistrationCertificate Validation failed");
             });
     }
 }

@@ -94,7 +94,7 @@ public record AuthorizationRequest
     [JsonProperty("state")]
     public string? State { get; }
     
-    [JsonProperty("attachements")]
+    [JsonIgnore]
     public Attachment[] Attachments { get; }
 
     /// <summary>

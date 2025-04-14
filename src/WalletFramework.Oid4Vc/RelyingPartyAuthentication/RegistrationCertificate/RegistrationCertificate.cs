@@ -1,6 +1,10 @@
 using System.Collections;
+using System.Globalization;
+using System.IdentityModel.Tokens.Jwt;
 using LanguageExt;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using Org.BouncyCastle.X509;
 using WalletFramework.Core.Functional;
 using WalletFramework.Core.Json;
 using WalletFramework.Core.StatusList;
@@ -16,46 +20,60 @@ public record RegistrationCertificate(
     Contact Contact,
     Sub Sub,
     Option<IssuedAt> IssuedAt,
-    Option<StatusListEntry> Status)
+    Option<StatusListEntry> Status,
+    IEnumerable<X509Certificate> Certificates)
 {
-    public static Validation<RegistrationCertificate> FromJObject(JObject json)
+    public static Validation<RegistrationCertificate> FromJwtToken(string jwtToken)
     {
-        var purpose = json.GetByKey(PurposeJsonKey)
+        var tokenHandler = new JwtSecurityTokenHandler();
+        var jwt = tokenHandler.ReadJwtToken(jwtToken);
+        var jObject = JObject.Parse(jwt.Payload.SerializeToJson());
+        
+        var purpose = jObject.GetByKey(PurposeJsonKey)
             .OnSuccess(token => token.ToJArray())
             .OnSuccess(array => array.TraverseAll(jToken => jToken.ToJObject()))
             .OnSuccess(array => array.Select(RelyingPartyAuthentication.RegistrationCertificate.Purpose.FromJObject))
             .OnSuccess(array => array.TraverseAll(x => x.ToOption()));
 
-        var credentials = json.GetByKey(CredentialsJsonKey)
+        var credentials = jObject.GetByKey(CredentialsJsonKey)
             .OnSuccess(token => token.ToJArray())
             .OnSuccess(array => array.TraverseAll(jToken => jToken.ToJObject()))
             .OnSuccess(array => array.Select(CredentialQuery.FromJObject))
             .OnSuccess(array => array.TraverseAll(x => x));
 
-        var credentialSets = json.GetByKey(CredentialSetsJsonKey)
+        var credentialSets = jObject.GetByKey(CredentialSetsJsonKey)
             .OnSuccess(token => token.ToJArray())
             .OnSuccess(array => array.TraverseAll(jToken => jToken.ToJObject()))
             .OnSuccess(array => array.Select(CredentialSetQuery.FromJObject))
             .OnSuccess(array => array.TraverseAll(x => x))
             .ToOption();
         
-        var contact = json.GetByKey(ContactJsonKey)
+        var contact = jObject.GetByKey(ContactJsonKey)
             .OnSuccess(token => token.ToJObject())
             .OnSuccess(Contact.FromJObject);
         
-        var sub = json.GetByKey(SubJsonKey)
+        var sub = jObject.GetByKey(SubJsonKey)
             .OnSuccess(token => token.ToJValue())
             .OnSuccess(Sub.ValidSub);
         
-        var issuedAt = json.GetByKey(IssuedAtJsonKey)
+        var issuedAt = jObject.GetByKey(IssuedAtJsonKey)
             .OnSuccess(token => token.ToJValue())
             .OnSuccess(RelyingPartyAuthentication.RegistrationCertificate.IssuedAt.ValidIssuedAt)
             .ToOption();
 
-        var statusList = json.GetByKey(StatusJsonKey)
+        var statusList = jObject.GetByKey(StatusJsonKey)
             .OnSuccess(token => token.ToJObject())
             .OnSuccess(StatusListEntry.FromJObject)
             .ToOption();
+        
+        var certificates = JArray.Parse(jwt.Header.X5c).ToJArray()
+            .OnSuccess(array => array.TraverseAll(jToken => jToken.ToJValue()))
+            .OnSuccess(x =>
+            {
+                var parser = new X509CertificateParser();
+                return x.Select(jToken =>
+                    parser.ReadCertificate(Convert.FromBase64String(jToken.ToString(CultureInfo.InvariantCulture))));
+            });
         
         return ValidationFun.Valid(Create)
             .Apply(purpose)
@@ -64,7 +82,8 @@ public record RegistrationCertificate(
             .Apply(contact)
             .Apply(sub)
             .Apply(issuedAt)
-            .Apply(statusList);
+            .Apply(statusList)
+            .Apply(certificates);
     }
 
     private static RegistrationCertificate Create(
@@ -74,8 +93,10 @@ public record RegistrationCertificate(
         Contact contact,
         Sub sub,
         Option<IssuedAt> issuedAt,
-        Option<StatusListEntry> status) =>
-        new(purpose, credentials, credentialSets, contact, sub, issuedAt, status);
+        Option<StatusListEntry> status,
+        IEnumerable<X509Certificate> certificates
+        ) =>
+        new(purpose, credentials, credentialSets, contact, sub, issuedAt, status, certificates);
 }
 
 public static class RegistrationCertificateFun

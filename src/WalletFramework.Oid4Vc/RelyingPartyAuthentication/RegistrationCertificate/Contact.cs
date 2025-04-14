@@ -64,7 +64,7 @@ public record Contact(ContactAddress Address, ContactEmail Email, ContactPhone P
 
 public static class ContactFun
 {
-    public const string AddressJsonKey = "address";
-    public const string EmailJsonKey = "email";
+    public const string AddressJsonKey = "website";
+    public const string EmailJsonKey = "e-mail";
     public const string PhoneJsonKey = "phone";
 }
