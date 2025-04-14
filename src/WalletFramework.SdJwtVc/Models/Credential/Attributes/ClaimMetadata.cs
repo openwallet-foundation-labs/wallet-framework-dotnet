@@ -7,6 +7,10 @@ namespace WalletFramework.SdJwtVc.Models.Credential.Attributes;
 ///     Represents the specifics about a claim.
 /// </summary>
 public class ClaimMetadata   {
+    
+    [JsonProperty("path", NullValueHandling = NullValueHandling.Ignore)]
+    public List<string>? Path { get; set; }
+    
     /// <summary>
     ///     Gets or sets the list of display properties associated with a specific credential attribute.
     /// </summary>

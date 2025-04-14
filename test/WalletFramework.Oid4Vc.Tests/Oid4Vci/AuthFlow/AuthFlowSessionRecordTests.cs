@@ -26,7 +26,7 @@ public class AuthFlowSessionRecordTests
             RedirectUri = "i can write anything"
         };
 
-        var issuerMetadata = IssuerMetadataSample.Decoded;
+        var issuerMetadata = IssuerMetadataSample.DecodedDraft14AndLower;
         
         var authorizationServerMetadata = new AuthorizationServerMetadata
         {

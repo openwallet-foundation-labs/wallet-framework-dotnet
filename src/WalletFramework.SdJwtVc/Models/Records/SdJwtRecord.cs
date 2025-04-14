@@ -166,7 +166,7 @@ public sealed class SdJwtRecord : RecordBase, ICredential
     /// <param name="isOneTimeUse">Indicator whether the credential should be sued only once.</param>
     [JsonConstructor]
     public SdJwtRecord(
-        Dictionary<string, ClaimMetadata> displayedAttributes,
+        Dictionary<string, ClaimMetadata>? displayedAttributes,
         Dictionary<string, string> claims,
         ImmutableArray<string> disclosures,
         List<SdJwtDisplay> display,
@@ -202,7 +202,7 @@ public sealed class SdJwtRecord : RecordBase, ICredential
     
     public SdJwtRecord(
         string serializedSdJwtWithDisclosures,
-        Dictionary<string, ClaimMetadata> displayedAttributes,
+        Dictionary<string, ClaimMetadata>? displayedAttributes,
         List<SdJwtDisplay> display,
         KeyId keyId,
         CredentialSetId credentialSetId,
@@ -251,7 +251,7 @@ public sealed class SdJwtRecord : RecordBase, ICredential
     
     public SdJwtRecord(
         SdJwtDoc sdJwtDoc,
-        Dictionary<string, ClaimMetadata> displayedAttributes,
+        Dictionary<string, ClaimMetadata>? displayedAttributes,
         List<SdJwtDisplay> display,
         KeyId keyId,
         CredentialSetId credentialSetId,
