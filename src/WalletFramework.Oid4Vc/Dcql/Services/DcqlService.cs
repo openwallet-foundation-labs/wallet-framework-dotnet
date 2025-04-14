@@ -93,7 +93,8 @@ public class DcqlService(IAgentProvider agentProvider,
         
         switch (credentialQuery.Format)
         {
-            case Constants.SdJwtFormat:
+            case Constants.SdJwtVcFormat:
+            case Constants.SdJwtDcFormat:
                 candidates.AddRange(await GetMatchingSdJwtCredentials(credentialQuery));
                 break;
             case Constants.MdocFormat:

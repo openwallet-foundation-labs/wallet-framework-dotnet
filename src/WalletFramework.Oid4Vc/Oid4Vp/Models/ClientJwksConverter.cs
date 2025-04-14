@@ -16,12 +16,17 @@ public class ClientJwksConverter : JsonConverter<Option<JwkSet>>
         bool hasExistingValue,
         JsonSerializer serializer)
     {
-        var jObject = JObject.Load(reader);
-        return JwkSet.FromJObject(jObject).ToOption();
+        try
+        {
+            var jObject = JObject.Load(reader);
+            return JwkSet.FromJObject(jObject).ToOption();
+        }
+        catch (Exception)
+        {
+            return Option<JwkSet>.None;
+        }
     }
 
-    public override void WriteJson(JsonWriter writer, Option<JwkSet> value, JsonSerializer serializer)
-    {
+    public override void WriteJson(JsonWriter writer, Option<JwkSet> value, JsonSerializer serializer) => 
         throw new NotImplementedException();
-    }
 }

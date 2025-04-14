@@ -9,6 +9,33 @@ namespace WalletFramework.Oid4Vc.Oid4Vp.Models;
 /// </summary>
 public record ClientMetadata
 {
+    // Needed for Newtonsoft Json Serialization
+    public ClientMetadata(
+        string? authorizationEncryptedResponseEnc,
+        string[] redirectUris,
+        string? clientName,
+        string? clientUri,
+        string[]? contacts,
+        string? logoUri,
+        Option<JwkSet> jwks,
+        string? jwksUri,
+        string? policyUri,
+        string? tosUri,
+        Formats formats)
+    {
+        AuthorizationEncryptedResponseEnc = authorizationEncryptedResponseEnc;
+        RedirectUris = redirectUris;
+        ClientName = clientName;
+        ClientUri = clientUri;
+        Contacts = contacts;
+        LogoUri = logoUri;
+        JwkSet = jwks;
+        JwksUri = jwksUri;
+        PolicyUri = policyUri;
+        TosUri = tosUri;
+        Formats = formats;
+    }
+
     /// <summary>
     ///     Defined the encoding that should be used when an encrypted Auth Response is requested by the verifier.
     /// </summary>
