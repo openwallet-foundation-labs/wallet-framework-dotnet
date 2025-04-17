@@ -1,7 +1,6 @@
 using Newtonsoft.Json.Linq;
 using WalletFramework.Core.Functional;
 using WalletFramework.Core.Functional.Errors;
-using WalletFramework.Core.Json;
 
 namespace WalletFramework.Oid4Vc.RelyingPartyAuthentication.RegistrationCertificate;
 

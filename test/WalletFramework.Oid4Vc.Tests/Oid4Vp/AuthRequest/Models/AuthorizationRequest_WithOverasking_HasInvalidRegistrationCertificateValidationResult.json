@@ -25,6 +25,11 @@
                         "path": [
                             "given_name"
                         ]
+                    },
+                    {
+                        "path": [
+                            "overasked_claim"
+                        ]
                     }
                 ]
             }

@@ -99,7 +99,7 @@ public record AuthorizationRequest
     public string? State { get; }
     
     [JsonIgnore]
-    public Attachment[] Attachments { get; }
+    public Attachment[]? Attachments { get; }
 
     /// <summary>
     ///     The X509 certificate of the verifier, this property is only set when ClientIDScheme is X509SanDNS.
@@ -382,8 +382,8 @@ internal static class AuthorizationRequestExtensions
         return authorizationRequest.Requirements.Match(
             dcqlQuery =>
             {
-                var registrationCertificateAttachments = authorizationRequest.Attachments.Where(attachment =>
-                    attachment.Format == Constants.RegistrationCertificateFormat);
+                var registrationCertificateAttachments = authorizationRequest.Attachments?.Where(attachment =>
+                    attachment.Format == Constants.RegistrationCertificateFormat) ?? [];
 
                 List<string> certifiedClaims = [];
                 List<IEnumerable<string>> certifiedClaimSets = [];
