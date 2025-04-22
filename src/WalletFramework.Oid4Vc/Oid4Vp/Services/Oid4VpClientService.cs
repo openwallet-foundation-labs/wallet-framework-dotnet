@@ -281,10 +281,24 @@ public class Oid4VpClientService : IOid4VpClientService
             switch (credential.Credential)
             {
                 case SdJwtRecord { OneTimeUse: true } sdJwtRecord:
-                    await _sdJwtVcHolderService.DeleteAsync(context, sdJwtRecord.GetId());
+                    var credentialSetSdJwtRecords = await _sdJwtVcHolderService.ListAsync(context, sdJwtRecord.GetCredentialSetId());
+                    await credentialSetSdJwtRecords.Match(
+                        async sdJwtRecords =>
+                        {
+                            if (sdJwtRecords.Count() > 1)
+                                await _sdJwtVcHolderService.DeleteAsync(context, sdJwtRecord.GetId());
+                        },
+                        () => Task.CompletedTask);
                     break;
                 case MdocRecord { OneTimeUse: true } mDocRecord:
-                    await _mDocStorage.Delete(mDocRecord);
+                    var credentialSetMdocRecords = await _mDocStorage.List(mDocRecord.GetCredentialSetId());
+                    await credentialSetMdocRecords.Match(
+                        async mDocRecords =>
+                        {
+                            if (mDocRecords.Count() > 1)
+                                await _mDocStorage.Delete(mDocRecord);
+                        },
+                        () => Task.CompletedTask);
                     break;
             }
         }
