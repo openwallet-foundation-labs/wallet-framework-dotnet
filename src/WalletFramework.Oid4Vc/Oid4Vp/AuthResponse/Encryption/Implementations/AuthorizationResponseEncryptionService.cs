@@ -27,10 +27,10 @@ public class AuthorizationResponseEncryptionService
                 httpClient.DefaultRequestHeaders.Clear();
                 var httpResponseMessage = await httpClient.GetAsync(request.ClientMetadata!.JwksUri);
                 var jwkSetJsonStr = await httpResponseMessage.Content.ReadAsStringAsync();
-                verifierPubKey = JwkSet.FromJsonStr(jwkSetJsonStr).UnwrapOrThrow().GetFirst();
+                verifierPubKey = JwkSet.FromJsonStr(jwkSetJsonStr).UnwrapOrThrow().GetEcP256Jwk();
                 break;
             case (false, true):
-                verifierPubKey = request.ClientMetadata!.JwkSet.UnwrapOrThrow().GetFirst();
+                verifierPubKey = request.ClientMetadata!.JwkSet.UnwrapOrThrow().GetEcP256Jwk();
                 break;
             default:
                 throw new InvalidOperationException("Neither jwks or jwk_uri found");
