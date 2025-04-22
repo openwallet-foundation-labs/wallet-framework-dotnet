@@ -287,7 +287,6 @@ public class Oid4VpClientService : IOid4VpClientService
                         {
                             if (sdJwtRecords.Count() > 1)
                                 await _sdJwtVcHolderService.DeleteAsync(context, sdJwtRecord.GetId());
-
                         },
                         () => Task.CompletedTask);
                     break;
