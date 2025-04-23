@@ -19,7 +19,7 @@ public static class AuthFlowSamples
                 ["WalletIssuer"] = "i can write anything",
                 ["RedirectUri"] = "https://test-issuer.com/redirect"
             },
-            ["issuer_metadata"] = IssuerMetadataSample.EncodedAsJson,
+            ["issuer_metadata"] = IssuerMetadataSample.EncodedAsJsonDraft14AndLower,
             ["authorization_server_metadata"] = new JObject
             {
                 ["issuer"] = "i can write anything",
