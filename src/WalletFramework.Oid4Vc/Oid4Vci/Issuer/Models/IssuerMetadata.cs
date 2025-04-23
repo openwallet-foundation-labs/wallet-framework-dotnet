@@ -11,6 +11,7 @@ using WalletFramework.Core.Functional;
 using WalletFramework.Core.Json;
 using WalletFramework.Core.Uri;
 using WalletFramework.Oid4Vc.Oid4Vci.CredConfiguration.Models;
+using WalletFramework.Oid4Vc.Oid4Vci.CredentialNonce.Models;
 using static WalletFramework.Core.Functional.ValidationFun;
 using static WalletFramework.Oid4Vc.Oid4Vci.Authorization.Models.AuthorizationServerId;
 using static WalletFramework.Oid4Vc.Oid4Vci.Issuer.Models.CredentialIssuerId;
@@ -65,6 +66,11 @@ public record IssuerMetadata
     /// </summary>
     public Option<BatchCredentialIssuance> BatchCredentialIssuance { get; }
     
+    /// <summary>
+    ///     Gets the URL of the Nonce Endpoint to retrieve new CredentialNonces (cNonce).
+    /// </summary>
+    public Option<CNonceEndpoint> CNonceEndpoint { get; }
+    
     private IssuerMetadata(
         Dictionary<CredentialConfigurationId, SupportedCredentialConfiguration> credentialConfigurationsSupported,
         Option<List<IssuerDisplay>> display,
@@ -72,7 +78,8 @@ public record IssuerMetadata
         Option<Uri> presentationSigningEndpoint,
         CredentialIssuerId credentialIssuer,
         Option<IEnumerable<AuthorizationServerId>> authorizationServers,
-        Option<BatchCredentialIssuance> batchCredentialIssuance)
+        Option<BatchCredentialIssuance> batchCredentialIssuance,
+        Option<CNonceEndpoint> cNonceEndpoint)
     {
         CredentialConfigurationsSupported = credentialConfigurationsSupported;
         Display = display;
@@ -81,6 +88,7 @@ public record IssuerMetadata
         CredentialIssuer = credentialIssuer;
         AuthorizationServers = authorizationServers;
         BatchCredentialIssuance = batchCredentialIssuance;
+        CNonceEndpoint = cNonceEndpoint;
     }
     
     private static IssuerMetadata Create(
@@ -90,14 +98,16 @@ public record IssuerMetadata
         Option<Uri> presentationSigningEndpoint,
         CredentialIssuerId credentialIssuer,
         Option<IEnumerable<AuthorizationServerId>> authorizationServers,
-        Option<BatchCredentialIssuance> batchCredentialIssuance) => new(
+        Option<BatchCredentialIssuance> batchCredentialIssuance,
+        Option<CNonceEndpoint> cNonceEndpoint) => new(
         credentialConfigurationsSupported,
         display,
         credentialEndpoint,
         presentationSigningEndpoint,
         credentialIssuer,
         authorizationServers,
-        batchCredentialIssuance);
+        batchCredentialIssuance,
+        cNonceEndpoint);
 
     public static Validation<IssuerMetadata> ValidIssuerMetadata(JObject json)
     {
@@ -172,6 +182,10 @@ public record IssuerMetadata
             .GetByKey(BatchCredentialIssuanceJsonKey)
             .ToOption()
             .OnSome(OptionalBatchCredentialIssuance);
+
+        var cNonceEndpoint =
+            from jToken in json.GetByKey(CNonceEndpointJsonKey).ToOption()
+            select new CNonceEndpoint(new Uri(jToken.ToString()));
         
         return Valid(Create)
             .Apply(credentialConfigurations)
@@ -180,7 +194,8 @@ public record IssuerMetadata
             .Apply(presentationSigningEndpoint)
             .Apply(credentialIssuerId)
             .Apply(authServers)
-            .Apply(issuance);
+            .Apply(issuance)
+            .Apply(cNonceEndpoint);
     }
 }
 
@@ -193,6 +208,7 @@ public static class IssuerMetadataJsonExtensions
     public const string CredentialIssuerJsonKey = "credential_issuer";
     public const string AuthorizationServersJsonKey = "authorization_servers";
     public const string BatchCredentialIssuanceJsonKey = "batch_credential_issuance";
+    public const string CNonceEndpointJsonKey = "nonce_endpoint";
     
     public static JObject EncodeToJson(this IssuerMetadata issuerMetadata)
     {
@@ -240,6 +256,11 @@ public static class IssuerMetadataJsonExtensions
         issuerMetadata.BatchCredentialIssuance.IfSome(issuance =>
         {
             result.Add(BatchCredentialIssuanceJsonKey, issuance.EncodeToJson());
+        });
+        
+        issuerMetadata.CNonceEndpoint.IfSome(endpoint =>
+        {
+            result.Add(CNonceEndpointJsonKey, endpoint.Value.ToStringWithoutTrail());
         });
         
         return result;
