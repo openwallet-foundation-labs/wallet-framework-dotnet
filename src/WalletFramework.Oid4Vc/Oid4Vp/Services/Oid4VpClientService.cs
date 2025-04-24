@@ -162,16 +162,8 @@ public class Oid4VpClientService : IOid4VpClientService
                 inputDescriptor => inputDescriptor.GetRequestedAttributes());
 
             var txDataBase64UrlStringsOption = credential
-                .TransactionData
-                .OnSome(list =>
-                {
-                    return list.TraverseAll(txData =>
-                    {
-                        return txData.Match(
-                            _ => Option<string>.None,
-                            uc5QesTxData => uc5QesTxData.TransactionDataProperties.Encoded.AsString);
-                    });
-                });
+                .Uc5TransactionData
+                .OnSome(list => list.Select(data => data.Encoded.AsString));
             
             var txDataHashesOption = credential
                 .TransactionData
