@@ -1,5 +1,4 @@
 using FluentAssertions;
-using WalletFramework.Core.Functional;
 using WalletFramework.Oid4Vc.Oid4Vp.Models;
 using WalletFramework.Oid4Vc.Tests.Oid4Vp.AuthRequest.Models;
 
@@ -23,25 +22,5 @@ public class AuthorizationRequestTests
         var authRequest = AuthorizationRequest.CreateAuthorizationRequest(json);
 
         authRequest.IsSuccess.Should().BeTrue();
-    }
-    
-    [Fact]
-    public void AuthorizationRequest_WithoutOverasking_HasValidRegistrationCertificateValidationResult()
-    {
-        var json = AuthorizationRequestServiceTestsDataProvider.GetJsonForTestCase();
-        var authRequest = AuthorizationRequest.CreateAuthorizationRequest(json);
-
-        authRequest.IsSuccess.Should().BeTrue();
-        authRequest.UnwrapOrThrow().RegistrationCertificateValidationResult!.Valid.Should().BeTrue();
-    }
-    
-    [Fact]
-    public void AuthorizationRequest_WithOverasking_HasInvalidRegistrationCertificateValidationResult()
-    {
-        var json = AuthorizationRequestServiceTestsDataProvider.GetJsonForTestCase();
-        var authRequest = AuthorizationRequest.CreateAuthorizationRequest(json);
-
-        authRequest.IsSuccess.Should().BeTrue();
-        authRequest.UnwrapOrThrow().RegistrationCertificateValidationResult!.Valid.Should().BeFalse();
     }
 }

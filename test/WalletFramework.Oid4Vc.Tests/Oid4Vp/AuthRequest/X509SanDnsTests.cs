@@ -12,7 +12,7 @@ public class X509SanDnsTests
     public void Valid_Jwt_Signature_Is_Accepted()
     {
         var requestObject = RequestObject
-            .CreateRequestObject(SignedRequestObjectWithRs256AndTrustChain)
+            .FromStr(SignedRequestObjectWithRs256AndTrustChain)
             .UnwrapOrThrow();
 
         var sut = requestObject.ValidateJwtSignature();
@@ -24,7 +24,7 @@ public class X509SanDnsTests
     public void Invalid_Jwt_Signature_Results_In_An_Error()
     {
         var requestObject = RequestObject
-            .CreateRequestObject(SignedRequestObjectWithRs256AndInvalidSignature)
+            .FromStr(SignedRequestObjectWithRs256AndInvalidSignature)
             .UnwrapOrThrow();
         try
         {
@@ -41,7 +41,7 @@ public class X509SanDnsTests
     public void Trust_Chain_Is_Being_Validated()
     {
         var requestObject = RequestObject
-            .CreateRequestObject(SignedRequestObjectWithRs256AndTrustChain)
+            .FromStr(SignedRequestObjectWithRs256AndTrustChain)
             .UnwrapOrThrow();
 
         var sut = requestObject.ValidateTrustChain();
@@ -53,7 +53,7 @@ public class X509SanDnsTests
     public void Single_Self_Signed_Certificate_Is_Allowed()
     {
         var requestObject = RequestObject
-            .CreateRequestObject(SignedRequestObjectWithRs256AndSingleSelfSigned)
+            .FromStr(SignedRequestObjectWithRs256AndSingleSelfSigned)
             .UnwrapOrThrow();
 
         var sut = requestObject.ValidateTrustChain();
@@ -65,7 +65,7 @@ public class X509SanDnsTests
     public void Single_Non_Self_Signed_Certificate_Is_Not_Allowed()
     {
         var requestObject = RequestObject
-            .CreateRequestObject(SignedRequestObjectWithRs256AndSingleNonSelfSigned)
+            .FromStr(SignedRequestObjectWithRs256AndSingleNonSelfSigned)
             .UnwrapOrThrow();
 
         try
@@ -83,7 +83,7 @@ public class X509SanDnsTests
     public void Checks_That_San_Name_Equals_Client_Id()
     {
         var requestObject = RequestObject
-            .CreateRequestObject(SignedRequestObjectWithRs256AndTrustChain)
+            .FromStr(SignedRequestObjectWithRs256AndTrustChain)
             .UnwrapOrThrow();
 
         var sut = requestObject.ValidateSanName();

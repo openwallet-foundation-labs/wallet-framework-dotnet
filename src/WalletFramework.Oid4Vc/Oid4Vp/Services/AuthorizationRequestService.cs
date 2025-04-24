@@ -6,6 +6,7 @@ using Newtonsoft.Json.Linq;
 using WalletFramework.Core.Functional;
 using WalletFramework.Oid4Vc.Oid4Vp.Errors;
 using WalletFramework.Oid4Vc.Oid4Vp.Models;
+using WalletFramework.Oid4Vc.RelyingPartyAuthentication.Abstractions;
 using static WalletFramework.Oid4Vc.Oid4Vp.Models.RequestObject;
 using static WalletFramework.Oid4Vc.Oid4Vp.Models.ClientIdScheme.ClientIdSchemeValue;
 using static Newtonsoft.Json.JsonConvert;
@@ -13,25 +14,46 @@ using static WalletFramework.Oid4Vc.Oid4Vp.Models.AuthorizationRequest;
 
 namespace WalletFramework.Oid4Vc.Oid4Vp.Services;
 
-public class AuthorizationRequestService(IHttpClientFactory httpClientFactory) : IAuthorizationRequestService
+public class AuthorizationRequestService(
+    IHttpClientFactory httpClientFactory,
+    IRpAuthService rpAuthService) : IAuthorizationRequestService
 {
-    public async Task<Validation<AuthorizationRequestCancellation, AuthorizationRequest>> GetAuthorizationRequest(AuthorizationRequestUri authorizationRequestUri)
-    {
-        return await authorizationRequestUri.Value.Match(
-            async authRequestByReference => 
-                await GetAuthRequestByReference(authRequestByReference),
-            async authRequestByValue => 
-                await GetAuthRequestByValue(authRequestByValue));
-    }
+    public async Task<Validation<AuthorizationRequestCancellation, AuthorizationRequest>> GetAuthorizationRequest(
+        AuthorizationRequestUri authorizationRequestUri) =>
+        await authorizationRequestUri.Value.Match(
+            async reference =>
+            {
+                var requestObjectValidation = await GetRequestObject(reference);
+                return await requestObjectValidation.MatchAsync(
+                    async requestObject =>
+                    {
+                        var authRequest = requestObject.ToAuthorizationRequest();
+                        var rpAuthResult = await rpAuthService.Authenticate(requestObject);
 
-    private async Task<Validation<AuthorizationRequestCancellation, AuthorizationRequest>> GetAuthRequestByReference(
+                        Validation<AuthorizationRequestCancellation, AuthorizationRequest> result = authRequest with
+                        {
+                            RpAuthResult = rpAuthResult
+                        };
+
+                        return result;
+                    },
+                    seq => seq
+                );
+            },
+            async value =>
+            {
+                return await GetAuthRequestByValue(value);
+            }
+        );
+
+    private async Task<Validation<AuthorizationRequestCancellation, RequestObject>> GetRequestObject(
         AuthorizationRequestByReference authRequestByReference)
     {
         var httpClient = httpClientFactory.CreateClient();
         httpClient.DefaultRequestHeaders.Clear();
 
         var jsonString = await httpClient.GetStringAsync(authRequestByReference.RequestUri);
-        var requestObjectValidation = CreateRequestObject(jsonString);
+        var requestObjectValidation = FromStr(jsonString);
 
         return await requestObjectValidation.MatchAsync(async requestObject =>
             {
@@ -41,22 +63,19 @@ public class AuthorizationRequestService(IHttpClientFactory httpClientFactory) :
         
                 var error = new InvalidRequestError($"Client ID Scheme {requestObject.ClientIdScheme} is not supported");
             
-                Validation<AuthorizationRequestCancellation, AuthorizationRequest> result = 
+                Validation<AuthorizationRequestCancellation, RequestObject> result = 
                     requestObject.ClientIdScheme.Value switch
                     {
                         X509SanDns => requestObject
                             .ValidateJwtSignature()
                             .ValidateTrustChain()
                             .ValidateSanName()
-                            .ToAuthorizationRequest()
-                            .WithX509(requestObject)
+                            .WithX509()
                             .WithClientMetadata(clientMetadataOption),
                         RedirectUri => requestObject
-                            .ToAuthorizationRequest()
                             .WithClientMetadata(clientMetadataOption),
                         //TODO: Remove Did in the future (kept for now for compatibility)
                         Did => requestObject
-                            .ToAuthorizationRequest()
                             .WithClientMetadata(clientMetadataOption),
                         _ => new AuthorizationRequestCancellation(authRequest.GetResponseUriMaybe(), [error])
                     };

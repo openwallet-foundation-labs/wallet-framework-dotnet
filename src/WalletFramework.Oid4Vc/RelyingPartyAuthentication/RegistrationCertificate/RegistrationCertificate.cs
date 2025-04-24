@@ -1,8 +1,6 @@
-using System.Collections;
 using System.Globalization;
 using System.IdentityModel.Tokens.Jwt;
 using LanguageExt;
-using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Org.BouncyCastle.X509;
 using WalletFramework.Core.Functional;
@@ -23,7 +21,7 @@ public record RegistrationCertificate(
     Option<StatusListEntry> Status,
     IEnumerable<X509Certificate> Certificates)
 {
-    public static Validation<RegistrationCertificate> FromJwtToken(string jwtToken)
+    public static Validation<RegistrationCertificate> FromJwtTokenStr(string jwtToken)
     {
         var tokenHandler = new JwtSecurityTokenHandler();
         var jwt = tokenHandler.ReadJwtToken(jwtToken);

@@ -54,6 +54,6 @@ public interface IOid4VpClientService
     ///     associated with the OpenID4VP Authorization Request Url and Credentials Candidates that can be used to answer the
     ///     request.
     /// </returns>
-    Task<Validation<AuthorizationRequestCancellation, PresentationCandidates>> ProcessAuthorizationRequestUri(
+    Task<Validation<AuthorizationRequestCancellation, PresentationRequest>> ProcessAuthorizationRequestUri(
         AuthorizationRequestUri authorizationRequestUri);
 }

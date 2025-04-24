@@ -158,7 +158,7 @@ public class Oid4VpClientService : IOid4VpClientService
                 inputDescriptor => inputDescriptor.Id);
 
             var claims = credentialRequirement.Match(
-                credentialQuery => credentialQuery.GetRequestedClaims(),
+                credentialQuery => credentialQuery.GetRequestedAttributes(),
                 inputDescriptor => inputDescriptor.GetRequestedAttributes());
 
             var txDataBase64UrlStringsOption = credential
@@ -408,7 +408,7 @@ public class Oid4VpClientService : IOid4VpClientService
                 inputDescriptor => inputDescriptor.Id);
 
             var claims = credentialRequirement.Match(
-                credentialQuery => credentialQuery.GetRequestedClaims(),
+                credentialQuery => credentialQuery.GetRequestedAttributes(),
                 inputDescriptor => inputDescriptor.GetRequestedAttributes());
 
             Format format;
@@ -661,14 +661,14 @@ public class Oid4VpClientService : IOid4VpClientService
         }
     }
 
-    public async Task<Validation<AuthorizationRequestCancellation, PresentationCandidates>> ProcessAuthorizationRequestUri(
+    public async Task<Validation<AuthorizationRequestCancellation, PresentationRequest>> ProcessAuthorizationRequestUri(
         AuthorizationRequestUri requestUri)
     {
         var authorizationRequestValidation = await _authorizationRequestService.GetAuthorizationRequest(requestUri);
         var result = authorizationRequestValidation.Map(async authRequest =>
         {
             var candidates = (await _presentationCandidateService.FindPresentationCandidatesAsync(authRequest)).OnSome(enumerable => enumerable.ToList());
-            var presentationCandidates = new PresentationCandidates(authRequest, candidates);
+            var presentationCandidates = new PresentationRequest(authRequest, candidates);
             
             var vpTxDataOption = presentationCandidates.AuthorizationRequest.TransactionData;
 
@@ -701,11 +701,11 @@ public class Oid4VpClientService : IOid4VpClientService
         return (await result.Traverse(candidates => candidates)).Flatten();
     }
 
-    private static Validation<AuthorizationRequestCancellation, PresentationCandidates> ProcessVpTransactionData(
-        PresentationCandidates presentationCandidates,
+    private static Validation<AuthorizationRequestCancellation, PresentationRequest> ProcessVpTransactionData(
+        PresentationRequest presentationRequest,
         IEnumerable<TransactionData> transactionDatas)
     {
-        var result = presentationCandidates.Candidates.Match(
+        var result = presentationRequest.Candidates.Match(
             candidates =>
             {
                 var candidatesValidation = transactionDatas.TraverseAll(transactionData =>
@@ -714,33 +714,33 @@ public class Oid4VpClientService : IOid4VpClientService
                         candidate => candidate.AddTransactionData(transactionData),
                         () => (Validation<PresentationCandidate>)new InvalidTransactionDataError(
                             $"No credentials found that satisfy the transaction data with type {transactionData.GetTransactionDataType().AsString()}",
-                            presentationCandidates));
+                            presentationRequest));
                 });
         
-                return candidatesValidation.OnSuccess(enumerable => presentationCandidates with
+                return candidatesValidation.OnSuccess(enumerable => presentationRequest with
                 {
                     Candidates = enumerable.ToList()
                 });
             },
             () => new InvalidTransactionDataError(
                     "No credentials found that satisfy the authorization request with transaction data",
-                    presentationCandidates)
-                .ToInvalid<PresentationCandidates>()
+                    presentationRequest)
+                .ToInvalid<PresentationRequest>()
         );
         
         return result.Value.MapFail(error =>
         {
-            var responseUriOption = presentationCandidates.AuthorizationRequest.GetResponseUriMaybe();
+            var responseUriOption = presentationRequest.AuthorizationRequest.GetResponseUriMaybe();
             var vpError = error as VpError ?? new InvalidRequestError("Could not parse the Authorization Request");
             return new AuthorizationRequestCancellation(responseUriOption, [vpError]);
         });
     }
 
-    private static Validation<AuthorizationRequestCancellation, PresentationCandidates> ProcessUc5TransactionData(
-        PresentationCandidates presentationCandidates,
+    private static Validation<AuthorizationRequestCancellation, PresentationRequest> ProcessUc5TransactionData(
+        PresentationRequest presentationRequest,
         IEnumerable<InputDescriptorTransactionData> txData)
     {
-        var result = presentationCandidates.Candidates.Match(
+        var result = presentationRequest.Candidates.Match(
             candidates =>
             {
                 var candidatesValidation = txData.TraverseAll(inputDescriptorTxData =>
@@ -752,20 +752,20 @@ public class Oid4VpClientService : IOid4VpClientService
                         candidate => candidate.AddUc5TransactionData(inputDescriptorTxData.TransactionData),
                         () => (Validation<PresentationCandidate>)new InvalidTransactionDataError(
                             "No credentials found that satisfy the authorization request with transaction data",
-                            presentationCandidates) 
+                            presentationRequest) 
                     );
                 });
                     
-                return candidatesValidation.OnSuccess(enumerable => presentationCandidates with
+                return candidatesValidation.OnSuccess(enumerable => presentationRequest with
                 {
                     Candidates = enumerable.ToList()
                 });
             },
-            () => presentationCandidates);
+            () => presentationRequest);
 
         return result.Value.MapFail(error =>
         {
-            var responseUriOption = presentationCandidates.AuthorizationRequest.GetResponseUriMaybe();
+            var responseUriOption = presentationRequest.AuthorizationRequest.GetResponseUriMaybe();
             var vpError = error as VpError ?? new InvalidRequestError("Could not parse the Authorization Request");
             return new AuthorizationRequestCancellation(responseUriOption, [vpError]);
         });

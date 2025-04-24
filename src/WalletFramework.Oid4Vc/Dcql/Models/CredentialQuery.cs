@@ -1,48 +1,52 @@
 using LanguageExt;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using OneOf;
 using WalletFramework.Core.Functional;
 using WalletFramework.Core.Functional.Errors;
 using WalletFramework.Core.Json;
+using WalletFramework.MdocLib;
+using WalletFramework.SdJwtVc.Models;
 using static WalletFramework.Oid4Vc.Dcql.Models.CredentialQueryFun;
 
 namespace WalletFramework.Oid4Vc.Dcql.Models;
 
 /// <summary>
-/// The credential query.
+///     The credential query.
 /// </summary>
 public class CredentialQuery
 {
     /// <summary>
-    /// This MUST be a string identifying the Credential in the response.
+    ///     An object defining claims in the requested credential.
     /// </summary>
-    [JsonProperty(IdJsonKey)]
-    public string Id { get; set; } = null!;
+    [JsonProperty(ClaimsJsonKey)]
+    public CredentialClaimQuery[]? Claims { get; set; }
 
     /// <summary>
-    /// This MUST be a string that specifies the format of the requested Verifiable Credential.
+    ///     An object defining additional properties requested by the Verifier.
+    /// </summary>
+    [JsonProperty(MetaJsonKey)]
+    public CredentialMetaQuery? Meta { get; set; }
+
+    /// <summary>
+    ///     This MUST be a string that specifies the format of the requested Verifiable Credential.
     /// </summary>
     [JsonProperty(FormatJsonKey)]
     public string Format { get; set; } = null!;
 
     /// <summary>
-    /// An object defining additional properties requested by the Verifier.
+    ///     This MUST be a string identifying the Credential in the response.
     /// </summary>
-    [JsonProperty(MetaJsonKey)]
-    public CredentialMetaQuery? Meta { get; set; }
-    
+    [JsonProperty(IdJsonKey)]
+    public string Id { get; set; } = null!;
+
     /// <summary>
-    /// An object defining claims in the requested credential.
-    /// </summary>
-    [JsonProperty(ClaimsJsonKey)]
-    public CredentialClaimQuery[]? Claims { get; set; }
-    
-    /// <summary>
-    /// Represents a collection, where each value contains a collection of identifiers for elements in claims that specifies which combinations of claims for the credential are requested.
+    ///     Represents a collection, where each value contains a collection of identifiers for elements in claims that
+    ///     specifies which combinations of claims for the credential are requested.
     /// </summary>
     [JsonProperty(ClaimSetsJsonKey)]
     public string[][]? ClaimSets { get; set; }
-    
+
     public static Validation<CredentialQuery> FromJObject(JObject json)
     {
         var id = json.GetByKey(IdJsonKey)
@@ -54,7 +58,7 @@ public class CredentialQuery
                     return new StringIsNullOrWhitespaceError<CredentialQuery>();
                 }
 
-                return ValidationFun.Valid(value.Value.ToString());;
+                return ValidationFun.Valid(value.Value.ToString());
             });
 
         var format = json.GetByKey(FormatJsonKey)
@@ -66,13 +70,13 @@ public class CredentialQuery
                     return new StringIsNullOrWhitespaceError<CredentialQuery>();
                 }
 
-                return ValidationFun.Valid(value.Value.ToString());;
+                return ValidationFun.Valid(value.Value.ToString());
             });
 
         var meta = json.GetByKey(MetaJsonKey)
             .OnSuccess(token => token.ToJObject())
             .OnSuccess(CredentialMetaQuery.FromJObject);
-        
+
         var claims = json.GetByKey(ClaimsJsonKey)
             .OnSuccess(token => token.ToJArray())
             .OnSuccess(array => array.TraverseAll(jToken => jToken.ToJObject()))
@@ -124,13 +128,13 @@ public class CredentialQuery
 
 public static class CredentialQueryFun
 {
-    public const string IdJsonKey = "id";
-    public const string FormatJsonKey = "format";
-    public const string MetaJsonKey = "meta";
-    public const string ClaimsJsonKey = "claims";
     public const string ClaimSetsJsonKey = "claim_sets";
-    
-    public static IEnumerable<string> GetRequestedClaims(this CredentialQuery credentialQuery) =>
+    public const string ClaimsJsonKey = "claims";
+    public const string FormatJsonKey = "format";
+    public const string IdJsonKey = "id";
+    public const string MetaJsonKey = "meta";
+
+    public static IEnumerable<string> GetRequestedAttributes(this CredentialQuery credentialQuery) =>
         credentialQuery.Format switch
         {
             Constants.SdJwtVcFormat or Constants.SdJwtDcFormat
@@ -145,4 +149,23 @@ public static class CredentialQueryFun
                 }) ?? [],
             _ => []
         };
+
+    public static Option<OneOf<Vct, DocType>> GetRequestedCredentialType(this CredentialQuery credentialQuery)
+    {
+        switch (credentialQuery.Format)
+        {
+            case Constants.SdJwtVcFormat:
+            case Constants.SdJwtDcFormat:
+                return credentialQuery.Meta?.Vcts?.Any() == true
+                    ? Option<OneOf<Vct, DocType>>.Some(
+                        Vct.ValidVct(credentialQuery.Meta!.Vcts!.First()).UnwrapOrThrow())
+                    : Option<OneOf<Vct, DocType>>.None;
+            case Constants.MdocFormat:
+                return credentialQuery.Meta?.Doctype?.Any() == true
+                    ? Option<OneOf<Vct, DocType>>.Some(Vct.ValidVct(credentialQuery.Meta!.Doctype).UnwrapOrThrow())
+                    : Option<OneOf<Vct, DocType>>.None;
+            default:
+                return Option<OneOf<Vct, DocType>>.None;
+        }
+    }
 }

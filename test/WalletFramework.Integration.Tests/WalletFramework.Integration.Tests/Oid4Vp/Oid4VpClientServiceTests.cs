@@ -20,6 +20,7 @@ using WalletFramework.Oid4Vc.Oid4Vp.PresentationExchange.Services;
 using WalletFramework.Oid4Vc.Oid4Vp.Services;
 using WalletFramework.Oid4Vc.Oid4Vp.TransactionDatas;
 using WalletFramework.Oid4Vc.Qes;
+using WalletFramework.Oid4Vc.RelyingPartyAuthentication.Abstractions;
 using WalletFramework.SdJwtVc.Models.Records;
 using WalletFramework.SdJwtVc.Services.SdJwtVcHolderService;
 
@@ -48,7 +49,7 @@ public class Oid4VpClientServiceTests : IAsyncLifetime
         var presentationCandidateService = new PresentationCandidateService(pexService, dcqlService);
        
         _sdJwtVcHolderService = new SdJwtVcHolderService(holder, _sdJwtSignerService.Object, walletRecordService);
-        var authRequestService = new AuthorizationRequestService(_httpClientFactoryMock.Object);
+        var authRequestService = new AuthorizationRequestService(_httpClientFactoryMock.Object, _rpAuthServiceMock.Object);
         var oid4VpHaipClient = new Oid4VpHaipClient(pexService, dcqlService);
         _oid4VpRecordService = new Oid4VpRecordService(walletRecordService);
         
@@ -89,6 +90,7 @@ public class Oid4VpClientServiceTests : IAsyncLifetime
     private readonly Mock<IMdocStorage> _mdocStorageMock = new();
     private readonly Mock<ISdJwtSigner> _sdJwtSignerService = new();
     private readonly Mock<IAuthFlowSessionStorage> _authFlowSessionStorageMock = new();
+    private readonly Mock<IRpAuthService> _rpAuthServiceMock = new();
     private readonly MockAgentRouter _router = new();
     private readonly Oid4VpClientService _oid4VpClientService;
     private readonly Oid4VpRecordService _oid4VpRecordService;

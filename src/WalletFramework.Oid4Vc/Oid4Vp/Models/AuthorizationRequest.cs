@@ -1,4 +1,3 @@
-using System.Net.Http.Headers;
 using System.Security.Cryptography.X509Certificates;
 using LanguageExt;
 using Newtonsoft.Json;
@@ -6,15 +5,13 @@ using Newtonsoft.Json.Linq;
 using OneOf;
 using WalletFramework.Core.Functional;
 using WalletFramework.Core.Json;
-using WalletFramework.Core.X509;
 using WalletFramework.Oid4Vc.Dcql.Models;
 using WalletFramework.Oid4Vc.Oid4Vp.Errors;
 using WalletFramework.Oid4Vc.Oid4Vp.PresentationExchange.Models;
 using WalletFramework.Oid4Vc.Oid4Vp.TransactionDatas;
 using static WalletFramework.Oid4Vc.Oid4Vp.Models.ClientIdScheme;
 using WalletFramework.Oid4Vc.Qes;
-using WalletFramework.Oid4Vc.RelyingPartyAuthentication.RegistrationCertificate;
-using Unit = System.Reactive.Unit;
+using WalletFramework.Oid4Vc.RelyingPartyAuthentication;
 
 namespace WalletFramework.Oid4Vc.Oid4Vp.Models;
 
@@ -98,8 +95,9 @@ public record AuthorizationRequest
     [JsonProperty("state")]
     public string? State { get; }
     
-    [JsonIgnore]
-    public Attachment[]? Attachments { get; }
+    [JsonProperty("verifier_attestations")]
+    [JsonConverter(typeof(VerifierAttestationsConverter))]
+    public VerifierAttestation[]? VerifierAttestations { get; }
 
     /// <summary>
     ///     The X509 certificate of the verifier, this property is only set when ClientIDScheme is X509SanDNS.
@@ -112,9 +110,9 @@ public record AuthorizationRequest
     /// </summary>
     [JsonIgnore]
     public X509Chain? X509TrustChain { get; init; }
-    
-    [JsonIgnore]
-    public OverAskingValidationResult? RegistrationCertificateValidationResult { get; init; }
+
+    [JsonIgnore] 
+    public RpAuthResult RpAuthResult { get; init; } = RpAuthResult.GetWithLevelAbort();
 
     [JsonIgnore]
     public OneOf<DcqlQuery, PresentationDefinition> Requirements =>
@@ -133,7 +131,7 @@ public record AuthorizationRequest
         string? clientMetadataUri,
         string? scope,
         string? state,
-        Attachment[] attachments)
+        VerifierAttestation[] verifierAttestations)
     {
         if (SupportedClientIdSchemes.Exists(supportedClientIdScheme =>
                 clientId.StartsWith($"{supportedClientIdScheme}:")))
@@ -156,7 +154,7 @@ public record AuthorizationRequest
         ResponseMode = responseMode;
         Scope = scope;
         State = state;
-        Attachments = attachments;
+        VerifierAttestations = verifierAttestations;
     }
 
     /// <summary>
@@ -230,11 +228,12 @@ public record AuthorizationRequest
             case (true, true):
             {
                 var txDataJArray = transactionDataPropertyFoundValidation.UnwrapOrThrow();
-                
+
+                var validation = authRequestValidation;
                 authRequestValidation = 
                     from transactionDataArray in TransactionDataArray.FromJArray(txDataJArray)
                     from transactionDataEnum in transactionDataArray.Decode()
-                    from authRequest in authRequestValidation
+                    from authRequest in validation
                     select authRequest with
                     {
                         TransactionData = transactionDataEnum.ToList()
@@ -275,13 +274,6 @@ public record AuthorizationRequest
                 break;
             }
         }
-        
-        authRequestValidation =
-            from authRequest in authRequestValidation
-            select authRequest with
-            {
-                RegistrationCertificateValidationResult = authRequest.ValidateOverAsking() 
-            };
         
         return authRequestValidation.ToLangExtValidation(responseUriOption);
     }
@@ -351,93 +343,6 @@ internal static class AuthorizationRequestExtensions
         this AuthorizationRequest authorizationRequest,
         Option<ClientMetadata> clientMetadata)
         => authorizationRequest with { ClientMetadata = clientMetadata.ToNullable() };
-
-    internal static AuthorizationRequest WithX509(
-        this AuthorizationRequest authorizationRequest,
-        RequestObject requestObject)
-    {
-        var encodedCertificate = requestObject.GetLeafCertificate().GetEncoded();
-
-        var certificates =
-            requestObject
-                .GetCertificates()
-                .Select(x => x.GetEncoded())
-                .Select(x => new X509Certificate2(x));
-
-        var trustChain = new X509Chain();
-        foreach (var element in certificates)
-        {
-            trustChain.ChainPolicy.ExtraStore.Add(element);
-        }
-
-        return authorizationRequest with
-        {
-            X509Certificate = new X509Certificate2(encodedCertificate),
-            X509TrustChain = trustChain
-        };
-    }
-
-    internal static OverAskingValidationResult ValidateOverAsking(this AuthorizationRequest authorizationRequest)
-    {
-        return authorizationRequest.Requirements.Match(
-            dcqlQuery =>
-            {
-                var registrationCertificateAttachments = authorizationRequest.Attachments?.Where(attachment =>
-                    attachment.Format == Constants.RegistrationCertificateFormat) ?? [];
-
-                List<string> certifiedClaims = [];
-                List<IEnumerable<string>> certifiedClaimSets = [];
-
-                var areTrustChainsValid = true;
-                foreach (var registrationCertificateAttachment in registrationCertificateAttachments)
-                {
-                    _ = registrationCertificateAttachment.Data.Match(
-                        registrationCertificate =>
-                        {
-                            certifiedClaims.AddRange(
-                                registrationCertificate.Credentials.SelectMany(query => query.GetRequestedClaims()));
-
-                            var registrationCertifiedClaimSets = registrationCertificate.CredentialSets.Match(
-                                credentialsSets =>
-                                {
-                                    return credentialsSets.SelectMany(
-                                        set => set.Options ?? Enumerable.Empty<string[]>());
-                                },
-                                () => []);
-
-                            certifiedClaimSets.AddRange(registrationCertifiedClaimSets);
-
-                            var isValidChain = registrationCertificate.Certificates.IsTrustChainValid();
-                            if (!isValidChain)
-                                areTrustChainsValid = false;
-
-                            return Unit.Default;
-                        },
-                        _ =>
-                        {
-                            areTrustChainsValid = false;
-                            return Unit.Default;
-                        });
-                }
-
-                if (areTrustChainsValid == false)
-                    return new OverAskingValidationResult(false);
-
-                var requestedClaims =
-                    authorizationRequest.DcqlQuery!.CredentialQueries.SelectMany(query => query.GetRequestedClaims());
-                var isOverAskingClaims =
-                    !requestedClaims.All(requestedAttribute => certifiedClaims.Contains(requestedAttribute));
-
-                var requestedClaimSets =
-                    authorizationRequest.DcqlQuery!.CredentialSetQueries?.SelectMany(query =>
-                        query.Options ?? []) ?? [];
-                var isOverAskingClaimSets =
-                    !requestedClaimSets.All(requestedClaimSet => certifiedClaimSets.Any(certifiedClaimSet => requestedClaimSet.All(certifiedClaimSet.Contains)));
-
-                    return new OverAskingValidationResult(!isOverAskingClaims && !isOverAskingClaimSets);
-            },
-            presentationDefinition => new OverAskingValidationResult(true));
-    }
 }
 
 public static class AuthorizationRequestFun

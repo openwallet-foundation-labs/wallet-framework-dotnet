@@ -9,7 +9,7 @@ public class RegistrationCertificateTests
     [Fact]
     public void Can_Parse_Registration_Certificate_Data()
     {
-        var sut = RegistrationCertificate.FromJwtToken(RegistrationCertificateSamples.JwtSample);
+        var sut = RegistrationCertificate.FromJwtTokenStr(RegistrationCertificateSamples.JwtStrSample);
         sut.Match(
             _ =>
             {

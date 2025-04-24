@@ -7,14 +7,9 @@ using static WalletFramework.Oid4Vc.Oid4Vci.Issuer.Models.IssuerMetadata;
 
 namespace WalletFramework.Oid4Vc.Oid4Vci.Issuer.Implementations;
 
-public class IssuerMetadataService : IIssuerMetadataService
+public class IssuerMetadataService(IHttpClientFactory httpClientFactory) : IIssuerMetadataService
 {
-    public IssuerMetadataService(IHttpClientFactory httpClientFactory)
-    {
-        _httpClient = httpClientFactory.CreateClient();
-    }
-    
-    private readonly HttpClient _httpClient;
+    private readonly HttpClient _httpClient = httpClientFactory.CreateClient();
     
     public async Task<Validation<IssuerMetadata>> ProcessMetadata(Uri issuerEndpoint, Locale language)
     {
