@@ -38,5 +38,7 @@ public record JwkSet
 
 public static class JwkSetFun
 {
-    public static JsonWebKey GetFirst(this JwkSet jwkSet) => jwkSet.AsEnum().First();
+    public static JsonWebKey GetEcP256Jwk(this JwkSet jwkSet) => jwkSet.AsEnum().Single(setItem => 
+        setItem.Kty == "EC" 
+        && setItem.Crv == "P-256");
 }
