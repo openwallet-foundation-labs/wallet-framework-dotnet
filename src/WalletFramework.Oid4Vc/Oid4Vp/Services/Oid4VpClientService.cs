@@ -21,7 +21,6 @@ using WalletFramework.MdocLib.Security;
 using WalletFramework.MdocLib.Security.Cose;
 using WalletFramework.MdocVc;
 using WalletFramework.Oid4Vc.ClientAttestation;
-using WalletFramework.Oid4Vc.Dcql.Models;
 using WalletFramework.Oid4Vc.Errors;
 using WalletFramework.Oid4Vc.Oid4Vci.Abstractions;
 using WalletFramework.Oid4Vc.Oid4Vci.AuthFlow.Abstractions;
@@ -31,6 +30,7 @@ using WalletFramework.Oid4Vc.Oid4Vci.Extensions;
 using WalletFramework.Oid4Vc.Oid4Vci.Implementations;
 using WalletFramework.Oid4Vc.Oid4Vp.AuthResponse.Encryption;
 using WalletFramework.Oid4Vc.Oid4Vp.AuthResponse.Encryption.Abstractions;
+using WalletFramework.Oid4Vc.Oid4Vp.Dcql.Models;
 using WalletFramework.Oid4Vc.Oid4Vp.Errors;
 using WalletFramework.Oid4Vc.Oid4Vp.Models;
 using WalletFramework.Oid4Vc.Oid4Vp.PresentationExchange.Models;
@@ -60,7 +60,7 @@ public class Oid4VpClientService : IOid4VpClientService
     /// <param name="mdocAuthenticationService">The mdoc authentication service.</param>
     /// <param name="oid4VpHaipClient">The service responsible for OpenId4VP related operations.</param>
     /// <param name="logger">The ILogger.</param>
-    /// <param name="presentationCandidateService">The Presentation Candidate service.</param>
+    /// <param name="candidateQueryService">The Presentation Candidate service.</param>
     /// <param name="authFlowSessionStorage">The Auth Flow Session Storage.</param>
     /// <param name="oid4VpRecordService">The service responsible for OidPresentationRecord related operations.</param>
     /// <param name="mDocStorage">The service responsible for mDOc storage operations.</param>
@@ -75,7 +75,7 @@ public class Oid4VpClientService : IOid4VpClientService
         IMdocStorage mDocStorage,
         IOid4VpHaipClient oid4VpHaipClient,
         IOid4VpRecordService oid4VpRecordService,
-        IPresentationCandidateService presentationCandidateService,
+        ICandidateQueryService candidateQueryService,
         ISdJwtVcHolderService sdJwtVcHolderService)
     {
         _agentProvider = agentProvider;
@@ -88,7 +88,7 @@ public class Oid4VpClientService : IOid4VpClientService
         _mdocAuthenticationService = mdocAuthenticationService;
         _oid4VpHaipClient = oid4VpHaipClient;
         _oid4VpRecordService = oid4VpRecordService;
-        _presentationCandidateService = presentationCandidateService;
+        _candidateQueryService = candidateQueryService;
         _sdJwtVcHolderService = sdJwtVcHolderService;
     }
 
@@ -100,7 +100,7 @@ public class Oid4VpClientService : IOid4VpClientService
     private readonly ILogger<Oid4VpClientService> _logger;
     private readonly IMdocAuthenticationService _mdocAuthenticationService;
     private readonly IMdocStorage _mDocStorage;
-    private readonly IPresentationCandidateService _presentationCandidateService;
+    private readonly ICandidateQueryService _candidateQueryService;
     private readonly IOid4VpHaipClient _oid4VpHaipClient;
     private readonly IOid4VpRecordService _oid4VpRecordService;
     private readonly ISdJwtVcHolderService _sdJwtVcHolderService;
@@ -673,7 +673,7 @@ public class Oid4VpClientService : IOid4VpClientService
         var authorizationRequestValidation = await _authorizationRequestService.GetAuthorizationRequest(requestUri);
         var result = authorizationRequestValidation.Map(async authRequest =>
         {
-            var candidates = (await _presentationCandidateService.FindPresentationCandidatesAsync(authRequest)).OnSome(enumerable => enumerable.ToList());
+            var candidates = (await _candidateQueryService.Query(authRequest)).OnSome(enumerable => enumerable.ToList());
             var presentationCandidates = new PresentationRequest(authRequest, candidates);
             
             var vpTxDataOption = presentationCandidates.AuthorizationRequest.TransactionData;

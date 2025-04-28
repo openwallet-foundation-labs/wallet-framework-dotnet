@@ -1,3 +1,4 @@
+using WalletFramework.Core.ClaimPaths;
 using WalletFramework.Core.Functional;
 using WalletFramework.Core.Path;
 using Xunit;

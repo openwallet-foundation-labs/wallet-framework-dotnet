@@ -5,9 +5,9 @@ using WalletFramework.Core.Functional;
 using WalletFramework.Core.Functional.Errors;
 using WalletFramework.Core.Json;
 using WalletFramework.Oid4Vc.RelyingPartyAuthentication.RegistrationCertificate;
-using static WalletFramework.Oid4Vc.Dcql.Models.CredentialMetaFun;
+using static WalletFramework.Oid4Vc.Oid4Vp.Dcql.Models.CredentialMetaFun;
 
-namespace WalletFramework.Oid4Vc.Dcql.Models;
+namespace WalletFramework.Oid4Vc.Oid4Vp.Dcql.Models;
 
 /// <summary>
 /// The credential query meta.

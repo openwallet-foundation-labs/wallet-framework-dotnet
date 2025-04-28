@@ -8,16 +8,18 @@ using WalletFramework.Core.Credentials;
 using WalletFramework.Core.Credentials.Abstractions;
 using WalletFramework.Core.Cryptography.Models;
 using WalletFramework.Core.Functional;
-using WalletFramework.Oid4Vc.Dcql.Models;
-using WalletFramework.Oid4Vc.Dcql.Services;
+using WalletFramework.Oid4Vc;
 using WalletFramework.Oid4Vc.Oid4Vci.Abstractions;
+using WalletFramework.Oid4Vc.Oid4Vp.Dcql.Models;
+using WalletFramework.Oid4Vc.Oid4Vp.Dcql.Services;
 using WalletFramework.Oid4Vc.Oid4Vp.Models;
+using WalletFramework.Oid4Vc.Tests.Samples;
 using WalletFramework.SdJwtVc.Models.Credential;
 using WalletFramework.SdJwtVc.Models.Credential.Attributes;
 using WalletFramework.SdJwtVc.Models.Records;
 using WalletFramework.SdJwtVc.Services.SdJwtVcHolderService;
 
-namespace WalletFramework.Oid4Vc.Tests.Oid4Vp.Dcql.Services;
+namespace WalletFramework.Integration.Tests.Oid4Vp.Dcql;
 
 public class DcqlServiceTests
 {
@@ -32,13 +34,13 @@ public class DcqlServiceTests
     private static readonly CredentialSetId AlternativeNestedCredentialSetId = CredentialSetId.CreateCredentialSetId();
     private static readonly CredentialSetId BatchCredentialSetId = CredentialSetId.CreateCredentialSetId();
 
-    private readonly SdJwtRecord _driverCredential = CreateCredential(CredentialExamples.DriverCredential, DriverLicenseCredentialSetId);
-    private readonly SdJwtRecord _driverCredentialClone = CreateCredential(CredentialExamples.DriverCredential, DriverLicenseCredentialCloneSetId);
-    private readonly SdJwtRecord _universityCredential = CreateCredential(CredentialExamples.UniversityCredential, UniversityCredentialSetId);
-    private readonly SdJwtRecord _nestedCredential = CreateCredential(CredentialExamples.NestedCredential, NestedCredentialSetId);
-    private readonly SdJwtRecord _alternativeNestedCredential = CreateCredential(CredentialExamples.AlternativeNestedCredential, AlternativeNestedCredentialSetId);
-    private readonly SdJwtRecord _batchCredentialOne = CreateCredential(CredentialExamples.BatchCredential, BatchCredentialSetId);
-    private readonly SdJwtRecord _batchCredentialTwo = CreateCredential(CredentialExamples.BatchCredential, BatchCredentialSetId);
+    private readonly SdJwtRecord _driverCredential = CreateCredential(JsonBasedCredentialSamples.DriverCredential, DriverLicenseCredentialSetId);
+    private readonly SdJwtRecord _driverCredentialClone = CreateCredential(JsonBasedCredentialSamples.DriverCredential, DriverLicenseCredentialCloneSetId);
+    private readonly SdJwtRecord _universityCredential = CreateCredential(JsonBasedCredentialSamples.UniversityCredential, UniversityCredentialSetId);
+    private readonly SdJwtRecord _nestedCredential = CreateCredential(JsonBasedCredentialSamples.NestedCredential, NestedCredentialSetId);
+    private readonly SdJwtRecord _alternativeNestedCredential = CreateCredential(JsonBasedCredentialSamples.AlternativeNestedCredential, AlternativeNestedCredentialSetId);
+    private readonly SdJwtRecord _batchCredentialOne = CreateCredential(JsonBasedCredentialSamples.BatchCredential, BatchCredentialSetId);
+    private readonly SdJwtRecord _batchCredentialTwo = CreateCredential(JsonBasedCredentialSamples.BatchCredential, BatchCredentialSetId);
 
     [Fact]
     public async Task Can_Get_Credential_Candidates_For_CredentialQuery()

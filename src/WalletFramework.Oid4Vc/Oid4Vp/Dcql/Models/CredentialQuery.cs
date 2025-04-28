@@ -7,9 +7,9 @@ using WalletFramework.Core.Functional.Errors;
 using WalletFramework.Core.Json;
 using WalletFramework.MdocLib;
 using WalletFramework.SdJwtVc.Models;
-using static WalletFramework.Oid4Vc.Dcql.Models.CredentialQueryFun;
+using static WalletFramework.Oid4Vc.Oid4Vp.Dcql.Models.CredentialQueryFun;
 
-namespace WalletFramework.Oid4Vc.Dcql.Models;
+namespace WalletFramework.Oid4Vc.Oid4Vp.Dcql.Models;
 
 /// <summary>
 ///     The credential query.

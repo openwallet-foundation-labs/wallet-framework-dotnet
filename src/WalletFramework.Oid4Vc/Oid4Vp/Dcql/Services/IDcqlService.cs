@@ -1,8 +1,8 @@
 using LanguageExt;
-using WalletFramework.Oid4Vc.Dcql.Models;
+using WalletFramework.Oid4Vc.Oid4Vp.Dcql.Models;
 using WalletFramework.Oid4Vc.Oid4Vp.Models;
 
-namespace WalletFramework.Oid4Vc.Dcql.Services;
+namespace WalletFramework.Oid4Vc.Oid4Vp.Dcql.Services;
 
 public interface IDcqlService
 {

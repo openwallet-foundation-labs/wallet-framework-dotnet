@@ -27,7 +27,7 @@ public class CredentialResponseTests
         var response = CredentialResponse.ValidCredentialResponse(SingleEncodedAsJson, new KeyId());
         
         Assert.True(response.IsSuccess);
-        Assert.Equal(SingleEncodedAsJson["credential"].ToString(), response.UnwrapOrThrow().CredentialsOrTransactionId.AsT0.First().Value.AsT0);
+        Assert.Equal(SingleEncodedAsJson["credential"]!.ToString(), response.UnwrapOrThrow().CredentialsOrTransactionId.AsT0.First().Value.AsT0);
     }
     
     [Fact]
@@ -36,6 +36,6 @@ public class CredentialResponseTests
         var response = CredentialResponse.ValidCredentialResponse(BatchEncodedAsJson, new KeyId());
         
         Assert.True(response.IsSuccess); 
-        Assert.Equal(((JArray)BatchEncodedAsJson["credentials"]).First.ToString(), response.UnwrapOrThrow().CredentialsOrTransactionId.AsT0.First().Value.AsT0);
+        Assert.Equal(((JArray)BatchEncodedAsJson["credentials"]!).First!.ToString(), response.UnwrapOrThrow().CredentialsOrTransactionId.AsT0.First().Value.AsT0);
     }
 }

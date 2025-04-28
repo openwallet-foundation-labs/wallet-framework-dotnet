@@ -2,6 +2,7 @@ using System.Globalization;
 using System.Text.RegularExpressions;
 using LanguageExt;
 using Newtonsoft.Json.Linq;
+using WalletFramework.Core.ClaimPaths;
 using WalletFramework.Core.Functional;
 using WalletFramework.Core.Functional.Enumerable;
 using WalletFramework.Core.Functional.Errors;

@@ -1,6 +1,6 @@
 using Newtonsoft.Json;
 
-namespace WalletFramework.Oid4Vc.Dcql.Models;
+namespace WalletFramework.Oid4Vc.Oid4Vp.Dcql.Models;
 
 /// <summary>
 ///     Represents constraints on the combinations of credentials and claims that articulate what Verifier requires

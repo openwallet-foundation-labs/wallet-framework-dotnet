@@ -6,7 +6,7 @@ using Org.BouncyCastle.X509;
 using WalletFramework.Core.Functional;
 using WalletFramework.Core.Json;
 using WalletFramework.Core.StatusList;
-using WalletFramework.Oid4Vc.Dcql.Models;
+using WalletFramework.Oid4Vc.Oid4Vp.Dcql.Models;
 using static WalletFramework.Oid4Vc.RelyingPartyAuthentication.RegistrationCertificate.RegistrationCertificateFun;
 
 namespace WalletFramework.Oid4Vc.RelyingPartyAuthentication.RegistrationCertificate;

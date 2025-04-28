@@ -11,10 +11,10 @@ using SD_JWT.Roles.Implementation;
 using WalletFramework.Core.Cryptography.Models;
 using WalletFramework.Core.Functional;
 using WalletFramework.MdocLib.Device.Abstractions;
-using WalletFramework.Oid4Vc.Dcql.Services;
 using WalletFramework.Oid4Vc.Oid4Vci.Abstractions;
 using WalletFramework.Oid4Vc.Oid4Vci.AuthFlow.Abstractions;
 using WalletFramework.Oid4Vc.Oid4Vp.AuthResponse.Encryption.Abstractions;
+using WalletFramework.Oid4Vc.Oid4Vp.Dcql.Services;
 using WalletFramework.Oid4Vc.Oid4Vp.Models;
 using WalletFramework.Oid4Vc.Oid4Vp.PresentationExchange.Services;
 using WalletFramework.Oid4Vc.Oid4Vp.Services;
@@ -46,7 +46,7 @@ public class Oid4VpClientServiceTests : IAsyncLifetime
         var walletRecordService = new DefaultWalletRecordService();
         var pexService = new PexService(_agentProviderMock.Object, _mdocStorageMock.Object, _sdJwtVcHolderService!);
         var dcqlService = new DcqlService(_agentProviderMock.Object, _mdocStorageMock.Object, _sdJwtVcHolderService!);
-        var presentationCandidateService = new PresentationCandidateService(pexService, dcqlService);
+        var presentationCandidateService = new CandidateQueryService(pexService, dcqlService);
        
         _sdJwtVcHolderService = new SdJwtVcHolderService(holder, _sdJwtSignerService.Object, walletRecordService);
         var authRequestService = new AuthorizationRequestService(_httpClientFactoryMock.Object, _rpAuthServiceMock.Object);
