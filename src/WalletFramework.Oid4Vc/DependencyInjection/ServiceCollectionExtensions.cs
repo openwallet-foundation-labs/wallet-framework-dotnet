@@ -1,4 +1,5 @@
 using Microsoft.Extensions.DependencyInjection;
+using WalletFramework.Core.StatusList;
 using WalletFramework.MdocLib.Device.Abstractions;
 using WalletFramework.MdocLib.Device.Implementations;
 using WalletFramework.MdocLib.Security.Cose.Abstractions;
@@ -6,6 +7,7 @@ using WalletFramework.MdocLib.Security.Cose.Implementations;
 using WalletFramework.Oid4Vc.CredentialSet;
 using WalletFramework.Oid4Vc.Database.Migration.Abstraction;
 using WalletFramework.Oid4Vc.Database.Migration.Implementations;
+using WalletFramework.Oid4Vc.Dcql.Services;
 using WalletFramework.Oid4Vc.Oid4Vci.Abstractions;
 using WalletFramework.Oid4Vc.Oid4Vci.AuthFlow.Abstractions;
 using WalletFramework.Oid4Vc.Oid4Vci.AuthFlow.Implementations;
@@ -20,13 +22,15 @@ using WalletFramework.Oid4Vc.Oid4Vci.CredRequest.Implementations;
 using WalletFramework.Oid4Vc.Oid4Vci.Implementations;
 using WalletFramework.Oid4Vc.Oid4Vci.Issuer.Abstractions;
 using WalletFramework.Oid4Vc.Oid4Vci.Issuer.Implementations;
-using WalletFramework.Oid4Vc.Oid4Vp.Dcql.Services;
 using WalletFramework.Oid4Vc.Oid4Vp.AuthResponse.Encryption.Abstractions;
 using WalletFramework.Oid4Vc.Oid4Vp.AuthResponse.Encryption.Implementations;
 using WalletFramework.Oid4Vc.Oid4Vp.PresentationExchange.Services;
 using WalletFramework.Oid4Vc.Oid4Vp.Services;
+using WalletFramework.Oid4Vc.RelyingPartyAuthentication.Abstractions;
+using WalletFramework.Oid4Vc.RelyingPartyAuthentication.Implementations;
 using WalletFramework.SdJwtVc;
 using WalletFramework.SdJwtVc.Services;
+using IRpRegistrarService = WalletFramework.Oid4Vc.RelyingPartyAuthentication.Implementations.IRpRegistrarService;
 
 namespace WalletFramework.Oid4Vc.DependencyInjection;
 
@@ -61,6 +65,8 @@ public static class ServiceCollectionExtensions
         builder.AddSingleton<IPexService, PexService>();
         builder.AddSingleton<IPresentationCandidateService, PresentationCandidateService>();
         builder.AddSingleton<IRecordsMigrationService, RecordsMigrationService>();
+        builder.AddSingleton<IRpAuthService, RpAuthService>();
+        builder.AddSingleton<RelyingPartyAuthentication.Abstractions.IRpRegistrarService, IRpRegistrarService>();
         builder.AddSingleton<IStatusListService, StatusListService>();
         builder.AddSingleton<ITokenService, TokenService>();
         builder.AddSingleton<IVctMetadataService, VctMetadataService>();

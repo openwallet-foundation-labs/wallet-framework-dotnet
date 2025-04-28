@@ -1,4 +1,3 @@
-using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
 namespace WalletFramework.Oid4Vc.Oid4Vci.CredRequest.Models;

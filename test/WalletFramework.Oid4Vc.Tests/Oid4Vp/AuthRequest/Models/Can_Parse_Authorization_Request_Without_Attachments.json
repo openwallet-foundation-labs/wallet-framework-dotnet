@@ -1,0 +1,44 @@
+{
+    "response_type" : "vp_token",
+    "client_id" : "x509_san_dns:funke-wallet.de",
+    "response_uri" : "https://funke-wallet.de/oid4vp/response",
+    "response_mode" : "direct_post",
+    "nonce" : "860303407528324526871313",
+    "dcql_query" : {
+        "credentials" : [ {
+            "id" : "pid",
+            "format" : "dc+sd-jwt",
+            "meta" : {
+                "vct_values" : [ "https://demo.pid-issuer.bundesdruckerei.de/credentials/pid/1.0", "urn:eu.europa.ec.eudi:pid:1" ]
+            },
+            "claims" : [ {
+                "path" : [ "family_name" ]
+            }, {
+                "path" : [ "given_name" ]
+            } ]
+        } ]
+    },
+    "client_metadata" : {
+        "vp_formats" : {
+            "mso_mdoc" : {
+                "alg" : [ "EdDSA", "ES256", "ES384" ]
+            },
+            "vc+sd-jwt" : {
+                "kb-jwt_alg_values" : [ "EdDSA", "ES256", "ES384", "ES256K" ],
+                "sd-jwt_alg_values" : [ "EdDSA", "ES256", "ES384", "ES256K" ]
+            },
+            "dc+sd-jwt" : {
+                "kb-jwt_alg_values" : [ "EdDSA", "ES256", "ES384", "ES256K" ],
+                "sd-jwt_alg_values" : [ "EdDSA", "ES256", "ES384", "ES256K" ]
+            }
+        },
+        "authorization_encrypted_response_alg" : "ECDH-ES",
+        "authorization_encrypted_response_enc" : "A128GCM",
+        "client_name" : "German Registrar",
+        "response_types_supported" : [ "vp_token" ]
+    },
+    "state" : "764143516933320540744584",
+    "aud" : "https://funke-wallet.de/oid4vp/valid-request",
+    "exp" : 1744362364,
+    "iat" : 1744362064
+}

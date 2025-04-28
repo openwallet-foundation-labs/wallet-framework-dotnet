@@ -14,4 +14,12 @@
   <ItemGroup>
     <PackageReference Include="SD-JWT" Version="0.1.0-rc.67" />
   </ItemGroup>
+
+  <ItemGroup>
+    <Compile Remove="Services\IStatusListService.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Models\StatusList\" />
+  </ItemGroup>
 </Project>

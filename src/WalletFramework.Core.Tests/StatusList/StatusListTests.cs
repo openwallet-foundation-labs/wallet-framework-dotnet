@@ -2,10 +2,10 @@ using System.Net;
 using Moq;
 using Moq.Protected;
 using WalletFramework.Core.Credentials;
-using WalletFramework.SdJwtVc.Models.StatusList;
-using WalletFramework.SdJwtVc.Services;
+using WalletFramework.Core.StatusList;
+using Xunit;
 
-namespace WalletFramework.SdJwtVc.Tests;
+namespace WalletFramework.Core.Tests.StatusList;
 
 public class StatusListTests
 {

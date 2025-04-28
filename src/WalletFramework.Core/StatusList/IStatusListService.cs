@@ -1,8 +1,7 @@
 using LanguageExt;
 using WalletFramework.Core.Credentials;
-using WalletFramework.SdJwtVc.Models.StatusList;
 
-namespace WalletFramework.SdJwtVc.Services;
+namespace WalletFramework.Core.StatusList;
 
 public interface IStatusListService
 {

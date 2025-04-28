@@ -6,13 +6,13 @@ using OneOf;
 using WalletFramework.Core.Credentials;
 using WalletFramework.Core.Functional;
 using WalletFramework.Core.Json;
+using WalletFramework.Core.StatusList;
 using WalletFramework.Core.String;
 using WalletFramework.MdocLib;
 using WalletFramework.MdocVc;
 using WalletFramework.Oid4Vc.Oid4Vci.Issuer.Models;
 using WalletFramework.SdJwtVc.Models;
 using WalletFramework.SdJwtVc.Models.Records;
-using WalletFramework.SdJwtVc.Models.StatusList;
 using CredentialState = WalletFramework.Core.Credentials.CredentialState;
 
 namespace WalletFramework.Oid4Vc.CredentialSet.Models;

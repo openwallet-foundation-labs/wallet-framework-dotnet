@@ -5,13 +5,13 @@ using Newtonsoft.Json.Linq;
 using OneOf;
 using WalletFramework.Core.Functional;
 using WalletFramework.Core.Json;
-using WalletFramework.Oid4Vc.Oid4Vp.Dcql.Models;
-using WalletFramework.Oid4Vc.Oid4Vp.Dcql.Models;
+using WalletFramework.Oid4Vc.Dcql.Models;
 using WalletFramework.Oid4Vc.Oid4Vp.Errors;
 using WalletFramework.Oid4Vc.Oid4Vp.PresentationExchange.Models;
 using WalletFramework.Oid4Vc.Oid4Vp.TransactionDatas;
 using static WalletFramework.Oid4Vc.Oid4Vp.Models.ClientIdScheme;
 using WalletFramework.Oid4Vc.Qes;
+using WalletFramework.Oid4Vc.RelyingPartyAuthentication;
 
 namespace WalletFramework.Oid4Vc.Oid4Vp.Models;
 
@@ -94,6 +94,10 @@ public record AuthorizationRequest
     /// </summary>
     [JsonProperty("state")]
     public string? State { get; }
+    
+    [JsonProperty("verifier_attestations")]
+    [JsonConverter(typeof(VerifierAttestationsConverter))]
+    public VerifierAttestation[]? VerifierAttestations { get; }
 
     /// <summary>
     ///     The X509 certificate of the verifier, this property is only set when ClientIDScheme is X509SanDNS.
@@ -106,6 +110,9 @@ public record AuthorizationRequest
     /// </summary>
     [JsonIgnore]
     public X509Chain? X509TrustChain { get; init; }
+
+    [JsonIgnore] 
+    public RpAuthResult RpAuthResult { get; init; } = RpAuthResult.GetWithLevelAbort();
 
     [JsonIgnore]
     public OneOf<DcqlQuery, PresentationDefinition> Requirements =>
@@ -123,7 +130,8 @@ public record AuthorizationRequest
         ClientMetadata? clientMetadata,
         string? clientMetadataUri,
         string? scope,
-        string? state)
+        string? state,
+        VerifierAttestation[] verifierAttestations)
     {
         if (SupportedClientIdSchemes.Exists(supportedClientIdScheme =>
                 clientId.StartsWith($"{supportedClientIdScheme}:")))
@@ -146,6 +154,7 @@ public record AuthorizationRequest
         ResponseMode = responseMode;
         Scope = scope;
         State = state;
+        VerifierAttestations = verifierAttestations;
     }
 
     /// <summary>
@@ -184,93 +193,89 @@ public record AuthorizationRequest
     private static Validation<AuthorizationRequestCancellation, AuthorizationRequest> CreateAuthorizationRequest(
         JObject authRequestJObject)
     {
-        if (IsHaipConform(authRequestJObject))
+        var responseUriOption = AuthorizationRequestExtensions.GetResponseUriMaybe(authRequestJObject);
+        if (!IsHaipConform(authRequestJObject))
         {
-            var authRequestValidation = 
-                authRequestJObject.ToObject<AuthorizationRequest>()
-                ?? new InvalidRequestError("Could not parse the Authorization Request")
-                    .ToInvalid<AuthorizationRequest>();
-            
-            var transactionDataPropertyFoundValidation =
-                from jToken in authRequestJObject.GetByKey("transaction_data")
-                from jArray in jToken.ToJArray()
-                select jArray;
-
-            var uc5TxDataFoundValidation =
-                from presentationDefinitionToken in authRequestJObject.GetByKey("presentation_definition")
-                from inputDescriptorsToken in presentationDefinitionToken.GetByKey("input_descriptors")
-                from txDataArrays in inputDescriptorsToken.TraverseAny(descriptor =>
-                {
-                    return
-                        from txDataToken in descriptor.GetByKey("transaction_data")
-                        from txDataArray in txDataToken.ToJArray()
-                        select (descriptor, txDataArray);
-                })
-                select txDataArrays;
-            
-            var responseUriOption = AuthorizationRequestExtensions.GetResponseUriMaybe(authRequestJObject);
-
-            switch (transactionDataPropertyFoundValidation.IsSuccess, uc5TxDataFoundValidation.IsSuccess)
-            {
-                case (true, false):
-                case (true, true):
-                {
-                    var txDataJArray = transactionDataPropertyFoundValidation.UnwrapOrThrow();
-                    
-                    var txDataValidation = 
-                        from transactionDataArray in TransactionDataArray.FromJArray(txDataJArray)
-                        from transactionDataEnum in transactionDataArray.Decode()
-                        from authRequest in authRequestValidation
-                        select authRequest with
-                        {
-                            TransactionData = transactionDataEnum.ToList()
-                        };
-
-                    return txDataValidation.ToLangExtValidation(responseUriOption);
-                }
-                case (false, true):
-                {
-                    var uc5TxDataJArray = uc5TxDataFoundValidation.UnwrapOrThrow();
-
-                    var txDataValidation = uc5TxDataJArray.TraverseAll(tuple =>
-                    {
-                        var inputDescriptor = tuple.descriptor.ToObject<InputDescriptor>();
-                        var txDataArray = tuple.txDataArray;
-
-                        var inputDescriptorValidation =
-                            from transactionDataArray in Uc5QesTransactionData.FromJArray(txDataArray)
-                            let list = transactionDataArray.ToList()
-                            select inputDescriptor with
-                            {
-                                TransactionData = list
-                            };
-
-                        return inputDescriptorValidation;
-                    });
-
-                    var result =
-                        from authRequest in authRequestValidation
-                        from inputDescriptors in txDataValidation
-                        select authRequest with
-                        {
-                            PresentationDefinition = authRequest.PresentationDefinition with
-                            {
-                                InputDescriptors = inputDescriptors.ToArray()
-                            }
-                        };
-
-                    return result.ToLangExtValidation(responseUriOption);
-                }
-                default:
-                    return authRequestValidation.ToLangExtValidation(responseUriOption);
-            }
-        }
-        else
-        {
-            var responseUriOption = AuthorizationRequestExtensions.GetResponseUriMaybe(authRequestJObject.ToString());
             var error = new InvalidRequestError("The authorization request does not match the HAIP");
             return new AuthorizationRequestCancellation(responseUriOption, [error]);
         }
+            
+        var authRequestValidation = 
+            authRequestJObject.ToObject<AuthorizationRequest>()
+            ?? new InvalidRequestError("Could not parse the Authorization Request")
+                .ToInvalid<AuthorizationRequest>();
+        
+        var transactionDataPropertyFoundValidation =
+            from jToken in authRequestJObject.GetByKey("transaction_data")
+            from jArray in jToken.ToJArray()
+            select jArray;
+
+        var uc5TxDataFoundValidation =
+            from presentationDefinitionToken in authRequestJObject.GetByKey("presentation_definition")
+            from inputDescriptorsToken in presentationDefinitionToken.GetByKey("input_descriptors")
+            from txDataArrays in inputDescriptorsToken.TraverseAny(descriptor =>
+            {
+                return
+                    from txDataToken in descriptor.GetByKey("transaction_data")
+                    from txDataArray in txDataToken.ToJArray()
+                    select (descriptor, txDataArray);
+            })
+            select txDataArrays;
+
+        switch (transactionDataPropertyFoundValidation.IsSuccess, uc5TxDataFoundValidation.IsSuccess)
+        {
+            case (true, false):
+            case (true, true):
+            {
+                var txDataJArray = transactionDataPropertyFoundValidation.UnwrapOrThrow();
+
+                var validation = authRequestValidation;
+                authRequestValidation = 
+                    from transactionDataArray in TransactionDataArray.FromJArray(txDataJArray)
+                    from transactionDataEnum in transactionDataArray.Decode()
+                    from authRequest in validation
+                    select authRequest with
+                    {
+                        TransactionData = transactionDataEnum.ToList()
+                    };
+                break;
+            }
+            case (false, true):
+            {
+                var uc5TxDataJArray = uc5TxDataFoundValidation.UnwrapOrThrow();
+
+                var txDataValidation = uc5TxDataJArray.TraverseAll(tuple =>
+                {
+                    var inputDescriptor = tuple.descriptor.ToObject<InputDescriptor>();
+                    var txDataArray = tuple.txDataArray;
+
+                    var inputDescriptorValidation =
+                        from transactionDataArray in Uc5QesTransactionData.FromJArray(txDataArray)
+                        let list = transactionDataArray.ToList()
+                        select inputDescriptor with
+                        {
+                            TransactionData = list
+                        };
+
+                    return inputDescriptorValidation;
+                });
+
+                authRequestValidation =
+                    from authRequest in authRequestValidation
+                    from inputDescriptors in txDataValidation
+                    select authRequest with
+                    {
+                        PresentationDefinition = authRequest.PresentationDefinition with
+                        {
+                            InputDescriptors = inputDescriptors.ToArray()
+                        }
+                    };
+
+                break;
+            }
+        }
+        
+        return authRequestValidation.ToLangExtValidation(responseUriOption);
     }
 
     private static bool IsHaipConform(JObject authorizationRequestJson)
@@ -338,31 +343,6 @@ internal static class AuthorizationRequestExtensions
         this AuthorizationRequest authorizationRequest,
         Option<ClientMetadata> clientMetadata)
         => authorizationRequest with { ClientMetadata = clientMetadata.ToNullable() };
-
-    internal static AuthorizationRequest WithX509(
-        this AuthorizationRequest authorizationRequest,
-        RequestObject requestObject)
-    {
-        var encodedCertificate = requestObject.GetLeafCertificate().GetEncoded();
-
-        var certificates =
-            requestObject
-                .GetCertificates()
-                .Select(x => x.GetEncoded())
-                .Select(x => new X509Certificate2(x));
-
-        var trustChain = new X509Chain();
-        foreach (var element in certificates)
-        {
-            trustChain.ChainPolicy.ExtraStore.Add(element);
-        }
-
-        return authorizationRequest with
-        {
-            X509Certificate = new X509Certificate2(encodedCertificate),
-            X509TrustChain = trustChain
-        };
-    }
 }
 
 public static class AuthorizationRequestFun

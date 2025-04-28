@@ -24,6 +24,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <EmbeddedResource Include="Oid4Vp\AuthRequest\Models\AuthorizationRequest_WithoutOverasking_HasValidRegistrationCertificateValidationResult.json" />
+    <EmbeddedResource Include="Oid4Vp\AuthRequest\Models\AuthorizationRequest_WithOverasking_HasInvalidRegistrationCertificateValidationResult.json" />
+    <EmbeddedResource Include="Oid4Vp\AuthRequest\Models\Can_Parse_Authorization_Request_Without_Attachments.json" />
+    <EmbeddedResource Include="Oid4Vp\AuthRequest\Models\Can_Parse_Authorization_Request_With_Attachments.json" />
     <EmbeddedResource Include="Oid4Vp\Dcql\Models\Can_Parse_Dcql_Query.json" />
     <EmbeddedResource Include="Oid4Vp\PresentationExchange\Models\Can_Create_Authorization_Response.json" />
     <EmbeddedResource Include="Oid4Vp\PresentationExchange\Models\Can_Parse_Presentation_Definition.json" />

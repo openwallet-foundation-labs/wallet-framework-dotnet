@@ -8,7 +8,7 @@ public record InvalidTransactionDataError : VpError
 {
     private const string Code = "invalid_transaction_data";
 
-    public Option<PresentationCandidates> PresentationCandidates { get; }
+    public Option<PresentationRequest> PresentationRequest { get; }
 
     public InvalidTransactionDataError(string message) : base(Code, message)
     {
@@ -20,12 +20,12 @@ public record InvalidTransactionDataError : VpError
     {
     }
 
-    public InvalidTransactionDataError(string message, PresentationCandidates candidates) : base(Code, message) =>
-        PresentationCandidates = candidates;
+    public InvalidTransactionDataError(string message, PresentationRequest request) : base(Code, message) =>
+        PresentationRequest = request;
 
     public InvalidTransactionDataError(
         string Message,
-        PresentationCandidates candidates,
+        PresentationRequest request,
         Option<Exception> Exception) : base(Code, Message, Exception) =>
-        PresentationCandidates = candidates;
+        PresentationRequest = request;
 }

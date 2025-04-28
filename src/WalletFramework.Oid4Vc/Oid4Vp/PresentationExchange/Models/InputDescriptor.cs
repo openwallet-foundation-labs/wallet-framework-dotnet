@@ -1,7 +1,11 @@
 using LanguageExt;
 using Newtonsoft.Json;
+using OneOf;
+using WalletFramework.Core.Functional;
+using WalletFramework.MdocLib;
 using WalletFramework.Oid4Vc.Oid4Vp.Models;
 using WalletFramework.Oid4Vc.Qes;
+using WalletFramework.SdJwtVc.Models;
 
 namespace WalletFramework.Oid4Vc.Oid4Vp.PresentationExchange.Models;
 
@@ -24,6 +28,10 @@ public record InputDescriptor
     /// </summary>
     [JsonProperty("format")]
     public Formats? Formats { get; private set; }
+
+    [JsonIgnore]
+    public Option<List<Uc5QesTransactionData>> TransactionData { get; init; }
+        = Option<List<Uc5QesTransactionData>>.None;
 
     /// <summary>
     ///     Gets or sets the unique identifier for the input descriptor.
@@ -52,10 +60,6 @@ public record InputDescriptor
     /// </summary>
     [JsonProperty("group")]
     public string[]? Group { get; private set; }
-    
-    [JsonIgnore]
-    public Option<List<Uc5QesTransactionData>> TransactionData { get; init; }
-        = Option<List<Uc5QesTransactionData>>.None;
 }
 
 /// <summary>
@@ -103,22 +107,22 @@ public class Field
 public class Filter
 {
     /// <summary>
+    ///     Gets the type of filter applied.
+    /// </summary>
+    [JsonProperty("type")]
+    public string Type { get; private set; } = null!;
+
+    /// <summary>
     ///     Gets the constant value which the selected value is evaluated against.
     /// </summary>
     [JsonProperty("const")]
     public string? Const { get; private set; }
-    
+
     /// <summary>
     ///     Gets the constant value which the selected value is evaluated against.
     /// </summary>
     [JsonProperty("enum")]
     public string[]? Enum { get; private set; }
-
-    /// <summary>
-    ///     Gets the type of filter applied.
-    /// </summary>
-    [JsonProperty("type")]
-    public string Type { get; private set; } = null!;
 }
 
 public static class InputDescriptorFun
@@ -127,4 +131,36 @@ public static class InputDescriptorFun
         inputDescriptor.Constraints.Fields?
             .SelectMany(field => field.Path)
             .Select(s => s.TrimStart('$', '.')) ?? [];
+
+    public static Option<OneOf<Vct, DocType>> GetRequestedCredentialType(this InputDescriptor inputDescriptor)
+    {
+        List<OneOf<Vct, DocType>> result = [];
+
+        if (inputDescriptor.Formats?.SdJwtVcFormat != null || inputDescriptor.Formats?.SdJwtDcFormat != null)
+        {
+            var types = inputDescriptor
+                .Constraints
+                .Fields?
+                .Where(field => !string.IsNullOrWhiteSpace(field.Filter?.Const))
+                .Select<Field, OneOf<Vct, DocType>>(field => Vct.ValidVct(field.Filter!.Const!).UnwrapOrThrow());
+
+            result = types?.ToList() ?? [];
+        }
+
+        if (inputDescriptor.Formats?.MDocFormat != null)
+        {
+            var types = inputDescriptor
+                .Constraints
+                .Fields?
+                .Where(field => !string.IsNullOrWhiteSpace(field.Filter?.Const))
+                .Select<Field, OneOf<Vct, DocType>>(field =>
+                {
+                    return DocType.ValidDoctype(field.Filter!.Const!).UnwrapOrThrow();
+                });
+
+            result = types?.ToList() ?? [];
+        }
+
+        return result.Count != 0 ? result[0] : Option<OneOf<Vct, DocType>>.None;
+    }
 }

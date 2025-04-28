@@ -1,7 +1,7 @@
 using LanguageExt;
 using OneOf;
-using WalletFramework.Oid4Vc.Oid4Vp.Dcql.Models;
-using WalletFramework.Oid4Vc.Oid4Vp.Dcql.Services;
+using WalletFramework.Oid4Vc.Dcql.Models;
+using WalletFramework.Oid4Vc.Dcql.Services;
 using WalletFramework.Oid4Vc.Oid4Vp.Models;
 using WalletFramework.Oid4Vc.Oid4Vp.PresentationExchange.Models;
 using WalletFramework.Oid4Vc.Oid4Vp.PresentationExchange.Services;

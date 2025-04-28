@@ -3,7 +3,6 @@ using Newtonsoft.Json.Linq;
 using WalletFramework.Core.Functional;
 using WalletFramework.Core.Json;
 using WalletFramework.Core.Localization;
-using WalletFramework.SdJwtVc.Models.Credential;
 using static WalletFramework.Oid4Vc.Oid4Vci.CredConfiguration.Models.CredentialName;
 using static WalletFramework.Core.Localization.Locale;
 using static WalletFramework.Oid4Vc.Oid4Vci.CredConfiguration.Models.CredentialLogo;
