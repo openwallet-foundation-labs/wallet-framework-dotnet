@@ -69,7 +69,7 @@ public record IssuerMetadata
     /// <summary>
     ///     Gets the URL of the Nonce Endpoint to retrieve new CredentialNonces (cNonce).
     /// </summary>
-    public Option<CNonceEndpoint> CNonceEndpoint { get; }
+    public Option<CredentialNonceEndpoint> CredentialNonceEndpoint { get; }
     
     private IssuerMetadata(
         Dictionary<CredentialConfigurationId, SupportedCredentialConfiguration> credentialConfigurationsSupported,
@@ -79,7 +79,7 @@ public record IssuerMetadata
         CredentialIssuerId credentialIssuer,
         Option<IEnumerable<AuthorizationServerId>> authorizationServers,
         Option<BatchCredentialIssuance> batchCredentialIssuance,
-        Option<CNonceEndpoint> cNonceEndpoint)
+        Option<CredentialNonceEndpoint> credentialNonceEndpoint)
     {
         CredentialConfigurationsSupported = credentialConfigurationsSupported;
         Display = display;
@@ -88,7 +88,7 @@ public record IssuerMetadata
         CredentialIssuer = credentialIssuer;
         AuthorizationServers = authorizationServers;
         BatchCredentialIssuance = batchCredentialIssuance;
-        CNonceEndpoint = cNonceEndpoint;
+        CredentialNonceEndpoint = credentialNonceEndpoint;
     }
     
     private static IssuerMetadata Create(
@@ -99,7 +99,7 @@ public record IssuerMetadata
         CredentialIssuerId credentialIssuer,
         Option<IEnumerable<AuthorizationServerId>> authorizationServers,
         Option<BatchCredentialIssuance> batchCredentialIssuance,
-        Option<CNonceEndpoint> cNonceEndpoint) => new(
+        Option<CredentialNonceEndpoint> credentialNonceEndpoint) => new(
         credentialConfigurationsSupported,
         display,
         credentialEndpoint,
@@ -107,7 +107,7 @@ public record IssuerMetadata
         credentialIssuer,
         authorizationServers,
         batchCredentialIssuance,
-        cNonceEndpoint);
+        credentialNonceEndpoint);
 
     public static Validation<IssuerMetadata> ValidIssuerMetadata(JObject json)
     {
@@ -183,9 +183,9 @@ public record IssuerMetadata
             .ToOption()
             .OnSome(OptionalBatchCredentialIssuance);
 
-        var cNonceEndpoint =
-            from jToken in json.GetByKey(CNonceEndpointJsonKey).ToOption()
-            select new CNonceEndpoint(new Uri(jToken.ToString()));
+        var credentialNonceEndpoint =
+            from jToken in json.GetByKey(CredentialNonceEndpointJsonKey).ToOption()
+            select new CredentialNonceEndpoint(new Uri(jToken.ToString()));
         
         return Valid(Create)
             .Apply(credentialConfigurations)
@@ -195,7 +195,7 @@ public record IssuerMetadata
             .Apply(credentialIssuerId)
             .Apply(authServers)
             .Apply(issuance)
-            .Apply(cNonceEndpoint);
+            .Apply(credentialNonceEndpoint);
     }
 }
 
@@ -208,7 +208,7 @@ public static class IssuerMetadataJsonExtensions
     public const string CredentialIssuerJsonKey = "credential_issuer";
     public const string AuthorizationServersJsonKey = "authorization_servers";
     public const string BatchCredentialIssuanceJsonKey = "batch_credential_issuance";
-    public const string CNonceEndpointJsonKey = "nonce_endpoint";
+    public const string CredentialNonceEndpointJsonKey = "nonce_endpoint";
     
     public static JObject EncodeToJson(this IssuerMetadata issuerMetadata)
     {
@@ -258,9 +258,9 @@ public static class IssuerMetadataJsonExtensions
             result.Add(BatchCredentialIssuanceJsonKey, issuance.EncodeToJson());
         });
         
-        issuerMetadata.CNonceEndpoint.IfSome(endpoint =>
+        issuerMetadata.CredentialNonceEndpoint.IfSome(endpoint =>
         {
-            result.Add(CNonceEndpointJsonKey, endpoint.Value.ToStringWithoutTrail());
+            result.Add(CredentialNonceEndpointJsonKey, endpoint.Value.ToStringWithoutTrail());
         });
         
         return result;

@@ -11,5 +11,5 @@ public interface ITokenService
     public Task<OneOf<OAuthToken, DPopToken>> RequestToken(
         TokenRequest tokenRequest,
         AuthorizationServerMetadata metadata,
-        Option<CNonceEndpoint> nonceEndpoint);
+        Option<CredentialNonceEndpoint> credentialNonceEndpoint);
 }

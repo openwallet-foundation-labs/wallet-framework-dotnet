@@ -6,12 +6,12 @@ using WalletFramework.Oid4Vc.Oid4Vci.CredentialNonce.Models;
 
 namespace WalletFramework.Oid4Vc.Oid4Vci.CredentialNonce.Implementations;
 
-public class CNonceService(IHttpClientFactory httpClientFactory) : ICNonceService
+public class CredentialNonceService(IHttpClientFactory httpClientFactory) : ICredentialNonceService
 {
-    public async Task<CNonce> GetCredentialNonce(CNonceEndpoint cNonceEndpoint)
+    public async Task<Models.CredentialNonce> GetCredentialNonce(CredentialNonceEndpoint credentialNonceEndpoint)
     {
         var client = httpClientFactory.CreateClient();
-        var response = await client.PostAsync(cNonceEndpoint.Value, new StringContent(""));
+        var response = await client.PostAsync(credentialNonceEndpoint.Value, new StringContent(""));
 
         var message = await response.Content.ReadAsStringAsync();
         
@@ -19,7 +19,7 @@ public class CNonceService(IHttpClientFactory httpClientFactory) : ICNonceServic
             throw new HttpRequestException($"Requesting the c_nonce failed. Status Code is {response.StatusCode} with message: {message}");
         
         return (from jToken in JObject.Parse(message).GetByKey("c_nonce") 
-                from docType in CNonce.ValidCredentialNonce(jToken.ToString())
+                from docType in Models.CredentialNonce.ValidCredentialNonce(jToken.ToString())
                 select docType)
             .Match(
                 nonce => nonce, 

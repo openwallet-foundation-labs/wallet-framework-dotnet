@@ -14,7 +14,7 @@ namespace WalletFramework.Oid4Vc.Oid4Vci.Authorization.Implementations;
 internal class TokenService(
     IDPopHttpClient dPopHttpClient,
     IHttpClientFactory httpClientFactory,
-    ICNonceService cNonceService,
+    ICredentialNonceService credentialNonceService,
     IKeyStore keyStore)
     : ITokenService
 {
@@ -23,7 +23,7 @@ internal class TokenService(
     public async Task<OneOf<OAuthToken, DPopToken>> RequestToken(
         TokenRequest tokenRequest,
         AuthorizationServerMetadata metadata,
-        Option<CNonceEndpoint> nonceEndpoint)
+        Option<CredentialNonceEndpoint> credentialNonceEndpoint)
     {
         if (metadata.IsDPoPSupported)
         {
@@ -41,10 +41,10 @@ internal class TokenService(
             var token = DeserializeObject<OAuthToken>(await result.ResponseMessage.Content.ReadAsStringAsync()) 
                         ?? throw new InvalidOperationException("Failed to deserialize the token response");
 
-            await nonceEndpoint.IfSomeAsync(async endpoint =>
+            await credentialNonceEndpoint.IfSomeAsync(async endpoint =>
             {
-                var nonce = await cNonceService.GetCredentialNonce(endpoint);
-                token = token with { CNonce = nonce.Value };
+                var credentialNonce = await credentialNonceService.GetCredentialNonce(endpoint);
+                token = token with { CNonce = credentialNonce.Value };
             });
             
             return new DPopToken(
@@ -61,10 +61,10 @@ internal class TokenService(
             var token = DeserializeObject<OAuthToken>(await response.Content.ReadAsStringAsync()) 
                         ?? throw new InvalidOperationException("Failed to deserialize the token response");
             
-            await nonceEndpoint.IfSomeAsync(async endpoint =>
+            await credentialNonceEndpoint.IfSomeAsync(async endpoint =>
             {
-                var nonce = await cNonceService.GetCredentialNonce(endpoint);
-                token = token with { CNonce = nonce.Value };
+                var credentialNonce = await credentialNonceService.GetCredentialNonce(endpoint);
+                token = token with { CNonce = credentialNonce.Value };
             });
             
             return token;

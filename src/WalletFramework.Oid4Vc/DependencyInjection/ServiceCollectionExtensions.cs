@@ -66,7 +66,7 @@ public static class ServiceCollectionExtensions
         builder.AddSingleton<IStatusListService, StatusListService>();
         builder.AddSingleton<ITokenService, TokenService>();
         builder.AddSingleton<IVctMetadataService, VctMetadataService>();
-        builder.AddSingleton<ICNonceService, CNonceService>();
+        builder.AddSingleton<ICredentialNonceService, CredentialNonceService>();
 
         builder.AddSdJwtVcServices();
         

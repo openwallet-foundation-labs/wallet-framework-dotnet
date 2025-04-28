@@ -3,20 +3,20 @@ using WalletFramework.Core.Functional.Errors;
 
 namespace WalletFramework.Oid4Vc.Oid4Vci.CredentialNonce.Models;
 
-public readonly struct CNonce
+public readonly struct CredentialNonce
 {
     public string Value { get; }
     
-    private CNonce(string nonce)
+    private CredentialNonce(string nonce)
     {
         Value = nonce;
     }
     
-    public static Validation<CNonce> ValidCredentialNonce(string nonce)
+    public static Validation<CredentialNonce> ValidCredentialNonce(string nonce)
     {
         if (string.IsNullOrEmpty(nonce))
-            return new StringIsNullOrWhitespaceError<CNonce>();
+            return new StringIsNullOrWhitespaceError<CredentialNonce>();
 
-        return new CNonce(nonce);
+        return new CredentialNonce(nonce);
     }
 };
