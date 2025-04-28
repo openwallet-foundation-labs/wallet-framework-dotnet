@@ -23,6 +23,7 @@ using WalletFramework.MdocVc;
 using WalletFramework.Oid4Vc.CredentialSet;
 using WalletFramework.Oid4Vc.CredentialSet.Models;
 using WalletFramework.Oid4Vc.Oid4Vci.Authorization.DPop.Models;
+using WalletFramework.Oid4Vc.Oid4Vci.CredentialNonce.Abstractions;
 using WalletFramework.Oid4Vc.Oid4Vci.CredResponse;
 using WalletFramework.Oid4Vc.Oid4Vp.Models;
 using WalletFramework.SdJwtVc.Models;
@@ -63,6 +64,7 @@ public class Oid4VciClientService : IOid4VciClientService
         IIssuerMetadataService issuerMetadataService,
         IMdocStorage mdocStorage,
         ISdJwtVcHolderService sdJwtService,
+        ICredentialNonceService credentialNonceService,
         ITokenService tokenService)
     {
         _agentProvider = agentProvider;
@@ -74,6 +76,7 @@ public class Oid4VciClientService : IOid4VciClientService
         _issuerMetadataService = issuerMetadataService;
         _mdocStorage = mdocStorage;
         _sdJwtService = sdJwtService;
+        _credentialNonceService = credentialNonceService;
         _tokenService = tokenService;
     }
 
@@ -86,6 +89,7 @@ public class Oid4VciClientService : IOid4VciClientService
     private readonly IIssuerMetadataService _issuerMetadataService;
     private readonly IMdocStorage _mdocStorage;
     private readonly ISdJwtVcHolderService _sdJwtService;
+    private readonly ICredentialNonceService _credentialNonceService;
     private readonly ITokenService _tokenService;
     
     /// <inheritdoc />
@@ -269,7 +273,8 @@ public class Oid4VciClientService : IOid4VciClientService
 
         var token = await _tokenService.RequestToken(
             tokenRequest,
-            authorizationServerMetadata);
+            authorizationServerMetadata,
+            issuerMetadata.CredentialNonceEndpoint);
 
         var validResponse = await _credentialRequestService.RequestCredentials(
             configuration,
@@ -377,8 +382,9 @@ public class Oid4VciClientService : IOid4VciClientService
         
         var token = await _tokenService.RequestToken(
             tokenRequest,
-            session.AuthorizationData.AuthorizationServerMetadata);
-
+            session.AuthorizationData.AuthorizationServerMetadata,
+            session.AuthorizationData.IssuerMetadata.CredentialNonceEndpoint);
+        
         var credentialSet = new CredentialSetRecord();
         
         //TODO: Make sure that it does not always request all available credConfigurations
@@ -403,9 +409,26 @@ public class Oid4VciClientService : IOid4VciClientService
                             await credential.Value.Match(
                                 async sdJwt =>
                                 {
-                                    token = token.Match<OneOf<OAuthToken, DPopToken>>(
-                                        oAuth => oAuth with { CNonce = cNonce.ToNullable() },
-                                        dPop => dPop with { Token = dPop.Token with { CNonce = cNonce.ToNullable() } });
+                                    token = await session.AuthorizationData.IssuerMetadata.CredentialNonceEndpoint.Match(
+                                        Some: async credentialNonceEndpoint =>
+                                        {
+                                            var credentialNonce = await _credentialNonceService.GetCredentialNonce(credentialNonceEndpoint);
+                                            return token.Match<OneOf<OAuthToken, DPopToken>>(
+                                                oAuth => oAuth with { CNonce = credentialNonce.Value },
+                                                dPop => dPop with
+                                                {
+                                                    Token = dPop.Token with { CNonce = credentialNonce.Value }
+                                                });
+                                        },
+                                        None: () =>
+                                        {
+                                            return Task.FromResult<OneOf<OAuthToken, DPopToken>>( token.Match<OneOf<OAuthToken, DPopToken>>(
+                                                oAuth => oAuth with { CNonce = cNonce.ToNullable() },
+                                                dPop => dPop with
+                                                {
+                                                    Token = dPop.Token with { CNonce = cNonce.ToNullable() }
+                                                }));
+                                        });
 
                                     var record = sdJwt.Decoded.ToRecord(
                                         configuration.AsT0,
@@ -419,9 +442,26 @@ public class Oid4VciClientService : IOid4VciClientService
                                 },
                                 async mdoc =>
                                 {
-                                    token = token.Match<OneOf<OAuthToken, DPopToken>>(
-                                        oAuth => oAuth with { CNonce = cNonce.ToNullable() },
-                                        dPop => dPop with { Token = dPop.Token with { CNonce = cNonce.ToNullable() } });
+                                    token = await session.AuthorizationData.IssuerMetadata.CredentialNonceEndpoint.Match(
+                                        Some: async credentialNonceEndpoint =>
+                                        {
+                                            var credentialNonce = await _credentialNonceService.GetCredentialNonce(credentialNonceEndpoint);
+                                            return token.Match<OneOf<OAuthToken, DPopToken>>(
+                                                oAuth => oAuth with { CNonce = credentialNonce.Value },
+                                                dPop => dPop with
+                                                {
+                                                    Token = dPop.Token with { CNonce = credentialNonce.Value }
+                                                });
+                                        },
+                                        None: () =>
+                                        {
+                                            return Task.FromResult<OneOf<OAuthToken, DPopToken>>( token.Match<OneOf<OAuthToken, DPopToken>>(
+                                                oAuth => oAuth with { CNonce = cNonce.ToNullable() },
+                                                dPop => dPop with
+                                                {
+                                                    Token = dPop.Token with { CNonce = cNonce.ToNullable() }
+                                                }));
+                                        });
 
                                     var displays = MdocFun.CreateMdocDisplays(configuration.AsT1);
                                     
@@ -484,7 +524,8 @@ public class Oid4VciClientService : IOid4VciClientService
         
         var token = await _tokenService.RequestToken(
             tokenRequest,
-            session.AuthorizationData.AuthorizationServerMetadata);
+            session.AuthorizationData.AuthorizationServerMetadata,
+            session.AuthorizationData.IssuerMetadata.CredentialNonceEndpoint);
 
         var credentialConfigs = credentialType.Match(
             vct => credConfigurations.Where(config => config.Match(

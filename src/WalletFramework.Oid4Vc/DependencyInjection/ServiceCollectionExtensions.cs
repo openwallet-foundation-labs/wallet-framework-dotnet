@@ -15,6 +15,8 @@ using WalletFramework.Oid4Vc.Oid4Vci.Authorization.Abstractions;
 using WalletFramework.Oid4Vc.Oid4Vci.Authorization.DPop.Abstractions;
 using WalletFramework.Oid4Vc.Oid4Vci.Authorization.DPop.Implementations;
 using WalletFramework.Oid4Vc.Oid4Vci.Authorization.Implementations;
+using WalletFramework.Oid4Vc.Oid4Vci.CredentialNonce.Abstractions;
+using WalletFramework.Oid4Vc.Oid4Vci.CredentialNonce.Implementations;
 using WalletFramework.Oid4Vc.Oid4Vci.CredOffer.Abstractions;
 using WalletFramework.Oid4Vc.Oid4Vci.CredOffer.Implementations;
 using WalletFramework.Oid4Vc.Oid4Vci.CredRequest.Abstractions;
@@ -70,6 +72,7 @@ public static class ServiceCollectionExtensions
         builder.AddSingleton<IStatusListService, StatusListService>();
         builder.AddSingleton<ITokenService, TokenService>();
         builder.AddSingleton<IVctMetadataService, VctMetadataService>();
+        builder.AddSingleton<ICredentialNonceService, CredentialNonceService>();
 
         builder.AddSdJwtVcServices();
         

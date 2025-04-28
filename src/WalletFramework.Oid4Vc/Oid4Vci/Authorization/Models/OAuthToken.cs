@@ -46,7 +46,7 @@ public record OAuthToken
     ///     when requesting a Credential.
     /// </summary>
     [JsonProperty("c_nonce")]
-    public string CNonce { get; set; }
+    public string? CNonce { get; set; }
 
     /// <summary>
     ///     Gets or sets the refresh token, which can be used to obtain new access tokens.
