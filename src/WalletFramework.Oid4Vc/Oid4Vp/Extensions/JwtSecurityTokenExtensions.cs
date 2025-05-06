@@ -26,6 +26,7 @@ public static class JwtSecurityTokenExtensions
         {
             "RS256" => GetSigner("SHA-256withRSA").SignWithRaw(encodedHeaderAndPayload, publicKeyParameters, token.RawSignature),
             "ES256" => GetSigner("SHA-256withECDSA").SignWithDer(encodedHeaderAndPayload, publicKeyParameters, token.RawSignature),
+            "ES384" => GetSigner("SHA-384withECDSA").SignWithDer(encodedHeaderAndPayload, publicKeyParameters, token.RawSignature),
             "ES512" => GetSigner("SHA-512withECDSA").SignWithDer(encodedHeaderAndPayload, publicKeyParameters, token.RawSignature),
             _ => throw new InvalidOperationException("Unsupported JWT alg")
         };
