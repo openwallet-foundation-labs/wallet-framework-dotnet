@@ -10,7 +10,7 @@ public class DcqlTests
     [Fact]
     public void Can_Parse_Dcql_Query()
     {
-        var json = DcqlSamples.GetDcqlQueryJsonStr();
+        var json = DcqlSamples.GetDcqlQueryAsJsonStr();
         var dcqlQuery = JsonConvert.DeserializeObject<DcqlQuery>(json)!;
 
         dcqlQuery.CredentialQueries.Length.Should().Be(5);

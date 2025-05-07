@@ -26,5 +26,4 @@
     <ItemGroup>
       <ProjectReference Include="..\WalletFramework.Core\WalletFramework.Core.csproj" />
     </ItemGroup>
-
 </Project>

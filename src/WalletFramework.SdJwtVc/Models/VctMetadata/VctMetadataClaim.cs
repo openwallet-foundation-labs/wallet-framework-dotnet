@@ -71,7 +71,7 @@ public readonly struct VctMetadataClaim
             .OnSuccess(token => token.ToJArray())
             .OnSuccess(arr =>
             {
-                return ClaimPath.ValidClaimPath(arr.Select(token => token.ToObject<string>() == null ? null : token.ToString()).ToArray());
+                return ClaimPath.FromObjects(arr.Select(token => token.ToObject<string>() == null ? null : token.ToString()).ToArray());
             });
         
         var display = json

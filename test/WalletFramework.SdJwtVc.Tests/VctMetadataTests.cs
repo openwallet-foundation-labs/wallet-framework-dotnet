@@ -142,8 +142,9 @@ public class VctMetadataTests
         Assert.Equal(4, claims.Length);
 
         var nameClaim = claims[0];
-        Assert.Single((string?[])nameClaim.Path);
-        Assert.Equal("name", ((string?[])nameClaim.Path).Single());
+        var nameClaimPathComponents = nameClaim.Path.GetPathComponents();
+        Assert.Single(nameClaimPathComponents);
+        Assert.Equal("name", nameClaimPathComponents[0].AsKey());
         
         Assert.True(nameClaim.Display.IsSome);
         var nameClaimDisplay = nameClaim.Display.ValueUnsafe();
@@ -172,8 +173,9 @@ public class VctMetadataTests
         Assert.Equal(ClaimSelectiveDisclosure.Allowed, nameClaim.SelectiveDisclosure.ValueUnsafe());
 
         var addressClaim = claims[1];
-        Assert.Single((string?[])addressClaim.Path);
-        Assert.Equal("address", ((string?[])addressClaim.Path).Single());
+        var addressClaimPathComponents = addressClaim.Path.GetPathComponents();
+        Assert.Single(addressClaimPathComponents);
+        Assert.Equal("address", addressClaimPathComponents[0].AsKey());
         
         Assert.True(addressClaim.Display.IsSome);
         var addressClaimDisplay = addressClaim.Display.ValueUnsafe();
@@ -202,9 +204,10 @@ public class VctMetadataTests
         Assert.Equal(ClaimSelectiveDisclosure.Always, addressClaim.SelectiveDisclosure.ValueUnsafe());
         
         var streetAddressClaim = claims[2];
-        Assert.Equal(2, ((string?[])streetAddressClaim.Path).Length);
-        Assert.Equal("address", ((string?[])streetAddressClaim.Path)[0]);
-        Assert.Equal("street_address", ((string?[])streetAddressClaim.Path)[1]);
+        var streetAddressClaimPathComponents = streetAddressClaim.Path.GetPathComponents();
+        Assert.Equal(2, streetAddressClaimPathComponents.Count);
+        Assert.Equal("address", streetAddressClaimPathComponents[0].AsKey());
+        Assert.Equal("street_address", streetAddressClaimPathComponents[1].AsKey());
         
         Assert.True(streetAddressClaim.Display.IsSome);
         var streetAddressClaimDisplay = streetAddressClaim.Display.ValueUnsafe();
@@ -231,9 +234,10 @@ public class VctMetadataTests
         Assert.Equal(ClaimSelectiveDisclosure.Always, streetAddressClaim.SelectiveDisclosure.ValueUnsafe());
         
         var degreesClaim = claims[3];
-        Assert.Equal(2, ((string?[])degreesClaim.Path).Length);
-        Assert.Equal("degrees", ((string?[])degreesClaim.Path)[0]);
-        Assert.Null(((string?[])degreesClaim.Path)[1]);
+        var degreesClaimPathComponents = degreesClaim.Path.GetPathComponents();
+        Assert.Equal(2, degreesClaimPathComponents.Count);
+        Assert.Equal("degrees", degreesClaimPathComponents[0].AsKey());
+        Assert.Null(degreesClaimPathComponents[1].AsKey());
         
         Assert.True(degreesClaim.Display.IsSome);
         var degreesClaimDisplay = degreesClaim.Display.ValueUnsafe();

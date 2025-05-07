@@ -4,16 +4,17 @@ using Newtonsoft.Json;
 using WalletFramework.Core.ClaimPaths;
 using WalletFramework.Core.Credentials.Abstractions;
 using WalletFramework.Core.Functional;
-using WalletFramework.Core.Path;
 using WalletFramework.Oid4Vc.Oid4Vci.Abstractions;
 using WalletFramework.Oid4Vc.Oid4Vci.Implementations;
+using WalletFramework.Oid4Vc.Oid4Vp.ClaimPaths;
 using WalletFramework.Oid4Vc.Oid4Vp.Dcql.Models;
 using WalletFramework.Oid4Vc.Oid4Vp.Models;
 using WalletFramework.SdJwtVc.Services.SdJwtVcHolderService;
 
 namespace WalletFramework.Oid4Vc.Oid4Vp.Dcql.Services;
 
-public class DcqlService(IAgentProvider agentProvider,
+public class DcqlService(
+    IAgentProvider agentProvider,
     IMdocStorage mdocStorage,
     ISdJwtVcHolderService sdJwtVcHolderService) : IDcqlService
 {
@@ -114,38 +115,29 @@ public class DcqlService(IAgentProvider agentProvider,
         var context = await agentProvider.GetContextAsync();
         var sdJwtRecords = await sdJwtVcHolderService.ListAsync(context);
         return sdJwtRecords.Where(record =>
-        { 
+        {
             var doc = record.ToSdJwtDoc();
+
+            var vctMatches = credentialQuery.Meta?.Vcts?.Any(vct => record.Vct == vct) ?? true;
+            var pathSuccess = credentialQuery.Claims?.All(requestedClaim =>
+            {
+                return ClaimPath
+                    .FromObjects([.. requestedClaim.Path!.Cast<object>()])
+                    .OnSuccess(path => path.ProcessWith(doc))
+                    .OnSuccess(selection =>
+                    {
+                        if (requestedClaim.Values != null)
+                        {
+                            var values = selection.GetValues().Select(v => v.ToString());
+                            return requestedClaim.Values.Any(requestedValue => values.Contains(requestedValue));
+                        }
+                
+                        return true;
+                    })
+                    .Fallback(false);
+            }) ?? true;
             
-            return (credentialQuery.Meta?.Vcts?.Any(vct => record.Vct == vct) ?? true)
-                 && (credentialQuery.Claims?.All(requestedClaim =>
-                 {
-                     var claimPath = ClaimPath.ValidClaimPath(requestedClaim.Path!);
-                     return claimPath.Match(
-                         path =>
-                         {
-                             try
-                             {
-                                 var jsonPath = path.ToJsonPath();
-
-                                 var value = doc.UnsecuredPayload.SelectToken(jsonPath.Value, true)!;
-
-                                 if (requestedClaim.Values != null)
-                                 {
-                                     return requestedClaim.Values!.Any(requestedValue =>
-                                         requestedValue == value.ToString());
-                                 }
-
-                                 return true;
-                             }
-                             catch (Exception)
-                             {
-                                 return false;
-                             }
-                             
-                         },
-                         _ => false);
-                 }) ?? true);
+            return vctMatches && pathSuccess;
         });
     }
     
@@ -156,23 +148,37 @@ public class DcqlService(IAgentProvider agentProvider,
         return mdocRecords.Match(
             records => records.Where(record =>
             {
-                return (credentialQuery.Meta?.Doctype == null || credentialQuery.Meta?.Doctype == record.DocType)
-                       && (credentialQuery.Claims?.All(requestedClaim =>
-                       {
-                           // backward compatible Draft 24 & Draft 23
-                           var nameSpace = requestedClaim.Path?[0] ?? requestedClaim.Namespace;
-                           var claimName = requestedClaim.Path?[1] ?? requestedClaim.ClaimName;
-                           
-                           return record.Mdoc.IssuerSigned.IssuerNameSpaces.Value
-                               .Any(x => x.Key == nameSpace
-                                         && x.Value.Select(value => value.ElementId.Value).Contains(claimName)
-                                         && x.Value.Select(value => value.Element.Value)
-                                             .Any(value => value.Match(
-                                                 elementValue => requestedClaim.Values?.Contains(elementValue.Value) ?? true,
-                                                 elementArray => false,
-                                                 elementMap => false)));
-                       }) ?? true);
+                // Filter by doctype if specified
+                var doctypeMatches = credentialQuery.Meta?.Doctype == null || credentialQuery.Meta?.Doctype == record.DocType;
+                if (!doctypeMatches)
+                    return false;
+
+                // If no claims specified, accept the record
+                if (credentialQuery.Claims == null || credentialQuery.Claims.Length == 0)
+                    return true;
+
+                // All claims must match
+                return credentialQuery.Claims.All(requestedClaim =>
+                {
+                    // Build claim path
+                    object[] pathObjects = [.. requestedClaim.Path.Cast<object>()];
+
+                    return ClaimPath
+                        .FromObjects(pathObjects)
+                        .OnSuccess(path => path.ProcessWith(record.Mdoc))
+                        .OnSuccess(selection =>
+                        {
+                            if (requestedClaim.Values != null)
+                            {
+                                var values = selection.GetValues().Select(v => v.ToString());
+                                return requestedClaim.Values.Any(requestedValue => values.Contains(requestedValue));
+                            }
+                            return true;
+                        })
+                        .Fallback(false);
+                });
             }),
-            () => []);
+            () => []
+        );
     }
 }

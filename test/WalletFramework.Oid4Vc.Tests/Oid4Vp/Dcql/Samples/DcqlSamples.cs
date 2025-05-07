@@ -4,7 +4,7 @@ namespace WalletFramework.Oid4Vc.Tests.Oid4Vp.Dcql.Samples;
 
 public static class DcqlSamples
 {
-    public static string GetDcqlQueryJsonStr() => GetJsonForTestCase("DcqlQuerySample");
+    public static string GetDcqlQueryAsJsonStr() => GetJsonForTestCase("DcqlQuerySample");
 
     private static string GetJsonForTestCase(string name = "")
     {

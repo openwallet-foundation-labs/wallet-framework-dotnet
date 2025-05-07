@@ -12,6 +12,7 @@ namespace WalletFramework.Oid4Vc.Oid4Vp.Dcql.Models;
 /// <summary>
 /// The credential query claim.
 /// </summary>
+// TODO: Validate for duplicate claim queries and ignore them
 public class CredentialClaimQuery
 {
     /// <summary>
