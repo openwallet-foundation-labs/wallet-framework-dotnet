@@ -13,7 +13,7 @@ namespace WalletFramework.Oid4Vc.Oid4Vp.Dcql.Models;
 /// The credential query claim.
 /// </summary>
 // TODO: Validate for duplicate claim queries and ignore them
-public class CredentialClaimQuery
+public class ClaimQuery
 {
     /// <summary>
     /// This MUST be a string identifying the particular claim.
@@ -51,7 +51,7 @@ public class CredentialClaimQuery
     [JsonProperty(ClaimNameJsonKey)]
     public string? ClaimName { get; set; }
 
-    public static Validation<CredentialClaimQuery> FromJObject(JObject json)
+    public static Validation<ClaimQuery> FromJObject(JObject json)
     {
         var id = json.GetByKey(IdJsonKey)
             .OnSuccess(token => token.ToJValue())
@@ -148,7 +148,7 @@ public class CredentialClaimQuery
             .Apply(claimName);
     }
     
-    private static CredentialClaimQuery Create(
+    private static ClaimQuery Create(
         Option<string> id,
         Option<IEnumerable<string>> path,
         Option<IEnumerable<string>> values,

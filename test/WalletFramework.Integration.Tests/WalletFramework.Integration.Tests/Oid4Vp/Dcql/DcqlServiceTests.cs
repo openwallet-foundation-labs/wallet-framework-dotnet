@@ -237,9 +237,9 @@ public class DcqlServiceTests
         return record;
     }
 
-    private static CredentialClaimQuery CreateCredentialClaimQuery(string[] path, string? value = null)
+    private static ClaimQuery CreateCredentialClaimQuery(string[] path, string? value = null)
     {
-        var credentialQueryClaim = new CredentialClaimQuery
+        var credentialQueryClaim = new ClaimQuery
         {
             Id = Guid.NewGuid().ToString(),
             Path = path
@@ -253,7 +253,7 @@ public class DcqlServiceTests
         return credentialQueryClaim;
     }
 
-    private static CredentialQuery CreateCredentialQuery(string id, string format, CredentialClaimQuery[] credentialQueryClaims)
+    private static CredentialQuery CreateCredentialQuery(string id, string format, ClaimQuery[] credentialQueryClaims)
     {
         var credentialQuery = new CredentialQuery
         {

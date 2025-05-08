@@ -20,7 +20,7 @@ public class CredentialQuery
     ///     An object defining claims in the requested credential.
     /// </summary>
     [JsonProperty(ClaimsJsonKey)]
-    public CredentialClaimQuery[]? Claims { get; set; }
+    public ClaimQuery[]? Claims { get; set; }
 
     /// <summary>
     ///     An object defining additional properties requested by the Verifier.
@@ -80,7 +80,7 @@ public class CredentialQuery
         var claims = json.GetByKey(ClaimsJsonKey)
             .OnSuccess(token => token.ToJArray())
             .OnSuccess(array => array.TraverseAll(jToken => jToken.ToJObject()))
-            .OnSuccess(array => array.Select(CredentialClaimQuery.FromJObject))
+            .OnSuccess(array => array.Select(ClaimQuery.FromJObject))
             .OnSuccess(array => array.TraverseAll(x => x))
             .ToOption();
 
@@ -115,7 +115,7 @@ public class CredentialQuery
         string id,
         string format,
         CredentialMetaQuery meta,
-        Option<IEnumerable<CredentialClaimQuery>> claims,
+        Option<IEnumerable<ClaimQuery>> claims,
         Option<IEnumerable<IEnumerable<string>>> claimSets) => new()
     {
         Id = id,
