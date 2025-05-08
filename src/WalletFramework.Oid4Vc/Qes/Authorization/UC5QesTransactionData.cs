@@ -3,7 +3,7 @@ using WalletFramework.Core.Base64Url;
 using WalletFramework.Core.Functional;
 using WalletFramework.Core.Json;
 
-namespace WalletFramework.Oid4Vc.Qes;
+namespace WalletFramework.Oid4Vc.Qes.Authorization;
 
 public record Uc5QesTransactionData(
     Base64UrlString Encoded,

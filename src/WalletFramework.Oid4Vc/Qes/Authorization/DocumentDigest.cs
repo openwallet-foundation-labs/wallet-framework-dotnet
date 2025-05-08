@@ -3,7 +3,7 @@ using Newtonsoft.Json.Linq;
 using WalletFramework.Core.Functional;
 using WalletFramework.Core.Json;
 
-namespace WalletFramework.Oid4Vc.Qes;
+namespace WalletFramework.Oid4Vc.Qes.Authorization;
 
 public record DocumentDigest(
     DocumentDigestLabel Label,

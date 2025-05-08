@@ -37,6 +37,7 @@ using WalletFramework.Oid4Vc.Oid4Vp.PresentationExchange.Models;
 using WalletFramework.Oid4Vc.Oid4Vp.TransactionDatas;
 using WalletFramework.Oid4Vc.Oid4Vp.TransactionDatas.Errors;
 using WalletFramework.Oid4Vc.Qes;
+using WalletFramework.Oid4Vc.Qes.Authorization;
 using WalletFramework.SdJwtVc.Models;
 using WalletFramework.SdJwtVc.Models.Records;
 using WalletFramework.SdJwtVc.Services.SdJwtVcHolderService;
