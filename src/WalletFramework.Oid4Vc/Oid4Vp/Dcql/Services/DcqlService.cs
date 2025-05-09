@@ -1,8 +1,8 @@
 using Hyperledger.Aries.Agents;
 using LanguageExt;
 using Newtonsoft.Json;
-using WalletFramework.Core.Credentials.Abstractions;
 using WalletFramework.Core.Functional;
+using WalletFramework.Core.Credentials.Abstractions;
 using WalletFramework.Oid4Vc.Oid4Vci.Abstractions;
 using WalletFramework.Oid4Vc.Oid4Vp.Dcql.Models;
 using WalletFramework.Oid4Vc.Oid4Vp.Models;
@@ -41,7 +41,8 @@ public class DcqlService(
         return sdJwtCandidate.Match(Some, () => mdocCandidate);
     }
 
-    public AuthorizationResponse CreateAuthorizationResponse(AuthorizationRequest authorizationRequest,
+    public AuthorizationResponse CreateAuthorizationResponse(
+        AuthorizationRequest authorizationRequest,
         PresentationMap[] presentationMaps)
     {
         var vpToken = presentationMaps.ToDictionary(

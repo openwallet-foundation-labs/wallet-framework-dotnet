@@ -158,7 +158,7 @@ public class Oid4VpClientService : IOid4VpClientService
                 inputDescriptor => inputDescriptor.Id);
 
             var claims = credentialRequirement.Match(
-                credentialQuery => credentialQuery.GetRequestedAttributes(),
+                credentialQuery => credentialQuery.GetClaimsToDiscloseAsStrs(),
                 inputDescriptor => inputDescriptor.GetRequestedAttributes());
 
             var txDataBase64UrlStringsOption = credential
@@ -193,7 +193,7 @@ public class Oid4VpClientService : IOid4VpClientService
                     
                     presentation = await _sdJwtVcHolderService.CreatePresentation(
                         sdJwt,
-                        claims.ToArray(),
+                        [.. claims],
                         txDataBase64UrlStringsOption,
                         txDataHashesAsHexOption,
                         txDataHashesAlgOption,
@@ -414,7 +414,7 @@ public class Oid4VpClientService : IOid4VpClientService
                 inputDescriptor => inputDescriptor.Id);
 
             var claims = credentialRequirement.Match(
-                credentialQuery => credentialQuery.GetRequestedAttributes(),
+                credentialQuery => credentialQuery.GetClaimsToDiscloseAsStrs(),
                 inputDescriptor => inputDescriptor.GetRequestedAttributes());
 
             Format format;

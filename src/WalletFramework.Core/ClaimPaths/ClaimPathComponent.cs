@@ -35,4 +35,12 @@ public sealed record ClaimPathComponent
     public string? AsKey() => _value.TryPickT0(out var key, out _) ? key : null;
 
     public int? AsIndex() => _value.TryPickT1(out var idx, out _) ? idx : null;
+
+    public override string ToString()
+    {
+        return _value.Match(
+            key => key,
+            index => index.ToString(),
+            selectAll => selectAll.ToString());
+    }
 } 
