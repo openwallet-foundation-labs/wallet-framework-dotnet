@@ -3,11 +3,15 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using OneOf;
 using WalletFramework.Core.Functional;
-using WalletFramework.Core.Functional.Errors;
 using WalletFramework.Core.Json;
 using WalletFramework.MdocLib;
 using WalletFramework.SdJwtVc.Models;
+using WalletFramework.SdJwtVc.Models.Records;
+using WalletFramework.Oid4Vc.Oid4Vp.Models;
+using WalletFramework.Oid4Vc.Oid4Vci.Implementations;
 using static WalletFramework.Oid4Vc.Oid4Vp.Dcql.Models.CredentialQueryFun;
+using WalletFramework.Core.Functional.Errors;
+using WalletFramework.MdocVc;
 
 namespace WalletFramework.Oid4Vc.Oid4Vp.Dcql.Models;
 
@@ -79,9 +83,7 @@ public class CredentialQuery
 
         var claims = json.GetByKey(ClaimsJsonKey)
             .OnSuccess(token => token.ToJArray())
-            .OnSuccess(array => array.TraverseAll(jToken => jToken.ToJObject()))
-            .OnSuccess(array => array.Select(ClaimQuery.FromJObject))
-            .OnSuccess(array => array.TraverseAll(x => x))
+            .OnSuccess(array => array.TraverseAll(jToken => jToken.ToJObject().OnSuccess(ClaimQuery.FromJObject)))
             .ToOption();
 
         var claimSets = json.GetByKey(ClaimSetsJsonKey)
@@ -138,13 +140,13 @@ public static class CredentialQueryFun
         credentialQuery.Format switch
         {
             Constants.SdJwtVcFormat or Constants.SdJwtDcFormat
-                => credentialQuery.Claims?.Select(claim => string.Join('.', claim.Path)) ?? [],
+                => credentialQuery.Claims?.Select(claim => string.Join('.', claim.Path.GetPathComponents().Select(c => c.AsKey() ?? c.AsIndex()?.ToString() ?? "*"))) ?? [],
             Constants.MdocFormat =>
                 credentialQuery.Claims?.Select(claim =>
                 {
-                    // backward compatible Draft 24 & Draft 23
-                    var nameSpace = claim.Path?[0] ?? claim.Namespace;
-                    var claimName = claim.Path?[1] ?? claim.ClaimName;
+                    var components = claim.Path.GetPathComponents().ToArray();
+                    var nameSpace = components.Length > 0 ? components[0].AsKey() : claim.Namespace;
+                    var claimName = components.Length > 1 ? components[1].AsKey() : claim.ClaimName;
                     return $"['{nameSpace}']['{claimName}']";
                 }) ?? [],
             _ => []
@@ -167,5 +169,48 @@ public static class CredentialQueryFun
             default:
                 return Option<OneOf<Vct, DocType>>.None;
         }
+    }
+
+    public static Option<PresentationCandidate> FindMatchingCandidate(this CredentialQuery credentialQuery, IEnumerable<SdJwtRecord> sdJwts)
+    {
+        var vctValues = credentialQuery.Meta?.Vcts?.ToList();
+        var claims = credentialQuery.Claims;
+
+        var matches =
+            from record in sdJwts
+            let vctMatches = vctValues == null || vctValues.Count == 0 || vctValues.Contains(record.Vct)
+            where vctMatches && claims.AreFulfilledBy(record.ToSdJwtDoc())
+            select record;
+
+        var setCandidates =
+            from grouped in matches.GroupBy(sdJwt => sdJwt.GetCredentialSetId())
+            let candidate = new CredentialSetCandidate(grouped.Key, grouped)
+            where candidate.Credentials.Any()
+            select candidate;
+
+        return setCandidates.Any()
+            ? new PresentationCandidate(credentialQuery.Id, setCandidates)
+            : Option<PresentationCandidate>.None;
+    }
+
+    public static Option<PresentationCandidate> FindMatchingCandidate(this CredentialQuery credentialQuery, IEnumerable<MdocRecord> mdocs)
+    {
+        var doctype = credentialQuery.Meta?.Doctype;
+        var claims = credentialQuery.Claims;
+
+        var matches =
+            from record in mdocs
+            where record.DocType == doctype && claims.AreFulfilledBy(record.Mdoc)
+            select record;
+
+        var setCandidates =
+            from grouped in matches.GroupBy(mdoc => mdoc.GetCredentialSetId())
+            let candidate = new CredentialSetCandidate(grouped.Key, grouped)
+            where candidate.Credentials.Any()
+            select candidate;
+
+        return setCandidates.Any()
+            ? new PresentationCandidate(credentialQuery.Id, setCandidates)
+            : Option<PresentationCandidate>.None;
     }
 }

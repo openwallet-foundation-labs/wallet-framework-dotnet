@@ -10,13 +10,13 @@ public interface IDcqlService
     ///     Finds the presentation candidates based on the provided credentials and DCQL query.
     /// </summary>
     /// <returns>An array of presentation candidates, each containing a list of credentials that match the DCQL query.</returns>
-    Task<Option<IEnumerable<PresentationCandidate>>> FindPresentationCandidatesAsync(DcqlQuery query);
+    Task<Option<IEnumerable<PresentationCandidate>>> Query(DcqlQuery query);
     
     /// <summary>
     ///     Finds a presentation candidate based on the provided credentials and credential query.
     /// </summary>
     /// <returns>A presentation candidate that matches the DCQL query.</returns>
-    Task<Option<PresentationCandidate>> FindPresentationCandidateAsync(CredentialQuery credentialQuery);
+    Task<Option<PresentationCandidate>> QuerySingle(CredentialQuery credentialQuery);
     
     /// <summary>
     ///     Creates the Parameters that are necessary to send an OpenId4VP Authorization Response.

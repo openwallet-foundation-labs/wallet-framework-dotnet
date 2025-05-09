@@ -4,6 +4,7 @@ using Hyperledger.Aries.Storage;
 using Moq;
 using Newtonsoft.Json.Linq;
 using SD_JWT.Roles.Implementation;
+using WalletFramework.Core.ClaimPaths;
 using WalletFramework.Core.Credentials;
 using WalletFramework.Core.Credentials.Abstractions;
 using WalletFramework.Core.Cryptography.Models;
@@ -70,7 +71,7 @@ public class DcqlServiceTests
         var universityCredentialSetCandidate = new CredentialSetCandidate(UniversityCredentialSetId,
             new List<ICredential> { _universityCredential});
         var batchCredentialSetCandidate = new CredentialSetCandidate(BatchCredentialSetId,
-            new List<ICredential> { _batchCredentialOne });
+            new List<ICredential> { _batchCredentialOne, _batchCredentialTwo });
         
         var expected = new List<PresentationCandidate>
         {
@@ -87,9 +88,9 @@ public class DcqlServiceTests
         var dcqlService = CreateDcqlService();
 
         // Act
-        var driverLicenseCandidate = (await dcqlService.FindPresentationCandidateAsync(driverLicenseCredentialQuery)).UnwrapOrThrow();
-        var universityCandidate = (await dcqlService.FindPresentationCandidateAsync(universityCredentialQuery)).UnwrapOrThrow();
-        var batchCandidate = (await dcqlService.FindPresentationCandidateAsync(batchCredentialQuery)).UnwrapOrThrow();
+        var driverLicenseCandidate = (await dcqlService.QuerySingle(driverLicenseCredentialQuery)).UnwrapOrThrow();
+        var universityCandidate = (await dcqlService.QuerySingle(universityCredentialQuery)).UnwrapOrThrow();
+        var batchCandidate = (await dcqlService.QuerySingle(batchCredentialQuery)).UnwrapOrThrow();
         var credentialCandidatesArray = new List<PresentationCandidate> { driverLicenseCandidate, universityCandidate, batchCandidate };
 
         // Assert
@@ -119,7 +120,7 @@ public class DcqlServiceTests
     
         // Act
         var candidate = 
-            (await dcqlService.FindPresentationCandidateAsync(identityCredentialCredentialQuery)).UnwrapOrThrow();
+            (await dcqlService.QuerySingle(identityCredentialCredentialQuery)).UnwrapOrThrow();
         var credentialCandidatesArray = new List<PresentationCandidate> { candidate };
     
         // Assert
@@ -151,7 +152,7 @@ public class DcqlServiceTests
     
         // Act
         var candidate = 
-            (await dcqlService.FindPresentationCandidateAsync(identityCredentialCredentialQuery)).UnwrapOrThrow();
+            (await dcqlService.QuerySingle(identityCredentialCredentialQuery)).UnwrapOrThrow();
         
         var credentialCandidatesArray = new List<PresentationCandidate> { candidate };
     
@@ -176,7 +177,7 @@ public class DcqlServiceTests
         var dcqlService = CreateDcqlService();
     
         // Act
-        var candidate = await dcqlService.FindPresentationCandidateAsync(driverLicenseCredentialQuery);
+        var candidate = await dcqlService.QuerySingle(driverLicenseCredentialQuery);
     
         // Assert
         candidate.IsNone.Should().BeTrue();
@@ -196,7 +197,7 @@ public class DcqlServiceTests
         var dcqlService = CreateDcqlService();
     
         // Act
-        var candidate = await dcqlService.FindPresentationCandidateAsync(driverLicenseCredentialQuery);
+        var candidate = await dcqlService.QuerySingle(driverLicenseCredentialQuery);
     
         // Assert
         candidate.IsNone.Should().BeTrue();
@@ -237,12 +238,12 @@ public class DcqlServiceTests
         return record;
     }
 
-    private static ClaimQuery CreateCredentialClaimQuery(string[] path, string? value = null)
+    private static ClaimQuery CreateCredentialClaimQuery(JArray path, string? value = null)
     {
         var credentialQueryClaim = new ClaimQuery
         {
             Id = Guid.NewGuid().ToString(),
-            Path = path
+            Path = ClaimPath.FromJArray(path).UnwrapOrThrow()
         };
 
         if (value != null)

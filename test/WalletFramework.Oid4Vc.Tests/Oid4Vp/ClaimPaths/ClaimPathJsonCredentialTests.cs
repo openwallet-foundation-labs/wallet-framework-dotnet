@@ -1,4 +1,5 @@
 using FluentAssertions;
+using Newtonsoft.Json.Linq;
 using WalletFramework.Core.ClaimPaths;
 using WalletFramework.Core.ClaimPaths.Errors;
 using WalletFramework.Core.Functional;
@@ -105,7 +106,7 @@ public class ClaimPathJsonCredentialTests
     [Fact]
     public void Processing_Unknown_Component_Results_In_Error()
     {
-        var result = ClaimPath.FromObjects([1.23]);
+        var result = ClaimPath.FromJArray([1.23]);
         result.Match(
             _ => Assert.Fail("Expected error, got selection"),
             errors => errors.Should().ContainSingle(e => e is UnknownComponentError)

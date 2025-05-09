@@ -1,0 +1,73 @@
+using PeterO.Cbor;
+using WalletFramework.Core.Functional;
+using WalletFramework.MdocLib.Elements;
+using WalletFramework.MdocLib.Security.Cose;
+
+namespace WalletFramework.MdocLib.Tests;
+
+public static class MdocSamples
+{
+    public const string DocType = "org.iso.18013.5.1.mDL";
+
+    public const string MdlNameSpace = "org.iso.18013.5.1";
+
+    public static string EncodedMdoc =
+        "omdkb2NUeXBldW9yZy5pc28uMTgwMTMuNS4xLm1ETGxpc3N1ZXJTaWduZWSiamlzc3VlckF1dGiEQ6EBJqEYIVkB8zCCAe8wggGVoAMCAQICFDxEFu7XhPO0E-SPVvB1q_pth-uEMAoGCCqGSM49BAMCMCMxFDASBgNVBAMMC3V0b3BpYSBpYWNhMQswCQYDVQQGEwJVUzAeFw0yMDEwMDEwMDAwMDBaFw0yMTEwMDEwMDAwMDBaMCExEjAQBgNVBAMMCXV0b3BpYSBkczELMAkGA1UEBhMCVVMwWTATBgcqhkjOPQIBBggqhkjOPQMBBwNCAASs56tzQOXZZIxacqmm9WdFx6rUNqA6Q-_qd7X6e4jwGX1X2Jg-GzfTpTn01Yg2XjjLv1uU1oxUe1vIcx3NLxRro4GoMIGlMB4GA1UdEgQXMBWBE2V4YW1wbGVAZXhhbXBsZS5jb20wHAYDVR0fBBUwEzARoA-gDYILZXhhbXBsZS5jb20wHQYDVR0OBBYEFBTikBemw1Yh_8emhre3LbBs0SNRMB8GA1UdIwQYMBaAFFT6I4OgTCjg2TB5ImHIDEiB0sALMA4GA1UdDwEB_wQEAwIHgDAVBgNVHSUBAf8ECzAJBgcogYxdBQECMAoGCCqGSM49BAMCA0gAMEUCIQCXcXq5AWdAyNe82qSUpiwFO73szhODwaynKtCNvATLsgIgO62FnBOmPG0a1n2BTUPiQlyvkNQiQiwEqO4DBMDTpo1ZA6LYGFkDnaZndmVyc2lvbmMxLjBvZGlnZXN0QWxnb3JpdGhtZ1NIQS0yNTZsdmFsdWVEaWdlc3RzonFvcmcuaXNvLjE4MDEzLjUuMa0AWCB1FnMztHtsK_uG7MwfQ4z1evBVNxrFXh41niDyVK3OvwFYIGflOdYTnr0TGu9EG0RWRd2DGys3WzkMpe9iebIF7UVxAlggM5Q3Ldt4BT821dhpeA5h7aMT1Eo5IJKtjgUnovv-Va4DWCAuNa08TlFLtnsanbUc505MubcUbkGsUtrJzoa4YT21VQRYIOpcMwS7fEqNy1HEwTtlJk-EVUE0E0IJPMp4bgWPrC1ZBVgg-uSH9ot6DoenSXdOVunh3DqOx7d-SQ0h8OHTR1Zhqh0GWCB9g-UHrnfbgV3k2AO4hVXQUR2JTIl0OfV3QFZBahx1MwdYIPBUmhRfHPdcvu_6iB1IV91DjWJ88yF0sXMcTDjhLKk2CFggtoyK_LKq98WBQR0od97xVb4usSGkK8m6W3MSN34Gj2YJWCALNYfR3QwqB6Nb-xINmaCr-131aGW7f6FcyLVqZt9uDApYIMmKFwzzbhGrtyTpinWlND36K27T3y7Pu47y7lXdQciBC1ggtX3QNngvexTGow-qqubM1QVM6IvfpRoBa6de2h7eqUgMWCBlH4c2sYSA_iUqAyJOoIe10QylSFFGxnx0rE7DES1MOnRvcmcuaXNvLjE4MDEzLjUuMS5VU6QAWCDYC4PSUXPEhMVkBhD_GjHJScHZNL9M9_GNUiOxXdTyHAFYIE2A4eLk-yRtl4lUJ85wALtZuyTIzQA-z5S_NbvSkX40AlggizMfO2hbyjcuhTUaJclISrevzfDSIzEFUR93jZjC9UQDWCDDQ68b0WkHFUORYaunNwLEdKv5krIMn7VcNqM26-Aah21kZXZpY2VLZXlJbmZvoWlkZXZpY2VLZXmkAQIgASFYIJYxPWxj4k4zcnQr_bGjO6LIl9zWirjHU-T71I3Ka3-aIlggH7Mmnt1BiFfeGzmk5KRLkvpITKpyLCKCiPAdDAOiw9ZnZG9jVHlwZXVvcmcuaXNvLjE4MDEzLjUuMS5tRExsdmFsaWRpdHlJbmZvo2ZzaWduZWTAdDIwMjAtMTAtMDFUMTM6MzA6MDJaaXZhbGlkRnJvbcB0MjAyMC0xMC0wMVQxMzozMDowMlpqdmFsaWRVbnRpbMB0MjAyMS0xMC0wMVQxMzozMDowMlpYQFnmQgXfHi9wjdbbCEeu15_HwCAdgPpVutyvLhvPWQLh5aYuSDIES4kK2FqlPxKRNHddczdU18t6QTdmrv8Tyy5qbmFtZVNwYWNlc6Fxb3JnLmlzby4xODAxMy41LjGG2BhYY6RoZGlnZXN0SUQAZnJhbmRvbVggh5hkWyDqIA4Z_6uskmJL7mrsY6zu3s-xuAB30iv8IOlxZWxlbWVudElkZW50aWZpZXJrZmFtaWx5X25hbWVsZWxlbWVudFZhbHVlY0RvZdgYWGykaGRpZ2VzdElEA2ZyYW5kb21YILI_Yn6JmccG3wwKTtmK10r5iK9hm0uweLiQWFU_RGFdcWVsZW1lbnRJZGVudGlmaWVyamlzc3VlX2RhdGVsZWxlbWVudFZhbHVl2QPsajIwMTktMTAtMjDYGFhtpGhkaWdlc3RJRARmcmFuZG9tWCDH_6MH5d6SHme6WHgJR4fogHrI57Wzky0s6A8A8-mrr3FlbGVtZW50SWRlbnRpZmllcmtleHBpcnlfZGF0ZWxlbGVtZW50VmFsdWXZA-xqMjAyNC0xMC0yMNgYWG2kaGRpZ2VzdElEB2ZyYW5kb21YICYFKkLliAVXqAbBRZrz-361BdN4FWYynQtgS4RbX55ocWVsZW1lbnRJZGVudGlmaWVyb2RvY3VtZW50X251bWJlcmxlbGVtZW50VmFsdWVpMTIzNDU2Nzg52BhZBHGkaGRpZ2VzdElECGZyYW5kb21YINCU2tdkouud61IQ6diZZD770dBpzDEdMpVRbKCwJEEtcWVsZW1lbnRJZGVudGlmaWVyaHBvcnRyYWl0bGVsZW1lbnRWYWx1ZVkEEv_Y_-AAEEpGSUYAAQEBAJAAkAAA_9sAQwATDQ4RDgwTEQ8RFRQTFx0wHx0aGh06KiwjMEU9SUdEPUNBTFZtXUxRaFJBQ1-CYGhxdXt8e0pchpCFd49teHt2_9sAQwEUFRUdGR04Hx84dk9DT3Z2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2_8AAEQgAGABkAwEiAAIRAQMRAf_EABsAAAMBAAMBAAAAAAAAAAAAAAAFBgQBAgMH_8QAMhAAAQMDAwIFAgMJAAAAAAAAAQIDBAAFEQYSIRMxFBVRYXEiQQeBoRY1QlJzkbLB8f_EABUBAQEAAAAAAAAAAAAAAAAAAAAB_8QAGhEBAQEAAwEAAAAAAAAAAAAAAAFBESExYf_aAAwDAQACEQMRAD8ApbveItojKcfWkrx9DQP1LPsP9156fvPncJcjodDa4Ubd-7PAOc4HrSvUen4y27jdHVLW70soT2SkgAZ9-1H4f_uV_wDrn_FNIV3mavCJzkS3296ctokKKDjt3xgHj3rdYtQR7025sQpl1rlaFHOB6g1JW5Mydf5runXBFBBKi6QQQT6YPf8AT1r100tLTN5jLQvx_RWSvdkcZBHzk0wvpq9rVJddEG3PSmWuVuhWAB68A8fOKd2e7x7xD8RH3J2natKu6TU3obp-T3Ddjv8AV8bf-14aGYVKg3WOVFKHUJRuxnBIUM0De86wi219LMdtMxf8e1zAT7ZwcmnFxuDFtgrlSSQhI7Dkk_YCoHVVnjWZcNmNuJUlRWtRyVHIr6E-qOmOPFloNng9XGP1phqZ_bcpCHXbS-iKs4S7u7_HGD_eqmM-iVHbfaOW3EhST7GovWEaWqKiQy8wq0IKem0yQMcYzwMfqe9MmtVQIFqgKVHfSh1shCGwFbdp24ySKYN-or6LGw050OupxRSE79uMDv2NJY2vPESWmfLtvUWE56-cZOP5a5vrKNSsQJMeZHjI52okqCVElQHYZ9Kx3N666ZucdSrk7Nbd5KF5wcHkYJOPkUnvZV5RXAORmiics9yiePt78Xf0-qgp3Yzj8qyafs3kkJcfr9fc4V7tm3HAGMZPpRRRSyTo5PjFybdcHoJXncEjPf7Agjj2rdYtORrMHFJWp55wbVLUMcegFFFAuf0UnrOmDcXojLvC2gkkEenccfOad2a0R7NE6EfcrJ3LWruo0UUGHUOm_PHmXPFdDpAjHT3Zz-YplcbcxcoSoskEoV9x3SfUUUU-CdGiFFCWHLs-qKlWQzt4HxzjPf7VTw4rUKK3HYTtbbGAKKKBdfdPxr2hBcUpp5HCXE88ehH3FYYmj0pmtybjPenqbxtSsYHHYHJOR7UUUgpaKKKD_9nYGFj_pGhkaWdlc3RJRAlmcmFuZG9tWCBFmfgb6qKyC9D_zJqgOm-YW--rP2vq_6QeY1TNsqss5HFlbGVtZW50SWRlbnRpZmllcnJkcml2aW5nX3ByaXZpbGVnZXNsZWxlbWVudFZhbHVlgqN1dmVoaWNsZV9jYXRlZ29yeV9jb2RlYUFqaXNzdWVfZGF0ZdkD7GoyMDE4LTA4LTA5a2V4cGlyeV9kYXRl2QPsajIwMjQtMTAtMjCjdXZlaGljbGVfY2F0ZWdvcnlfY29kZWFCamlzc3VlX2RhdGXZA-xqMjAxNy0wMi0yM2tleHBpcnlfZGF0ZdkD7GoyMDI0LTEwLTIw";
+    
+    public static string SelectivelyDisclosedEncodedMdoc =
+        "omdkb2NUeXBldW9yZy5pc28uMTgwMTMuNS4xLm1ETGxpc3N1ZXJTaWduZWSiamlzc3VlckF1dGiEQ6EBJqEYIVkB8zCCAe8wggGVoAMCAQICFDxEFu7XhPO0E-SPVvB1q_pth-uEMAoGCCqGSM49BAMCMCMxFDASBgNVBAMMC3V0b3BpYSBpYWNhMQswCQYDVQQGEwJVUzAeFw0yMDEwMDEwMDAwMDBaFw0yMTEwMDEwMDAwMDBaMCExEjAQBgNVBAMMCXV0b3BpYSBkczELMAkGA1UEBhMCVVMwWTATBgcqhkjOPQIBBggqhkjOPQMBBwNCAASs56tzQOXZZIxacqmm9WdFx6rUNqA6Q-_qd7X6e4jwGX1X2Jg-GzfTpTn01Yg2XjjLv1uU1oxUe1vIcx3NLxRro4GoMIGlMB4GA1UdEgQXMBWBE2V4YW1wbGVAZXhhbXBsZS5jb20wHAYDVR0fBBUwEzARoA-gDYILZXhhbXBsZS5jb20wHQYDVR0OBBYEFBTikBemw1Yh_8emhre3LbBs0SNRMB8GA1UdIwQYMBaAFFT6I4OgTCjg2TB5ImHIDEiB0sALMA4GA1UdDwEB_wQEAwIHgDAVBgNVHSUBAf8ECzAJBgcogYxdBQECMAoGCCqGSM49BAMCA0gAMEUCIQCXcXq5AWdAyNe82qSUpiwFO73szhODwaynKtCNvATLsgIgO62FnBOmPG0a1n2BTUPiQlyvkNQiQiwEqO4DBMDTpo1ZA6LYGFkDnaZndmVyc2lvbmMxLjBvZGlnZXN0QWxnb3JpdGhtZ1NIQS0yNTZsdmFsdWVEaWdlc3RzonFvcmcuaXNvLjE4MDEzLjUuMa0AWCB1FnMztHtsK_uG7MwfQ4z1evBVNxrFXh41niDyVK3OvwFYIGflOdYTnr0TGu9EG0RWRd2DGys3WzkMpe9iebIF7UVxAlggM5Q3Ldt4BT821dhpeA5h7aMT1Eo5IJKtjgUnovv-Va4DWCAuNa08TlFLtnsanbUc505MubcUbkGsUtrJzoa4YT21VQRYIOpcMwS7fEqNy1HEwTtlJk-EVUE0E0IJPMp4bgWPrC1ZBVgg-uSH9ot6DoenSXdOVunh3DqOx7d-SQ0h8OHTR1Zhqh0GWCB9g-UHrnfbgV3k2AO4hVXQUR2JTIl0OfV3QFZBahx1MwdYIPBUmhRfHPdcvu_6iB1IV91DjWJ88yF0sXMcTDjhLKk2CFggtoyK_LKq98WBQR0od97xVb4usSGkK8m6W3MSN34Gj2YJWCALNYfR3QwqB6Nb-xINmaCr-131aGW7f6FcyLVqZt9uDApYIMmKFwzzbhGrtyTpinWlND36K27T3y7Pu47y7lXdQciBC1ggtX3QNngvexTGow-qqubM1QVM6IvfpRoBa6de2h7eqUgMWCBlH4c2sYSA_iUqAyJOoIe10QylSFFGxnx0rE7DES1MOnRvcmcuaXNvLjE4MDEzLjUuMS5VU6QAWCDYC4PSUXPEhMVkBhD_GjHJScHZNL9M9_GNUiOxXdTyHAFYIE2A4eLk-yRtl4lUJ85wALtZuyTIzQA-z5S_NbvSkX40AlggizMfO2hbyjcuhTUaJclISrevzfDSIzEFUR93jZjC9UQDWCDDQ68b0WkHFUORYaunNwLEdKv5krIMn7VcNqM26-Aah21kZXZpY2VLZXlJbmZvoWlkZXZpY2VLZXmkAQIgASFYIJYxPWxj4k4zcnQr_bGjO6LIl9zWirjHU-T71I3Ka3-aIlggH7Mmnt1BiFfeGzmk5KRLkvpITKpyLCKCiPAdDAOiw9ZnZG9jVHlwZXVvcmcuaXNvLjE4MDEzLjUuMS5tRExsdmFsaWRpdHlJbmZvo2ZzaWduZWTAdDIwMjAtMTAtMDFUMTM6MzA6MDJaaXZhbGlkRnJvbcB0MjAyMC0xMC0wMVQxMzozMDowMlpqdmFsaWRVbnRpbMB0MjAyMS0xMC0wMVQxMzozMDowMlpYQFnmQgXfHi9wjdbbCEeu15_HwCAdgPpVutyvLhvPWQLh5aYuSDIES4kK2FqlPxKRNHddczdU18t6QTdmrv8Tyy5qbmFtZVNwYWNlc6Fxb3JnLmlzby4xODAxMy41LjGC2BhYY6RoZGlnZXN0SUQAZnJhbmRvbVggh5hkWyDqIA4Z_6uskmJL7mrsY6zu3s-xuAB30iv8IOlxZWxlbWVudElkZW50aWZpZXJrZmFtaWx5X25hbWVsZWxlbWVudFZhbHVlY0RvZdgYWP-kaGRpZ2VzdElECWZyYW5kb21YIEWZ-BvqorIL0P_MmqA6b5hb76s_a-r_pB5jVM2yqyzkcWVsZW1lbnRJZGVudGlmaWVycmRyaXZpbmdfcHJpdmlsZWdlc2xlbGVtZW50VmFsdWWCo3V2ZWhpY2xlX2NhdGVnb3J5X2NvZGVhQWppc3N1ZV9kYXRl2QPsajIwMTgtMDgtMDlrZXhwaXJ5X2RhdGXZA-xqMjAyNC0xMC0yMKN1dmVoaWNsZV9jYXRlZ29yeV9jb2RlYUJqaXNzdWVfZGF0ZdkD7GoyMDE3LTAyLTIza2V4cGlyeV9kYXRl2QPsajIwMjQtMTAtMjA";
+
+    public static ElementIdentifier GivenName =>
+        ElementIdentifier.ValidElementIdentifier(CBORObject.FromObject("given_name")).Match(
+            identifier => identifier,
+            _ => throw new InvalidOperationException()
+        );
+    
+    public static ElementIdentifier FamilyName =>
+        ElementIdentifier.ValidElementIdentifier(CBORObject.FromObject("family_name")).Match(
+            identifier => identifier,
+            _ => throw new InvalidOperationException()
+        );
+    
+    public static ElementIdentifier DrivingPrivileges =>
+        ElementIdentifier.ValidElementIdentifier(CBORObject.FromObject("driving_privileges")).Match(
+            identifier => identifier,
+            _ => throw new InvalidOperationException()
+        );
+
+    public static CoseLabel Es256CoseLabel =>
+        CoseLabel.ValidCoseLabel(CBORObject.FromObject(1)).Match(
+            label => label,
+            _ => throw new InvalidOperationException()
+        );
+
+    public static CoseLabel X509ChainCoseLabel =>
+        CoseLabel.ValidCoseLabel(CBORObject.FromObject(33)).Match(
+            label => label,
+            _ => throw new InvalidOperationException()
+        );
+
+    public static ElementIdentifier ExpiryDateIdentifier =>
+        ElementIdentifier.ValidElementIdentifier(CBORObject.FromObject("expiry_date")).Match(
+            identifier => identifier,
+            _ => throw new InvalidOperationException()
+        );
+
+    public static ElementIdentifier IssueDateIdentifier =>
+        ElementIdentifier.ValidElementIdentifier(CBORObject.FromObject("issue_date")).Match(
+            identifier => identifier,
+            _ => throw new InvalidOperationException()
+        );
+
+    public static ElementIdentifier VehicleCategoryCodeIdentifier =>
+        ElementIdentifier.ValidElementIdentifier(CBORObject.FromObject("vehicle_category_code")).Match(
+            identifier => identifier,
+            _ => throw new InvalidOperationException()
+        );
+
+    public static NameSpace MdlIsoNameSpace =>
+        NameSpace.ValidNameSpace(CBORObject.FromObject(MdlNameSpace)).Match(
+            space => space,
+            _ => throw new InvalidOperationException()
+        );
+}

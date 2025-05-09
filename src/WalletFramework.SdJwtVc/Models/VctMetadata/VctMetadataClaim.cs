@@ -69,10 +69,7 @@ public readonly struct VctMetadataClaim
         var path = json
             .GetByKey(PathJsonName)
             .OnSuccess(token => token.ToJArray())
-            .OnSuccess(arr =>
-            {
-                return ClaimPath.FromObjects(arr.Select(token => token.ToObject<string>() == null ? null : token.ToString()).ToArray());
-            });
+            .OnSuccess(ClaimPath.FromJArray);
         
         var display = json
             .GetByKey(DisplayJsonName)

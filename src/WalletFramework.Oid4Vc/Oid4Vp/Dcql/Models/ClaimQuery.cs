@@ -1,11 +1,15 @@
 using LanguageExt;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using SD_JWT.Models;
+using WalletFramework.Core.ClaimPaths;
 using WalletFramework.Core.Functional;
 using WalletFramework.Core.Functional.Errors;
 using WalletFramework.Core.Json;
+using WalletFramework.MdocLib;
+using WalletFramework.Oid4Vc.Oid4Vp.ClaimPaths;
 using WalletFramework.Oid4Vc.RelyingPartyAuthentication.RegistrationCertificate;
-using static WalletFramework.Oid4Vc.Oid4Vp.Dcql.Models.CredentialClaimQueryFun;
+using static WalletFramework.Oid4Vc.Oid4Vp.Dcql.Models.CredentialClaimQueryConstants;
 
 namespace WalletFramework.Oid4Vc.Oid4Vp.Dcql.Models;
 
@@ -22,10 +26,11 @@ public class ClaimQuery
     public string? Id { get; set; }
     
     /// <summary>
-    /// A collection of strings representing a claims path pointer that specifies the path to a claim.
+    /// A claims path pointer that specifies the path to a claim.
     /// </summary>
     [JsonProperty(PathJsonKey)]
-    public string[]? Path { get; set; }
+    [JsonConverter(typeof(ClaimPathJsonConverter))]
+    public ClaimPath Path { get; set; }
     
     /// <summary>
     /// A collection of strings, integers or booleans values that specifies the expected values of the claim.
@@ -68,17 +73,7 @@ public class ClaimQuery
         
         var path = json.GetByKey(PathJsonKey)
             .OnSuccess(token => token.ToJArray())
-            .OnSuccess(array => array.TraverseAll(jToken => jToken.ToJValue()))
-            .OnSuccess(array => array.Select(value =>
-            {
-                if (string.IsNullOrWhiteSpace(value.Value?.ToString()))
-                {
-                    return new StringIsNullOrWhitespaceError<CredentialQuery>();
-                }
-
-                return ValidationFun.Valid(value.Value.ToString());;
-            }))
-            .OnSuccess(array => array.TraverseAll(x => x))
+            .OnSuccess(ClaimPath.FromJArray)
             .ToOption();
         
         var values = json.GetByKey(ValuesJsonKey)
@@ -150,14 +145,14 @@ public class ClaimQuery
     
     private static ClaimQuery Create(
         Option<string> id,
-        Option<IEnumerable<string>> path,
+        Option<ClaimPath> path,
         Option<IEnumerable<string>> values,
         Option<IEnumerable<Purpose>> purpose,
         Option<string> @namespace,
         Option<string> claimName) => new()
     {
         Id = id.ToNullable(),
-        Path = path.ToNullable()?.ToArray(),
+        Path = path.ToNullable() ?? throw new InvalidOperationException("Path cannot be null for ClaimQuery"),
         Values = values.ToNullable()?.ToArray(),
         Purpose = purpose.ToNullable()?.ToArray(),
         Namespace = @namespace.ToNullable(),
@@ -165,12 +160,66 @@ public class ClaimQuery
     };
 }
 
-public static class CredentialClaimQueryFun
+public static class CredentialClaimQueryConstants
 {
     public const string IdJsonKey = "id";
+
     public const string PathJsonKey = "path";
+
     public const string ValuesJsonKey = "values";
+
     public const string PurposeJsonKey = "purpose";
+
     public const string NamespaceJsonKey = "namespace";
+
     public const string ClaimNameJsonKey = "claim_name";
+}
+
+public static class ClaimQueryFun
+{
+    /// <summary>
+    ///     Returns true if all claims match the document according to the claim path and values logic.
+    /// </summary>
+    public static bool AreFulfilledBy(this IEnumerable<ClaimQuery>? claims, SdJwtDoc doc)
+    {
+        if (claims == null) 
+            return true;
+
+        return claims.All(requestedClaim =>
+        {
+            return requestedClaim.Path.ProcessWith(doc)
+                .OnSuccess(selection =>
+                {
+                    if (requestedClaim.Values != null)
+                    {
+                        var values = selection.GetValues().Select(v => v.ToString());
+                        return requestedClaim.Values.Any(requestedValue => values.Contains(requestedValue));
+                    }
+                    return true;
+                })
+                .Fallback(false);
+        });
+    }
+
+    public static bool AreFulfilledBy(this IEnumerable<ClaimQuery>? claims, Mdoc mdoc)
+    {
+        if (claims == null)
+            return true;
+
+        return claims.All(requestedClaim =>
+        {
+            return requestedClaim.Path
+                .ProcessWith(mdoc)
+                .OnSuccess(selection =>
+                {
+                    if (requestedClaim.Values != null)
+                    {
+                        var values = selection.GetValues().Select(v => v.ToString());
+                        return requestedClaim.Values.Any(requestedValue => values.Contains(requestedValue));
+                    }
+                    return true;
+                })
+                .Fallback(false);
+        });
+    }
 }

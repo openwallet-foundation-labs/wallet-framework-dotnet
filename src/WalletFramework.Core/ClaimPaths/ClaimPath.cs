@@ -1,7 +1,7 @@
 using WalletFramework.Core.ClaimPaths.Errors;
 using WalletFramework.Core.Functional;
 using WalletFramework.Core.Path;
-using LanguageExt;
+using Newtonsoft.Json.Linq;
 
 namespace WalletFramework.Core.ClaimPaths;
 
@@ -24,10 +24,13 @@ public readonly struct ClaimPath
         return new ClaimPath(list);
     }
 
-    public static Validation<ClaimPath> FromObjects(IEnumerable<object?> objects) =>
-        from components in objects.TraverseAll(ClaimPathComponent.Create)
-        from path in FromComponents(components)
-        select path;
+    public static Validation<ClaimPath> FromJArray(JArray array)
+    {
+        return
+            from components in array.TraverseAll(ClaimPathComponent.Create)
+            from path in FromComponents(components)
+            select path;
+    }
 }
 
 public static class ClaimPathFun

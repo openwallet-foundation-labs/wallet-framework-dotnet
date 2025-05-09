@@ -1,6 +1,7 @@
 using WalletFramework.Core.ClaimPaths.Errors;
 using WalletFramework.Core.Functional;
 using OneOf;
+using Newtonsoft.Json.Linq;
 
 namespace WalletFramework.Core.ClaimPaths;
 
@@ -10,15 +11,15 @@ public sealed record ClaimPathComponent
 
     private ClaimPathComponent(OneOf<string, int, SelectAllElementsInArrayComponent> value) => _value = value;
 
-    public static Validation<ClaimPathComponent> Create(object? value) =>
-        value switch
+    public static Validation<ClaimPathComponent> Create(JToken token) =>
+        token.Type switch
         {
-            string s => string.IsNullOrEmpty(s)
-                ? new UnknownComponentError() 
-                : new ClaimPathComponent(s),
-            int i => new ClaimPathComponent(i),
-            null => new ClaimPathComponent(new SelectAllElementsInArrayComponent()),
-            _ => new UnknownComponentError().ToInvalid<ClaimPathComponent>()
+            JTokenType.String => !string.IsNullOrEmpty(token.Value<string>())
+                ? new ClaimPathComponent(token.Value<string>()!)
+                : new UnknownComponentError(),
+            JTokenType.Integer => new ClaimPathComponent(token.Value<int>()),
+            JTokenType.Null => new ClaimPathComponent(new SelectAllElementsInArrayComponent()),
+            _ => new UnknownComponentError()
         };
 
     public T Match<T>(

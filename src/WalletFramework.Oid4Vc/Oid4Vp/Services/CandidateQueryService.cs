@@ -15,14 +15,14 @@ public class CandidateQueryService(
     public async Task<Option<IEnumerable<PresentationCandidate>>> Query(AuthorizationRequest authRequest)
     {
         return await authRequest.Requirements.Match(
-            dcqlService.FindPresentationCandidatesAsync,
+            dcqlService.Query,
             presentationDefinition => pexService.FindPresentationCandidatesAsync(presentationDefinition, authRequest.ClientMetadata?.Formats));
     }
     
     public async Task<Option<PresentationCandidate>> Query(OneOf<CredentialQuery, InputDescriptor> credentialRequirement)
     {
         return await credentialRequirement.Match(
-            dcqlService.FindPresentationCandidateAsync,
+            dcqlService.QuerySingle,
             pexService.FindPresentationCandidateAsync);
     }
 }

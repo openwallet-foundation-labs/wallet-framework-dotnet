@@ -1,3 +1,4 @@
+using Newtonsoft.Json.Linq;
 using WalletFramework.Core.ClaimPaths;
 using WalletFramework.Core.Functional;
 using WalletFramework.Oid4Vc.Tests.Samples;
@@ -10,23 +11,23 @@ public static class ClaimPathSamples
     public static string JsonBasedCredentialSample => JsonBasedCredentialSamples.IdCardCredentialAsJsonStr;
     
     public static ClaimPath SelectFirstNameByKeySample =>
-        FromObjects(["first_name"]).UnwrapOrThrow();
+        FromJArray(["first_name"]).UnwrapOrThrow();
 
     public static ClaimPath SelectAllElementsInArraySample =>
-        FromObjects(["degrees", null!]).UnwrapOrThrow();
+        FromJArray(["degrees", null!]).UnwrapOrThrow();
 
     public static ClaimPath SelectSecondIndexSample =>
-        FromObjects(["nationalities", 1]).UnwrapOrThrow();
+        FromJArray(["nationalities", 1]).UnwrapOrThrow();
 
     public static ClaimPath NonExistentKeySample =>
-        FromObjects(["nonexistent_key"]).UnwrapOrThrow();
+        FromJArray(["nonexistent_key"]).UnwrapOrThrow();
 
     public static ClaimPath IndexOnNonArraySample =>
-        FromObjects(["first_name", 0]).UnwrapOrThrow();
+        FromJArray(["first_name", 0]).UnwrapOrThrow();
     
     public static ClaimPath NullOnNonArraySample =>
-        FromObjects(["first_name", null!]).UnwrapOrThrow();
+        FromJArray(["first_name", null!]).UnwrapOrThrow();
 
     public static ClaimPath StringOnNonObjectSample =>
-        FromObjects(["degrees", "not_a_key"]).UnwrapOrThrow();
+        FromJArray(["degrees", "not_a_key"]).UnwrapOrThrow();
 }
