@@ -10,7 +10,7 @@ using WalletFramework.Oid4Vc.Oid4Vp.Errors;
 using WalletFramework.Oid4Vc.Oid4Vp.PresentationExchange.Models;
 using WalletFramework.Oid4Vc.Oid4Vp.TransactionDatas;
 using static WalletFramework.Oid4Vc.Oid4Vp.Models.ClientIdScheme;
-using WalletFramework.Oid4Vc.Qes;
+using WalletFramework.Oid4Vc.Qes.Authorization;
 using WalletFramework.Oid4Vc.RelyingPartyAuthentication;
 
 namespace WalletFramework.Oid4Vc.Oid4Vp.Models;

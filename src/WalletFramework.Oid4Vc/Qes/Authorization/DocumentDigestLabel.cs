@@ -1,7 +1,7 @@
 using WalletFramework.Core.Functional;
 using WalletFramework.Core.Functional.Errors;
 
-namespace WalletFramework.Oid4Vc.Qes;
+namespace WalletFramework.Oid4Vc.Qes.Authorization;
 
 public readonly record struct DocumentDigestLabel
 {
