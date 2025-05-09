@@ -22,7 +22,6 @@ public record OverAskingValidationResult
                     .Where(attachment => attachment.Format == Constants.RegistrationCertificateFormat) ?? [];
 
                 List<string> certifiedClaims = [];
-                List<IEnumerable<string>> certifiedClaimSets = [];
 
                 var areTrustChainsValid = true;
                 foreach (var registrationCertificateAttachment in registrationCertificateAttachments)
@@ -36,17 +35,6 @@ public record OverAskingValidationResult
                                     return query.GetRequestedAttributes();
                                 })
                             );
-
-                            var registrationCertifiedClaimSets = registrationCertificate.CredentialSets.Match(
-                                credentialsSets =>
-                                {
-                                    return credentialsSets.SelectMany(
-                                        set => set.Options ?? Enumerable.Empty<string[]>()
-                                    );
-                                },
-                                () => []);
-
-                            certifiedClaimSets.AddRange(registrationCertifiedClaimSets);
 
                             var isValidChain = registrationCertificate.Certificates.IsTrustChainValid();
                             if (!isValidChain)
@@ -76,20 +64,7 @@ public record OverAskingValidationResult
                     return certifiedClaims.Contains(requestedAttribute);
                 });
 
-                var requestedClaimSets = authorizationRequest
-                    .DcqlQuery!
-                    .CredentialSetQueries?
-                    .SelectMany(query => query.Options ?? []) ?? [];
-                
-                var isOverAskingClaimSets = !requestedClaimSets.All(requestedClaimSet =>
-                {
-                    return certifiedClaimSets.Any(certifiedClaimSet =>
-                    {
-                        return requestedClaimSet.All(certifiedClaimSet.Contains);
-                    });
-                });
-
-                return new OverAskingValidationResult(!isOverAskingClaims && !isOverAskingClaimSets);
+                return new OverAskingValidationResult(!isOverAskingClaims);
             },
             _ => new OverAskingValidationResult(true)
         );
