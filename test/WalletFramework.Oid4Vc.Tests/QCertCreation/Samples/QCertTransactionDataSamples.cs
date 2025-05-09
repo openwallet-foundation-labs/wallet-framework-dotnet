@@ -13,6 +13,11 @@ public static class QCertCreationTransactionDataSamples
         ["QC_terms_conditions_uri"] = "https://example.com/tos",
         ["QC_hash"] = "kXAgwDcdAe3obxpo8UoDkC-D-b7OCrDo8IOGZjSX8_M=",
         ["QC_hashAlgorithmOID"] = "2.16.840.1.101.3.4.2.1",
+        ["credential_ids"] = new JArray
+        {
+            "credential-id-1",
+            "credential-id-2"
+        },
     }.ToString();
 
     public static Base64UrlString GetBase64UrlStringSample()

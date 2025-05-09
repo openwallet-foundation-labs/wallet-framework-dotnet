@@ -6,7 +6,7 @@ using WalletFramework.Oid4Vc.Oid4Vp.TransactionDatas;
 
 namespace WalletFramework.Oid4Vc.Qes.CertCreation;
 
-public record QCertCreationTransactionData(TermsConditionsUri TermsConditionsUri, string Hash)
+public record QCertCreationTransactionData(TransactionDataProperties TransactionDataProperties, TermsConditionsUri TermsConditionsUri, string Hash)
 {
     public static Validation<TransactionData> FromJObject(
         JObject jObject,
@@ -16,12 +16,6 @@ public record QCertCreationTransactionData(TermsConditionsUri TermsConditionsUri
         from termsConditionsUri in TermsConditionsUri.ValidTermsConditionsUri(termsConditionsUriValue)
         from hashToken in jObject.GetByKey("QC_hash")
         from hashValue in hashToken.ToJValue()
-        let qesTransactionData = new QCertCreationTransactionData(termsConditionsUri, hashValue.ToString(CultureInfo.InvariantCulture))
-        select TransactionData.WithQCertCreationTransactionData(qesTransactionData, transactionDataProperties);
-
-    public void Deconstruct(out TermsConditionsUri TermsConditionsUri, out string Hash)
-    {
-        TermsConditionsUri = this.TermsConditionsUri;
-        Hash = this.Hash;
-    }
+        let qesTransactionData = new QCertCreationTransactionData(transactionDataProperties, termsConditionsUri, hashValue.ToString(CultureInfo.InvariantCulture))
+        select TransactionData.WithQCertCreationTransactionData(qesTransactionData);
 }
