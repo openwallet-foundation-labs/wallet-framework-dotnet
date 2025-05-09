@@ -6,7 +6,6 @@ using WalletFramework.Core.Json.Errors;
 using WalletFramework.MdocLib;
 using WalletFramework.Core.ClaimPaths.Errors;
 using WalletFramework.MdocLib.Elements;
-using LanguageExt;
 using static WalletFramework.Core.ClaimPaths.ClaimPathSelectionFun;
 
 namespace WalletFramework.Oid4Vc.Oid4Vp.ClaimPaths;

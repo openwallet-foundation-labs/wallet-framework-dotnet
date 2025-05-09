@@ -30,10 +30,9 @@ public record OverAskingValidationResult
                         registrationCertificate =>
                         {
                             certifiedClaims.AddRange(
-                                registrationCertificate.Credentials.SelectMany(query =>
-                                {
-                                    return query.GetRequestedAttributes();
-                                })
+                                from credentialQuery in registrationCertificate.Credentials
+                                from attr in credentialQuery.GetClaimsToDiscloseAsStrs()
+                                select attr
                             );
 
                             var isValidChain = registrationCertificate.Certificates.IsTrustChainValid();
@@ -54,10 +53,10 @@ public record OverAskingValidationResult
                 if (areTrustChainsValid == false)
                     return new OverAskingValidationResult(false);
 
-                var requestedClaims = authorizationRequest
-                    .DcqlQuery!
-                    .CredentialQueries
-                    .SelectMany(query => query.GetRequestedAttributes());
+                var requestedClaims =
+                    from credentialQuery in authorizationRequest.DcqlQuery!.CredentialQueries
+                    from attr in credentialQuery.GetClaimsToDiscloseAsStrs()
+                    select attr;
                 
                 var isOverAskingClaims = !requestedClaims.All(requestedAttribute =>
                 {

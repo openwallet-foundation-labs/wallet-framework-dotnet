@@ -242,7 +242,7 @@ public class DcqlServiceTests
     {
         var credentialQueryClaim = new ClaimQuery
         {
-            Id = Guid.NewGuid().ToString(),
+            Id = ClaimIdentifier.Validate(Guid.NewGuid().ToString()).UnwrapOrThrow(),
             Path = ClaimPath.FromJArray(path).UnwrapOrThrow()
         };
 

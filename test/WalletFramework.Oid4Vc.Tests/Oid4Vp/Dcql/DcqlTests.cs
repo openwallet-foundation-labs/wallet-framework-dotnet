@@ -193,6 +193,80 @@ public class DcqlTests
     }
 
     [Fact]
+    public void Can_Process_Mdoc_Credential_Query_With_Multiple_Claims()
+    {
+        var mdoc = MdocSamples.MdocRecord;
+        var query = DcqlSamples.GetMdocGivenNameAndFamilyNameQuery();
+
+        var sut = query.FindMatchingCandidates([mdoc]);
+
+        sut.Match(
+            candidates =>
+            {
+                var presentationCandidates = candidates.ToList();
+                presentationCandidates.Should().HaveCount(1);
+
+                var credentials = 
+                    from candidate in presentationCandidates
+                    from set in candidate.CredentialSetCandidates
+                    from credential in set.Credentials
+                    select credential;
+
+                credentials.Should().Contain([mdoc]);
+            },
+            () => Assert.Fail()
+        );
+    }
+
+    [Fact]
+    public void Can_Parse_Query_With_Claim_Sets()
+    {
+        // Arrange
+        const string query = DcqlSamples.QueryStrWithClaimSets;
+
+        // Act
+        var sut = JsonConvert.DeserializeObject<DcqlQuery>(query)!;
+
+        // Assert
+        sut.CredentialQueries.Length.Should().Be(1);
+        var cred = sut.CredentialQueries[0];
+        cred.Id.Should().Be("pid");
+        cred.Format.Should().Be("dc+sd-jwt");
+        cred.Meta!.Vcts!.Should().ContainSingle().Which.Should().Be("https://credentials.example.com/identity_credential");
+        cred.Claims!.Length.Should().Be(5);
+        cred.Claims[0].Id!.AsString().Should().Be("a");
+        cred.Claims[1].Id!.AsString().Should().Be("b");
+        cred.Claims[2].Id!.AsString().Should().Be("c");
+        cred.Claims[3].Id!.AsString().Should().Be("d");
+        cred.Claims[4].Id!.AsString().Should().Be("e");
+        cred.ClaimSets!.Length().Should().Be(2);
+        cred.ClaimSets![0].Claims.Select(c => c.AsString()).Should().BeEquivalentTo(["a", "c", "d", "e"]);
+        cred.ClaimSets![1].Claims.Select(c => c.AsString()).Should().BeEquivalentTo(["a", "b", "e"]);
+    }
+
+    [Fact]
+    public void The_First_Matching_Claim_Set_Is_Prioritized()
+    {
+        // Arrange
+        var dcqlQuery = DcqlSamples.GetDcqlQueryWithClaimsets;
+        var credentialQuery = dcqlQuery.CredentialQueries[0];
+        var expectedClaimIds = credentialQuery.ClaimSets![0].Claims.Select(id => id.AsString()).ToArray();
+
+        // Act
+        var sut = credentialQuery.GetClaimsToDisclose();
+
+        // Assert
+        sut.Match(
+            claims =>
+            {
+                var claimIds = claims.Select(c => c.Id!.AsString()).ToArray();
+                claimIds.Should().BeEquivalentTo(expectedClaimIds);
+            },
+            () => Assert.Fail("Expected claims to be returned, but got none.")
+        );
+    }
+
+    [Fact]
     public void Can_Process_Query_That_Asks_For_SdJwt_And_Mdoc_At_The_Same_Time()
     {
         var mdoc = MdocSamples.MdocRecord;

@@ -43,14 +43,16 @@ public static class CredentialRequirementFun
 
     public static string FormatForLog(this CredentialQuery query)
     {
-        var result = query.GetRequestedAttributes().Aggregate(
-            new StringBuilder(),
-            (sb, requestedAttribute) =>
-            {
-                sb.AppendLine(requestedAttribute);
-                return sb;
-            }
-        );
+        var result = query
+            .GetClaimsToDiscloseAsStrs()
+            .Aggregate(
+                new StringBuilder(),
+                (sb, requestedAttribute) =>
+                {
+                    sb.AppendLine(requestedAttribute);
+                    return sb;
+                }
+            );
 
         return result.ToString();
     }
@@ -68,7 +70,7 @@ public static class CredentialRequirementFun
 
     public static IEnumerable<string> GetRequestedAttributes(this CredentialRequirement requirement) =>
         requirement.GetQuery().Match(
-            credentialQuery => credentialQuery.GetRequestedAttributes(),
+            credentialQuery => credentialQuery.GetClaimsToDiscloseAsStrs(),
             inputDescriptor => inputDescriptor.GetRequestedAttributes()
         );
 
