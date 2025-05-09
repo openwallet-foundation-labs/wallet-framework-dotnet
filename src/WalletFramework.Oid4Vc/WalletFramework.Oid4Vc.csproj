@@ -19,9 +19,4 @@
         <ProjectReference Include="..\WalletFramework.MdocVc\WalletFramework.MdocVc.csproj" />
         <ProjectReference Include="..\WalletFramework.SdJwtVc\WalletFramework.SdJwtVc.csproj" />
     </ItemGroup>
-
-    <ItemGroup>
-      <Compile Remove="Qes\DocumentDigest.cs" />
-      <Compile Remove="Qes\DocumentDigestLabel.cs" />
-    </ItemGroup>
 </Project>

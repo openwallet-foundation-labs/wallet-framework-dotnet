@@ -1,11 +1,6 @@
-using System.Net.NetworkInformation;
-using System.Reactive;
 using Newtonsoft.Json.Linq;
 using WalletFramework.Core.Base64Url;
-using WalletFramework.Core.Credentials.Errors;
 using WalletFramework.Core.Functional;
-using WalletFramework.Oid4Vc.Oid4Vp.TransactionDatas.Errors;
-using Error = OneOf.Types.Error;
 
 namespace WalletFramework.Oid4Vc.Oid4Vp.TransactionDatas;
 
@@ -27,5 +22,4 @@ public static class TransactionDataArrayFun
     {
         return array.EncodedTransactionDataStrings.TraverseAll(TransactionData.FromBase64Url);
     } 
-        
 }

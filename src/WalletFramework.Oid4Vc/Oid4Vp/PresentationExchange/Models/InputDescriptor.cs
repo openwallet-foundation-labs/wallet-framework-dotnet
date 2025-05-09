@@ -4,7 +4,6 @@ using OneOf;
 using WalletFramework.Core.Functional;
 using WalletFramework.MdocLib;
 using WalletFramework.Oid4Vc.Oid4Vp.Models;
-using WalletFramework.Oid4Vc.Qes;
 using WalletFramework.Oid4Vc.Qes.Authorization;
 using WalletFramework.SdJwtVc.Models;
 
