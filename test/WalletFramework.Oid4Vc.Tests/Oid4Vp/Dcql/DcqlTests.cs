@@ -191,4 +191,30 @@ public class DcqlTests
             () => { }
         );
     }
+
+    [Fact]
+    public void Can_Process_Query_That_Asks_For_SdJwt_And_Mdoc_At_The_Same_Time()
+    {
+        var mdoc = MdocSamples.MdocRecord;
+        var sdJwt = SdJwtSamples.GetIdCardCredential();
+        var query = DcqlSamples.GetMdocAndSdJwtFamilyNameQuery();
+
+        var sut = query.FindMatchingCandidates([mdoc, sdJwt]);
+
+        sut.Match(
+            candidates =>
+            {
+                var presentationCandidates = candidates.ToList();
+                presentationCandidates.Should().HaveCount(2);
+
+                var credentials = from candidate in presentationCandidates
+                                  from set in candidate.CredentialSetCandidates
+                                  from credential in set.Credentials
+                                  select credential;
+
+                credentials.Should().Contain([mdoc, sdJwt]);
+            },
+            () => Assert.Fail()
+        );
+    }
 }

@@ -1,6 +1,8 @@
 using Hyperledger.Aries.Agents;
 using LanguageExt;
 using Newtonsoft.Json;
+using WalletFramework.Core.Credentials.Abstractions;
+using WalletFramework.Core.Functional;
 using WalletFramework.Oid4Vc.Oid4Vci.Abstractions;
 using WalletFramework.Oid4Vc.Oid4Vp.Dcql.Models;
 using WalletFramework.Oid4Vc.Oid4Vp.Models;
@@ -18,17 +20,11 @@ public class DcqlService(
     {
         var context = await agentProvider.GetContextAsync();
         var sdJwtRecords = await sdJwtVcHolderService.ListAsync(context);
-        var sdJwtCandidates = query.FindMatchingCandidates(sdJwtRecords);
-
-        var mdocRecords = await mdocStorage.ListAll();
-        var mdocCandidates = 
-            from record in mdocRecords
-            from candidate in query.FindMatchingCandidates(record)
-            select candidate;
-
-        return from s in sdJwtCandidates
-               from m in mdocCandidates
-               select s.Concat(m);
+        var mdocsOption = await mdocStorage.ListAll();
+        var mdocs = mdocsOption.ToNullable() ?? [];
+        
+        var credentials = sdJwtRecords.Cast<ICredential>().Concat(mdocs);
+        return query.FindMatchingCandidates(credentials);
     }
 
     public async Task<Option<PresentationCandidate>> QuerySingle(CredentialQuery query)

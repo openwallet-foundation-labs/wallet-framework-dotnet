@@ -117,6 +117,35 @@ public static class DcqlSamples
         return JsonConvert.DeserializeObject<DcqlQuery>(json)!;
     }
 
+    public static DcqlQuery GetMdocAndSdJwtFamilyNameQuery()
+    {
+        var json = @"{
+            ""credentials"": [
+                {
+                    ""id"": ""mdoc"",
+                    ""format"": ""mso_mdoc"",
+                    ""meta"": {
+                        ""doctype_value"": ""org.iso.18013.5.1.mDL""
+                    },
+                    ""claims"": [
+                        { ""path"": [""org.iso.18013.5.1"", ""family_name""] }
+                    ]
+                },
+                {
+                    ""id"": ""idcard"",
+                    ""format"": ""dc+sd-jwt"",
+                    ""meta"": {
+                        ""vct_values"": [""ID-Card""]
+                    },
+                    ""claims"": [
+                        { ""path"": [""last_name""] }
+                    ]
+                }
+            ]
+        }";
+        return JsonConvert.DeserializeObject<DcqlQuery>(json)!;
+    }
+
     private static string GetJsonForTestCase(string name = "")
     {
         var assembly = Assembly.GetExecutingAssembly();

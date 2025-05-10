@@ -3,12 +3,16 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using SD_JWT.Models;
 using WalletFramework.Core.ClaimPaths;
+using WalletFramework.Core.Credentials.Abstractions;
 using WalletFramework.Core.Functional;
 using WalletFramework.Core.Functional.Errors;
 using WalletFramework.Core.Json;
 using WalletFramework.MdocLib;
+using WalletFramework.MdocVc;
+using WalletFramework.Oid4Vc.Oid4Vci.Implementations;
 using WalletFramework.Oid4Vc.Oid4Vp.ClaimPaths;
 using WalletFramework.Oid4Vc.RelyingPartyAuthentication.RegistrationCertificate;
+using WalletFramework.SdJwtVc.Models.Records;
 using static WalletFramework.Oid4Vc.Oid4Vp.Dcql.Models.CredentialClaimQueryConstants;
 
 namespace WalletFramework.Oid4Vc.Oid4Vp.Dcql.Models;
@@ -187,7 +191,9 @@ public static class ClaimQueryFun
 
         return claims.All(requestedClaim =>
         {
-            return requestedClaim.Path.ProcessWith(doc)
+            return requestedClaim
+                .Path
+                .ProcessWith(doc)
                 .OnSuccess(selection =>
                 {
                     if (requestedClaim.Values != null)
@@ -208,7 +214,8 @@ public static class ClaimQueryFun
 
         return claims.All(requestedClaim =>
         {
-            return requestedClaim.Path
+            return requestedClaim
+                .Path
                 .ProcessWith(mdoc)
                 .OnSuccess(selection =>
                 {
@@ -221,5 +228,21 @@ public static class ClaimQueryFun
                 })
                 .Fallback(false);
         });
+    }
+
+    public static bool AreFulfilledBy(this IEnumerable<ClaimQuery>? claims, ICredential credential)
+    {
+        if (claims == null)
+            return true;
+
+        switch (credential)
+        {
+            case SdJwtRecord sdJwt:
+                return claims.AreFulfilledBy(sdJwt.ToSdJwtDoc());
+            case MdocRecord mdoc:
+                return claims.AreFulfilledBy(mdoc.Mdoc);
+            default:
+                return false;
+        }
     }
 }

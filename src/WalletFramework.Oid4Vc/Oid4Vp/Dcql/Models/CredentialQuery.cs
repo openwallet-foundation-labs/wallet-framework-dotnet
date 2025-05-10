@@ -2,6 +2,7 @@ using LanguageExt;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using OneOf;
+using WalletFramework.Core.Credentials.Abstractions;
 using WalletFramework.Core.Functional;
 using WalletFramework.Core.Json;
 using WalletFramework.MdocLib;
@@ -12,6 +13,7 @@ using WalletFramework.Oid4Vc.Oid4Vci.Implementations;
 using static WalletFramework.Oid4Vc.Oid4Vp.Dcql.Models.CredentialQueryFun;
 using WalletFramework.Core.Functional.Errors;
 using WalletFramework.MdocVc;
+using WalletFramework.Oid4Vc.Credential;
 
 namespace WalletFramework.Oid4Vc.Oid4Vp.Dcql.Models;
 
@@ -171,37 +173,16 @@ public static class CredentialQueryFun
         }
     }
 
-    public static Option<PresentationCandidate> FindMatchingCandidate(this CredentialQuery credentialQuery, IEnumerable<SdJwtRecord> sdJwts)
+    public static Option<PresentationCandidate> FindMatchingCandidate(this CredentialQuery credentialQuery, IEnumerable<ICredential> credentials)
     {
-        var vctValues = credentialQuery.Meta?.Vcts?.ToList();
+        var type = credentialQuery.Meta?.Vcts?.Concat([credentialQuery.Meta.Doctype]).ToArray();
         var claims = credentialQuery.Claims;
-
+        
         var matches =
-            from record in sdJwts
-            let vctMatches = vctValues == null || vctValues.Count == 0 || vctValues.Contains(record.Vct)
-            where vctMatches && claims.AreFulfilledBy(record.ToSdJwtDoc())
-            select record;
-
-        var setCandidates =
-            from grouped in matches.GroupBy(sdJwt => sdJwt.GetCredentialSetId())
-            let candidate = new CredentialSetCandidate(grouped.Key, grouped)
-            where candidate.Credentials.Any()
-            select candidate;
-
-        return setCandidates.Any()
-            ? new PresentationCandidate(credentialQuery.Id, setCandidates)
-            : Option<PresentationCandidate>.None;
-    }
-
-    public static Option<PresentationCandidate> FindMatchingCandidate(this CredentialQuery credentialQuery, IEnumerable<MdocRecord> mdocs)
-    {
-        var doctype = credentialQuery.Meta?.Doctype;
-        var claims = credentialQuery.Claims;
-
-        var matches =
-            from record in mdocs
-            where record.DocType == doctype && claims.AreFulfilledBy(record.Mdoc)
-            select record;
+            from credential in credentials
+            let typeMatches = type == null || !type.Any() || type.Contains(credential.GetCredentialTypeAsString())
+            where typeMatches && claims.AreFulfilledBy(credential)
+            select credential;
 
         var setCandidates =
             from grouped in matches.GroupBy(mdoc => mdoc.GetCredentialSetId())
@@ -209,8 +190,9 @@ public static class CredentialQueryFun
             where candidate.Credentials.Any()
             select candidate;
 
-        return setCandidates.Any()
-            ? new PresentationCandidate(credentialQuery.Id, setCandidates)
+        var sets = setCandidates as CredentialSetCandidate[] ?? setCandidates.ToArray();
+        return sets.Any()
+            ? new PresentationCandidate(credentialQuery.Id, sets)
             : Option<PresentationCandidate>.None;
     }
 }
