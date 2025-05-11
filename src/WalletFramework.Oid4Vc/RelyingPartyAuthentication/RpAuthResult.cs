@@ -30,11 +30,11 @@ public record RpAuthResult
         return result.Match(
             rpAuthResult => rpAuthResult,
             // TODO: Log
-            _ => new RpAuthResult(RpTrustLevel.Abort)
+            _ => new RpAuthResult(RpTrustLevel.ValidationFailed)
         );
     }
 
-    public static RpAuthResult GetWithLevelAbort() => new(RpTrustLevel.Abort);
+    public static RpAuthResult GetWithLevelUnknown() => new(RpTrustLevel.Unknown);
 }
 
 public static class RpAuthResultFun
@@ -45,11 +45,11 @@ public static class RpAuthResultFun
     {
         if (accessCertificateValidationResult.IsValid is false)
         {
-            return RpTrustLevel.Abort;
+            return RpTrustLevel.AccessCertificateValidationFailed;
         }
 
         return overAskingValidationResult.IsValid
-            ? RpTrustLevel.Green
-            : RpTrustLevel.Red;
+            ? RpTrustLevel.ValidationSuccessful
+            : RpTrustLevel.OverAskingValidationFailed;
     }
 }

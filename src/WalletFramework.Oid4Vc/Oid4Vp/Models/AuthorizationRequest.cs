@@ -112,7 +112,7 @@ public record AuthorizationRequest
     public X509Chain? X509TrustChain { get; init; }
 
     [JsonIgnore] 
-    public RpAuthResult RpAuthResult { get; init; } = RpAuthResult.GetWithLevelAbort();
+    public RpAuthResult RpAuthResult { get; init; } = RpAuthResult.GetWithLevelUnknown();
 
     [JsonIgnore]
     public OneOf<DcqlQuery, PresentationDefinition> Requirements =>

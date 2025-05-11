@@ -61,5 +61,4 @@ public static class TransactionDataFun
             payment => payment.TransactionDataProperties,
             qes => qes.TransactionDataProperties,
             qcert => qcert.TransactionDataProperties);
-
 }
