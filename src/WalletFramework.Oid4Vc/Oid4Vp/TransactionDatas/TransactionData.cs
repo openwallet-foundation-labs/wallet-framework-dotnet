@@ -52,12 +52,9 @@ public static class TransactionDataFun
     
     public static Base64UrlString GetEncoded(this TransactionData transactionData) =>
         transactionData.GetTransactionDataProperties().Encoded;
-
-    public static Option<PresentationCandidate> FindCandidateForTransactionData(
-        this IEnumerable<PresentationCandidate> candidates,
-        TransactionData transactionData) => candidates.FirstOrDefault(candidate =>
-        transactionData.GetTransactionDataProperties().CredentialIds.Select(id => id.AsString)
-            .Contains(candidate.Identifier));
+    
+    public static IEnumerable<TransactionDataCredentialId> GetCredentialIds(this TransactionData transactionData) =>
+        transactionData.GetTransactionDataProperties().CredentialIds;
 
     private static TransactionDataProperties GetTransactionDataProperties(this TransactionData transactionData) =>
         transactionData.Match(
