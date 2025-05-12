@@ -715,27 +715,27 @@ public class Oid4VpClientService : IOid4VpClientService
             candidates =>
             {
                 var transactionDatas = vpTransactionDatas.ToList();
-                candidates = candidates.Select(candidate =>
-                {
-                    return candidate.AddTransactionDatas(transactionDatas.Where(transactionData => transactionData
-                        .GetCredentialIds().Select(id => id.AsString)
-                        .Contains(candidate.Identifier)));
-                }).ToList();
+                var candidatesValidation = transactionDatas
+                    .TraverseAll(candidates.FindCandidateForTransactionData)
+                    .OnSuccess(matches =>
+                    {
+                        return matches
+                            .GroupBy(match => match.GetIdentifier())
+                            .Select(group =>
+                            {
+                                var txData = group.Select(match => match.TransactionData).ToList();
+                                return group.First().Candidate.AddTransactionDatas(txData);
+                            })
+                            .ToList();
+                    });
 
-                var satisfiedTransactionDatas = candidates.Where(x => x.TransactionData.IsSome)
-                    .SelectMany(x => x.TransactionData.UnwrapOrThrow());
-                if (transactionDatas.Any(transactionData => !satisfiedTransactionDatas.Contains(transactionData)))
-                    return new InvalidTransactionDataError(
-                            "Not enough credentials found to satisfy the authorization request with transaction data",
-                            presentationRequest)
-                        .ToInvalid<PresentationRequest>();
-                
-                return presentationRequest with { Candidates = candidates };
+                return
+                    from presentationCandidates in candidatesValidation
+                    select presentationRequest with { Candidates = presentationCandidates };
             },
             () => new InvalidTransactionDataError(
                     "No credentials found that satisfy the authorization request with transaction data",
-                    presentationRequest)
-                .ToInvalid<PresentationRequest>()
+                    presentationRequest).ToInvalid<PresentationRequest>()
         );
         
         return result.Value.MapFail(error =>
