@@ -41,6 +41,6 @@ public class RpAuthenticationTests
 
         var sut = RpAuthResult.ValidateRequestObject(requestObject, rpRegistrarCert);
 
-        sut.TrustLevel.Should().Be(RpTrustLevel.Green);
+        sut.TrustLevel.Should().Be(RpTrustLevel.ValidationSuccessful);
     }
 }

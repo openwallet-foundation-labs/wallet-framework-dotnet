@@ -44,7 +44,7 @@ public class CredentialQuery
     ///     This MUST be a string identifying the Credential in the response.
     /// </summary>
     [JsonProperty(IdJsonKey)]
-    public string Id { get; set; } = null!;
+    public string? Id { get; set; } = null!;
 
     /// <summary>
     ///     Represents a collection, where each value contains a collection of identifiers for elements in claims that
@@ -65,7 +65,7 @@ public class CredentialQuery
                 }
 
                 return ValidationFun.Valid(value.Value.ToString());
-            });
+            }).ToOption();
 
         var format = json.GetByKey(FormatJsonKey)
             .OnSuccess(token => token.ToJValue())
@@ -116,13 +116,13 @@ public class CredentialQuery
     }
 
     private static CredentialQuery Create(
-        string id,
+        Option<string> id,
         string format,
         CredentialMetaQuery meta,
         Option<IEnumerable<ClaimQuery>> claims,
         Option<IEnumerable<IEnumerable<string>>> claimSets) => new()
     {
-        Id = id,
+        Id = id.ToNullable(),
         Format = format,
         Meta = meta,
         Claims = claims.ToNullable()?.ToArray(),

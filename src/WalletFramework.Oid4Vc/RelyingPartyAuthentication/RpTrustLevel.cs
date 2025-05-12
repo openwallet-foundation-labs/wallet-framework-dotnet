@@ -2,7 +2,9 @@ namespace WalletFramework.Oid4Vc.RelyingPartyAuthentication;
 
 public enum RpTrustLevel
 {
-    Green,
-    Red,
-    Abort
+    ValidationSuccessful,
+    AccessCertificateValidationFailed,
+    OverAskingValidationFailed,
+    ValidationFailed,
+    Unknown
 }

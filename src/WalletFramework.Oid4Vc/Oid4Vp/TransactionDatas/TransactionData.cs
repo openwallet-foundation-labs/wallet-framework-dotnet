@@ -5,13 +5,14 @@ using WalletFramework.Core.Functional;
 using WalletFramework.Core.Json;
 using WalletFramework.Oid4Vc.Oid4Vp.Models;
 using WalletFramework.Oid4Vc.Payment;
-using WalletFramework.Oid4Vc.Qes;
+using WalletFramework.Oid4Vc.Qes.Authorization;
+using WalletFramework.Oid4Vc.Qes.CertCreation;
 
 namespace WalletFramework.Oid4Vc.Oid4Vp.TransactionDatas;
 
 public class TransactionData(
-    OneOf<PaymentTransactionData, QesAuthorizationTransactionData> input
-    ) : OneOfBase<PaymentTransactionData, QesAuthorizationTransactionData>(input)
+    OneOf<PaymentTransactionData, QesAuthorizationTransactionData, QCertCreationTransactionData> input)
+    : OneOfBase<PaymentTransactionData, QesAuthorizationTransactionData, QCertCreationTransactionData>(input)
 {
     public static Validation<TransactionData> FromBase64Url(Base64UrlString base64UrlString) =>
         from jObject in base64UrlString.DecodeToJObject()
@@ -20,36 +21,48 @@ public class TransactionData(
         {
             TransactionDataTypeValue.Payment => PaymentTransactionData.FromJObject(jObject, properties),
             TransactionDataTypeValue.Qes => QesAuthorizationTransactionData.FromJObject(jObject, properties),
+            TransactionDataTypeValue.QCertCreation => QCertCreationTransactionData.FromJObject(jObject, properties),
             _ => throw new InvalidOperationException()
         }
         select transactionData;
+
+    public static TransactionData WithPaymentTransactionData(PaymentTransactionData input)
+    {
+        return new TransactionData(input);
+    }
+    
+    public static TransactionData WithQesAuthorizationTransactionData(QesAuthorizationTransactionData input)
+    {
+        return new TransactionData(input);
+    }
+    
+    public static TransactionData WithQCertCreationTransactionData(QCertCreationTransactionData input)
+    {
+        return new TransactionData(input);
+    }
 }
 
 public static class TransactionDataFun
 {
     public static TransactionDataType GetTransactionDataType(this TransactionData transactionData) =>
-        transactionData.Match(
-            payment => payment.TransactionDataProperties.Type,
-            qes => qes.TransactionDataProperties.Type);
+        transactionData.GetTransactionDataProperties().Type;
 
-    public static IEnumerable<TransactionDataHashesAlg> GetHashesAlg(this TransactionData transactionData) => 
-        transactionData.Match(
-            payment => payment.TransactionDataProperties.TransactionDataHashesAlg,
-            qes => qes.TransactionDataProperties.TransactionDataHashesAlg);
+    public static IEnumerable<TransactionDataHashesAlg> GetHashesAlg(this TransactionData transactionData) =>
+        transactionData.GetTransactionDataProperties().TransactionDataHashesAlg;
     
     public static Base64UrlString GetEncoded(this TransactionData transactionData) =>
-        transactionData.Match(
-            payment => payment.TransactionDataProperties.Encoded,
-            qes => qes.TransactionDataProperties.Encoded);
+        transactionData.GetTransactionDataProperties().Encoded;
 
     public static Option<PresentationCandidate> FindCandidateForTransactionData(
         this IEnumerable<PresentationCandidate> candidates,
-        TransactionData transactionData)
-    {
-        var credentialIds = transactionData.Match(
-            payment => payment.TransactionDataProperties.CredentialIds.Select(id => id.AsString),
-            qes => qes.TransactionDataProperties.CredentialIds.Select(id => id.AsString));
-        
-        return candidates.FirstOrDefault(candidate => credentialIds.Contains(candidate.Identifier));
-    }
+        TransactionData transactionData) => candidates.FirstOrDefault(candidate =>
+        transactionData.GetTransactionDataProperties().CredentialIds.Select(id => id.AsString)
+            .Contains(candidate.Identifier));
+
+    private static TransactionDataProperties GetTransactionDataProperties(this TransactionData transactionData) =>
+        transactionData.Match(
+            payment => payment.TransactionDataProperties,
+            qes => qes.TransactionDataProperties,
+            qcert => qcert.TransactionDataProperties);
+
 }

@@ -7,7 +7,8 @@ namespace WalletFramework.Oid4Vc.Oid4Vp.TransactionDatas;
 public enum TransactionDataTypeValue
 {
     Payment,
-    Qes
+    Qes,
+    QCertCreation
 }
 
 public static class TransactionDataTypeValueFun
@@ -17,6 +18,7 @@ public static class TransactionDataTypeValueFun
         {
             TransactionDataTypeValue.Payment => SupportedTransactionDataTypeConstants.Payment,
             TransactionDataTypeValue.Qes => SupportedTransactionDataTypeConstants.Qes,
+            TransactionDataTypeValue.QCertCreation => SupportedTransactionDataTypeConstants.QCertCreation,
             _ => throw new ArgumentOutOfRangeException(nameof(value), value, null)
         };
 }
@@ -26,6 +28,8 @@ public static class SupportedTransactionDataTypeConstants
     public const string Payment = "payment_data";
 
     public const string Qes = "qes_authorization";
+    
+    public const string QCertCreation = "qcert_creation_acceptance";
 }
 
 public readonly struct TransactionDataType
@@ -51,6 +55,7 @@ public readonly struct TransactionDataType
         {
             SupportedTransactionDataTypeConstants.Payment => new TransactionDataType(TransactionDataTypeValue.Payment),
             SupportedTransactionDataTypeConstants.Qes => new TransactionDataType(TransactionDataTypeValue.Qes),
+            SupportedTransactionDataTypeConstants.QCertCreation => new TransactionDataType(TransactionDataTypeValue.QCertCreation),
             _ => throw new ArgumentOutOfRangeException()
         };
     }
