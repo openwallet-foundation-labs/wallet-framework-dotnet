@@ -16,18 +16,17 @@ public static class DcqlSamples
                     ""id"": ""pid"",
                     ""format"": ""dc+sd-jwt"",
                     ""meta"": {
-                        ""vct_values"": [ ""https://credentials.example.com/identity_credential"" ]
+                        ""vct_values"": [ ""ID-Card"" ]
                     },
                     ""claims"": [
                         {""id"": {""value"": ""a""}, ""path"": [""last_name""]},
-                        {""id"": {""value"": ""b""}, ""path"": [""postal_code""]},
-                        {""id"": {""value"": ""c""}, ""path"": [""locality""]},
-                        {""id"": {""value"": ""d""}, ""path"": [""region""]},
-                        {""id"": {""value"": ""e""}, ""path"": [""date_of_birth""]}
+                        {""id"": {""value"": ""b""}, ""path"": [""address"", ""postal_code""]},
+                        {""id"": {""value"": ""c""}, ""path"": [""address"", ""street_address""]},
+                        {""id"": {""value"": ""d""}, ""path"": [""first_name""]}
                     ],
                     ""claim_sets"": [
-                        {""claims"": [""a"", ""c"", ""d"", ""e""]},
-                        {""claims"": [""a"", ""b"", ""e""]}
+                        {""claims"": [""a"", ""b"", ""d""]},
+                        {""claims"": [""a"", ""c""]}
                     ]
                 }
             ]
@@ -177,6 +176,21 @@ public static class DcqlSamples
         }";
         return JsonConvert.DeserializeObject<DcqlQuery>(json)!;
     }
+
+    public const string QueryStrWithNoClaims = @"{
+        ""credentials"": [
+            {
+                ""id"": ""pid"",
+                ""format"": ""dc+sd-jwt"",
+                ""meta"": {
+                    ""vct_values"": [ ""ID-Card"" ]
+                }
+            }
+        ]
+    }";
+
+    public static DcqlQuery GetDcqlQueryWithNoClaims => 
+        JsonConvert.DeserializeObject<DcqlQuery>(QueryStrWithNoClaims)!;
 
     private static string GetJsonForTestCase(string name = "")
     {

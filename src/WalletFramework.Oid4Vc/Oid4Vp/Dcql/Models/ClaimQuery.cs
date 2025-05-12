@@ -264,4 +264,30 @@ public static class ClaimQueryFun
                 return [];
         }
     }
+
+    /// <summary>
+    ///     Returns, for each ClaimSet, the set of ClaimQuery objects whose Id matches the ClaimIdentifiers in the set.
+    ///     Only includes sets where all ClaimIdentifiers are matched by a ClaimQuery with a non-null Id.
+    ///     If no ClaimQuery objects are matched, returns the original claimQueries.
+    /// </summary>
+    public static IEnumerable<IReadOnlyList<ClaimQuery>> ProcessSets(
+        this IEnumerable<ClaimQuery> claimQueries,
+        IEnumerable<ClaimSet> claimSets)
+    {
+        var queries = claimQueries as ClaimQuery[] ?? [.. claimQueries];
+        var result = 
+            from set in claimSets
+            let matched = 
+                (from id in set.Claims 
+                    join q in queries on id.AsString() equals q.Id?.AsString()
+                    where q.Id != null
+                    select q).ToArray()
+            where matched.Length == set.Claims.Count
+            select (IReadOnlyList<ClaimQuery>)matched;
+
+        var sets = result as IReadOnlyList<ClaimQuery>[] ?? [.. result];
+        return queries.Length == 0 
+            ? [] 
+            : sets.Any() ? sets : [[.. queries]];
+    }
 }

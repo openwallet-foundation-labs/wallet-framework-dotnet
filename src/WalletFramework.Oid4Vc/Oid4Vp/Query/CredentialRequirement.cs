@@ -3,6 +3,7 @@ using LanguageExt;
 using OneOf;
 using WalletFramework.MdocLib;
 using WalletFramework.Oid4Vc.Oid4Vp.Dcql.Models;
+using WalletFramework.Oid4Vc.Oid4Vp.Models;
 using WalletFramework.Oid4Vc.Oid4Vp.PresentationExchange.Models;
 using WalletFramework.SdJwtVc.Models;
 
@@ -68,9 +69,15 @@ public static class CredentialRequirementFun
             credentialQuery => credentialQuery.Id,
             inputDescriptor => inputDescriptor.Id);
 
-    public static IEnumerable<string> GetRequestedAttributes(this CredentialRequirement requirement) =>
+    public static IEnumerable<string> GetRequestedAttributes(this CredentialRequirement requirement, Option<List<ClaimQuery>> claimsToDisclose) =>
         requirement.GetQuery().Match(
-            credentialQuery => credentialQuery.GetClaimsToDiscloseAsStrs(),
+            credentialQuery =>
+            {
+                return claimsToDisclose.Match(
+                    claims => claims.AsStrings(credentialQuery.Format),
+                    credentialQuery.GetClaimsToDiscloseAsStrs
+                );
+            },
             inputDescriptor => inputDescriptor.GetRequestedAttributes()
         );
 

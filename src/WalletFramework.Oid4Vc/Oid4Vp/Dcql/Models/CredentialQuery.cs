@@ -150,26 +150,63 @@ public static class CredentialQueryFun
         }
     }
 
-    public static Option<PresentationCandidate> FindMatchingCandidate(this CredentialQuery credentialQuery, IEnumerable<ICredential> credentials)
+    public static Option<PresentationCandidate> FindMatchingCandidate(
+        this CredentialQuery credentialQuery,
+        IEnumerable<ICredential> credentials)
     {
-        var type = credentialQuery.Meta?.Vcts?.Concat([credentialQuery.Meta.Doctype]).ToArray();
-        var claims = credentialQuery.Claims;
+        // Determine the credential types requested by the query
+        var requestedTypes = credentialQuery.Meta?.Vcts?.Concat([credentialQuery.Meta.Doctype]).ToArray();
+
+        // Filter credentials by requested types (if any)
+        var credentialsWhereTypeMatches = credentials
+            .Where(credential =>
+            {
+                return requestedTypes == null 
+                    || !requestedTypes.Any()
+                    || requestedTypes.Contains(credential.GetCredentialTypeAsString());
+            })
+            .ToArray();
         
-        var matches =
-            from credential in credentials
-            let typeMatches = type == null || !type.Any() || type.Contains(credential.GetCredentialTypeAsString())
-            where typeMatches && claims.AreFulfilledBy(credential)
-            select credential;
+        // Get the claims and claim sets to be disclosed
+        var claims = credentialQuery.Claims ?? [];
+        var claimSets = credentialQuery.ClaimSets ?? [];
 
-        var setCandidates =
-            from grouped in matches.GroupBy(mdoc => mdoc.GetCredentialSetId())
-            let candidate = new CredentialSetCandidate(grouped.Key, grouped)
-            where candidate.Credentials.Any()
-            select candidate;
+        var toDisclose = claims.ProcessSets(claimSets).ToList();
+        // Try to find and return a credentials that fulfill the claims
+        foreach (var disclosures in toDisclose)
+        {
+            var matches = credentialsWhereTypeMatches
+                .Where(disclosures.AreFulfilledBy)
+                .ToArray();
 
-        var sets = setCandidates as CredentialSetCandidate[] ?? setCandidates.ToArray();
-        return sets.Any()
-            ? new PresentationCandidate(credentialQuery.Id, sets)
+            var groupedCandidates = matches
+                .GroupBy(credential => credential.GetCredentialSetId())
+                .Select(group => new CredentialSetCandidate(group.Key, group))
+                .Where(candidate => candidate.Credentials.Any())
+                .ToArray();
+
+            if (groupedCandidates.Any())
+            {
+                return new PresentationCandidate(
+                    credentialQuery.Id,
+                    groupedCandidates,
+                    disclosures.ToList());
+            }
+        }
+
+        // If there are claims but not returned yet, that means there are claims who are not fulfilled
+        if (toDisclose.Any())
+            return Option<PresentationCandidate>.None;
+
+        // If there are no claims asked, all credentials with the right type are valid
+        var allCandidates = credentialsWhereTypeMatches
+            .GroupBy(credential => credential.GetCredentialSetId())
+            .Select(group => new CredentialSetCandidate(group.Key, group))
+            .Where(candidate => candidate.Credentials.Any())
+            .ToArray();
+
+        return credentialsWhereTypeMatches.Any()
+            ? new PresentationCandidate(credentialQuery.Id, allCandidates, Option<List<ClaimQuery>>.None)
             : Option<PresentationCandidate>.None;
     }
 

@@ -80,9 +80,10 @@ public class DcqlServiceTests
                 {
                     driverLicenseCredentialSetCandidate,
                     driverLicenseCredentialCloneSetCandidate
-                }),
-            new(universityCredentialQuery.Id, new List<CredentialSetCandidate> { universityCredentialSetCandidate }),
-            new(batchCredentialQuery.Id, new List<CredentialSetCandidate> { batchCredentialSetCandidate }),
+                },
+                driverLicenseCredentialQuery.Claims!.ToList()),
+            new(universityCredentialQuery.Id, new List<CredentialSetCandidate> { universityCredentialSetCandidate }, universityCredentialQuery.Claims!.ToList()),
+            new(batchCredentialQuery.Id, new List<CredentialSetCandidate> { batchCredentialSetCandidate }, batchCredentialQuery.Claims!.ToList()),
         };
 
         var dcqlService = CreateDcqlService();
@@ -113,7 +114,8 @@ public class DcqlServiceTests
         var expected = new List<PresentationCandidate>
         {
             new(identityCredentialCredentialQuery.Id,
-                new List<CredentialSetCandidate> { alternativeNestedCredentialSetCandidate })
+                new List<CredentialSetCandidate> { alternativeNestedCredentialSetCandidate },
+                identityCredentialCredentialQuery.Claims!.ToList())
         };
     
         var dcqlService = CreateDcqlService();
@@ -145,7 +147,8 @@ public class DcqlServiceTests
         var expected = new List<PresentationCandidate>
         {
             new(identityCredentialCredentialQuery.Id,
-                new List<CredentialSetCandidate> { nestedCredentialSetCandidate, alternativeNestedCredentialSetCandidate }),
+                new List<CredentialSetCandidate> { nestedCredentialSetCandidate, alternativeNestedCredentialSetCandidate },
+                identityCredentialCredentialQuery.Claims!.ToList()),
         };
     
         var dcqlService = CreateDcqlService();
