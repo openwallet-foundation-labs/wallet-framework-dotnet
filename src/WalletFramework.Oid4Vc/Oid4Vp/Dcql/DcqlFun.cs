@@ -3,6 +3,7 @@ using WalletFramework.Core.Functional;
 using WalletFramework.Oid4Vc.Oid4Vp.Dcql.Models;
 using WalletFramework.Oid4Vc.Oid4Vp.Models;
 using WalletFramework.Core.Credentials.Abstractions;
+using WalletFramework.Oid4Vc.Oid4Vp.Dcql.CredentialQueries;
 
 namespace WalletFramework.Oid4Vc.Oid4Vp.Dcql;
 

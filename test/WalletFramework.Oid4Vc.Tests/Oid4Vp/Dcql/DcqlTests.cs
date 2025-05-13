@@ -17,7 +17,7 @@ public class DcqlTests
 
         dcqlQuery.CredentialQueries.Length.Should().Be(5);
 
-        dcqlQuery.CredentialQueries[0].Id.Should().Be("pid");
+        dcqlQuery.CredentialQueries[0].Id.AsString().Should().Be("pid");
         dcqlQuery.CredentialQueries[0].Format.Should().Be("dc+sd-jwt");
         dcqlQuery.CredentialQueries[0].Meta!.Vcts!
             .First()
@@ -30,10 +30,10 @@ public class DcqlTests
 
         dcqlQuery.CredentialSetQueries!.Length.Should().Be(2);
         dcqlQuery.CredentialSetQueries[0].Purpose.Should().Contain(x => x.Name == "Identification");
-        dcqlQuery.CredentialSetQueries[0].Options![0][0].Should().Be("pid");
-        dcqlQuery.CredentialSetQueries[0].Options![1][0].Should().Be("other_pid");
-        dcqlQuery.CredentialSetQueries[0].Options![2][0].Should().Be("pid_reduced_cred_1");
-        dcqlQuery.CredentialSetQueries[0].Options![2][1].Should().Be("pid_reduced_cred_2");
+        dcqlQuery.CredentialSetQueries[0].Options[0].Ids[0].AsString().Should().Be("pid");
+        dcqlQuery.CredentialSetQueries[0].Options[1].Ids[0].AsString().Should().Be("other_pid");
+        dcqlQuery.CredentialSetQueries[0].Options[2].Ids[0].AsString().Should().Be("pid_reduced_cred_1");
+        dcqlQuery.CredentialSetQueries[0].Options[2].Ids[1].AsString().Should().Be("pid_reduced_cred_2");
     }
 
     [Fact]
@@ -48,7 +48,7 @@ public class DcqlTests
         // Assert
         sut.CredentialQueries.Length.Should().Be(1);
         var cred = sut.CredentialQueries[0];
-        cred.Id.Should().Be("pid");
+        cred.Id.AsString().Should().Be("pid");
         cred.Format.Should().Be("dc+sd-jwt");
         cred.Meta!.Vcts!.Should().ContainSingle().Which.Should()
             .Be("ID-Card");
@@ -188,7 +188,7 @@ public class DcqlTests
                 presentationCandidates.Should().HaveCount(2);
                 foreach (var candidate in presentationCandidates)
                 {
-                    query.CredentialQueries.Select(q => q.Id).Should().Contain(candidate.Identifier);
+                    query.CredentialQueries.Select(q => q.Id.AsString()).Should().Contain(candidate.Identifier);
                     var expectedClaims = query.CredentialQueries.First(q => q.Id == candidate.Identifier).Claims!;
                     candidate.ClaimsToDisclose.Match(
                         claims =>
@@ -262,7 +262,7 @@ public class DcqlTests
                 presentationCandidates.Should().HaveCount(2);
                 foreach (var candidate in presentationCandidates)
                 {
-                    query.CredentialQueries.Select(q => q.Id).Should().Contain(candidate.Identifier);
+                    query.CredentialQueries.Select(q => q.Id.AsString()).Should().Contain(candidate.Identifier);
                     var expectedClaims = query.CredentialQueries.First(q => q.Id == candidate.Identifier).Claims!;
                     candidate.ClaimsToDisclose.Match(
                         claims =>

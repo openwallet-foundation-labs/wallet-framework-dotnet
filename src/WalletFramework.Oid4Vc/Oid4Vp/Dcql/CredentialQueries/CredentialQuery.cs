@@ -4,15 +4,16 @@ using Newtonsoft.Json.Linq;
 using OneOf;
 using WalletFramework.Core.Credentials.Abstractions;
 using WalletFramework.Core.Functional;
+using WalletFramework.Core.Functional.Errors;
 using WalletFramework.Core.Json;
 using WalletFramework.MdocLib;
-using WalletFramework.SdJwtVc.Models;
-using WalletFramework.Oid4Vc.Oid4Vp.Models;
-using WalletFramework.Core.Functional.Errors;
 using WalletFramework.Oid4Vc.Credential;
-using static WalletFramework.Oid4Vc.Oid4Vp.Dcql.Models.CredentialQueryConstants;
+using WalletFramework.Oid4Vc.Oid4Vp.Dcql.Models;
+using WalletFramework.Oid4Vc.Oid4Vp.Models;
+using WalletFramework.SdJwtVc.Models;
+using static WalletFramework.Oid4Vc.Oid4Vp.Dcql.CredentialQueries.CredentialQueryConstants;
 
-namespace WalletFramework.Oid4Vc.Oid4Vp.Dcql.Models;
+namespace WalletFramework.Oid4Vc.Oid4Vp.Dcql.CredentialQueries;
 
 /// <summary>
 ///     The credential query.
@@ -38,10 +39,11 @@ public class CredentialQuery
     public string Format { get; set; } = null!;
 
     /// <summary>
-    ///     This MUST be a string identifying the Credential in the response.
+    ///     This MUST be a CredentialQueryId identifying the Credential in the response.
     /// </summary>
     [JsonProperty(IdJsonKey)]
-    public string? Id { get; set; } = null!;
+    [JsonConverter(typeof(CredentialQueryIdJsonConverter))]
+    public CredentialQueryId Id { get; set; } = null!;
 
     /// <summary>
     ///     Represents a collection, where each value contains a collection of identifiers for elements in claims that
@@ -54,15 +56,8 @@ public class CredentialQuery
     {
         var id = json.GetByKey(IdJsonKey)
             .OnSuccess(token => token.ToJValue())
-            .OnSuccess(value =>
-            {
-                if (string.IsNullOrWhiteSpace(value.Value?.ToString()))
-                {
-                    return new StringIsNullOrWhitespaceError<CredentialQuery>();
-                }
-
-                return ValidationFun.Valid(value.Value.ToString());
-            }).ToOption();
+            .OnSuccess(value => CredentialQueryId.Create(value.Value?.ToString() ?? string.Empty))
+            .ToOption();
 
         var format = json.GetByKey(FormatJsonKey)
             .OnSuccess(token => token.ToJValue())
@@ -102,7 +97,7 @@ public class CredentialQuery
     }
 
     private static CredentialQuery Create(
-        Option<string> id,
+        Option<CredentialQueryId> id,
         string format,
         CredentialMetaQuery meta,
         Option<IEnumerable<ClaimQuery>> claims,
@@ -188,9 +183,10 @@ public static class CredentialQueryFun
             if (groupedCandidates.Any())
             {
                 return new PresentationCandidate(
-                    credentialQuery.Id,
+                    credentialQuery.Id.AsString(),
                     groupedCandidates,
-                    disclosures.ToList());
+                    disclosures.ToList()
+                );
             }
         }
 
@@ -206,7 +202,7 @@ public static class CredentialQueryFun
             .ToArray();
 
         return credentialsWhereTypeMatches.Any()
-            ? new PresentationCandidate(credentialQuery.Id, allCandidates, Option<List<ClaimQuery>>.None)
+            ? new PresentationCandidate(credentialQuery.Id.AsString(), allCandidates, Option<List<ClaimQuery>>.None)
             : Option<PresentationCandidate>.None;
     }
 

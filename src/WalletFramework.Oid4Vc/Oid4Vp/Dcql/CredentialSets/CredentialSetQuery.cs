@@ -5,34 +5,35 @@ using WalletFramework.Core.Functional;
 using WalletFramework.Core.Functional.Errors;
 using WalletFramework.Core.Json;
 using WalletFramework.Oid4Vc.RelyingPartyAuthentication.RegistrationCertificate;
-using static WalletFramework.Oid4Vc.Oid4Vp.Dcql.Models.CredentialSetQueryFun;
+using static WalletFramework.Oid4Vc.Oid4Vp.Dcql.CredentialSets.CredentialSetQueryConstants;
 
-namespace WalletFramework.Oid4Vc.Oid4Vp.Dcql.Models;
+namespace WalletFramework.Oid4Vc.Oid4Vp.Dcql.CredentialSets;
 
 /// <summary>
 /// The credential set query.
 /// </summary>
-public class CredentialSetQuery
+public record CredentialSetQuery
 {
     /// <summary>
     /// Specifies the purpose of the query.
     /// </summary>
     [JsonProperty(PurposeJsonKey)]
     [JsonConverter(typeof(PurposeConverter))]
-    public Purpose[]? Purpose { get; set; }
+    public Purpose[]? Purpose { get; init; }
     
     /// <summary>
     /// Indicates whether this set of Credentials is required to satisfy the particular use case at the Verifier.
     /// </summary>
     [JsonProperty("required")]
-    public bool Required { get; set; }
+    public bool Required { get; init; }
 
     /// <summary>
     /// Represents a collection, where each value is a list of Credential query identifiers representing one set Credentials that satisfies the use case.
     /// </summary>
     [JsonProperty(OptionsJsonKey)]
-    public string[][]? Options { get; set; }
-    
+    [JsonConverter(typeof(CredentialSetOptionListJsonConverter))]
+    public IReadOnlyList<CredentialSetOption> Options { get; private init; } = null!;
+
     public static Validation<CredentialSetQuery> FromJObject(JObject json)
     {
         var purpose = json.GetByKey(PurposeJsonKey)
@@ -67,43 +68,39 @@ public class CredentialSetQuery
             })
             .ToOption();
 
-        var options = json.GetByKey(OptionsJsonKey)
-            .OnSuccess(token => token.ToJArray())
-            .OnSuccess(array => array.TraverseAll(jToken => jToken.ToJArray()))
-            .OnSuccess(array => array.TraverseAll(innerArray =>
+        var optionsValidation =
+            from jToken in json.GetByKey(OptionsJsonKey)
+            from jArray in jToken.ToJArray()
+            from options in jArray.TraverseAll(token =>
             {
-                return innerArray.TraverseAll(x => x.ToJValue())
-                    .OnSuccess(values => values.Select(value =>
-                    {
-                        if (string.IsNullOrWhiteSpace(value.Value?.ToString()))
-                        {
-                            return new StringIsNullOrWhitespaceError<CredentialSetQuery>();
-                        }
-
-                        return ValidationFun.Valid(value.Value.ToString());
-                    }))
-                    .OnSuccess(values => values.TraverseAll(x => x));
-            }))
-            .ToOption();
+                return
+                    from array in token.ToJArray()
+                    from option in CredentialSetOption.FromJArray(array)
+                    select option;
+            })
+            select options;
 
         return ValidationFun.Valid(Create)
             .Apply(purpose)
             .Apply(required)
-            .Apply(options);
+            .Apply(optionsValidation);
     }
-    
+
     private static CredentialSetQuery Create(
         Option<IEnumerable<Purpose>> purpose,
         Option<bool> required,
-        Option<IEnumerable<IEnumerable<string>>> options) => new()
+        IEnumerable<CredentialSetOption> options)
     {
-        Purpose = purpose.ToNullable()?.ToArray(),
-        Required = required.ToNullable() ?? false,
-        Options = options.ToNullable()?.Select(x => x.ToArray()).ToArray()
-    };
+        return new CredentialSetQuery
+        {
+            Purpose = purpose.ToNullable()?.ToArray(),
+            Required = required.ToNullable() ?? false,
+            Options = options.ToArray()
+        };
+    }
 }
 
-public static class CredentialSetQueryFun
+public static class CredentialSetQueryConstants
 {
     public const string PurposeJsonKey = "purpose";
     public const string RequiredJsonKey = "required";
