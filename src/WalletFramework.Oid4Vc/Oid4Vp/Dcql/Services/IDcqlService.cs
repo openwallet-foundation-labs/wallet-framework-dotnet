@@ -11,7 +11,7 @@ public interface IDcqlService
     ///     Finds the presentation candidates based on the provided credentials and DCQL query.
     /// </summary>
     /// <returns>An array of presentation candidates, each containing a list of credentials that match the DCQL query.</returns>
-    Task<Option<IEnumerable<PresentationCandidate>>> Query(DcqlQuery query);
+    Task<CandidateQueryResult> Query(DcqlQuery query);
     
     /// <summary>
     ///     Finds a presentation candidate based on the provided credentials and credential query.

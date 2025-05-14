@@ -31,7 +31,6 @@ using WalletFramework.Oid4Vc.Oid4Vci.Implementations;
 using WalletFramework.Oid4Vc.Oid4Vp.AuthResponse.Encryption;
 using WalletFramework.Oid4Vc.Oid4Vp.AuthResponse.Encryption.Abstractions;
 using WalletFramework.Oid4Vc.Oid4Vp.Dcql.CredentialQueries;
-using WalletFramework.Oid4Vc.Oid4Vp.Dcql.Models;
 using WalletFramework.Oid4Vc.Oid4Vp.Errors;
 using WalletFramework.Oid4Vc.Oid4Vp.Models;
 using WalletFramework.Oid4Vc.Oid4Vp.PresentationExchange.Models;
@@ -675,8 +674,8 @@ public class Oid4VpClientService : IOid4VpClientService
         var authorizationRequestValidation = await _authorizationRequestService.GetAuthorizationRequest(requestUri);
         var result = authorizationRequestValidation.Map(async authRequest =>
         {
-            var candidates = (await _candidateQueryService.Query(authRequest)).OnSome(enumerable => enumerable.ToList());
-            var presentationCandidates = new PresentationRequest(authRequest, candidates);
+            var queryResult = await _candidateQueryService.Query(authRequest);
+            var presentationCandidates = new PresentationRequest(authRequest, queryResult);
             
             var vpTxDataOption = presentationCandidates.AuthorizationRequest.TransactionData;
 
@@ -685,8 +684,12 @@ public class Oid4VpClientService : IOid4VpClientService
                 .Requirements.Match(
                     _ => Option<IEnumerable<InputDescriptorTransactionData>>.None,
                     presentationDefinition => presentationDefinition.InputDescriptors.TraverseAny(descriptor =>
-                        descriptor.TransactionData.OnSome(list =>
-                            new InputDescriptorTransactionData(descriptor.Id, list))));
+                    {
+                        return
+                            from list in descriptor.TransactionData
+                            select new InputDescriptorTransactionData(descriptor.Id, list);
+                    })
+                );
 
             switch (vpTxDataOption.IsSome, uc5TxDataOption.IsSome)
             {
@@ -713,7 +716,7 @@ public class Oid4VpClientService : IOid4VpClientService
         PresentationRequest presentationRequest,
         IEnumerable<TransactionData> transactionDatas)
     {
-        var result = presentationRequest.Candidates.Match(
+        var result = presentationRequest.CandidateQueryResult.Candidates.Match(
             candidates =>
             {
                 var candidatesValidation = transactionDatas.TraverseAll(transactionData =>
@@ -724,10 +727,19 @@ public class Oid4VpClientService : IOid4VpClientService
                             $"No credentials found that satisfy the transaction data with type {transactionData.GetTransactionDataType().AsString()}",
                             presentationRequest));
                 });
+
         
-                return candidatesValidation.OnSuccess(enumerable => presentationRequest with
+                return candidatesValidation.OnSuccess(enumerable =>
                 {
-                    Candidates = enumerable.ToList()
+                    var newResult = presentationRequest.CandidateQueryResult with
+                    {
+                        Candidates =  enumerable.ToList()
+                    };
+                    
+                    return presentationRequest with
+                    {
+                        CandidateQueryResult = newResult
+                    };
                 });
             },
             () => new InvalidTransactionDataError(
@@ -748,7 +760,7 @@ public class Oid4VpClientService : IOid4VpClientService
         PresentationRequest presentationRequest,
         IEnumerable<InputDescriptorTransactionData> txData)
     {
-        var result = presentationRequest.Candidates.Match(
+        var result = presentationRequest.CandidateQueryResult.Candidates.Match(
             candidates =>
             {
                 var candidatesValidation = txData.TraverseAll(inputDescriptorTxData =>
@@ -764,9 +776,17 @@ public class Oid4VpClientService : IOid4VpClientService
                     );
                 });
                     
-                return candidatesValidation.OnSuccess(enumerable => presentationRequest with
+                return candidatesValidation.OnSuccess(enumerable =>
                 {
-                    Candidates = enumerable.ToList()
+                    var newResult = presentationRequest.CandidateQueryResult with
+                    {
+                        Candidates =  enumerable.ToList()
+                    };
+                    
+                    return presentationRequest with
+                    {
+                        CandidateQueryResult = newResult
+                    };
                 });
             },
             () => presentationRequest);

@@ -11,6 +11,7 @@ using WalletFramework.Oid4Vc.Oid4Vci.Abstractions;
 using WalletFramework.Oid4Vc.Oid4Vci.Implementations;
 using WalletFramework.Oid4Vc.Oid4Vp.Models;
 using WalletFramework.Oid4Vc.Oid4Vp.PresentationExchange.Models;
+using WalletFramework.Oid4Vc.Oid4Vp.Query;
 using WalletFramework.SdJwtVc.Services.SdJwtVcHolderService;
 
 namespace WalletFramework.Oid4Vc.Oid4Vp.PresentationExchange.Services;
@@ -21,17 +22,28 @@ public class PexService(
     IMdocStorage mdocStorage,
     ISdJwtVcHolderService sdJwtVcHolderService) : IPexService
 {
-    public async Task<Option<IEnumerable<PresentationCandidate>>> FindPresentationCandidatesAsync(PresentationDefinition presentationDefinition, Option<Formats> supportedFormatSigningAlgorithms)
+    public async Task<CandidateQueryResult> FindPresentationCandidatesAsync(PresentationDefinition presentationDefinition, Option<Formats> supportedFormatSigningAlgorithms)
     {
         var candidates = await FindCandidates(
             presentationDefinition.InputDescriptors,
             supportedFormatSigningAlgorithms);
 
-        var list = candidates.ToList();
+        var candidateList = candidates.ToList();
+        var candidatesOption = candidateList.Count == 0
+            ? Option<List<PresentationCandidate>>.None
+            : candidateList;
 
-        return list.Count == 0
-            ? Option<IEnumerable<PresentationCandidate>>.None
-            : list;
+        // Find missing credentials: input descriptors with no candidates
+        var missing = presentationDefinition.InputDescriptors
+            .Where(inputDescriptor => candidateList.All(c => c.Identifier != inputDescriptor.Id))
+            .Select(inputDescriptor => new CredentialRequirement(inputDescriptor))
+            .ToList();
+        var missingOption = missing.Count > 0 ? missing : Option<List<CredentialRequirement>>.None;
+
+        return new CandidateQueryResult(
+            candidatesOption,
+            missingOption
+        );
     }
 
     public async Task<Option<PresentationCandidate>> FindPresentationCandidateAsync(InputDescriptor inputDescriptor)
