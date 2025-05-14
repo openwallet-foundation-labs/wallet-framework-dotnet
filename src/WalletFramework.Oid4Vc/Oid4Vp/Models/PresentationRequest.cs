@@ -5,7 +5,7 @@ namespace WalletFramework.Oid4Vc.Oid4Vp.Models;
 
 public record PresentationRequest(
     AuthorizationRequest AuthorizationRequest,
-    Option<List<PresentationCandidate>> Candidates)
+    CandidateQueryResult CandidateQueryResult)
 {
     public Option<RpAuthResult> RpAuthResult => AuthorizationRequest.RpAuthResult;
 }
