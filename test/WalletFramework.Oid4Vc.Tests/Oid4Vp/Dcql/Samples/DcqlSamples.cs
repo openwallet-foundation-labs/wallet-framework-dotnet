@@ -8,41 +8,109 @@ public static class DcqlSamples
 {
     public const string ClaimSetSampleJson = "[\"a\", \"b\", \"c\"]";
 
-    public const string MultipleClaimSetsSampleJson = "[[\"a\", \"b\"], [\"c\", \"d\"]]";
+    public const string DcqlQueryWithOneCredentialSetJson = @"{
+      ""credentials"": [
+        {
+          ""id"": ""idcard"",
+          ""format"": ""dc+sd-jwt"",
+          ""meta"": {
+            ""vct_values"": [""ID-Card""]
+          },
+          ""claims"": [
+            {""path"": [""first_name""]},
+            {""path"": [""last_name""]},
+            {""path"": [""address"", ""street_address""]}
+          ]
+        },
+        {
+          ""id"": ""idcard2"",
+          ""format"": ""dc+sd-jwt"",
+          ""meta"": {
+            ""vct_values"": [""ID-Card-2""]
+          },
+          ""claims"": [
+            {""path"": [""first_name""]},
+            {""path"": [""last_name""]},
+            {""path"": [""address"", ""street_address""]}
+          ]
+        },
+        {
+          ""id"": ""idcard3"",
+          ""format"": ""dc+sd-jwt"",
+          ""meta"": {
+            ""vct_values"": [""ID-Card-3""]
+          },
+          ""claims"": [
+            {""path"": [""rewards_number""]}
+          ]
+        }
+      ],
+      ""credential_sets"": [
+        {
+          ""options"": [
+            [ ""idcard"", ""idcard2"" ]
+          ]
+        },
+        {
+          ""required"": false,
+          ""options"": [
+            [ ""idcard3"" ]
+          ]
+        }
+      ]
+    }";
 
-    public const string QueryStrWithClaimSets = @"{
-        ""credentials"": [
-                {
-                    ""id"": ""pid"",
-                    ""format"": ""dc+sd-jwt"",
-                    ""meta"": {
-                        ""vct_values"": [ ""ID-Card"" ]
-                    },
-                    ""claims"": [
-                        {""id"": {""value"": ""a""}, ""path"": [""last_name""]},
-                        {""id"": {""value"": ""b""}, ""path"": [""address"", ""postal_code""]},
-                        {""id"": {""value"": ""c""}, ""path"": [""address"", ""street_address""]},
-                        {""id"": {""value"": ""d""}, ""path"": [""first_name""]}
-                    ],
-                    ""claim_sets"": [
-                        {""claims"": [""a"", ""b"", ""d""]},
-                        {""claims"": [""a"", ""c""]}
-                    ]
-                }
-            ]
-        }";
-    
-    public static DcqlQuery GetDcqlQueryWithClaimsets => 
-        JsonConvert.DeserializeObject<DcqlQuery>(QueryStrWithClaimSets)!;
-
-    public static string GetDcqlQueryAsJsonStr() => GetJsonForTestCase("DcqlQuerySample");
-
-    public static DcqlQuery GetIdCardAndIdCard2NationalitiesSecondIndexQuery()
+    public const string DcqlQueryWithOneCredentialSetAndMultipleOptionsJson = @"{
+  ""credentials"": [
     {
-        var json = @"{
+      ""id"": ""idcard"",
+      ""format"": ""dc+sd-jwt"",
+      ""meta"": {
+        ""vct_values"": [""ID-Card""]
+      },
+      ""claims"": [
+        {""path"": [""first_name""]},
+        {""path"": [""last_name""]},
+        {""path"": [""address"", ""street_address""]}
+      ]
+    },
+    {
+      ""id"": ""idcard2"",
+      ""format"": ""dc+sd-jwt"",
+      ""meta"": {
+        ""vct_values"": [""ID-Card-2""]
+      },
+      ""claims"": [
+        {""path"": [""first_name""]},
+        {""path"": [""last_name""]},
+        {""path"": [""address"", ""street_address""]}
+      ]
+    },
+    {
+      ""id"": ""idcard3"",
+      ""format"": ""dc+sd-jwt"",
+      ""meta"": {
+        ""vct_values"": [""ID-Card-3""]
+      },
+      ""claims"": [
+        {""path"": [""rewards_number""]}
+      ]
+    }
+  ],
+  ""credential_sets"": [
+    {
+      ""options"": [
+        [ ""idcard"", ""idcard2"" ],
+        [ ""idcard2"", ""idcard3"" ]
+      ]
+    }
+  ]
+}";
+
+    public const string IdCardAndIdCard2NationalitiesSecondIndexQueryJson = @"{
             ""credentials"": [
                 {
-                    ""id"": ""idcard1"",
+                    ""id"": ""idcard"",
                     ""format"": ""dc+sd-jwt"",
                     ""meta"": {
                         ""vct_values"": [""ID-Card""]
@@ -64,12 +132,7 @@ public static class DcqlSamples
             ]
         }";
 
-        return JsonConvert.DeserializeObject<DcqlQuery>(json)!;
-    }
-
-    public static DcqlQuery GetIdCardNationalitiesSecondIndexQuery()
-    {
-        var json = @"{
+    public const string IdCardNationalitiesSecondIndexQueryJson = @"{
             ""credentials"": [
                 {
                     ""id"": ""idcard"",
@@ -84,6 +147,88 @@ public static class DcqlSamples
             ]
         }";
 
+    public const string MultipleClaimSetsSampleJson = "[[\"a\", \"b\"], [\"c\", \"d\"]]";
+
+    public const string QueryStrWithClaimSets = @"{
+        ""credentials"": [
+                {
+                    ""id"": ""idcard"",
+                    ""format"": ""dc+sd-jwt"",
+                    ""meta"": {
+                        ""vct_values"": [ ""ID-Card"" ]
+                    },
+                    ""claims"": [
+                        {""id"": {""value"": ""a""}, ""path"": [""last_name""]},
+                        {""id"": {""value"": ""b""}, ""path"": [""address"", ""postal_code""]},
+                        {""id"": {""value"": ""c""}, ""path"": [""address"", ""street_address""]},
+                        {""id"": {""value"": ""d""}, ""path"": [""first_name""]}
+                    ],
+                    ""claim_sets"": [
+                        {""claims"": [""a"", ""b"", ""d""]},
+                        {""claims"": [""a"", ""c""]}
+                    ]
+                }
+            ]
+        }";
+
+    public const string QueryStrWithNoClaims = @"{
+        ""credentials"": [
+            {
+                ""id"": ""pid"",
+                ""format"": ""dc+sd-jwt"",
+                ""meta"": {
+                    ""vct_values"": [ ""ID-Card"" ]
+                }
+            }
+        ]
+    }";
+
+    public static DcqlQuery GetDcqlQueryWithClaimsets =>
+        JsonConvert.DeserializeObject<DcqlQuery>(QueryStrWithClaimSets)!;
+
+    public static DcqlQuery GetDcqlQueryWithCredentialSets =>
+        JsonConvert.DeserializeObject<DcqlQuery>(DcqlQueryWithOneCredentialSetJson)!;
+
+    public static DcqlQuery GetDcqlQueryWithOneCredentialSet =>
+        JsonConvert.DeserializeObject<DcqlQuery>(DcqlQueryWithOneCredentialSetJson)!;
+
+    public static DcqlQuery GetDcqlQueryWithNoClaims =>
+        JsonConvert.DeserializeObject<DcqlQuery>(QueryStrWithNoClaims)!;
+
+    public static string GetDcqlQueryAsJsonStr() => GetJsonForTestCase("DcqlQuerySample");
+
+    public static DcqlQuery GetIdCardAndIdCard2NationalitiesSecondIndexQuery() =>
+        JsonConvert.DeserializeObject<DcqlQuery>(IdCardAndIdCard2NationalitiesSecondIndexQueryJson)!;
+
+    public static DcqlQuery GetIdCardNationalitiesSecondIndexQuery() =>
+        JsonConvert.DeserializeObject<DcqlQuery>(IdCardNationalitiesSecondIndexQueryJson)!;
+
+    public static DcqlQuery GetMdocAndSdJwtFamilyNameQuery()
+    {
+        var json = @"{
+            ""credentials"": [
+                {
+                    ""id"": ""mdoc"",
+                    ""format"": ""mso_mdoc"",
+                    ""meta"": {
+                        ""doctype_value"": ""org.iso.18013.5.1.mDL""
+                    },
+                    ""claims"": [
+                        { ""path"": [""org.iso.18013.5.1"", ""family_name""] }
+                    ]
+                },
+                {
+                    ""id"": ""idcard"",
+                    ""format"": ""dc+sd-jwt"",
+                    ""meta"": {
+                        ""vct_values"": [""ID-Card""]
+                    },
+                    ""claims"": [
+                        { ""path"": [""last_name""] }
+                    ]
+                }
+            ]
+        }";
         return JsonConvert.DeserializeObject<DcqlQuery>(json)!;
     }
 
@@ -148,49 +293,8 @@ public static class DcqlSamples
         return JsonConvert.DeserializeObject<DcqlQuery>(json)!;
     }
 
-    public static DcqlQuery GetMdocAndSdJwtFamilyNameQuery()
-    {
-        var json = @"{
-            ""credentials"": [
-                {
-                    ""id"": ""mdoc"",
-                    ""format"": ""mso_mdoc"",
-                    ""meta"": {
-                        ""doctype_value"": ""org.iso.18013.5.1.mDL""
-                    },
-                    ""claims"": [
-                        { ""path"": [""org.iso.18013.5.1"", ""family_name""] }
-                    ]
-                },
-                {
-                    ""id"": ""idcard"",
-                    ""format"": ""dc+sd-jwt"",
-                    ""meta"": {
-                        ""vct_values"": [""ID-Card""]
-                    },
-                    ""claims"": [
-                        { ""path"": [""last_name""] }
-                    ]
-                }
-            ]
-        }";
-        return JsonConvert.DeserializeObject<DcqlQuery>(json)!;
-    }
-
-    public const string QueryStrWithNoClaims = @"{
-        ""credentials"": [
-            {
-                ""id"": ""pid"",
-                ""format"": ""dc+sd-jwt"",
-                ""meta"": {
-                    ""vct_values"": [ ""ID-Card"" ]
-                }
-            }
-        ]
-    }";
-
-    public static DcqlQuery GetDcqlQueryWithNoClaims => 
-        JsonConvert.DeserializeObject<DcqlQuery>(QueryStrWithNoClaims)!;
+    public static DcqlQuery GetDcqlQueryWithOneCredentialSetAndMultipleOptions =>
+        JsonConvert.DeserializeObject<DcqlQuery>(DcqlQueryWithOneCredentialSetAndMultipleOptionsJson)!;
 
     private static string GetJsonForTestCase(string name = "")
     {
