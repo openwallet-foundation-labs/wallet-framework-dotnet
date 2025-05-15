@@ -1,5 +1,6 @@
 using PeterO.Cbor;
 using WalletFramework.Core.Functional;
+using Newtonsoft.Json.Linq;
 
 namespace WalletFramework.MdocLib.Elements;
 
@@ -26,5 +27,10 @@ public readonly struct ElementValue
         {
             return new ElementValue(cbor.ToString());
         }
+    }
+
+    public JValue ToJValue()
+    {
+        return new JValue(Value);
     }
 }

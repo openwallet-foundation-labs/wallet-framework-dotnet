@@ -1,6 +1,7 @@
 using PeterO.Cbor;
 using WalletFramework.Core.Functional;
 using WalletFramework.MdocLib.Cbor;
+using Newtonsoft.Json.Linq;
 using static WalletFramework.MdocLib.Elements.ElementIdentifier;
 using static WalletFramework.MdocLib.Elements.Element;
 
@@ -26,5 +27,15 @@ public readonly struct ElementMap
         {
             return new CborIsNotAMapOrAnArrayError(cbor.ToString(), e);
         }
+    }
+
+    public JObject ToJObject()
+    {
+        var obj = new JObject();
+        foreach (var kvp in Value)
+        {
+            obj[kvp.Key.Value] = kvp.Value.ToJToken();
+        }
+        return obj;
     }
 }

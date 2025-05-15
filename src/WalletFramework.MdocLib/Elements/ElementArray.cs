@@ -1,6 +1,7 @@
 using PeterO.Cbor;
 using WalletFramework.Core.Functional;
 using static WalletFramework.MdocLib.Elements.Element;
+using Newtonsoft.Json.Linq;
 
 namespace WalletFramework.MdocLib.Elements;
 
@@ -17,4 +18,9 @@ public readonly struct ElementArray
             .Select(ValidElement)
             .TraverseAll(value => value)
             .OnSuccess(values => new ElementArray(values.ToList()));
+
+    public JArray ToJArray()
+    {
+        return new JArray(Value.Select(e => e.ToJToken()));
+    }
 }

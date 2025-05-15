@@ -1,6 +1,6 @@
 using LanguageExt;
 using WalletFramework.Core.X509;
-using WalletFramework.Oid4Vc.Dcql.Models;
+using WalletFramework.Oid4Vc.Oid4Vp.Dcql.Models;
 using WalletFramework.Oid4Vc.Oid4Vp.Models;
 
 namespace WalletFramework.Oid4Vc.RelyingPartyAuthentication.RegistrationCertificate;

@@ -2,7 +2,7 @@ using System.Text;
 using LanguageExt;
 using OneOf;
 using WalletFramework.MdocLib;
-using WalletFramework.Oid4Vc.Dcql.Models;
+using WalletFramework.Oid4Vc.Oid4Vp.Dcql.Models;
 using WalletFramework.Oid4Vc.Oid4Vp.PresentationExchange.Models;
 using WalletFramework.SdJwtVc.Models;
 
