@@ -65,17 +65,13 @@ public record PresentationCandidate
 
 public static class PresentationCandidateFun
 {
-    public static PresentationCandidate AddTransactionData(
+    public static PresentationCandidate AddTransactionDatas(
         this PresentationCandidate candidate,
-        TransactionData transactionData)
+        IEnumerable<TransactionData> transactionDatas)
     {
-        var td = candidate.TransactionData.Match(
-            list => list.Append(transactionData),
-            () => [transactionData]);
-
         return candidate with
         {
-            TransactionData = td.ToList()
+            TransactionData = transactionDatas.ToList()
         };
     }
     
