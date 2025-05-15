@@ -25,7 +25,7 @@ public class DcqlService(
         var mdocs = mdocsOption.ToNullable() ?? [];
         
         var credentials = sdJwtRecords.Cast<ICredential>().Concat(mdocs);
-        return CandidateQueryResult.FromDcqlQuery(query, credentials);
+        return query.ProcessWith(credentials);
     }
 
     public async Task<Option<PresentationCandidate>> QuerySingle(CredentialQuery query)

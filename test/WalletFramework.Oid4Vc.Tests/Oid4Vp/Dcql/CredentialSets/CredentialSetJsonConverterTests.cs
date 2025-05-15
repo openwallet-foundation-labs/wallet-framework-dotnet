@@ -5,11 +5,11 @@ using static WalletFramework.Core.Functional.ValidationFun;
 
 namespace WalletFramework.Oid4Vc.Tests.Oid4Vp.Dcql.CredentialSets;
 
-public class CredentialSetOptionJsonConverterTests
+public class CredentialSetJsonConverterTests
 {
     private static readonly JsonSerializerSettings Settings = new()
     {
-        Converters = { new CredentialSetOptionListJsonConverter() }
+        Converters = { new CredentialSetJsonConverter() }
     };
 
     [Fact]

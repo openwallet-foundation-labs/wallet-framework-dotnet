@@ -20,19 +20,19 @@ public record CredentialSetQuery
     [JsonProperty(PurposeJsonKey)]
     [JsonConverter(typeof(PurposeConverter))]
     public Purpose[]? Purpose { get; init; }
-    
+
     /// <summary>
     /// Indicates whether this set of Credentials is required to satisfy the particular use case at the Verifier.
     /// </summary>
     [JsonProperty("required")]
-    public bool Required { get; init; }
+    public bool Required { get; init; } = true;
 
     /// <summary>
     /// Represents a collection, where each value is a list of Credential query identifiers representing one set Credentials that satisfies the use case.
     /// </summary>
     [JsonProperty(OptionsJsonKey)]
-    [JsonConverter(typeof(CredentialSetOptionListJsonConverter))]
-    public IReadOnlyList<CredentialSetOption> Options { get; private init; } = null!;
+    [JsonConverter(typeof(CredentialSetJsonConverter))]
+    public List<CredentialSetOption> Options { get; private init; } = null!;
 
     public static Validation<CredentialSetQuery> FromJObject(JObject json)
     {
@@ -95,7 +95,7 @@ public record CredentialSetQuery
         {
             Purpose = purpose.ToNullable()?.ToArray(),
             Required = required.ToNullable() ?? false,
-            Options = options.ToArray()
+            Options = options.ToList()
         };
     }
 }

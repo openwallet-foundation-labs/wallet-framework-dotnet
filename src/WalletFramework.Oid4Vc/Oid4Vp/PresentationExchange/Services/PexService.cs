@@ -30,8 +30,8 @@ public class PexService(
 
         var candidateList = candidates.ToList();
         var candidatesOption = candidateList.Count == 0
-            ? Option<List<PresentationCandidate>>.None
-            : candidateList;
+            ? Option<List<PresentationCandidateSet>>.None
+            : new List<PresentationCandidateSet> { candidateList.ToSet() };
 
         // Find missing credentials: input descriptors with no candidates
         var missing = presentationDefinition.InputDescriptors

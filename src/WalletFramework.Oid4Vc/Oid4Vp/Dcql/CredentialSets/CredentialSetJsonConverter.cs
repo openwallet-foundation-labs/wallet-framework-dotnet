@@ -4,7 +4,7 @@ using WalletFramework.Core.Functional;
 
 namespace WalletFramework.Oid4Vc.Oid4Vp.Dcql.CredentialSets;
 
-public class CredentialSetOptionListJsonConverter : JsonConverter<IReadOnlyList<CredentialSetOption>>
+public class CredentialSetJsonConverter : JsonConverter<IReadOnlyList<CredentialSetOption>>
 {
     public override void WriteJson(JsonWriter writer, IReadOnlyList<CredentialSetOption>? value, JsonSerializer serializer)
     {
