@@ -13,7 +13,7 @@ using WalletFramework.Oid4Vc.Oid4Vci.Implementations;
 using WalletFramework.Oid4Vc.Oid4Vp.ClaimPaths;
 using WalletFramework.Oid4Vc.RelyingPartyAuthentication.RegistrationCertificate;
 using WalletFramework.SdJwtVc.Models.Records;
-using static WalletFramework.Oid4Vc.Oid4Vp.Dcql.Models.CredentialClaimQueryConstants;
+using static WalletFramework.Oid4Vc.Oid4Vp.Dcql.Models.ClaimQueryConstants;
 
 namespace WalletFramework.Oid4Vc.Oid4Vp.Dcql.Models;
 
@@ -27,7 +27,7 @@ public class ClaimQuery
     /// This MUST be a string identifying the particular claim.
     /// </summary>
     [JsonProperty(IdJsonKey)]
-    public string? Id { get; set; }
+    public ClaimIdentifier? Id { get; set; }
     
     /// <summary>
     /// A claims path pointer that specifies the path to a claim.
@@ -64,15 +64,7 @@ public class ClaimQuery
     {
         var id = json.GetByKey(IdJsonKey)
             .OnSuccess(token => token.ToJValue())
-            .OnSuccess(value =>
-            {
-                if (string.IsNullOrWhiteSpace(value.Value?.ToString()))
-                {
-                    return new StringIsNullOrWhitespaceError<CredentialQuery>();
-                }
-
-                return ValidationFun.Valid(value.Value.ToString());
-            })
+            .OnSuccess(value => ClaimIdentifier.Validate(value.Value?.ToString()))
             .ToOption();
         
         var path = json.GetByKey(PathJsonKey)
@@ -148,7 +140,7 @@ public class ClaimQuery
     }
     
     private static ClaimQuery Create(
-        Option<string> id,
+        Option<ClaimIdentifier> id,
         Option<ClaimPath> path,
         Option<IEnumerable<string>> values,
         Option<IEnumerable<Purpose>> purpose,
@@ -164,7 +156,7 @@ public class ClaimQuery
     };
 }
 
-public static class CredentialClaimQueryConstants
+public static class ClaimQueryConstants
 {
     public const string IdJsonKey = "id";
 
@@ -244,5 +236,58 @@ public static class ClaimQueryFun
             default:
                 return false;
         }
+    }
+
+    /// <summary>
+    /// Returns the string representations of claim queries according to the credential format.
+    /// </summary>
+    public static IReadOnlyList<string> AsStrings(this IEnumerable<ClaimQuery> claims, string format)
+    {
+        switch (format)
+        {
+            case Constants.SdJwtVcFormat:
+            case Constants.SdJwtDcFormat:
+                var resultSdJwt =
+                    from claim in claims
+                    let path = claim.Path.GetPathComponents()
+                    select string.Join('.', from c in path select c.AsKey() ?? c.AsIndex()?.ToString() ?? "*");
+                return [.. resultSdJwt];
+            case Constants.MdocFormat:
+                var resultMdoc =
+                    from claim in claims
+                    let components = claim.Path.GetPathComponents().ToArray()
+                    let nameSpace = components.Length > 0 ? components[0].AsKey() : claim.Namespace
+                    let claimName = components.Length > 1 ? components[1].AsKey() : claim.ClaimName
+                    select $"['{nameSpace}']['{claimName}']";
+                return [.. resultMdoc];
+            default:
+                return [];
+        }
+    }
+
+    /// <summary>
+    ///     Returns, for each ClaimSet, the set of ClaimQuery objects whose Id matches the ClaimIdentifiers in the set.
+    ///     Only includes sets where all ClaimIdentifiers are matched by a ClaimQuery with a non-null Id.
+    ///     If no ClaimQuery objects are matched, returns the original claimQueries.
+    /// </summary>
+    public static IEnumerable<IReadOnlyList<ClaimQuery>> ProcessSets(
+        this IEnumerable<ClaimQuery> claimQueries,
+        IEnumerable<ClaimSet> claimSets)
+    {
+        var queries = claimQueries as ClaimQuery[] ?? [.. claimQueries];
+        var result = 
+            from set in claimSets
+            let matched = 
+                (from id in set.Claims 
+                    join q in queries on id.AsString() equals q.Id?.AsString()
+                    where q.Id != null
+                    select q).ToArray()
+            where matched.Length == set.Claims.Count
+            select (IReadOnlyList<ClaimQuery>)matched;
+
+        var sets = result as IReadOnlyList<ClaimQuery>[] ?? [.. result];
+        return queries.Length == 0 
+            ? [] 
+            : sets.Any() ? sets : [[.. queries]];
     }
 }
