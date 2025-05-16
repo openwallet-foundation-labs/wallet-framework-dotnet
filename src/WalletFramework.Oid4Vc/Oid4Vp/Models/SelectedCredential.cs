@@ -1,5 +1,6 @@
 using LanguageExt;
 using WalletFramework.Core.Credentials.Abstractions;
+using WalletFramework.Oid4Vc.Oid4Vp.Dcql.CredentialQueries;
 using WalletFramework.Oid4Vc.Oid4Vp.Dcql.Models;
 using WalletFramework.Oid4Vc.Oid4Vp.TransactionDatas;
 using WalletFramework.Oid4Vc.Qes.Authorization;

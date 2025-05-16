@@ -11,6 +11,8 @@ using WalletFramework.Core.Cryptography.Models;
 using WalletFramework.Core.Functional;
 using WalletFramework.Oid4Vc;
 using WalletFramework.Oid4Vc.Oid4Vci.Abstractions;
+using WalletFramework.Oid4Vc.Oid4Vp.Dcql.CredentialQueries;
+using WalletFramework.Oid4Vc.Oid4Vp.Dcql.CredentialSets;
 using WalletFramework.Oid4Vc.Oid4Vp.Dcql.Models;
 using WalletFramework.Oid4Vc.Oid4Vp.Dcql.Services;
 using WalletFramework.Oid4Vc.Oid4Vp.Models;
@@ -261,7 +263,7 @@ public class DcqlServiceTests
     {
         var credentialQuery = new CredentialQuery
         {
-            Id = id,
+            Id = CredentialQueryId.Create(id).UnwrapOrThrow(),
             Format = format,
             Claims = credentialQueryClaims
         };

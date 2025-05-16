@@ -69,9 +69,13 @@ public static class PresentationCandidateFun
         this PresentationCandidate candidate,
         IEnumerable<TransactionData> transactionDatas)
     {
+        var td = candidate.TransactionData.Match(
+            list => list.Append(transactionDatas),
+            transactionDatas.ToList);
+
         return candidate with
         {
-            TransactionData = transactionDatas.ToList()
+            TransactionData = td.ToList()
         };
     }
     

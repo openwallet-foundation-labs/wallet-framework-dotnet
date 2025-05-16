@@ -4,6 +4,7 @@ using Newtonsoft.Json;
 using WalletFramework.Core.Functional;
 using WalletFramework.Core.Credentials.Abstractions;
 using WalletFramework.Oid4Vc.Oid4Vci.Abstractions;
+using WalletFramework.Oid4Vc.Oid4Vp.Dcql.CredentialQueries;
 using WalletFramework.Oid4Vc.Oid4Vp.Dcql.Models;
 using WalletFramework.Oid4Vc.Oid4Vp.Models;
 using WalletFramework.SdJwtVc.Services.SdJwtVcHolderService;
@@ -16,7 +17,7 @@ public class DcqlService(
     IMdocStorage mdocStorage,
     ISdJwtVcHolderService sdJwtVcHolderService) : IDcqlService
 {
-    public async Task<Option<IEnumerable<PresentationCandidate>>> Query(DcqlQuery query)
+    public async Task<CandidateQueryResult> Query(DcqlQuery query)
     {
         var context = await agentProvider.GetContextAsync();
         var sdJwtRecords = await sdJwtVcHolderService.ListAsync(context);
@@ -24,7 +25,7 @@ public class DcqlService(
         var mdocs = mdocsOption.ToNullable() ?? [];
         
         var credentials = sdJwtRecords.Cast<ICredential>().Concat(mdocs);
-        return query.FindMatchingCandidates(credentials);
+        return query.ProcessWith(credentials);
     }
 
     public async Task<Option<PresentationCandidate>> QuerySingle(CredentialQuery query)

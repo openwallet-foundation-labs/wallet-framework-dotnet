@@ -1,5 +1,6 @@
 using LanguageExt;
 using WalletFramework.Core.X509;
+using WalletFramework.Oid4Vc.Oid4Vp.Dcql.CredentialQueries;
 using WalletFramework.Oid4Vc.Oid4Vp.Dcql.Models;
 using WalletFramework.Oid4Vc.Oid4Vp.Models;
 

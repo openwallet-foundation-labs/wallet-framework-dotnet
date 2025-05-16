@@ -1,11 +1,13 @@
 using Newtonsoft.Json;
+using WalletFramework.Oid4Vc.Oid4Vp.Dcql.CredentialQueries;
+using WalletFramework.Oid4Vc.Oid4Vp.Dcql.CredentialSets;
 
 namespace WalletFramework.Oid4Vc.Oid4Vp.Dcql.Models;
 
 /// <summary>
 ///     Represents constraints on the combinations of credentials and claims that articulate what Verifier requires
 /// </summary>
-public class DcqlQuery
+public record DcqlQuery
 {
     /// <summary>
     ///     Represents a collection of Credential queries

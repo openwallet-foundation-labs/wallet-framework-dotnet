@@ -79,8 +79,7 @@ public class PurposeConverter : JsonConverter<Purpose[]>
             {
                 JArray => token.ToJArray()
                     .OnSuccess(array => array.TraverseAll(jToken => jToken.ToJObject()))
-                    .OnSuccess(array =>
-                        array.Select(Purpose.FromJObject))
+                    .OnSuccess(array =>array.Select(Purpose.FromJObject))
                     .OnSuccess(array => array.TraverseAll(x => x)),
                 JValue => token.ToJValue()
                     .OnSuccess(Purpose.FromJValue)
