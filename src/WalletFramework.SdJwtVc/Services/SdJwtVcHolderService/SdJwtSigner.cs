@@ -63,8 +63,13 @@ public class SdJwtSigner(IKeyStore keyStore) : ISdJwtSigner
     
     public async Task<string> CreateSignedJwt(object header, object payload, KeyId keyId)
     {
-        var encodedHeader = Base64UrlEncoder.Encode(JsonConvert.SerializeObject(header));
-        var encodedPayload = Base64UrlEncoder.Encode(JsonConvert.SerializeObject(payload));
+        var serializerSettings = new JsonSerializerSettings
+        {
+            NullValueHandling = NullValueHandling.Ignore
+        };
+        
+        var encodedHeader = Base64UrlEncoder.Encode(JsonConvert.SerializeObject(header, serializerSettings));
+        var encodedPayload = Base64UrlEncoder.Encode(JsonConvert.SerializeObject(payload, serializerSettings));
 
         var dataToSign = encodedHeader + "." + encodedPayload;
         var signature = await keyStore.Sign(keyId, Encoding.UTF8.GetBytes(dataToSign));
