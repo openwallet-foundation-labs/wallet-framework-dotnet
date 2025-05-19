@@ -110,7 +110,9 @@ internal static class TransactionDataFun
                 // Flatten to (setIndex, candidateIndex, candidate)
                 var indexedCandidates = candidateSets
                     .SelectMany((set, setIdx) =>
-                        set.Candidates.Select((candidate, candIdx) => (setIdx, candIdx, candidate)))
+                    {
+                        return set.Candidates.Select((candidate, candIdx) => (setIdx, candIdx, candidate));
+                    })
                     .ToList();
 
                 var updatedCandidates = indexedCandidates.ToDictionary(

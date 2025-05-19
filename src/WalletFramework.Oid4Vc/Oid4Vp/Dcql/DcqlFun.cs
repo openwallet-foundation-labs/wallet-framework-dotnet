@@ -1,5 +1,4 @@
 using LanguageExt;
-using WalletFramework.Core.Functional;
 using WalletFramework.Oid4Vc.Oid4Vp.Dcql.Models;
 using WalletFramework.Oid4Vc.Oid4Vp.Models;
 using WalletFramework.Core.Credentials.Abstractions;
@@ -52,15 +51,26 @@ internal static class DcqlFun
         IReadOnlyList<PresentationCandidate> candidates,
         List<CredentialRequirement> missing)
     {
-        var matchingSets =
-            from setQuery in credentialSetQueries
-            from option in setQuery.Options
-            let matchingIds = option.Ids.Select(id => id.AsString())
-            let setCandidates = candidates.Where(c => matchingIds.Contains(c.Identifier)).ToList()
-            where setCandidates.Count == option.Ids.Count
-            select new PresentationCandidateSet(setCandidates, setQuery.Required);
+        var sets = new List<PresentationCandidateSet>();
+        foreach (var setQuery in credentialSetQueries)
+        {
+            var firstMatchingOption = setQuery.Options
+                .Select(option =>
+                {
+                    return (
+                        Option: option,
+                        SetCandidates: candidates
+                            .Where(c => option.Ids.Select(id => id.AsString()).Contains(c.Identifier))
+                            .ToList()
+                    );
+                })
+                .FirstOrDefault(x => x.SetCandidates.Count == x.Option.Ids.Count);
 
-        var sets = matchingSets.ToList();
+            if (firstMatchingOption != default)
+            {
+                sets.Add(new PresentationCandidateSet(firstMatchingOption.SetCandidates, setQuery.Required));
+            }
+        }
         return new CandidateQueryResult(
             sets.Count > 0 ? sets : Option<List<PresentationCandidateSet>>.None,
             missing.Count > 0 ? missing : Option<List<CredentialRequirement>>.None

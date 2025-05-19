@@ -100,8 +100,8 @@ public static class DcqlSamples
   ""credential_sets"": [
     {
       ""options"": [
-        [ ""idcard"", ""idcard2"" ],
-        [ ""idcard2"", ""idcard3"" ]
+        [ ""idcard"", ""idcard2""],
+        [ ""idcard2""]
       ]
     }
   ]
