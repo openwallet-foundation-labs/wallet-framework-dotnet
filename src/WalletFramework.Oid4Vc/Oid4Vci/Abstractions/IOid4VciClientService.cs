@@ -30,8 +30,9 @@ public interface IOid4VciClientService
     /// <param name="uri">The issuers uri</param>
     /// <param name="clientOptions">The client options</param>
     /// <param name="language">Optional language tag</param>
+    /// <param name="specVersion">Optional language tag</param>
     /// <returns></returns>
-    Task<Uri> InitiateAuthFlow(Uri uri, ClientOptions clientOptions, Option<Locale> language);
+    Task<Uri> InitiateAuthFlow(Uri uri, ClientOptions clientOptions, Option<Locale> language, int specVersion);
         
     /// <summary>
     ///     Requests a verifiable credential using the authorization code flow.
@@ -40,7 +41,7 @@ public interface IOid4VciClientService
     /// <returns>
     /// A list of credentials.
     /// </returns>
-    Task<Validation<CredentialSetRecord>> RequestCredentialSet(IssuanceSession issuanceSession);
+    Task<Validation<IEnumerable<CredentialSetRecord>>> RequestCredentialSet(IssuanceSession issuanceSession);
     
     /// <summary>
     ///     Requests a verifiable credential using the authorization code flow and C''.
@@ -66,7 +67,7 @@ public interface IOid4VciClientService
     /// ///
     /// <param name="credentialOfferMetadata">Credential offer and Issuer Metadata</param>
     /// <param name="transactionCode">The Transaction Code.</param>
-    Task<Validation<CredentialSetRecord>> AcceptOffer(
+    Task<Validation<IEnumerable<CredentialSetRecord>>> AcceptOffer(
         CredentialOfferMetadata credentialOfferMetadata,
         string? transactionCode);
 }

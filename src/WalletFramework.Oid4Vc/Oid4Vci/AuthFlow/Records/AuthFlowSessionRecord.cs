@@ -37,6 +37,11 @@ public sealed class AuthFlowSessionRecord : RecordBase
     ///     The parameters for the 'authorization_code' grant type.
     /// </summary>
     public AuthorizationCodeParameters AuthorizationCodeParameters { get; }
+    
+    /// <summary>
+    ///     Used to track the VCI Specification verison
+    /// </summary>
+    public int SpecVersion { get; }
 
     /// <summary>
     ///    Initializes a new instance of the <see cref="AuthFlowSessionRecord" /> class.
@@ -58,15 +63,18 @@ public sealed class AuthFlowSessionRecord : RecordBase
     /// <param name="authorizationData"></param>
     /// <param name="authorizationCodeParameters"></param>
     /// <param name="authFlowSessionState"></param>
+    /// <param name="specVersion"></param>
     public AuthFlowSessionRecord(
         AuthorizationData authorizationData,
         AuthorizationCodeParameters authorizationCodeParameters,
-        AuthFlowSessionState authFlowSessionState)
+        AuthFlowSessionState authFlowSessionState,
+        int specVersion)
     {
         AuthFlowSessionState = authFlowSessionState;
         RecordVersion = 1;
         AuthorizationCodeParameters = authorizationCodeParameters;
         AuthorizationData = authorizationData;
+        SpecVersion = specVersion;
     }
 }
 
@@ -94,6 +102,7 @@ public static class AuthFlowSessionRecordFun
 {
     private const string AuthorizationDataJsonKey = "authorization_data";
     private const string AuthorizationCodeParametersJsonKey = "authorization_code_parameters";
+    private const string SpecVersionJsonKey = "spec_version";
 
     public static JObject EncodeToJson(this AuthFlowSessionRecord record)
     {
@@ -104,7 +113,8 @@ public static class AuthFlowSessionRecordFun
         {
             { nameof(RecordBase.Id), record.Id },
             { AuthorizationDataJsonKey, authorizationData },
-            { AuthorizationCodeParametersJsonKey, authorizationCodeParameters }
+            { AuthorizationCodeParametersJsonKey, authorizationCodeParameters },
+            { SpecVersionJsonKey, record.SpecVersion }
         };
     }
 
@@ -119,8 +129,10 @@ public static class AuthFlowSessionRecordFun
 
         var authorizationData = AuthorizationDataFun
             .DecodeFromJson(json[AuthorizationDataJsonKey]!.ToObject<JObject>()!);
-
-        var result = new AuthFlowSessionRecord(authorizationData, authCodeParameters!, id);
+        
+        var specVersion = json[SpecVersionJsonKey]!.ToObject<int>();
+        
+        var result = new AuthFlowSessionRecord(authorizationData, authCodeParameters!, id, specVersion);
 
         return result;
     }

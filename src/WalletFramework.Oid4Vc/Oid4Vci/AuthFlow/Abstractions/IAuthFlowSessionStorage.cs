@@ -44,10 +44,12 @@ public interface IAuthFlowSessionStorage
     ///     flow.
     /// </param>
     /// <param name="authFlowSessionState">Session State Identifier of a Authorization Code Flow session</param>
+    /// <param name="specVersion">Session State Identifier of a Authorization Code Flow session</param>
     /// <returns></returns>
     Task<string> StoreAsync(
         IAgentContext agentContext,
         AuthorizationData authorizationData,
         AuthorizationCodeParameters authorizationCodeParameters,
-        AuthFlowSessionState authFlowSessionState);
+        AuthFlowSessionState authFlowSessionState,
+        int specVersion = 15);
 }

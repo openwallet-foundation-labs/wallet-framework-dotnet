@@ -51,7 +51,7 @@ public class AuthFlowSessionRecordTests
         var authorizationCodeParameters = new AuthorizationCodeParameters("hello", "world");
         
         var sessionId = AuthFlowSessionState.CreateAuthFlowSessionState();
-        var record = new AuthFlowSessionRecord(authorizationData, authorizationCodeParameters, sessionId);
+        var record = new AuthFlowSessionRecord(authorizationData, authorizationCodeParameters, sessionId, 15);
         
         // Act
         var recordSut = JObject.FromObject(record);
