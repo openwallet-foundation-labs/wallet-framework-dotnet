@@ -1,6 +1,7 @@
 using LanguageExt;
+using WalletFramework.Oid4Vc.Oid4Vp.Dcql.Models;
 using WalletFramework.Oid4Vc.Oid4Vp.TransactionDatas;
-using WalletFramework.Oid4Vc.Qes;
+using WalletFramework.Oid4Vc.Qes.Authorization;
 
 namespace WalletFramework.Oid4Vc.Oid4Vp.Models;
 
@@ -23,6 +24,8 @@ public record PresentationCandidate
     ///     Gets the Identifier of the candidate.
     /// </summary>
     public string Identifier { get; }
+
+    public Option<List<ClaimQuery>> ClaimsToDisclose { get; init; }
     
     public Option<List<TransactionData>> TransactionData { get; init; } = 
         Option<List<TransactionData>>.None;
@@ -35,7 +38,20 @@ public record PresentationCandidate
     /// </summary>
     /// <param name="identifier">The ID of the candidate.</param>
     /// <param name="credentialSets">The credentials matching the request.</param>
+    /// <param name="claimsToDisclose">The claims to disclose.</param>
     /// <param name="limitDisclosuresRequired">Specifies whether disclosures should be limited.</param>
+    public PresentationCandidate(
+        string identifier,
+        IEnumerable<CredentialSetCandidate> credentialSets,
+        Option<List<ClaimQuery>> claimsToDisclose,
+        bool limitDisclosuresRequired = false)
+    {
+        Identifier = identifier;
+        CredentialSetCandidates = credentialSets.ToArray();
+        LimitDisclosuresRequired = limitDisclosuresRequired;
+        ClaimsToDisclose = claimsToDisclose;
+    }
+    
     public PresentationCandidate(
         string identifier,
         IEnumerable<CredentialSetCandidate> credentialSets,
@@ -49,17 +65,13 @@ public record PresentationCandidate
 
 public static class PresentationCandidateFun
 {
-    public static PresentationCandidate AddTransactionData(
+    public static PresentationCandidate AddTransactionDatas(
         this PresentationCandidate candidate,
-        TransactionData transactionData)
+        IEnumerable<TransactionData> transactionDatas)
     {
-        var td = candidate.TransactionData.Match(
-            list => list.Append(transactionData),
-            () => [transactionData]);
-
         return candidate with
         {
-            TransactionData = td.ToList()
+            TransactionData = transactionDatas.ToList()
         };
     }
     

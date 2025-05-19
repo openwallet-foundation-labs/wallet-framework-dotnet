@@ -18,6 +18,8 @@ public record TransactionDataArray(Base64UrlString[] EncodedTransactionDataStrin
 
 public static class TransactionDataArrayFun
 {
-    public static Validation<IEnumerable<TransactionData>> Decode(this TransactionDataArray array) => 
-        array.EncodedTransactionDataStrings.TraverseAll(TransactionData.FromBase64Url);
+    public static Validation<IEnumerable<TransactionData>> Decode(this TransactionDataArray array)
+    {
+        return array.EncodedTransactionDataStrings.TraverseAll(TransactionData.FromBase64Url);
+    } 
 }

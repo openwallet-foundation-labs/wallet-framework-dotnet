@@ -1,4 +1,4 @@
-using WalletFramework.Oid4Vc.Dcql.Services;
+using WalletFramework.Oid4Vc.Oid4Vp.Dcql.Services;
 using WalletFramework.Oid4Vc.Oid4Vp.Models;
 using WalletFramework.Oid4Vc.Oid4Vp.PresentationExchange.Services;
 
@@ -10,12 +10,20 @@ internal class Oid4VpHaipClient(
     IDcqlService dcqlService) : IOid4VpHaipClient
 {
     /// <inheritdoc />
-    public Task<AuthorizationResponse> CreateAuthorizationResponseAsync(
+    public async Task<AuthorizationResponse> CreateAuthorizationResponseAsync(
         AuthorizationRequest authorizationRequest,
         PresentationMap[] presentationMaps)
     {
-        return authorizationRequest.Requirements.Match(
-            dcqlQuery => Task.FromResult(dcqlService.CreateAuthorizationResponse(authorizationRequest, presentationMaps)),
-            presentationDefinition => pexService.CreateAuthorizationResponseAsync(authorizationRequest, presentationMaps));
+        return await authorizationRequest.Requirements.Match(
+            _ =>
+            {
+                var result = dcqlService.CreateAuthorizationResponse(authorizationRequest, presentationMaps);
+                return Task.FromResult(result);
+            },
+            async _ =>
+            {
+                return await pexService.CreateAuthorizationResponseAsync(authorizationRequest, presentationMaps);
+            }
+        );
     }
 }

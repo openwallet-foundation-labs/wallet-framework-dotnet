@@ -5,12 +5,12 @@ using Newtonsoft.Json.Linq;
 using OneOf;
 using WalletFramework.Core.Functional;
 using WalletFramework.Core.Json;
-using WalletFramework.Oid4Vc.Dcql.Models;
+using WalletFramework.Oid4Vc.Oid4Vp.Dcql.Models;
 using WalletFramework.Oid4Vc.Oid4Vp.Errors;
 using WalletFramework.Oid4Vc.Oid4Vp.PresentationExchange.Models;
 using WalletFramework.Oid4Vc.Oid4Vp.TransactionDatas;
 using static WalletFramework.Oid4Vc.Oid4Vp.Models.ClientIdScheme;
-using WalletFramework.Oid4Vc.Qes;
+using WalletFramework.Oid4Vc.Qes.Authorization;
 using WalletFramework.Oid4Vc.RelyingPartyAuthentication;
 
 namespace WalletFramework.Oid4Vc.Oid4Vp.Models;
@@ -112,7 +112,7 @@ public record AuthorizationRequest
     public X509Chain? X509TrustChain { get; init; }
 
     [JsonIgnore] 
-    public RpAuthResult RpAuthResult { get; init; } = RpAuthResult.GetWithLevelAbort();
+    public RpAuthResult RpAuthResult { get; init; } = RpAuthResult.GetWithLevelUnknown();
 
     [JsonIgnore]
     public OneOf<DcqlQuery, PresentationDefinition> Requirements =>

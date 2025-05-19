@@ -17,7 +17,7 @@ public record TransactionDataProperties(
             from jToken in jObject.GetByKey("type")
             from type in TransactionDataType.FromJToken(jToken)
             select type;
-
+        
         var idsValidation =
             from jToken in jObject.GetByKey("credential_ids")
             from jArray in jToken.ToJArray()

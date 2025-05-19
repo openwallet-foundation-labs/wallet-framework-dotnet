@@ -14,5 +14,5 @@ public record PaymentTransactionData(TransactionDataProperties TransactionDataPr
         from paymentDataJObject in paymentDataToken.ToJObject()
         from paymentData in PaymentData.FromJObject(paymentDataJObject)
         let paymentTransactionData = new PaymentTransactionData(transactionDataProperties, paymentData)
-        select new TransactionData(paymentTransactionData);
+        select TransactionData.WithPaymentTransactionData(paymentTransactionData);
 }

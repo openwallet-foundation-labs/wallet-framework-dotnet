@@ -1,6 +1,6 @@
 using LanguageExt;
 using WalletFramework.Core.X509;
-using WalletFramework.Oid4Vc.Dcql.Models;
+using WalletFramework.Oid4Vc.Oid4Vp.Dcql.Models;
 using WalletFramework.Oid4Vc.Oid4Vp.Models;
 
 namespace WalletFramework.Oid4Vc.RelyingPartyAuthentication.RegistrationCertificate;
@@ -22,7 +22,6 @@ public record OverAskingValidationResult
                     .Where(attachment => attachment.Format == Constants.RegistrationCertificateFormat) ?? [];
 
                 List<string> certifiedClaims = [];
-                List<IEnumerable<string>> certifiedClaimSets = [];
 
                 var areTrustChainsValid = true;
                 foreach (var registrationCertificateAttachment in registrationCertificateAttachments)
@@ -31,22 +30,10 @@ public record OverAskingValidationResult
                         registrationCertificate =>
                         {
                             certifiedClaims.AddRange(
-                                registrationCertificate.Credentials.SelectMany(query =>
-                                {
-                                    return query.GetRequestedAttributes();
-                                })
+                                from credentialQuery in registrationCertificate.Credentials
+                                from attr in credentialQuery.GetClaimsToDiscloseAsStrs()
+                                select attr
                             );
-
-                            var registrationCertifiedClaimSets = registrationCertificate.CredentialSets.Match(
-                                credentialsSets =>
-                                {
-                                    return credentialsSets.SelectMany(
-                                        set => set.Options ?? Enumerable.Empty<string[]>()
-                                    );
-                                },
-                                () => []);
-
-                            certifiedClaimSets.AddRange(registrationCertifiedClaimSets);
 
                             var isValidChain = registrationCertificate.Certificates.IsTrustChainValid();
                             if (!isValidChain)
@@ -66,30 +53,17 @@ public record OverAskingValidationResult
                 if (areTrustChainsValid == false)
                     return new OverAskingValidationResult(false);
 
-                var requestedClaims = authorizationRequest
-                    .DcqlQuery!
-                    .CredentialQueries
-                    .SelectMany(query => query.GetRequestedAttributes());
+                var requestedClaims =
+                    from credentialQuery in authorizationRequest.DcqlQuery!.CredentialQueries
+                    from attr in credentialQuery.GetClaimsToDiscloseAsStrs()
+                    select attr;
                 
                 var isOverAskingClaims = !requestedClaims.All(requestedAttribute =>
                 {
                     return certifiedClaims.Contains(requestedAttribute);
                 });
 
-                var requestedClaimSets = authorizationRequest
-                    .DcqlQuery!
-                    .CredentialSetQueries?
-                    .SelectMany(query => query.Options ?? []) ?? [];
-                
-                var isOverAskingClaimSets = !requestedClaimSets.All(requestedClaimSet =>
-                {
-                    return certifiedClaimSets.Any(certifiedClaimSet =>
-                    {
-                        return requestedClaimSet.All(certifiedClaimSet.Contains);
-                    });
-                });
-
-                return new OverAskingValidationResult(!isOverAskingClaims && !isOverAskingClaimSets);
+                return new OverAskingValidationResult(!isOverAskingClaims);
             },
             _ => new OverAskingValidationResult(true)
         );

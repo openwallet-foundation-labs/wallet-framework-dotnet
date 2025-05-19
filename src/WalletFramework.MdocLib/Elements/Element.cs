@@ -1,6 +1,7 @@
 using PeterO.Cbor;
 using WalletFramework.Core.Functional;
 using OneOf;
+using Newtonsoft.Json.Linq;
 using static WalletFramework.MdocLib.Elements.ElementArray;
 using static WalletFramework.MdocLib.Elements.ElementMap;
 
@@ -29,5 +30,14 @@ public readonly struct Element
             singleValue => singleValue.Value,
             array => array.Value.First().ToString(),
             map => map.Value.First().ToString());
+    }
+
+    public JToken ToJToken()
+    {
+        return Value.Match<JToken>(
+            singleValue => singleValue.ToJValue(),
+            array => array.ToJArray(),
+            map => map.ToJObject()
+        );
     }
 }

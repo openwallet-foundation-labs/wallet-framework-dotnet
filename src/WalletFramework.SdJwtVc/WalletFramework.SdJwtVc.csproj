@@ -18,8 +18,4 @@
   <ItemGroup>
     <Compile Remove="Services\IStatusListService.cs" />
   </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="Models\StatusList\" />
-  </ItemGroup>
 </Project>

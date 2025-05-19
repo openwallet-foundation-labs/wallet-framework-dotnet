@@ -2,6 +2,7 @@ using System.Globalization;
 using System.Text.RegularExpressions;
 using LanguageExt;
 using Newtonsoft.Json.Linq;
+using WalletFramework.Core.ClaimPaths;
 using WalletFramework.Core.Functional;
 using WalletFramework.Core.Functional.Enumerable;
 using WalletFramework.Core.Functional.Errors;
@@ -68,10 +69,7 @@ public readonly struct VctMetadataClaim
         var path = json
             .GetByKey(PathJsonName)
             .OnSuccess(token => token.ToJArray())
-            .OnSuccess(arr =>
-            {
-                return ClaimPath.ValidClaimPath(arr.Select(token => token.ToObject<string>() == null ? null : token.ToString()).ToArray());
-            });
+            .OnSuccess(ClaimPath.FromJArray);
         
         var display = json
             .GetByKey(DisplayJsonName)

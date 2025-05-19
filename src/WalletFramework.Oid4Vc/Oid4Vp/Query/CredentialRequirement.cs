@@ -2,7 +2,8 @@ using System.Text;
 using LanguageExt;
 using OneOf;
 using WalletFramework.MdocLib;
-using WalletFramework.Oid4Vc.Dcql.Models;
+using WalletFramework.Oid4Vc.Oid4Vp.Dcql.Models;
+using WalletFramework.Oid4Vc.Oid4Vp.Models;
 using WalletFramework.Oid4Vc.Oid4Vp.PresentationExchange.Models;
 using WalletFramework.SdJwtVc.Models;
 
@@ -43,14 +44,16 @@ public static class CredentialRequirementFun
 
     public static string FormatForLog(this CredentialQuery query)
     {
-        var result = query.GetRequestedAttributes().Aggregate(
-            new StringBuilder(),
-            (sb, requestedAttribute) =>
-            {
-                sb.AppendLine(requestedAttribute);
-                return sb;
-            }
-        );
+        var result = query
+            .GetClaimsToDiscloseAsStrs()
+            .Aggregate(
+                new StringBuilder(),
+                (sb, requestedAttribute) =>
+                {
+                    sb.AppendLine(requestedAttribute);
+                    return sb;
+                }
+            );
 
         return result.ToString();
     }
@@ -66,9 +69,15 @@ public static class CredentialRequirementFun
             credentialQuery => credentialQuery.Id,
             inputDescriptor => inputDescriptor.Id);
 
-    public static IEnumerable<string> GetRequestedAttributes(this CredentialRequirement requirement) =>
+    public static IEnumerable<string> GetRequestedAttributes(this CredentialRequirement requirement, Option<List<ClaimQuery>> claimsToDisclose) =>
         requirement.GetQuery().Match(
-            credentialQuery => credentialQuery.GetRequestedAttributes(),
+            credentialQuery =>
+            {
+                return claimsToDisclose.Match(
+                    claims => claims.AsStrings(credentialQuery.Format),
+                    credentialQuery.GetClaimsToDiscloseAsStrs
+                );
+            },
             inputDescriptor => inputDescriptor.GetRequestedAttributes()
         );
 
