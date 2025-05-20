@@ -69,6 +69,6 @@ public record OAuthToken
     /// <summary>
     ///     Gets or sets the credential identifier.
     /// </summary>
-    [JsonProperty("credential_identifiers")]
-    public AuthorizationDetails? CredentialIdentifier { get; set; }
+    [JsonProperty("authorization_details", NullValueHandling = NullValueHandling.Ignore)]
+    public AuthorizationDetails[]? AuthorizationDetails { get; set; }
 }

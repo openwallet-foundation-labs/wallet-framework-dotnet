@@ -12,8 +12,7 @@ using WalletFramework.Oid4Vc.Oid4Vci.Authorization.DPop.Abstractions;
 using WalletFramework.Oid4Vc.Oid4Vci.Authorization.DPop.Models;
 using WalletFramework.Oid4Vc.Oid4Vci.Authorization.Models;
 using WalletFramework.Oid4Vc.Oid4Vci.CredConfiguration.Models;
-using WalletFramework.Oid4Vc.Oid4Vci.CredConfiguration.Models.Mdoc;
-using WalletFramework.Oid4Vc.Oid4Vci.CredConfiguration.Models.SdJwt;
+using WalletFramework.Oid4Vc.Oid4Vci.CredOffer.Models;
 using WalletFramework.Oid4Vc.Oid4Vci.CredRequest.Abstractions;
 using WalletFramework.Oid4Vc.Oid4Vci.CredRequest.Models;
 using WalletFramework.Oid4Vc.Oid4Vci.CredRequest.Models.Mdoc;
@@ -50,7 +49,9 @@ public class CredentialRequestService : ICredentialRequestService
     private async Task<CredentialRequest> CreateCredentialRequest(
         KeyId keyId,
         Format format,
+        OneOf<CredentialIdentifier, CredentialConfigurationId> credentialIdentification,
         OneOf<OAuthToken, DPopToken> token,
+        int specVersion,
         IssuerMetadata issuerMetadata,
         Option<ClientOptions> clientOptions,
         Option<AuthorizationRequest> authorizationRequest)
@@ -90,8 +91,8 @@ public class CredentialRequestService : ICredentialRequestService
                     None: async () =>
                         proof = await GetProofOfPossessionAsync(keyId, issuerMetadata, cNonce, clientOptions));
             });
-
-        return new CredentialRequest(format, proof, proofs, sessionTranscript);
+        
+        return new CredentialRequest(credentialIdentification, format, specVersion, proof, proofs, sessionTranscript);
     }
 
     private async Task<ProofOfPossession> GetProofOfPossessionAsync(KeyId keyId, IssuerMetadata issuerMetadata, string cNonce, Option<ClientOptions> clientOptions)
@@ -132,74 +133,92 @@ public class CredentialRequestService : ICredentialRequestService
             Option<string>.None);
     }
 
-    async Task<Validation<CredentialResponse>> ICredentialRequestService.RequestCredentials(
-        OneOf<SdJwtConfiguration, MdocConfiguration> configuration,
+    async Task<Validation<IEnumerable<CredentialResponse>>> ICredentialRequestService.RequestCredentials(
+        KeyValuePair<CredentialConfigurationId, SupportedCredentialConfiguration> configurationPair,
         IssuerMetadata issuerMetadata,
         OneOf<OAuthToken, DPopToken> token,
         Option<ClientOptions> clientOptions,
-        Option<AuthorizationRequest> authorizationRequest)
+        Option<AuthorizationRequest> authorizationRequest,
+        int specVersion)
     {
-        var keyId = await _keyStore.GenerateKey(isPermanent: authorizationRequest.IsNone);
+        var credentialIdentifications = 
+            token.Match(
+                    oauthToken => oauthToken.AuthorizationDetails?.First().CredentialIdentifiers, 
+                    dPopToken => dPopToken.Token.AuthorizationDetails?.First().CredentialIdentifiers)?
+                .Select(identifier => (OneOf<CredentialIdentifier, CredentialConfigurationId>) new CredentialIdentifier(identifier)) 
+            ?? new List<OneOf<CredentialIdentifier, CredentialConfigurationId>>() { configurationPair.Key };
+        
+        var responses = new List<Validation<CredentialResponse>>();
+        foreach (var credentialIdentification in credentialIdentifications)
+        {
+            var keyId = await _keyStore.GenerateKey(isPermanent: authorizationRequest.IsNone);
 
-        var requestJson = await configuration.Match(
-            async sdJwt =>
-            {
-                var vciRequest = await CreateCredentialRequest(
-                    keyId,
-                    sdJwt.Format,
-                    token,
-                    issuerMetadata,
-                    clientOptions,
-                    authorizationRequest);
-                
-                var result = new SdJwtCredentialRequest(vciRequest, sdJwt.Vct);
-                return result.EncodeToJson();
-            },
-            async mdoc =>
-            {
-                var vciRequest = await CreateCredentialRequest(
-                    keyId,
-                    mdoc.Format,
-                    token,
-                    issuerMetadata,
-                    clientOptions,
-                    authorizationRequest);
-                
-                var result = new MdocCredentialRequest(vciRequest, mdoc);
-                return result.EncodeToJson();
-            }
-        );
-
-        var content = new StringContent(
-            requestJson,
-            Encoding.UTF8,
-            "application/json");
-
-        var response = await token.Match(
-            async authToken => await _httpClient
-                .WithAuthorizationHeader(authToken)
-                .PostAsync(issuerMetadata.CredentialEndpoint, content),
-            async dPopToken =>
-            {
-                var config = dPopToken.DPop.Config with
+            var requestJson = await configurationPair.Value.Match(
+                async sdJwt =>
                 {
-                    Audience = issuerMetadata.CredentialEndpoint.ToStringWithoutTrail(),
-                    OAuthToken = dPopToken.Token
-                };
+                    var vciRequest = await CreateCredentialRequest(
+                        keyId,
+                        sdJwt.Format,
+                        credentialIdentification,
+                        token,
+                        specVersion,
+                        issuerMetadata,
+                        clientOptions,
+                        authorizationRequest);
+                    
+                    var result = new SdJwtCredentialRequest(vciRequest, sdJwt.Vct);
+                    return result.EncodeToJson();
+                },
+                async mdoc =>
+                {
+                    var vciRequest = await CreateCredentialRequest(
+                        keyId,
+                        mdoc.Format,
+                        credentialIdentification,
+                        token,
+                        specVersion,
+                        issuerMetadata,
+                        clientOptions,
+                        authorizationRequest);
+                    
+                    var result = new MdocCredentialRequest(vciRequest, mdoc);
+                    return result.EncodeToJson();
+                }
+            );
 
-                var dPopResponse = await _dPopHttpClient.Post(
-                    issuerMetadata.CredentialEndpoint,
-                    config,
-                    () => content);
+            var content = new StringContent(
+                requestJson,
+                Encoding.UTF8,
+                "application/json");
 
-                return dPopResponse.ResponseMessage;
-            });
+            var response = await token.Match(
+                async authToken => await _httpClient
+                    .WithAuthorizationHeader(authToken)
+                    .PostAsync(issuerMetadata.CredentialEndpoint, content),
+                async dPopToken =>
+                {
+                    var config = dPopToken.DPop.Config with
+                    {
+                        Audience = issuerMetadata.CredentialEndpoint.ToStringWithoutTrail(),
+                        OAuthToken = dPopToken.Token
+                    };
 
-        var responseContent = await response.Content.ReadAsStringAsync();
+                    var dPopResponse = await _dPopHttpClient.Post(
+                        issuerMetadata.CredentialEndpoint,
+                        config,
+                        () => content);
 
-        return 
-            from jObject in JsonFun.ParseAsJObject(responseContent)
-            from credResponse in CredentialResponse.ValidCredentialResponse(jObject, keyId)
-            select credResponse;
+                    return dPopResponse.ResponseMessage;
+                });
+            
+            var credentialResponse =
+                from jObject in JsonFun.ParseAsJObject(await response.Content.ReadAsStringAsync())
+                from credResponse in CredentialResponse.ValidCredentialResponse(jObject, keyId)
+                select credResponse;
+            
+            responses.Add(credentialResponse);
+        }
+
+        return responses.TraverseAll(item => item);
     }
 }

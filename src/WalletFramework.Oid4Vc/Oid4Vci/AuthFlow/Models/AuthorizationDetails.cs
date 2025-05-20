@@ -36,6 +36,9 @@ public record AuthorizationDetails
         
     [JsonProperty("locations", NullValueHandling = NullValueHandling.Ignore)]
     public string[]? Locations { get; }
+    
+    [JsonProperty("credential_identifiers", NullValueHandling = NullValueHandling.Ignore)]
+    public string[]? CredentialIdentifiers { get; }
         
     internal AuthorizationDetails(
         string credentialConfigurationId, 
@@ -43,5 +46,22 @@ public record AuthorizationDetails
     {
         CredentialConfigurationId = credentialConfigurationId;
         Locations = locations;
+    }
+    
+    [JsonConstructor]
+    private AuthorizationDetails(
+        string format,
+        string? vct,
+        string? docType,
+        string? credentialConfigurationId,
+        string[]? locations,
+        string[]? credentialIdentifiers)
+    {
+        Format = format;
+        Vct = vct;
+        DocType = docType;
+        CredentialConfigurationId = credentialConfigurationId;
+        Locations = locations;
+        CredentialIdentifiers = credentialIdentifiers; 
     }
 }

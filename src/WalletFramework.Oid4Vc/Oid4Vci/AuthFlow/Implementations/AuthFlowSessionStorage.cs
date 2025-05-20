@@ -26,12 +26,14 @@ public class AuthFlowSessionStorage : IAuthFlowSessionStorage
         IAgentContext agentContext,
         AuthorizationData authorizationData,
         AuthorizationCodeParameters authorizationCodeParameters,
-        AuthFlowSessionState authFlowSessionState)
+        AuthFlowSessionState authFlowSessionState,
+        int specVersion)
     {
         var record = new AuthFlowSessionRecord(
             authorizationData,
             authorizationCodeParameters,
-            authFlowSessionState);
+            authFlowSessionState,
+            specVersion);
 
         await _recordService.AddAsync(agentContext.Wallet, record);
             
