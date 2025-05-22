@@ -149,7 +149,7 @@ public class Oid4VciClientService : IOid4VciClientService
         var authServerMetadata = await FetchAuthorizationServerMetadataAsync(issuerMetadata, offer.CredentialOffer);
         
         var authorizationRequestUri = authServerMetadata.PushedAuthorizationRequestEndpoint.IsNullOrEmpty()
-            ? new Uri(authServerMetadata.AuthorizationEndpoint + "?" + vciAuthorizationRequest.ToQueryString())
+            ? new Uri(authServerMetadata.AuthorizationEndpoint + vciAuthorizationRequest.ToQueryString())
             : await GetRequestUriUsingPushedAuthorizationRequest(authServerMetadata, vciAuthorizationRequest);
         
         var authorizationData = new AuthorizationData(
@@ -211,7 +211,7 @@ public class Oid4VciClientService : IOid4VciClientService
                     null);
                 
                 var authorizationRequestUri = authServerMetadata.PushedAuthorizationRequestEndpoint.IsNullOrEmpty()
-                    ? new Uri(authServerMetadata.AuthorizationEndpoint + "?" + vciAuthorizationRequest.ToQueryString())
+                    ? new Uri(authServerMetadata.AuthorizationEndpoint + vciAuthorizationRequest.ToQueryString())
                     : await GetRequestUriUsingPushedAuthorizationRequest(authServerMetadata, vciAuthorizationRequest);
                 
                 //TODO: Select multiple configurationIds
