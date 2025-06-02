@@ -33,7 +33,7 @@ public interface IOid4VciClientService
     /// <param name="credentialType">Specifies whether Sd-Jwt or MDoc should be issued</param>
     /// <param name="specVersion">Optional language tag</param>
     /// <returns></returns>
-    Task<Uri> InitiateAuthFlow(Uri uri, ClientOptions clientOptions, Option<Locale> language, Option<OneOf<Vct, DocType>> credentialType, int specVersion);
+    Task<Uri> InitiateAuthFlow(Uri uri, ClientOptions clientOptions, Option<Locale> language, Option<OneOf<Vct, DocType>> credentialType, Option<int> specVersion);
         
     /// <summary>
     ///     Requests a verifiable credential using the authorization code flow.

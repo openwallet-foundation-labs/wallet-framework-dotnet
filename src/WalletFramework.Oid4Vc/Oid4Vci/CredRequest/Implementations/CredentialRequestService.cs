@@ -51,7 +51,7 @@ public class CredentialRequestService : ICredentialRequestService
         Format format,
         OneOf<CredentialIdentifier, CredentialConfigurationId> credentialIdentification,
         OneOf<OAuthToken, DPopToken> token,
-        int specVersion,
+        Option<int> specVersion,
         IssuerMetadata issuerMetadata,
         Option<ClientOptions> clientOptions,
         Option<AuthorizationRequest> authorizationRequest)
@@ -139,7 +139,7 @@ public class CredentialRequestService : ICredentialRequestService
         OneOf<OAuthToken, DPopToken> token,
         Option<ClientOptions> clientOptions,
         Option<AuthorizationRequest> authorizationRequest,
-        int specVersion)
+        Option<int> specVersion)
     {
         var credentialIdentifications = 
             token.Match(

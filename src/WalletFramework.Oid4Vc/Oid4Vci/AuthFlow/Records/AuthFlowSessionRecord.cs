@@ -41,7 +41,7 @@ public sealed class AuthFlowSessionRecord : RecordBase
     /// <summary>
     ///     Used to track the VCI Specification verison
     /// </summary>
-    public int SpecVersion { get; }
+    public int? SpecVersion { get; }
 
     /// <summary>
     ///    Initializes a new instance of the <see cref="AuthFlowSessionRecord" /> class.
@@ -68,7 +68,7 @@ public sealed class AuthFlowSessionRecord : RecordBase
         AuthorizationData authorizationData,
         AuthorizationCodeParameters authorizationCodeParameters,
         AuthFlowSessionState authFlowSessionState,
-        int specVersion)
+        int? specVersion)
     {
         AuthFlowSessionState = authFlowSessionState;
         RecordVersion = 1;
@@ -130,7 +130,7 @@ public static class AuthFlowSessionRecordFun
         var authorizationData = AuthorizationDataFun
             .DecodeFromJson(json[AuthorizationDataJsonKey]!.ToObject<JObject>()!);
         
-        var specVersion = json[SpecVersionJsonKey]!.ToObject<int>();
+        var specVersion = json[SpecVersionJsonKey]!.ToObject<int?>();
         
         var result = new AuthFlowSessionRecord(authorizationData, authCodeParameters!, id, specVersion);
 

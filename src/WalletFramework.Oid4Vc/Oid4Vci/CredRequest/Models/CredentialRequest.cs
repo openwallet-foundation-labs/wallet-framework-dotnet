@@ -14,30 +14,13 @@ namespace WalletFramework.Oid4Vc.Oid4Vci.CredRequest.Models;
 ///     This request contains the format of the credential, the type of credential,
 ///     and a proof of possession of the key material the issued credential shall be bound to.
 /// </summary>
-public record CredentialRequest(OneOf<CredentialIdentifier, CredentialConfigurationId> CredentialIdentification, Format Format, int specVersion, Option<ProofOfPossession> Proof, Option<ProofsOfPossession> Proofs, Option<SessionTranscript> SessionTranscript)
-{
-    /// <summary>
-    ///     Gets the proof of possession of the key material the issued credential shall be bound to.
-    /// </summary>
-    public Option<ProofOfPossession> Proof { get; } = Proof;
-    
-    /// <summary>
-    ///     Gets one or more proof of possessions of the key material the issued credential shall be bound to.
-    /// </summary>
-    public Option<ProofsOfPossession> Proofs { get; } = Proofs;
-
-    //TODO: Remove when backward compatibility is not needed anymore
-    /// <summary>
-    ///     Gets the format of the credential to be issued.
-    /// </summary>
-    public Format Format { get; } = Format;
-
-    public Option<SessionTranscript> SessionTranscript { get; } = SessionTranscript;
-    
-    public OneOf<CredentialIdentifier, CredentialConfigurationId> CredentialIdentification { get; } = CredentialIdentification;
-    
-    public int SpecVersion { get; } = specVersion;
-}
+public record CredentialRequest(
+    OneOf<CredentialIdentifier, CredentialConfigurationId> CredentialIdentification,
+    Format Format,
+    Option<int> SpecVersion,
+    Option<ProofOfPossession> Proof,
+    Option<ProofsOfPossession> Proofs,
+    Option<SessionTranscript> SessionTranscript);
 
 public static class CredentialRequestFun
 {
@@ -75,10 +58,28 @@ public static class CredentialRequestFun
             },
             configurationId =>
             {
-                if (request.SpecVersion == 15)
-                    result.Add(CredentialConfigurationIdKey, configurationId.ToString());
-                else
-                    result.Add(FormatJsonKey, request.Format.ToString());
+                request.SpecVersion.Match(specVersion =>
+                    {
+                        switch (specVersion)
+                        {
+                            case 14:
+                                result.Add(FormatJsonKey, request.Format.ToString());
+                                break;
+                            case 15:
+                                result.Add(CredentialConfigurationIdKey, configurationId.ToString());
+                                break;
+                            default:
+                                result.Add(FormatJsonKey, request.Format.ToString());
+                                result.Add(CredentialConfigurationIdKey, configurationId.ToString());
+                                break;
+                        }
+                    },
+                    () =>
+                    {
+                        result.Add(FormatJsonKey, request.Format.ToString());
+                        result.Add(CredentialConfigurationIdKey, configurationId.ToString());
+                    }
+                );
                 
                 return Unit.Default;
             });

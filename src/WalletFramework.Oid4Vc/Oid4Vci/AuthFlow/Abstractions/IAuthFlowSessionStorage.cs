@@ -1,4 +1,5 @@
 using Hyperledger.Aries.Agents;
+using LanguageExt;
 using WalletFramework.Oid4Vc.Oid4Vci.AuthFlow.Models;
 using WalletFramework.Oid4Vc.Oid4Vci.AuthFlow.Records;
 
@@ -51,5 +52,5 @@ public interface IAuthFlowSessionStorage
         AuthorizationData authorizationData,
         AuthorizationCodeParameters authorizationCodeParameters,
         AuthFlowSessionState authFlowSessionState,
-        int specVersion = 15);
+        Option<int> specVersion);
 }

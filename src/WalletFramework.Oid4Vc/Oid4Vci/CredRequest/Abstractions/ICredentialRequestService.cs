@@ -20,5 +20,5 @@ public interface ICredentialRequestService
         OneOf<OAuthToken, DPopToken> token,
         Option<ClientOptions> clientOptions,
         Option<AuthorizationRequest> authorizationRequest,
-        int specVersion = 15);
+        Option<int> specVersion);
 }

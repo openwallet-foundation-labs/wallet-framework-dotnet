@@ -164,12 +164,13 @@ public class Oid4VciClientService : IOid4VciClientService
             context,
             authorizationData,
             authorizationCodeParameters,
-            sessionId);
+            sessionId,
+            Option<int>.None);
             
         return authorizationRequestUri;
     }
 
-    public async Task<Uri> InitiateAuthFlow(Uri uri, ClientOptions clientOptions, Option<Locale> language, Option<OneOf<Vct, DocType>> credentialType, int specVersion)
+    public async Task<Uri> InitiateAuthFlow(Uri uri, ClientOptions clientOptions, Option<Locale> language, Option<OneOf<Vct, DocType>> credentialType, Option<int> specVersion)
     {
         var locale = language.Match(
             some => some,
@@ -297,7 +298,8 @@ public class Oid4VciClientService : IOid4VciClientService
             issuerMetadata,
             token,
             Option<ClientOptions>.None,
-            Option<AuthorizationRequest>.None);
+            Option<AuthorizationRequest>.None,
+            Option<int>.None);
 
         var credentialSets = new List<CredentialSetRecord>();
         var result =
@@ -414,7 +416,7 @@ public class Oid4VciClientService : IOid4VciClientService
                 token,
                 session.AuthorizationData.ClientOptions,
                 Option<AuthorizationRequest>.None,
-                session.SpecVersion);
+                session.SpecVersion.ToOption());
             
             var result =
                 from responses in validResponses
@@ -543,8 +545,7 @@ public class Oid4VciClientService : IOid4VciClientService
                 token,
                 session.AuthorizationData.ClientOptions,
                 authorizationRequest,
-                session.SpecVersion
-                );
+                session.SpecVersion.ToOption());
             
             var result =
                 from responses in validResponses
