@@ -30,8 +30,10 @@ public interface IOid4VciClientService
     /// <param name="uri">The issuers uri</param>
     /// <param name="clientOptions">The client options</param>
     /// <param name="language">Optional language tag</param>
+    /// <param name="credentialType">Specifies whether Sd-Jwt or MDoc should be issued</param>
+    /// <param name="specVersion">Optional language tag</param>
     /// <returns></returns>
-    Task<Uri> InitiateAuthFlow(Uri uri, ClientOptions clientOptions, Option<Locale> language);
+    Task<Uri> InitiateAuthFlow(Uri uri, ClientOptions clientOptions, Option<Locale> language, Option<OneOf<Vct, DocType>> credentialType, Option<int> specVersion);
         
     /// <summary>
     ///     Requests a verifiable credential using the authorization code flow.
@@ -40,18 +42,17 @@ public interface IOid4VciClientService
     /// <returns>
     /// A list of credentials.
     /// </returns>
-    Task<Validation<CredentialSetRecord>> RequestCredentialSet(IssuanceSession issuanceSession);
+    Task<Validation<IEnumerable<CredentialSetRecord>>> RequestCredentialSet(IssuanceSession issuanceSession);
     
     /// <summary>
     ///     Requests a verifiable credential using the authorization code flow and C''.
     /// </summary>
     /// <param name="issuanceSession">Holds authorization session relevant information.</param>
     /// <param name="authorizationRequest">The AuthorizationRequest that is associated witht the ad-hoc crednetial issuance</param>
-    /// <param name="credentialType">Specifies whether Sd-Jwt or MDoc should be issued</param>
     /// <returns>
     /// A list of credentials.
     /// </returns>
-    Task<Validation<OnDemandCredentialSet>> RequestOnDemandCredentialSet(IssuanceSession issuanceSession, AuthorizationRequest authorizationRequest, OneOf<Vct, DocType> credentialType);
+    Task<Validation<IEnumerable<OnDemandCredentialSet>>> RequestOnDemandCredentialSet(IssuanceSession issuanceSession, AuthorizationRequest authorizationRequest);
     
     /// <summary>
     ///     Processes a credential offer
@@ -66,7 +67,7 @@ public interface IOid4VciClientService
     /// ///
     /// <param name="credentialOfferMetadata">Credential offer and Issuer Metadata</param>
     /// <param name="transactionCode">The Transaction Code.</param>
-    Task<Validation<CredentialSetRecord>> AcceptOffer(
+    Task<Validation<IEnumerable<CredentialSetRecord>>> AcceptOffer(
         CredentialOfferMetadata credentialOfferMetadata,
         string? transactionCode);
 }

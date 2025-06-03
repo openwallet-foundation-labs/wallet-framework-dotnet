@@ -37,6 +37,7 @@ public static class AuthFlowSamples
             ["Verifier"] = "world"
         },
         ["RecordVersion"] = 1,
-        ["Id"] = "598e7661-95a8-4531-b707-3d256d3c1745"
+        ["Id"] = "598e7661-95a8-4531-b707-3d256d3c1745",
+        ["spec_version"] = "15"
     };
 }
