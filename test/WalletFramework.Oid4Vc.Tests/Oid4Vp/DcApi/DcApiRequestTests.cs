@@ -10,38 +10,7 @@ public class DcApiRequestTests
     public void Valid_Json_String_Can_Be_Processed()
     {
         // Arrange
-        const string validJson = """
-                                 {
-                                            "dcql_query":{
-                                               "credentials":[
-                                                  {
-                                                     "claims":[
-                                                        {
-                                                           "path":[
-                                                              "org.iso.18013.5.1",
-                                                              "family_name"
-                                                           ]
-                                                        },
-                                                        {
-                                                           "path":[
-                                                              "org.iso.18013.5.1",
-                                                              "given_name"
-                                                           ]
-                                                        }
-                                                     ],
-                                                     "format":"mso_mdoc",
-                                                     "id":"cred1",
-                                                     "meta":{
-                                                        "doctype_value":"org.iso.18013.5.1.mDL"
-                                                     }
-                                                  }
-                                               ]
-                                            },
-                                            "nonce":"cQAgOKI-5dXxyhKJI38QX-d_qGLxXgn_1wSYmzeCDTQ",
-                                            "response_mode":"dc_api",
-                                            "response_type":"vp_token"
-                                         }
-                                 """;
+        var validJson = DcApiTestSamples.ValidDcApiRequestJson;
 
         // Act
         var result = DcApiRequest.ValidDcApiRequest(validJson);
