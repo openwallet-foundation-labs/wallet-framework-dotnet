@@ -154,6 +154,7 @@ public class AuthorizationRequestService(
     {
         var httpClient = httpClientFactory.CreateClient();
         httpClient.DefaultRequestHeaders.Clear();
+        httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/oauth-authz-req+jwt"));
         
         var walletNonce = Base64UrlEncoder.Encode(Guid.NewGuid().ToString());
         var keyValuePairs = new List<KeyValuePair<string, string>>();
