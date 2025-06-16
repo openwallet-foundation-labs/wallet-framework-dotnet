@@ -170,8 +170,8 @@ public class AuthorizationRequestService(
                 },
                 ["mso_mdoc"] = new JObject() 
                 { 
-                    ["issuerauth_alg_values"] = new JArray(){ "ES256" }, 
-                    ["deviceauth_alg_values"] = new JArray(){ "ES256" } 
+                    ["issuerauth_alg_values"] = new JArray(){ "-7", "-35", "-36", "-8" }, 
+                    ["deviceauth_alg_values"] = new JArray(){ "-7" } 
                 }
             } 
         }.ToString()));
