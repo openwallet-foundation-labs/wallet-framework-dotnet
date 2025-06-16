@@ -27,37 +27,37 @@
     <PropertyGroup Label="Package Versions">
         <MicrosoftAspNetCoreHttpAbstractionsVersion>2.2.0</MicrosoftAspNetCoreHttpAbstractionsVersion>
         <MicrosoftAspNetCoreHttpExtensionsVersion>2.2.0</MicrosoftAspNetCoreHttpExtensionsVersion>
-        <MicrosoftAspNetCoreHttpVersion>2.2.2</MicrosoftAspNetCoreHttpVersion>
-        <MicrosoftCodeAnalysisFxCopAnalyzersVersion>3.0.0</MicrosoftCodeAnalysisFxCopAnalyzersVersion>
-        <MicrosoftExtensionsHostingVersion>3.1.5</MicrosoftExtensionsHostingVersion>
-        <MicrosoftExtensionsHttpVersion>3.1.5</MicrosoftExtensionsHttpVersion>
-        <MicrosoftExtensionsLoggingVersion>3.1.5</MicrosoftExtensionsLoggingVersion>
-        <MicrosoftNETTestSdkVersion>16.6.1</MicrosoftNETTestSdkVersion>
-        <SystemReactiveLinqVersion>4.4.1</SystemReactiveLinqVersion>
+        <MicrosoftAspNetCoreHttpVersion>2.3.0</MicrosoftAspNetCoreHttpVersion>
+        <MicrosoftCodeAnalysisFxCopAnalyzersVersion>3.3.2</MicrosoftCodeAnalysisFxCopAnalyzersVersion>
+        <MicrosoftExtensionsHostingVersion>9.0.6</MicrosoftExtensionsHostingVersion>
+        <MicrosoftExtensionsHttpVersion>9.0.6</MicrosoftExtensionsHttpVersion>
+        <MicrosoftExtensionsLoggingVersion>9.0.6</MicrosoftExtensionsLoggingVersion>
+        <MicrosoftNETTestSdkVersion>17.13.0</MicrosoftNETTestSdkVersion>
+        <SystemReactiveLinqVersion>6.0.1</SystemReactiveLinqVersion>
         <SystemTextJsonVersion>4.7.2</SystemTextJsonVersion>
-        <AutofacExtensionsDependencyInjectionVersion>6.0.0</AutofacExtensionsDependencyInjectionVersion>
+        <AutofacExtensionsDependencyInjectionVersion>10.0.0</AutofacExtensionsDependencyInjectionVersion>
         <DawnGuardVersion>1.12.0</DawnGuardVersion>
-        <FluentAssertionsVersion>5.10.3</FluentAssertionsVersion>
-        <FluentValidationAspNetCoreVersion>9.2.0</FluentValidationAspNetCoreVersion>
-        <FluentValidationVersion>9.2.0</FluentValidationVersion>
-        <FlurlVersion>2.8.2</FlurlVersion>
+        <FluentAssertionsVersion>8.3.0</FluentAssertionsVersion>
+        <FluentValidationAspNetCoreVersion>11.3.1</FluentValidationAspNetCoreVersion>
+        <FluentValidationVersion>10.0.0</FluentValidationVersion>
+        <FlurlVersion>4.0.0</FlurlVersion>
         <WalletFrameworkIndySdkVersion>2.0.1</WalletFrameworkIndySdkVersion>
         <HyperledgerIndyVdrVersion>0.4.2-alpha</HyperledgerIndyVdrVersion>
         <MediatrExtensionsMicrosoftDependencyInjectionVersion>8.0.1</MediatrExtensionsMicrosoftDependencyInjectionVersion>
-        <MediatrVersion>8.0.2</MediatrVersion>
-        <MicroElementsSwashbuckleFluentValidationVersion>4.0.0</MicroElementsSwashbuckleFluentValidationVersion>
-        <MoqVersion>4.14.5</MoqVersion>
+        <MediatrVersion>12.5.0</MediatrVersion>
+        <MicroElementsSwashbuckleFluentValidationVersion>6.1.0</MicroElementsSwashbuckleFluentValidationVersion>
+        <MoqVersion>4.20.72</MoqVersion>
         <MultiformatsBaseVersion>2.0.2</MultiformatsBaseVersion>
         <NewtonsoftJsonVersion>13.0.1</NewtonsoftJsonVersion>
-        <NLogConfigVersion>4.7.2</NLogConfigVersion>
-        <PollyVersion>8.5.0</PollyVersion>
-        <StatelessVersion>5.1.2</StatelessVersion>
-        <SwashbuckleAspNetCoreAnnotationsVersion>5.5.1</SwashbuckleAspNetCoreAnnotationsVersion>
+        <NLogConfigVersion>4.7.15</NLogConfigVersion>
+        <PollyVersion>8.6.0</PollyVersion>
+        <StatelessVersion>5.17.0</StatelessVersion>
+        <SwashbuckleAspNetCoreAnnotationsVersion>8.1.4</SwashbuckleAspNetCoreAnnotationsVersion>
         <SwashbuckleAspNetCoreFiltersVersion>5.1.2</SwashbuckleAspNetCoreFiltersVersion>
         <SwashbuckleAspNetCoreSwaggerGenVersion>5.5.1</SwashbuckleAspNetCoreSwaggerGenVersion>
         <SwashbuckleAspNetCoreSwaggerUIVersion>5.5.1</SwashbuckleAspNetCoreSwaggerUIVersion>
         <SwashbuckleAspNetCoreSwaggerVersion>5.5.1</SwashbuckleAspNetCoreSwaggerVersion>
-        <XunitRunnerVisualstudioVersion>2.4.2</XunitRunnerVisualstudioVersion>
-        <XunitVersion>2.7.0</XunitVersion>
+        <XunitRunnerVisualstudioVersion>2.4.5</XunitRunnerVisualstudioVersion>
+        <XunitVersion>2.9.3</XunitVersion>
     </PropertyGroup>
 </Project>
