@@ -711,9 +711,7 @@ public class Oid4VciClientService : IOid4VciClientService
             var getAuthServerResponse = await _httpClient.GetAsync(authServerUrl);
             
             if (!getAuthServerResponse.IsSuccessStatusCode)
-                throw new HttpRequestException(
-                    $"Failed to get authorization server metadata. Status Code is: {getAuthServerResponse.StatusCode}"
-                );
+                continue;
             
             var content = await getAuthServerResponse.Content.ReadAsStringAsync();
         
@@ -724,9 +722,6 @@ public class Oid4VciClientService : IOid4VciClientService
             authorizationServerMetadatas.Add(authServer);
         }
 
-        if (authorizationServerMetadatas.Count == 1)
-            return authorizationServerMetadatas.First();
-
         return credentialOffer.Match(
             Some: offer =>
             {
@@ -734,18 +729,30 @@ public class Oid4VciClientService : IOid4VciClientService
                     from code in grants.AuthorizationCode
                     select code;
 
-                return credentialOfferAuthCodeGrantType.Match(
-                    Some: code => authorizationServerMetadatas.Find(authServer => authServer.SupportsAuthCodeFlow) ??
-                            throw new InvalidOperationException("No suitable Authorization Server found"),
+                return  credentialOfferAuthCodeGrantType.Match(
+                    Some: code => code.AuthorizationServer.Match(
+                        Some: requestedAuthServer => 
+                            authorizationServerMetadatas.Find(authServer => 
+                                authServer.Issuer == requestedAuthServer.ToString())
+                            ?? throw new InvalidOperationException("No suitable Authorization Server found"),
+                        None: () => authorizationServerMetadatas.Find(authServer => authServer.SupportsAuthCodeFlow) ??
+                              throw new InvalidOperationException("No suitable Authorization Server found")),
                     None: () =>
                     {
                         var credentialOfferPreAuthGrantType = from grants in offer.Grants 
-                            from code in grants.AuthorizationCode
+                            from code in grants.PreAuthorizedCode
                             select code;
 
                         return credentialOfferPreAuthGrantType.Match(
-                            Some: preAuth => authorizationServerMetadatas.Find(authServer => authServer.SupportsPreAuthFlow)
-                                             ?? throw new InvalidOperationException("No suitable Authorization Server found"),
+                            Some: preAuth =>
+                            {
+                                return preAuth.AuthorizationServer.Match(
+                                    Some: requestedAuthServer => 
+                                        authorizationServerMetadatas.Find(authServer =>
+                                            authServer.Issuer == requestedAuthServer.ToString()) 
+                                        ?? throw new InvalidOperationException("No suitable Authorization Server found"),
+                                    None: () => authorizationServerMetadatas.Find(authServer => authServer.SupportsPreAuthFlow));
+                            },
                             None: () => authorizationServerMetadatas.First());
                     });
             },
