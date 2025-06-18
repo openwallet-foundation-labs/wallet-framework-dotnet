@@ -23,9 +23,11 @@ public record EncodedMdoc
     public static Validation<EncodedMdoc> ValidEncodedMdoc(JValue mdoc)
     {
         var str = mdoc.ToString(CultureInfo.InvariantCulture);
-        
+
         return MdocLib.Mdoc
-            .FromIssuerSigned(str)
-            .OnSuccess(mdoc1 => new EncodedMdoc(str, mdoc1));
+            .ValidMdoc(str)
+            .Match(
+                validMDoc => new EncodedMdoc(str,validMDoc),
+                _ => MdocLib.Mdoc.FromIssuerSigned(str).OnSuccess(validIssuerSigned => new EncodedMdoc(str, validIssuerSigned)));
     }
 }

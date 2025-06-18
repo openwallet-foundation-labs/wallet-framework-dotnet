@@ -72,13 +72,13 @@ public record CredentialResponse
     public static Validation<CredentialResponse> ValidCredentialResponse(JObject response, KeyId keyId)
     {
         // TODO: Implement transactionID
-        var credential =
+        var singleCredential =
             from jToken in response.GetByKey("credential").ToOption()
             from jValue in jToken.ToJValue().ToOption()
             from cred in Credential.ValidCredential(jValue).ToOption()
             select cred;
 
-        var batchCredentials =
+        var batchCredentialsDraft14 =
             from jToken in response.GetByKey("credentials").ToOption()
             from jArray in jToken.ToJArray().ToOption()
             from all in jArray.TraverseAll(jToken =>
@@ -86,12 +86,24 @@ public record CredentialResponse
                 from cred in Credential.ValidCredential(jValue).ToOption()
                 select cred)
             select all;
-
-        var credentials = batchCredentials.Match(
-            Some: bc => (OneOf<List<Credential>, TransactionId>)bc.ToList(),
-            None: () => credential.Match(
-                Some: c => (OneOf<List<Credential>, TransactionId>)new List<Credential> { c },
-                None: () => throw new InvalidOperationException("Credential response contains no credentials")));
+        
+        var batchCredentialsDraft15 =
+            from jToken in response.GetByKey("credentials").ToOption()
+            from jArray in jToken.ToJArray().ToOption()
+            from all in jArray.TraverseAll(jToken =>
+                from credToken in jToken.GetByKey("credential").ToOption()
+                from jValue in credToken.ToJValue().ToOption()
+                from cred in Credential.ValidCredential(jValue).ToOption()
+                select cred)
+            select all;
+        
+        var credentials = batchCredentialsDraft15.Match(
+            Some: bcDraft15 => (OneOf<List<Credential>, TransactionId>)bcDraft15.ToList(),
+            None: () => batchCredentialsDraft14.Match(
+                Some: bcDraft14 => (OneOf<List<Credential>, TransactionId>)bcDraft14.ToList(),
+                None: () => singleCredential.Match(
+                    Some: c => (OneOf<List<Credential>, TransactionId>)new List<Credential> { c },
+                    None: () => throw new InvalidOperationException("Credential response contains no credentials"))));
 
         var cNonce = response
             .GetByKey("c_nonce")
