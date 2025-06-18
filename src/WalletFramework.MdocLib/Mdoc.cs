@@ -66,7 +66,7 @@ public record Mdoc
         }
         .AggregateValidators();
 
-        return 
+        var validRootLevelMDocOne =  
             from bytes in decodeBase64Url(base64UrlencodedCborByteString)
             from cbor in parseCborByteString(bytes)
             from issuerSigned in cbor.GetByLabel(IssuerSignedLabel)
@@ -75,6 +75,23 @@ public record Mdoc
                 .Apply(ValidIssuerSigned(issuerSigned))
             from validMdoc in validateIntegrity(mdoc)
             select validMdoc;
+        
+        //TODO: extract and validate all the mDocs in documents
+        var validDocumentsNestedMDoc = 
+            from bytes in decodeBase64Url(base64UrlencodedCborByteString)
+            from cbor in parseCborByteString(bytes)
+            from documents in cbor.GetByLabel(DocumentsLabel)
+            from issuerSigned in documents[0].GetByLabel(IssuerSignedLabel)
+            from mdoc in Valid(Create)
+                .Apply(ValidDoctype(documents[0]))
+                .Apply(ValidIssuerSigned(issuerSigned))
+            from validMdoc in validateIntegrity(mdoc)
+            select validMdoc;
+        
+        return validRootLevelMDocOne.Match(
+            rootLevelMDoc => rootLevelMDoc,
+            _ => validDocumentsNestedMDoc
+        );
     }
     
     //TODO: Workaround because PId Issuer only implemented issuer signed, Delete this overload when PID Issuer is fixed!!
