@@ -15,4 +15,6 @@ internal static class Constants
     public const string IssuerSignedLabel = "issuerSigned";
     
     public const string NameSpacesLabel = "nameSpaces";
+    
+    public const string DocumentsLabel = "documents";
 }
