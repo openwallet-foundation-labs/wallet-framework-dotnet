@@ -48,7 +48,7 @@ public readonly struct RequestObject
     ///     Creates a new instance of the <see cref="RequestObject" /> class.
     /// </summary>
     public static Validation<AuthorizationRequestCancellation, RequestObject> FromStr(
-        string requestObjectJson)
+        string requestObjectJson, Option<string> walletNonce)
     {
         var tokenHandler = new JwtSecurityTokenHandler();
 
@@ -66,6 +66,19 @@ public readonly struct RequestObject
             return new AuthorizationRequestCancellation(Option<Uri>.None, [error]);
         }
 
+        walletNonce.IfSome(nonce => 
+        {
+            if (jwt.Payload.TryGetValue("wallet_nonce", out var nonceValue))
+            {
+                if (nonceValue.ToString() != nonce)
+                    throw new InvalidOperationException("wallet_nonce in request object does not match the provided wallet_nonce");
+            }
+            else
+            {
+                throw new InvalidOperationException("wallet_nonce is required but not present in the Request Object");
+            }
+        });
+        
         var json = jwt.Payload.SerializeToJson();
 
         return
