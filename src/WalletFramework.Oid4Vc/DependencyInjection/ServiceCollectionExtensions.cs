@@ -4,6 +4,7 @@ using WalletFramework.MdocLib.Device.Abstractions;
 using WalletFramework.MdocLib.Device.Implementations;
 using WalletFramework.MdocLib.Security.Cose.Abstractions;
 using WalletFramework.MdocLib.Security.Cose.Implementations;
+using WalletFramework.Oid4Vc.ClientAttestation;
 using WalletFramework.Oid4Vc.CredentialSet;
 using WalletFramework.Oid4Vc.Database.Migration.Abstraction;
 using WalletFramework.Oid4Vc.Database.Migration.Implementations;
@@ -73,6 +74,7 @@ public static class ServiceCollectionExtensions
         builder.AddSingleton<ITokenService, TokenService>();
         builder.AddSingleton<IVctMetadataService, VctMetadataService>();
         builder.AddSingleton<ICredentialNonceService, CredentialNonceService>();
+        builder.AddSingleton<IClientAttestationService, ClientAttestationService>();
 
         builder.AddSdJwtVcServices();
         

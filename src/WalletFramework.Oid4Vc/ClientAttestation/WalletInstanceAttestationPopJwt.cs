@@ -8,5 +8,5 @@ public struct WalletInstanceAttestationPopJwt
     
     private WalletInstanceAttestationPopJwt(string value) => Value = value;
 
-    public static WalletInstanceAttestationPopJwt CreateWalletInstanceAttestationPopJwt(string value) => new (value);
+    public static WalletInstanceAttestationPopJwt Create(string value) => new (value);
 }

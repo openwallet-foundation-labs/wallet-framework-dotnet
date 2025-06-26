@@ -22,12 +22,12 @@ public interface IOid4VpClientService
     /// </summary>
     /// <param name="authorizationRequest"></param>
     /// <param name="selectedCredentials"></param>
-    /// <param name="clientAttestation"></param>
+    /// <param name="clientAttestationDetails"></param>
     /// <returns></returns>
     Task<Option<Uri>> AcceptAuthorizationRequest(
         AuthorizationRequest authorizationRequest,
         IEnumerable<SelectedCredential> selectedCredentials,
-        CombinedWalletAttestation? clientAttestation = null);
+        Option<ClientAttestationDetails> clientAttestationDetails);
 
     /// <summary>
     ///     Prepares and sends an Authorization Response containing a Presentation Submission with on demand credentials (C'')

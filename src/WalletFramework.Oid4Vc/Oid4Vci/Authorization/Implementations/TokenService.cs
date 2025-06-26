@@ -1,6 +1,7 @@
 using LanguageExt;
 using OneOf;
 using WalletFramework.Core.Cryptography.Abstractions;
+using WalletFramework.Oid4Vc.ClientAttestation;
 using WalletFramework.Oid4Vc.Oid4Vci.Authorization.Abstractions;
 using WalletFramework.Oid4Vc.Oid4Vci.Authorization.DPop.Abstractions;
 using WalletFramework.Oid4Vc.Oid4Vci.Authorization.DPop.Models;
@@ -15,6 +16,7 @@ internal class TokenService(
     IDPopHttpClient dPopHttpClient,
     IHttpClientFactory httpClientFactory,
     ICredentialNonceService credentialNonceService,
+    IClientAttestationService clientAttestationService,
     IKeyStore keyStore)
     : ITokenService
 {
@@ -23,8 +25,13 @@ internal class TokenService(
     public async Task<OneOf<OAuthToken, DPopToken>> RequestToken(
         TokenRequest tokenRequest,
         AuthorizationServerMetadata metadata,
+        Option<ClientAttestationDetails> clientAttestationDetails,
         Option<CredentialNonceEndpoint> credentialNonceEndpoint)
     {
+        var combinedWalletAttestation = await clientAttestationDetails.Match(
+            async attestationDetails => Option<CombinedWalletAttestation>.Some(await clientAttestationService.GetCombinedWalletAttestationAsync(attestationDetails, metadata)),
+            () => Task.FromResult(Option<CombinedWalletAttestation>.None));
+        
         if (metadata.IsDPoPSupported)
         {
             var keyId = await keyStore.GenerateKey(isPermanent: false);
@@ -36,6 +43,7 @@ internal class TokenService(
             var result = await dPopHttpClient.Post(
                 uri,
                 config,
+                combinedWalletAttestation,
                 tokenRequest.ToFormUrlEncoded);
             
             var token = DeserializeObject<OAuthToken>(await result.ResponseMessage.Content.ReadAsStringAsync()) 
@@ -54,6 +62,8 @@ internal class TokenService(
         }
         else
         {
+            combinedWalletAttestation.IfSome(walletAttestation => _httpClient.AddClientAttestationPopHeader(walletAttestation));
+            
             var response = await _httpClient.PostAsync(
                 metadata.TokenEndpoint,
                 tokenRequest.ToFormUrlEncoded());
