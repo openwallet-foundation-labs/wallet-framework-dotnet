@@ -1,11 +1,13 @@
 using System.Security.Cryptography;
 using System.Text;
+using LanguageExt;
 using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json.Linq;
 using WalletFramework.Core.Cryptography.Abstractions;
 using WalletFramework.Core.Cryptography.Models;
 using WalletFramework.Core.Functional;
+using WalletFramework.Oid4Vc.ClientAttestation;
 using WalletFramework.Oid4Vc.Oid4Vci.Authorization.DPop.Abstractions;
 using WalletFramework.Oid4Vc.Oid4Vci.Authorization.DPop.Models;
 using WalletFramework.Oid4Vc.Oid4Vci.Exceptions;
@@ -40,6 +42,7 @@ public class DPopHttpClient : IDPopHttpClient
     public async Task<DPopHttpResponse> Post(
         Uri requestUri,
         DPopConfig config,
+        Option<CombinedWalletAttestation> combinedWalletAttestation,
         Func<HttpContent> getContent)
     {
         var dPop = await GenerateDPopHeaderAsync(
@@ -47,34 +50,42 @@ public class DPopHttpClient : IDPopHttpClient
             config.Audience,
             config.Nonce.ToNullable(),
             config.OAuthToken.ToNullable()?.AccessToken);
-
+        
         var httpClient = config.OAuthToken.Match(
             token => _httpClient.WithDPopHeader(dPop).WithAuthorizationHeader(token),
             () => _httpClient.WithDPopHeader(dPop));
+
+        combinedWalletAttestation.IfSome(attestation => httpClient.AddClientAttestationPopHeader(attestation));
         
         var response = await httpClient.PostAsync(requestUri, getContent());
         
         await ThrowIfInvalidGrantError(response);
             
-        var nonceStr = await GetDPopNonce(response);
-        if (!string.IsNullOrEmpty(nonceStr))
-        {
-            config = config with { Nonce = new DPopNonce(nonceStr) };
-            
-            var newDpop = await GenerateDPopHeaderAsync(
-                config.KeyId, 
-                config.Audience, 
-                config.Nonce.ToNullable(), 
-                config.OAuthToken.ToNullable()?.AccessToken);
-            
-            httpClient.WithDPopHeader(newDpop);
-            
-            response = await httpClient.PostAsync(requestUri, getContent());
-            
-            config = response.Headers.TryGetValues("DPoP-Nonce", out var refreshedDpopNonce)
-                ? config with { Nonce = new DPopNonce(refreshedDpopNonce?.First()!)}
-                : config;
-        }
+        var freshNonce = await GetAuthorizationServerProvidedDPopNonce(response).Match(
+            authServerProvidedNonce => authServerProvidedNonce,
+            () => GetResourceServerProvidedDPopNonce(response));
+
+        await freshNonce.Match(
+            async nonce =>
+            {
+                config = config with { Nonce = new DPopNonce(nonce) };
+
+                var newDpop = await GenerateDPopHeaderAsync(
+                    config.KeyId,
+                    config.Audience,
+                    config.Nonce.ToNullable(),
+                    config.OAuthToken.ToNullable()?.AccessToken);
+
+                httpClient.WithDPopHeader(newDpop);
+
+                response = await httpClient.PostAsync(requestUri, getContent());
+
+                config = response.Headers.TryGetValues("DPoP-Nonce", out var refreshedDpopNonce)
+                    ? config with { Nonce = new DPopNonce(refreshedDpopNonce?.First()!) }
+                    : config;
+            },
+            () => Task.CompletedTask
+        );
             
         await ThrowIfInvalidGrantError(response);
 
@@ -100,23 +111,44 @@ public class DPopHttpClient : IDPopHttpClient
         }
     }
     
-    private static async Task<string?> GetDPopNonce(HttpResponseMessage response)
+    private static async Task<Option<string>> GetAuthorizationServerProvidedDPopNonce(HttpResponseMessage response)
     {
-        var content = await response.Content.ReadAsStringAsync();
-        var errorReason = string.IsNullOrEmpty(content) 
-            ? null 
-            : JObject.Parse(content)[ErrorCodeKey]?.ToString();
-            
-        if (response.StatusCode 
-                is System.Net.HttpStatusCode.BadRequest 
-                or System.Net.HttpStatusCode.Unauthorized
-            && errorReason == UseDPopNonceError
-            && response.Headers.TryGetValues("DPoP-Nonce", out var dPopNonce))
-        {
-            return dPopNonce?.FirstOrDefault();
-        }
+        var responseContent = await response.Content.ReadAsStringAsync();
+        var errorReason = string.IsNullOrEmpty(responseContent)
+            ? Option<string>.None
+            : JObject.Parse(responseContent)[ErrorCodeKey]?.ToString();
+        
+        return errorReason.Match(
+            reason =>
+            {
+                if (response.StatusCode 
+                        is System.Net.HttpStatusCode.BadRequest 
+                        or System.Net.HttpStatusCode.Unauthorized
+                    && reason == UseDPopNonceError
+                    && response.Headers.TryGetValues("DPoP-Nonce", out var dPopNonce))
+                {
+                    return dPopNonce.FirstOrDefault();
+                }
 
-        return null;
+                return Option<string>.None;
+            },
+            () => Option<string>.None);
+    }
+    
+    private static Option<string> GetResourceServerProvidedDPopNonce(HttpResponseMessage response)
+    {
+        if (response.StatusCode is System.Net.HttpStatusCode.Unauthorized
+            && response.Headers.TryGetValues("WWW-Authenticate", out var wwwAuthenticateValues)
+            && response.Headers.TryGetValues("DPoP-Nonce", out var dPopNonceValues))
+        {
+            return wwwAuthenticateValues
+                .Find(headerValue => headerValue.Contains("DPoP")
+                                     && headerValue.Contains("error=\"use_dpop_nonce\""))
+                .Match(_ => dPopNonceValues.FirstOrDefault(),
+                    () => Option<string>.None);
+        }
+        
+        return Option<string>.None;
     }
     
     private async Task<string> GenerateDPopHeaderAsync(KeyId keyId, string audience, string? nonce, string? accessToken)

@@ -37,7 +37,8 @@ public class SdJwtSigner(IKeyStore keyStore) : ISdJwtSigner
         {
             { "aud", audience },
             { "nonce", nonce },
-            { "iat" , DateTimeOffset.UtcNow.ToUnixTimeSeconds() }
+            { "iat" , DateTimeOffset.UtcNow.ToUnixTimeSeconds() },
+            { "exp" , DateTimeOffset.Now.AddDays(1).ToUnixTimeSeconds() }
         };
 
         transactionDataBase64UrlStrings.IfSome(base64UrlStrings => 
