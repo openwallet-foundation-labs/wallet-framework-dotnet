@@ -7,7 +7,7 @@ public struct WalletInstanceAttestationJwt
 {
     public string Value { get; }
     
-    public static implicit operator string(WalletInstanceAttestationJwt keyId) => keyId.Value;
+    public static implicit operator string(WalletInstanceAttestationJwt attestationJwt) => attestationJwt.Value;
     
     private WalletInstanceAttestationJwt(string value) => Value = value;
 

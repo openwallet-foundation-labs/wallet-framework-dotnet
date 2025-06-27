@@ -4,6 +4,7 @@ using OneOf;
 using WalletFramework.Core.Functional;
 using WalletFramework.Core.Localization;
 using WalletFramework.MdocLib;
+using WalletFramework.Oid4Vc.ClientAttestation;
 using WalletFramework.Oid4Vc.CredentialSet.Models;
 using WalletFramework.Oid4Vc.Oid4Vci.AuthFlow.Models;
 using WalletFramework.Oid4Vc.Oid4Vp.Models;
@@ -21,53 +22,75 @@ public interface IOid4VciClientService
     /// </summary>
     /// <param name="offer">The offer metadata</param>
     /// <param name="clientOptions">The client options</param>
+    /// <param name="clientAttestationDetails">The client attestation details</param>
     /// <returns></returns>
-    Task<Uri> InitiateAuthFlow(CredentialOfferMetadata offer, ClientOptions clientOptions);
+    Task<Uri> InitiateAuthFlow(
+        CredentialOfferMetadata offer, 
+        ClientOptions clientOptions, 
+        Option<ClientAttestationDetails> clientAttestationDetails);
     
     /// <summary>
     ///    Initiates the wallet initiate authorization process of the VCI authorization code flow.
     /// </summary>
     /// <param name="uri">The issuers uri</param>
     /// <param name="clientOptions">The client options</param>
+    /// <param name="clientAttestationDetails">The client attestation details</param>
     /// <param name="language">Optional language tag</param>
     /// <param name="credentialType">Specifies whether Sd-Jwt or MDoc should be issued</param>
     /// <param name="specVersion">Optional language tag</param>
     /// <returns></returns>
-    Task<Uri> InitiateAuthFlow(Uri uri, ClientOptions clientOptions, Option<Locale> language, Option<OneOf<Vct, DocType>> credentialType, Option<int> specVersion);
+    Task<Uri> InitiateAuthFlow(
+        Uri uri, 
+        ClientOptions clientOptions, 
+        Option<ClientAttestationDetails> clientAttestationDetails, 
+        Option<Locale> language, 
+        Option<OneOf<Vct, DocType>> credentialType, 
+        Option<int> specVersion);
         
     /// <summary>
     ///     Requests a verifiable credential using the authorization code flow.
     /// </summary>
     /// <param name="issuanceSession">Holds authorization session relevant information.</param>
+    /// <param name="clientAttestationDetails">The client attestation details</param>
     /// <returns>
     /// A list of credentials.
     /// </returns>
-    Task<Validation<IEnumerable<CredentialSetRecord>>> RequestCredentialSet(IssuanceSession issuanceSession);
+    Task<Validation<IEnumerable<CredentialSetRecord>>> RequestCredentialSet(
+        IssuanceSession issuanceSession, 
+        Option<ClientAttestationDetails> clientAttestationDetails);
     
     /// <summary>
     ///     Requests a verifiable credential using the authorization code flow and C''.
     /// </summary>
     /// <param name="issuanceSession">Holds authorization session relevant information.</param>
     /// <param name="authorizationRequest">The AuthorizationRequest that is associated witht the ad-hoc crednetial issuance</param>
+    /// <param name="clientAttestationDetails">The client attestation details</param>
     /// <returns>
     /// A list of credentials.
     /// </returns>
-    Task<Validation<IEnumerable<OnDemandCredentialSet>>> RequestOnDemandCredentialSet(IssuanceSession issuanceSession, AuthorizationRequest authorizationRequest);
+    Task<Validation<IEnumerable<OnDemandCredentialSet>>> RequestOnDemandCredentialSet(
+        IssuanceSession issuanceSession, 
+        AuthorizationRequest authorizationRequest, 
+        Option<ClientAttestationDetails> clientAttestationDetails);
     
     /// <summary>
     ///     Processes a credential offer
     /// </summary>
     /// <param name="credentialOffer">The credential offer uri</param>
     /// <param name="language">Optional language tag</param>
-    Task<Validation<CredentialOfferMetadata>> ProcessOffer(Uri credentialOffer, Option<Locale> language);
+    Task<Validation<CredentialOfferMetadata>> ProcessOffer(
+        Uri credentialOffer, 
+        Option<Locale> language);
 
     /// <summary>
     ///     Requests a verifiable credential using the pre-authorized code flow.
     /// </summary>
     /// ///
     /// <param name="credentialOfferMetadata">Credential offer and Issuer Metadata</param>
+    /// <param name="clientAttestationDetails">The client attestation details</param>
     /// <param name="transactionCode">The Transaction Code.</param>
     Task<Validation<IEnumerable<CredentialSetRecord>>> AcceptOffer(
         CredentialOfferMetadata credentialOfferMetadata,
+        Option<ClientAttestationDetails> clientAttestationDetails,
         string? transactionCode);
 }
