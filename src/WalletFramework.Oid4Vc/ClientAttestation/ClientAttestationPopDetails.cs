@@ -15,7 +15,7 @@ public record ClientAttestationPopDetails
         Nonce = nonce;
     }
 
-    public static ClientAttestationPopDetails CreateClientAttestationPopOptions(string clientId = "https://oob.lissi.io", string? nonce = null)
+    public static ClientAttestationPopDetails CreateClientAttestationPopOptions(string clientId, string? nonce = null)
     {
         if (IsNullOrWhiteSpace(clientId))
         {
