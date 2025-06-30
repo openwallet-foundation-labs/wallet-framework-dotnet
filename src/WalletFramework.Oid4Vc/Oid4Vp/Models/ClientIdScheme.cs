@@ -84,4 +84,19 @@ public record ClientIdScheme
     ///     Implicitly converts the input to a client ID scheme.
     /// </summary>
     public static implicit operator ClientIdScheme(string input) => CreateClientIdScheme(input);
+
+    /// <summary>
+    ///     Implicitly converts a client ID scheme to its string representation. 
+    /// </summary>
+    public static implicit operator string(ClientIdScheme clientIdScheme)
+        => clientIdScheme.Value switch
+        {
+            X509SanDns => X509SanDnsScheme,
+            RedirectUri => RedirectUriScheme,
+            Did => DidScheme,
+            ClientIdSchemeValue.VerifierAttestation => VerifierAttestationScheme,
+            _ => throw new InvalidOperationException($"Client ID Scheme {clientIdScheme.Value} is not supported")
+        };
 }
+
+
