@@ -200,7 +200,7 @@ public class Oid4VpClientService : IOid4VpClientService
                         txDataBase64UrlStringsOption,
                         txDataHashesAsHexOption,
                         txDataHashesAlgOption,
-                        $"{authorizationRequest.ClientIdScheme}:{authorizationRequest.ClientId}",
+                        authorizationRequest.ClientIdScheme + ":" + authorizationRequest.ClientId,
                         authorizationRequest.Nonce);
 
                     presentedCredential = sdJwt;
