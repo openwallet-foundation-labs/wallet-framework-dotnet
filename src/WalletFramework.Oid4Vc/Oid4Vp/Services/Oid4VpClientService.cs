@@ -200,7 +200,7 @@ public class Oid4VpClientService : IOid4VpClientService
                         txDataBase64UrlStringsOption,
                         txDataHashesAsHexOption,
                         txDataHashesAlgOption,
-                        authorizationRequest.ClientIdScheme + ":" + authorizationRequest.ClientId, 
+                        authorizationRequest.ClientIdScheme + ":" + authorizationRequest.ClientId,
                         authorizationRequest.Nonce);
 
                     presentedCredential = sdJwt;
@@ -225,7 +225,7 @@ public class Oid4VpClientService : IOid4VpClientService
 
                     var mdoc = mdocRecord.Mdoc.SelectivelyDisclose(toDisclose);
 
-                    var handover = authorizationRequest.ToVpHandover() 
+                    var handover = authorizationRequest.ToVpHandover();
                     mdocNonce = handover.MdocGeneratedNonce;
                     var sessionTranscript = handover.ToSessionTranscript();
                     var authenticatedMdoc = await _mdocAuthenticationService.Authenticate(
