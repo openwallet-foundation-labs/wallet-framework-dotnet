@@ -52,6 +52,8 @@ internal static class DcqlFun
         List<CredentialRequirement> missing)
     {
         var sets = new List<PresentationCandidateSet>();
+        var alternativeCredentialIds = new List<string>();
+        
         foreach (var setQuery in credentialSetQueries)
         {
             var firstMatchingOption = setQuery.Options
@@ -69,11 +71,30 @@ internal static class DcqlFun
             if (firstMatchingOption != default)
             {
                 sets.Add(new PresentationCandidateSet(firstMatchingOption.SetCandidates, setQuery.Required));
+                
+                // Mark credential IDs from alternative options in this set as alternatives
+                // (since one option was satisfied, the others are alternatives)
+                foreach (var option in setQuery.Options)
+                {
+                    if (option.Ids.Select(id => id.AsString()).SequenceEqual(firstMatchingOption.Option.Ids.Select(id => id.AsString())))
+                        continue;
+                        
+                    foreach (var id in option.Ids)
+                    {
+                        alternativeCredentialIds.Add(id.AsString());
+                    }
+                }
             }
         }
+        
+        // Filter out missing credentials that are only alternatives (not needed for any other credential set)
+        var filteredMissing = missing
+            .Where(requirement => !alternativeCredentialIds.Contains(requirement.GetIdentifier()))
+            .ToList();
+        
         return new CandidateQueryResult(
             sets.Count > 0 ? sets : Option<List<PresentationCandidateSet>>.None,
-            missing.Count > 0 ? missing : Option<List<CredentialRequirement>>.None
+            filteredMissing.Count > 0 ? filteredMissing : Option<List<CredentialRequirement>>.None
         );
     }
 }
