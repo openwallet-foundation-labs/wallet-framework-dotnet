@@ -14,7 +14,7 @@ public static class DcApiRequestBatchFun
     /// <returns>The first request item with the specified protocol, or None if not found.</returns>
     public static Option<DcApiRequestItem> GetFirstVpRequest(this DcApiRequestBatch batch)
     {
-        var firstRequest = batch.Requests.FirstOrDefault(request => request.Protocol == "openid4vp");
+        var firstRequest = batch.Requests.FirstOrDefault(request => request.Protocol.Contains("openid4vp"));
         return firstRequest ?? Option<DcApiRequestItem>.None;
     }
 } 

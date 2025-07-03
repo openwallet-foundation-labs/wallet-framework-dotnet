@@ -48,7 +48,7 @@ public class DcqlService(
     {
         var vpToken = presentationMaps.ToDictionary(
             presentationItem => presentationItem.Identifier,
-            presentationItem => presentationItem.Presentation);
+            presentationItem => new List<string>(){presentationItem.Presentation});
         
         return new AuthorizationResponse
         {
