@@ -9,9 +9,10 @@ using WalletFramework.Oid4Vc.Oid4Vp.Dcql.Models;
 using WalletFramework.Oid4Vc.Oid4Vp.Errors;
 using WalletFramework.Oid4Vc.Oid4Vp.PresentationExchange.Models;
 using WalletFramework.Oid4Vc.Oid4Vp.TransactionDatas;
-using static WalletFramework.Oid4Vc.Oid4Vp.Models.ClientIdScheme;
 using WalletFramework.Oid4Vc.Qes.Authorization;
 using WalletFramework.Oid4Vc.RelyingPartyAuthentication;
+using WalletFramework.Oid4Vc.Oid4Vp.DcApi.Models;
+using static WalletFramework.Oid4Vc.Oid4Vp.Models.ClientIdScheme;
 
 namespace WalletFramework.Oid4Vc.Oid4Vp.Models;
 
@@ -21,6 +22,7 @@ namespace WalletFramework.Oid4Vc.Oid4Vp.Models;
 public record AuthorizationRequest
 {
     public const string DirectPost = "direct_post";
+
     public const string DirectPostJwt = "direct_post.jwt";
 
     private const string VpToken = "vp_token";
@@ -158,6 +160,19 @@ public record AuthorizationRequest
     }
 
     /// <summary>
+    ///     Creates a new instance of the <see cref="AuthorizationRequest" /> class from a <see cref="DcApiRequest" />.
+    /// </summary>
+    /// <param name="dcApiRequest">The DC-API request to convert.</param>
+#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring as nullable.
+    public AuthorizationRequest(DcApiRequest dcApiRequest)
+#pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring as nullable.
+    {
+        Nonce = dcApiRequest.Nonce;
+        DcqlQuery = dcApiRequest.DcqlQuery;
+        ResponseMode = dcApiRequest.ResponseMode;
+    }
+
+    /// <summary>
     ///     Creates a new instance of the <see cref="AuthorizationRequest" /> class.
     /// </summary>
     /// <param name="authorizationRequestJson">The json representation of the authorization request.</param>
@@ -190,15 +205,15 @@ public record AuthorizationRequest
         }
     }
 
-    private static Validation<AuthorizationRequestCancellation, AuthorizationRequest> CreateAuthorizationRequest(
+    public static Validation<AuthorizationRequestCancellation, AuthorizationRequest> CreateAuthorizationRequest(
         JObject authRequestJObject)
     {
         var responseUriOption = AuthorizationRequestExtensions.GetResponseUriMaybe(authRequestJObject);
-        if (!IsHaipConform(authRequestJObject))
-        {
-            var error = new InvalidRequestError("The authorization request does not match the HAIP");
-            return new AuthorizationRequestCancellation(responseUriOption, [error]);
-        }
+        // if (!IsHaipConform(authRequestJObject))
+        // {
+        //     var error = new InvalidRequestError("The authorization request does not match the HAIP");
+        //     return new AuthorizationRequestCancellation(responseUriOption, [error]);
+        // }
             
         var authRequestValidation = 
             authRequestJObject.ToObject<AuthorizationRequest>()
