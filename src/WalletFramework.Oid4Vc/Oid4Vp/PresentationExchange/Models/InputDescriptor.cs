@@ -156,9 +156,17 @@ public static class InputDescriptorFun
                 .Select<Field, OneOf<Vct, DocType>>(field =>
                 {
                     return DocType.ValidDoctype(field.Filter!.Const!).UnwrapOrThrow();
-                });
+                })
+                .ToList();
 
-            result = types?.ToList() ?? [];
+            if (types == null || !types.Any())
+            {
+                types = DocType.ValidDoctype(inputDescriptor.Id).Match(
+                    docType => [docType],
+                    _ => new List<OneOf<Vct, DocType>>());
+            }
+
+            result = types;
         }
 
         return result.Count != 0 ? result[0] : Option<OneOf<Vct, DocType>>.None;

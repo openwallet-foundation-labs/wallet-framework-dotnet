@@ -3,6 +3,7 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using WalletFramework.Core.Functional;
 using WalletFramework.Core.Json;
+using WalletFramework.Oid4Vc.Oid4Vci.Authorization.Models;
 using static WalletFramework.Oid4Vc.Oid4Vci.CredOffer.GrantTypes.TransactionCode;
 
 namespace WalletFramework.Oid4Vc.Oid4Vci.CredOffer.GrantTypes;
@@ -24,11 +25,18 @@ public record PreAuthorizedCode
     /// </summary>
     [JsonProperty("tx_code")]
     public Option<TransactionCode> TransactionCode { get; }
+    
+    /// <summary>
+    ///     Specifying whether the user must send a Transaction Code along with the Token Request in a Pre-Authorized Code Flow.
+    /// </summary>
+    [JsonProperty("authorization_server")]
+    public Option<AuthorizationServerId> AuthorizationServer { get; }
 
-    private PreAuthorizedCode(string value, Option<TransactionCode> transactionCode)
+    private PreAuthorizedCode(string value, Option<TransactionCode> transactionCode, Option<AuthorizationServerId> authorizationServer)
     {
         Value = value;
         TransactionCode = transactionCode;
+        AuthorizationServer = authorizationServer;
     }
     
     public static Option<PreAuthorizedCode> OptionalPreAuthorizedCode(JToken preAuthCode)
@@ -38,12 +46,17 @@ public record PreAuthorizedCode
             .ToOption()
             .OnSome(OptionalTransactionCode);
         
+        var authorizationServer = preAuthCode
+            .GetByKey("authorization_server")
+            .OnSuccess(AuthorizationServerId.ValidAuthorizationServerId)
+            .ToOption();
+        
         return preAuthCode
             .GetByKey("pre-authorized_code")
             .OnSuccess(token =>
             {
                 var value = token.ToString();
-                return new PreAuthorizedCode(value, transactionCode);
+                return new PreAuthorizedCode(value, transactionCode, authorizationServer);
             })
             .ToOption();
     }

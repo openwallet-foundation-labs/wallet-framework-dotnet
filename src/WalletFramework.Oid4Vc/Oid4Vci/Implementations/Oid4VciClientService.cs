@@ -20,11 +20,11 @@ using WalletFramework.Core.Localization;
 using WalletFramework.Core.String;
 using WalletFramework.MdocLib;
 using WalletFramework.MdocVc;
+using WalletFramework.Oid4Vc.ClientAttestation;
 using WalletFramework.Oid4Vc.CredentialSet;
 using WalletFramework.Oid4Vc.CredentialSet.Models;
 using WalletFramework.Oid4Vc.Oid4Vci.Authorization.DPop.Models;
 using WalletFramework.Oid4Vc.Oid4Vci.CredentialNonce.Abstractions;
-using WalletFramework.Oid4Vc.Oid4Vci.CredResponse;
 using WalletFramework.Oid4Vc.Oid4Vp.Models;
 using WalletFramework.SdJwtVc.Models;
 using WalletFramework.SdJwtVc.Services.SdJwtVcHolderService;
@@ -57,6 +57,7 @@ public class Oid4VciClientService : IOid4VciClientService
     public Oid4VciClientService(
         IAgentProvider agentProvider,
         IAuthFlowSessionStorage authFlowSessionAuthFlowSessionStorage,
+        IClientAttestationService clientAttestationService,
         ICredentialOfferService credentialOfferService,
         ICredentialRequestService credentialRequestService,
         ICredentialSetStorage credentialSetStorage,
@@ -69,6 +70,7 @@ public class Oid4VciClientService : IOid4VciClientService
     {
         _agentProvider = agentProvider;
         _authFlowSessionStorage = authFlowSessionAuthFlowSessionStorage;
+        _clientAttestationService = clientAttestationService;
         _credentialOfferService = credentialOfferService;
         _credentialRequestService = credentialRequestService;
         _credentialSetStorage = credentialSetStorage;
@@ -83,6 +85,7 @@ public class Oid4VciClientService : IOid4VciClientService
     private readonly HttpClient _httpClient;
     private readonly IAgentProvider _agentProvider;
     private readonly IAuthFlowSessionStorage _authFlowSessionStorage;
+    private readonly IClientAttestationService _clientAttestationService;
     private readonly ICredentialOfferService _credentialOfferService;
     private readonly ICredentialRequestService _credentialRequestService;
     private readonly ICredentialSetStorage _credentialSetStorage;
@@ -93,7 +96,7 @@ public class Oid4VciClientService : IOid4VciClientService
     private readonly ITokenService _tokenService;
     
     /// <inheritdoc />
-    public async Task<Uri> InitiateAuthFlow(CredentialOfferMetadata offer, ClientOptions clientOptions)
+    public async Task<Uri> InitiateAuthFlow(CredentialOfferMetadata offer, ClientOptions clientOptions, Option<ClientAttestationDetails> clientAttestationDetails)
     {
         var authorizationCodeParameters = CreateAndStoreCodeChallenge();
         var sessionId = AuthFlowSessionState.CreateAuthFlowSessionState();
@@ -150,7 +153,7 @@ public class Oid4VciClientService : IOid4VciClientService
         
         var authorizationRequestUri = authServerMetadata.PushedAuthorizationRequestEndpoint.IsNullOrEmpty()
             ? new Uri(authServerMetadata.AuthorizationEndpoint + vciAuthorizationRequest.ToQueryString())
-            : await GetRequestUriUsingPushedAuthorizationRequest(authServerMetadata, vciAuthorizationRequest);
+            : await GetRequestUriUsingPushedAuthorizationRequest(authServerMetadata, vciAuthorizationRequest, clientAttestationDetails);
         
         var authorizationData = new AuthorizationData(
             clientOptions,
@@ -170,7 +173,7 @@ public class Oid4VciClientService : IOid4VciClientService
         return authorizationRequestUri;
     }
 
-    public async Task<Uri> InitiateAuthFlow(Uri uri, ClientOptions clientOptions, Option<Locale> language, Option<OneOf<Vct, DocType>> credentialType, Option<int> specVersion)
+    public async Task<Uri> InitiateAuthFlow(Uri uri, ClientOptions clientOptions, Option<ClientAttestationDetails> clientAttestationDetails, Option<Locale> language, Option<OneOf<Vct, DocType>> credentialType, Option<int> specVersion)
     {
         var locale = language.Match(
             some => some,
@@ -224,7 +227,7 @@ public class Oid4VciClientService : IOid4VciClientService
                 
                 var authorizationRequestUri = authServerMetadata.PushedAuthorizationRequestEndpoint.IsNullOrEmpty()
                     ? new Uri(authServerMetadata.AuthorizationEndpoint + vciAuthorizationRequest.ToQueryString())
-                    : await GetRequestUriUsingPushedAuthorizationRequest(authServerMetadata, vciAuthorizationRequest);
+                    : await GetRequestUriUsingPushedAuthorizationRequest(authServerMetadata, vciAuthorizationRequest, clientAttestationDetails);
                 
                 //TODO: Select multiple configurationIds
                 var authorizationData = new AuthorizationData(
@@ -250,9 +253,16 @@ public class Oid4VciClientService : IOid4VciClientService
             );
     }
 
-    private async Task<Uri> GetRequestUriUsingPushedAuthorizationRequest(AuthorizationServerMetadata authorizationServerMetadata, VciAuthorizationRequest vciAuthorizationRequest)
+    private async Task<Uri> GetRequestUriUsingPushedAuthorizationRequest(AuthorizationServerMetadata authorizationServerMetadata, VciAuthorizationRequest vciAuthorizationRequest, Option<ClientAttestationDetails> clientAttestationDetails)
     {
         _httpClient.DefaultRequestHeaders.Clear();
+        
+        await clientAttestationDetails.IfSomeAsync(async attestationDetails =>
+        {
+            var combinedWalletAttestation = await _clientAttestationService.GetCombinedWalletAttestationAsync(attestationDetails, authorizationServerMetadata);
+            _httpClient.AddClientAttestationPopHeader(combinedWalletAttestation);
+        });
+        
         var response = await _httpClient.PostAsync(
             authorizationServerMetadata.PushedAuthorizationRequestEndpoint,
             vciAuthorizationRequest.ToFormUrlEncoded()
@@ -266,7 +276,7 @@ public class Oid4VciClientService : IOid4VciClientService
                        + "&request_uri=" + System.Net.WebUtility.UrlEncode(parResponse.RequestUri.ToString()));
     }
     
-    public async Task<Validation<IEnumerable<CredentialSetRecord>>> AcceptOffer(CredentialOfferMetadata credentialOfferMetadata, string? transactionCode)
+    public async Task<Validation<IEnumerable<CredentialSetRecord>>> AcceptOffer(CredentialOfferMetadata credentialOfferMetadata, Option<ClientAttestationDetails> clientAttestationDetails, string? transactionCode)
     {
         var issuerMetadata = credentialOfferMetadata.IssuerMetadata;
         
@@ -283,10 +293,11 @@ public class Oid4VciClientService : IOid4VciClientService
         };
 
         var authorizationServerMetadata = await FetchAuthorizationServerMetadataAsync(issuerMetadata, credentialOfferMetadata.CredentialOffer);
-
+        
         var token = await _tokenService.RequestToken(
             tokenRequest,
             authorizationServerMetadata,
+            clientAttestationDetails,
             issuerMetadata.CredentialNonceEndpoint);
 
         // TODO: Support multiple configs
@@ -372,7 +383,7 @@ public class Oid4VciClientService : IOid4VciClientService
     }
 
     /// <inheritdoc />
-    public async Task<Validation<IEnumerable<CredentialSetRecord>>> RequestCredentialSet(IssuanceSession issuanceSession)
+    public async Task<Validation<IEnumerable<CredentialSetRecord>>> RequestCredentialSet(IssuanceSession issuanceSession, Option<ClientAttestationDetails> clientAttestationDetails)
     {
         var context = await _agentProvider.GetContextAsync();
         
@@ -404,6 +415,7 @@ public class Oid4VciClientService : IOid4VciClientService
         var token = await _tokenService.RequestToken(
             tokenRequest,
             session.AuthorizationData.AuthorizationServerMetadata,
+            clientAttestationDetails,
             session.AuthorizationData.IssuerMetadata.CredentialNonceEndpoint);
         
         //TODO: Make sure that it does not always request all available credConfigurations
@@ -500,7 +512,7 @@ public class Oid4VciClientService : IOid4VciClientService
     
     //TODO: Refactor this C'' method into current flows (too much duplicate code)
     /// <inheritdoc />
-    public async Task<Validation<IEnumerable<OnDemandCredentialSet>>> RequestOnDemandCredentialSet(IssuanceSession issuanceSession, AuthorizationRequest authorizationRequest)
+    public async Task<Validation<IEnumerable<OnDemandCredentialSet>>> RequestOnDemandCredentialSet(IssuanceSession issuanceSession, AuthorizationRequest authorizationRequest, Option<ClientAttestationDetails> clientAttestationDetails)
     {
         var context = await _agentProvider.GetContextAsync();
         
@@ -532,6 +544,7 @@ public class Oid4VciClientService : IOid4VciClientService
         var token = await _tokenService.RequestToken(
             tokenRequest,
             session.AuthorizationData.AuthorizationServerMetadata,
+            clientAttestationDetails,
             session.AuthorizationData.IssuerMetadata.CredentialNonceEndpoint);
 
         var credentials = new List<(CredentialSetRecord, List<ICredential>)>();
@@ -711,9 +724,7 @@ public class Oid4VciClientService : IOid4VciClientService
             var getAuthServerResponse = await _httpClient.GetAsync(authServerUrl);
             
             if (!getAuthServerResponse.IsSuccessStatusCode)
-                throw new HttpRequestException(
-                    $"Failed to get authorization server metadata. Status Code is: {getAuthServerResponse.StatusCode}"
-                );
+                continue;
             
             var content = await getAuthServerResponse.Content.ReadAsStringAsync();
         
@@ -724,9 +735,6 @@ public class Oid4VciClientService : IOid4VciClientService
             authorizationServerMetadatas.Add(authServer);
         }
 
-        if (authorizationServerMetadatas.Count == 1)
-            return authorizationServerMetadatas.First();
-
         return credentialOffer.Match(
             Some: offer =>
             {
@@ -734,22 +742,38 @@ public class Oid4VciClientService : IOid4VciClientService
                     from code in grants.AuthorizationCode
                     select code;
 
-                return credentialOfferAuthCodeGrantType.Match(
-                    Some: code => authorizationServerMetadatas.Find(authServer => authServer.SupportsAuthCodeFlow) ??
-                            throw new InvalidOperationException("No suitable Authorization Server found"),
+                return  credentialOfferAuthCodeGrantType.Match(
+                    Some: code => code.AuthorizationServer.Match(
+                        Some: requestedAuthServer => 
+                            authorizationServerMetadatas.Find(authServer => 
+                                authServer.Issuer == requestedAuthServer.ToString())
+                            ?? throw new InvalidOperationException("No suitable Authorization Server found"),
+                        None: () => authorizationServerMetadatas.Find(authServer => authServer.SupportsAuthCodeFlow)
+                                    ?? authorizationServerMetadatas.FirstOrDefault()
+                                    ?? throw new InvalidOperationException("No suitable Authorization Server found")),
                     None: () =>
                     {
                         var credentialOfferPreAuthGrantType = from grants in offer.Grants 
-                            from code in grants.AuthorizationCode
+                            from code in grants.PreAuthorizedCode
                             select code;
 
                         return credentialOfferPreAuthGrantType.Match(
-                            Some: preAuth => authorizationServerMetadatas.Find(authServer => authServer.SupportsPreAuthFlow)
-                                             ?? throw new InvalidOperationException("No suitable Authorization Server found"),
+                            Some: preAuth =>
+                            {
+                                return preAuth.AuthorizationServer.Match(
+                                    Some: requestedAuthServer => 
+                                        authorizationServerMetadatas.Find(authServer =>
+                                            authServer.Issuer == requestedAuthServer.ToString()) 
+                                        ?? throw new InvalidOperationException("No suitable Authorization Server found"),
+                                    None: () => authorizationServerMetadatas.Find(authServer => authServer.SupportsPreAuthFlow) 
+                                                ?? authorizationServerMetadatas.FirstOrDefault()
+                                                ?? throw new InvalidOperationException("No suitable Authorization Server found"));
+                            },
                             None: () => authorizationServerMetadatas.First());
                     });
             },
-            None: () => authorizationServerMetadatas.Find(authServer => authServer.SupportsAuthCodeFlow) 
+            None: () => authorizationServerMetadatas.Find(authServer => authServer.SupportsAuthCodeFlow)
+                        ?? authorizationServerMetadatas.FirstOrDefault()
                         ?? throw new InvalidOperationException("No suitable Authorization Server found"));
     }
     

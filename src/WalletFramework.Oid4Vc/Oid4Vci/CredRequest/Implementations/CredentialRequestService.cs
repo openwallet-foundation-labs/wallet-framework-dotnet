@@ -7,6 +7,7 @@ using WalletFramework.Core.Functional;
 using WalletFramework.Core.Json;
 using WalletFramework.Core.Uri;
 using WalletFramework.MdocLib.Security;
+using WalletFramework.Oid4Vc.ClientAttestation;
 using WalletFramework.Oid4Vc.Oid4Vci.AuthFlow.Models;
 using WalletFramework.Oid4Vc.Oid4Vci.Authorization.DPop.Abstractions;
 using WalletFramework.Oid4Vc.Oid4Vci.Authorization.DPop.Models;
@@ -193,8 +194,8 @@ public class CredentialRequestService : ICredentialRequestService
 
             var response = await token.Match(
                 async authToken => await _httpClient
-                    .WithAuthorizationHeader(authToken)
-                    .PostAsync(issuerMetadata.CredentialEndpoint, content),
+                        .WithAuthorizationHeader(authToken)
+                        .PostAsync(issuerMetadata.CredentialEndpoint, content),
                 async dPopToken =>
                 {
                     var config = dPopToken.DPop.Config with
@@ -206,6 +207,7 @@ public class CredentialRequestService : ICredentialRequestService
                     var dPopResponse = await _dPopHttpClient.Post(
                         issuerMetadata.CredentialEndpoint,
                         config,
+                        Option<CombinedWalletAttestation>.None, 
                         () => content);
 
                     return dPopResponse.ResponseMessage;

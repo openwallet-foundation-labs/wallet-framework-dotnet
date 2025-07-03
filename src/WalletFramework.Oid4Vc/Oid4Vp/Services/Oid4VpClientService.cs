@@ -75,6 +75,7 @@ public class Oid4VpClientService : IOid4VpClientService
         IMdocStorage mDocStorage,
         IOid4VpHaipClient oid4VpHaipClient,
         IOid4VpRecordService oid4VpRecordService,
+        IClientAttestationService clientAttestationService,
         ICandidateQueryService candidateQueryService,
         ISdJwtVcHolderService sdJwtVcHolderService)
     {
@@ -88,6 +89,7 @@ public class Oid4VpClientService : IOid4VpClientService
         _mdocAuthenticationService = mdocAuthenticationService;
         _oid4VpHaipClient = oid4VpHaipClient;
         _oid4VpRecordService = oid4VpRecordService;
+        _clientAttestationService = clientAttestationService;
         _candidateQueryService = candidateQueryService;
         _sdJwtVcHolderService = sdJwtVcHolderService;
     }
@@ -103,6 +105,7 @@ public class Oid4VpClientService : IOid4VpClientService
     private readonly ICandidateQueryService _candidateQueryService;
     private readonly IOid4VpHaipClient _oid4VpHaipClient;
     private readonly IOid4VpRecordService _oid4VpRecordService;
+    private readonly IClientAttestationService _clientAttestationService;
     private readonly ISdJwtVcHolderService _sdJwtVcHolderService;
 
     public async Task<Option<Uri>> AbortAuthorizationRequest(AuthorizationRequestCancellation cancellation)
@@ -140,7 +143,7 @@ public class Oid4VpClientService : IOid4VpClientService
     public async Task<Option<Uri>> AcceptAuthorizationRequest(
         AuthorizationRequest authorizationRequest,
         IEnumerable<SelectedCredential> selectedCredentials,
-        CombinedWalletAttestation? clientAttestation = null)
+        Option<ClientAttestationDetails> clientAttestationDetails)
     {
         var credentials = selectedCredentials.ToList();
 
@@ -198,7 +201,7 @@ public class Oid4VpClientService : IOid4VpClientService
                         txDataBase64UrlStringsOption,
                         txDataHashesAsHexOption,
                         txDataHashesAlgOption,
-                        $"{authorizationRequest.ClientIdScheme}:{authorizationRequest.ClientId}",
+                        authorizationRequest.ClientIdScheme + ":" + authorizationRequest.ClientId,
                         authorizationRequest.Nonce);
 
                     presentedCredential = sdJwt;
@@ -264,8 +267,12 @@ public class Oid4VpClientService : IOid4VpClientService
         // TODO: Introduce timeout
         var httpClient = _httpClientFactory.CreateClient();
         httpClient.DefaultRequestHeaders.Clear();
-        if (clientAttestation != null)
-            httpClient.AddClientAttestationPopHeader(clientAttestation);
+        
+        await clientAttestationDetails.IfSomeAsync(async details =>
+        {
+            var combinedWalletAttestation = await _clientAttestationService.GetCombinedWalletAttestationAsync(details, authorizationRequest);
+            httpClient.AddClientAttestationPopHeader(combinedWalletAttestation);
+        });
 
         // ToDo: when to delete these records?
         var context = await _agentProvider.GetContextAsync();

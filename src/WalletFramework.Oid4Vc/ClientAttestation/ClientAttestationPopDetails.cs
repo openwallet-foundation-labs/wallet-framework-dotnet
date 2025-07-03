@@ -5,26 +5,23 @@ namespace WalletFramework.Oid4Vc.ClientAttestation;
 
 public record ClientAttestationPopDetails
 {
-    public string Audience { get; }
-    
-    public string Issuer { get; }
+    public string ClientId { get; }
     
     public Option<string> Nonce { get; }
     
-    private ClientAttestationPopDetails(string audience, string issuer, string? nonce)
+    private ClientAttestationPopDetails(string clientId, string? nonce)
     {
-        Audience = audience;
-        Issuer = issuer;
+        ClientId = clientId;
         Nonce = nonce;
     }
 
-    public static ClientAttestationPopDetails CreateClientAttestationPopOptions(string audience, string issuer, string? nonce)
+    public static ClientAttestationPopDetails CreateClientAttestationPopOptions(string clientId, string? nonce = null)
     {
-        if (IsNullOrWhiteSpace(audience) || IsNullOrWhiteSpace(issuer))
+        if (IsNullOrWhiteSpace(clientId))
         {
             throw new ArgumentException("Audience and Issuer must be provided.");
         }
 
-        return new ClientAttestationPopDetails(audience, issuer, nonce);
+        return new ClientAttestationPopDetails(clientId, nonce);
     }
 }
