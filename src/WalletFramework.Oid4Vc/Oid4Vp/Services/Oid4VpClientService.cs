@@ -729,7 +729,7 @@ public class Oid4VpClientService : IOid4VpClientService
         return presentationRequest;
     }
 
-    public async Task<AuthorizationResponse> AcceptDcApiRequest(
+    public async Task<EncryptedAuthorizationResponse> AcceptDcApiRequest(
         AuthorizationRequest authorizationRequest,
         IEnumerable<SelectedCredential> selectedCredentials)
     {
@@ -837,6 +837,20 @@ public class Oid4VpClientService : IOid4VpClientService
             presentations.Select(tuple => tuple.PresentationMap).ToArray()
         );
 
-        return authorizationResponse;
+        try
+        {
+            var encrypted = await _authorizationResponseEncryptionService.Encrypt(
+                authorizationResponse,
+                authorizationRequest,
+                mdocNonce
+        );
+            
+            return encrypted;
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+            throw;
+        }
     }
 }

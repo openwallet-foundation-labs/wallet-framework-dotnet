@@ -2,6 +2,7 @@ using LanguageExt;
 using WalletFramework.Core.Functional;
 using WalletFramework.Oid4Vc.ClientAttestation;
 using WalletFramework.Oid4Vc.Oid4Vci.AuthFlow.Models;
+using WalletFramework.Oid4Vc.Oid4Vp.AuthResponse.Encryption;
 using WalletFramework.Oid4Vc.Oid4Vp.DcApi.Models;
 using WalletFramework.Oid4Vc.Oid4Vp.Models;
 
@@ -61,7 +62,7 @@ public interface IOid4VpClientService
     
     Task<PresentationRequest> ProcessDcApiRequest(AuthorizationRequest dcApiRequest);
     
-    Task<AuthorizationResponse> AcceptDcApiRequest(
+    Task<EncryptedAuthorizationResponse> AcceptDcApiRequest(
         AuthorizationRequest authorizationRequest,
         IEnumerable<SelectedCredential> selectedCredentials);
 }
