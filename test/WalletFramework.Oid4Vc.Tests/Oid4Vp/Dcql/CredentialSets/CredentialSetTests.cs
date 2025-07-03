@@ -64,6 +64,29 @@ public class CredentialSetTests
         candidatesList.Count.Should().Be(2, "should have a candidate for each credential query in the set");
         candidateSet.IsRequired.Should().BeTrue();
     }
+    
+    [Fact]
+    public void Candidate_Query_Result_Can_Be_Built_Correctly_From_Dcql_With_One_Credential_Set_And_Filter_Missing_Credentials_That_Are_Only_Alternatives()
+    {
+        // Arrange
+        var query = DcqlSamples.GetDcqlQueryWithOneCredentialSetAndMultipleSingleOptions;
+        var idCard = SdJwtSamples.GetIdCardCredential();
+        var credentials = new List<ICredential> { idCard };
+
+        // Act
+        var result = query.ProcessWith(credentials);
+
+        // Assert
+        result.MissingCredentials.IsNone.Should().BeTrue();
+        result.Candidates.IsSome.Should().BeTrue();
+        var sets = result.Candidates.IfNone([]);
+        var setsList = sets.ToList();
+        setsList.Count.Should().Be(1, "only one set should be satisfied by the provided credentials");
+        var candidateSet = setsList[0];
+        var candidatesList = candidateSet.Candidates.ToList();
+        candidatesList.Count.Should().Be(1, "should have a candidate for each credential query in the set");
+        candidateSet.IsRequired.Should().BeTrue();
+    }
 
     [Fact]
     public void Candidate_Set_Wont_Be_Built_When_A_Credential_is_Missing()

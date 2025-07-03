@@ -52,6 +52,10 @@ internal static class DcqlFun
         List<CredentialRequirement> missing)
     {
         var sets = new List<PresentationCandidateSet>();
+        var alternativeCredentialIds = new List<string>();
+        var satisfiedCredentialSets = new List<CredentialSetQuery>();
+        
+        // First pass: identify satisfied credential sets and collect alternative credential IDs
         foreach (var setQuery in credentialSetQueries)
         {
             var firstMatchingOption = setQuery.Options
@@ -69,11 +73,62 @@ internal static class DcqlFun
             if (firstMatchingOption != default)
             {
                 sets.Add(new PresentationCandidateSet(firstMatchingOption.SetCandidates, setQuery.Required));
+                satisfiedCredentialSets.Add(setQuery);
+                
+                // Mark credential IDs from alternative options in this set as alternatives
+                foreach (var option in setQuery.Options)
+                {
+                    if (option.Ids.Select(id => id.AsString()).SequenceEqual(firstMatchingOption.Option.Ids.Select(id => id.AsString())))
+                        continue;
+                        
+                    foreach (var id in option.Ids)
+                    {
+                        alternativeCredentialIds.Add(id.AsString());
+                    }
+                }
             }
         }
+        
+        // Second pass: identify credentials that are ONLY alternatives (not needed for any unsatisfied credential sets)
+        var onlyAlternativeCredentialIds = new List<string>();
+        foreach (var alternativeId in alternativeCredentialIds)
+        {
+            var isOnlyAlternative = true;
+            
+            // Check if this credential is needed for any unsatisfied credential sets
+            foreach (var setQuery in credentialSetQueries)
+            {
+                if (satisfiedCredentialSets.Contains(setQuery))
+                    continue; // Skip satisfied sets
+                    
+                // Check if this credential is needed in any option of this unsatisfied set
+                foreach (var option in setQuery.Options)
+                {
+                    if (option.Ids.Any(id => id.AsString() == alternativeId))
+                    {
+                        isOnlyAlternative = false;
+                        break;
+                    }
+                }
+                
+                if (!isOnlyAlternative)
+                    break;
+            }
+            
+            if (isOnlyAlternative)
+            {
+                onlyAlternativeCredentialIds.Add(alternativeId);
+            }
+        }
+        
+        // Filter out missing credentials that are ONLY alternatives
+        var filteredMissing = missing
+            .Where(requirement => !onlyAlternativeCredentialIds.Contains(requirement.GetIdentifier()))
+            .ToList();
+        
         return new CandidateQueryResult(
             sets.Count > 0 ? sets : Option<List<PresentationCandidateSet>>.None,
-            missing.Count > 0 ? missing : Option<List<CredentialRequirement>>.None
+            filteredMissing.Count > 0 ? filteredMissing : Option<List<CredentialRequirement>>.None
         );
     }
 }

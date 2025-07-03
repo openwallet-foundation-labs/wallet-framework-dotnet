@@ -106,6 +106,43 @@ public static class DcqlSamples
     }
   ]
 }";
+    
+    public const string DcqlQueryWithOneCredentialSetAndMultipleSingleOptionsJson = @"{
+  ""credentials"": [
+    {
+      ""id"": ""idcard"",
+      ""format"": ""dc+sd-jwt"",
+      ""meta"": {
+        ""vct_values"": [""ID-Card""]
+      },
+      ""claims"": [
+        {""path"": [""first_name""]},
+        {""path"": [""last_name""]},
+        {""path"": [""address"", ""street_address""]}
+      ]
+    },
+    {
+      ""id"": ""idcard2"",
+      ""format"": ""dc+sd-jwt"",
+      ""meta"": {
+        ""vct_values"": [""ID-Card-2""]
+      },
+      ""claims"": [
+        {""path"": [""first_name""]},
+        {""path"": [""last_name""]},
+        {""path"": [""address"", ""street_address""]}
+      ]
+    }
+  ],
+  ""credential_sets"": [
+    {
+      ""options"": [
+        [ ""idcard""],
+        [ ""idcard2""]
+      ]
+    }
+  ]
+}";
 
     public const string IdCardAndIdCard2NationalitiesSecondIndexQueryJson = @"{
             ""credentials"": [
@@ -194,7 +231,10 @@ public static class DcqlSamples
 
     public static DcqlQuery GetDcqlQueryWithNoClaims =>
         JsonConvert.DeserializeObject<DcqlQuery>(QueryStrWithNoClaims)!;
-
+    
+    public static DcqlQuery GetDcqlQueryWithOneCredentialSetAndMultipleSingleOptions =>
+        JsonConvert.DeserializeObject<DcqlQuery>(DcqlQueryWithOneCredentialSetAndMultipleSingleOptionsJson)!;
+    
     public static string GetDcqlQueryAsJsonStr() => GetJsonForTestCase("DcqlQuerySample");
 
     public static DcqlQuery GetIdCardAndIdCard2NationalitiesSecondIndexQuery() =>

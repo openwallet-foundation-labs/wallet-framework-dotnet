@@ -138,7 +138,7 @@ public static class CredentialQueryFun
                     : Option<OneOf<Vct, DocType>>.None;
             case Constants.MdocFormat:
                 return credentialQuery.Meta?.Doctype?.Any() == true
-                    ? Option<OneOf<Vct, DocType>>.Some(Vct.ValidVct(credentialQuery.Meta!.Doctype).UnwrapOrThrow())
+                    ? Option<OneOf<Vct, DocType>>.Some(DocType.ValidDoctype(credentialQuery.Meta!.Doctype).UnwrapOrThrow())
                     : Option<OneOf<Vct, DocType>>.None;
             default:
                 return Option<OneOf<Vct, DocType>>.None;
