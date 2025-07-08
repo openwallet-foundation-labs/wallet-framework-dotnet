@@ -97,6 +97,11 @@ public record ClientIdScheme
             ClientIdSchemeValue.VerifierAttestation => VerifierAttestationScheme,
             _ => throw new InvalidOperationException($"Client ID Scheme {clientIdScheme.Value} is not supported")
         };
+
+    public string AsString()
+    {
+        return this;
+    }
 }
 
 

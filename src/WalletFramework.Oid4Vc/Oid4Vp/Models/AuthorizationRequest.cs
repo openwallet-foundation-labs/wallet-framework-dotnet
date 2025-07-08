@@ -135,17 +135,17 @@ public record AuthorizationRequest
         string? state,
         VerifierAttestation[] verifierAttestations)
     {
-        // if (SupportedClientIdSchemes.Exists(supportedClientIdScheme =>
-        //         clientId.StartsWith($"{supportedClientIdScheme}:")))
-        // {
-        //     ClientIdScheme = clientId.Split(':')[0];
-        //     ClientId = clientId.Split(':')[1];
-        // }
-        // else
-        // {
-        //     ClientId = clientId;
-        //     ClientIdScheme = clientIdScheme;
-        // }
+        if (SupportedClientIdSchemes.Exists(supportedClientIdScheme =>
+                clientId.StartsWith($"{supportedClientIdScheme}:")))
+        {
+            ClientIdScheme = clientId.Split(':')[0];
+            ClientId = clientId.Split(':')[1];
+        }
+        else
+        {
+            ClientId = clientId;
+            ClientIdScheme = clientIdScheme;
+        }
 
         ClientMetadata = clientMetadata;
         ClientMetadataUri = clientMetadataUri;
