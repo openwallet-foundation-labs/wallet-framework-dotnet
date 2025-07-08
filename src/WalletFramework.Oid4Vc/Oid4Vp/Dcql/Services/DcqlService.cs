@@ -1,6 +1,7 @@
 using Hyperledger.Aries.Agents;
 using LanguageExt;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using WalletFramework.Core.Functional;
 using WalletFramework.Core.Credentials.Abstractions;
 using WalletFramework.Oid4Vc.Oid4Vci.Abstractions;
@@ -52,7 +53,7 @@ public class DcqlService(
         
         return new AuthorizationResponse
         {
-            VpToken = JsonConvert.SerializeObject(vpToken),
+            VpToken = JObject.FromObject(vpToken),
             State = authorizationRequest.State
         };
     }

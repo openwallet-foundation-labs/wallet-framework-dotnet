@@ -55,7 +55,13 @@ public record DcApiRequestItem
             .OnSuccess(token => token.ToJObject())
             .OnSuccess(x =>
             {
-                return Bla(AuthorizationRequest.CreateAuthorizationRequest(x));
+                var aa = x.GetByKey("request").UnwrapOrThrow();
+                // return Bla(AuthorizationRequest.CreateAuthorizationRequest(x));
+                var xx = 
+                    from a in RequestObject.FromStr(aa.ToString(), Option<string>.None)
+                    select a.ToAuthorizationRequest();
+
+                return Bla(xx);
             });
 
         var protocolValidation = requestItemJson
