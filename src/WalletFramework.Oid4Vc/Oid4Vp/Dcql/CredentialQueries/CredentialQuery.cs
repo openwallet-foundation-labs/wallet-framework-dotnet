@@ -50,6 +50,7 @@ public class CredentialQuery
     ///     specifies which combinations of claims for the credential are requested.
     /// </summary>
     [JsonProperty(ClaimSetsJsonKey)]
+    [JsonConverter(typeof(ClaimSetJsonConverter))]
     public IReadOnlyList<ClaimSet>? ClaimSets { get; set; }
 
     public static Validation<CredentialQuery> FromJObject(JObject json)
