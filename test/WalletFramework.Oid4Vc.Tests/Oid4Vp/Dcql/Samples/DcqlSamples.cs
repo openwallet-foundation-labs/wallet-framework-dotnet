@@ -201,8 +201,8 @@ public static class DcqlSamples
                         {""id"": {""value"": ""d""}, ""path"": [""first_name""]}
                     ],
                     ""claim_sets"": [
-                        {""claims"": [""a"", ""b"", ""d""]},
-                        {""claims"": [""a"", ""c""]}
+                        [""a"", ""b"", ""d""],
+                        [""a"", ""c""]
                     ]
                 }
             ]

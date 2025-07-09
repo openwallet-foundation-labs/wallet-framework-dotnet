@@ -24,7 +24,14 @@ public class ClaimSetJsonConverter : JsonConverter<IReadOnlyList<ClaimSet>>
     public override IReadOnlyList<ClaimSet> ReadJson(JsonReader reader, Type objectType, IReadOnlyList<ClaimSet>? existingValue, bool hasExistingValue, JsonSerializer serializer)
     {
         var array = JArray.Load(reader);
-        var result = ClaimSetFun.ValidateMany(array);
+        var result = array.TraverseAll(token =>
+        {
+            var innerArray = token.Type == JTokenType.Array 
+                ? (JArray)token 
+                : new JArray(token);
+
+            return ClaimSetFun.Validate(innerArray);
+        });
         
         return result.Match(
             list => list.ToList(),

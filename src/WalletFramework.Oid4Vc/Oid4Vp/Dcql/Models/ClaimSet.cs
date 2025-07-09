@@ -7,12 +7,7 @@ namespace WalletFramework.Oid4Vc.Oid4Vp.Dcql.Models;
 /// <summary>
 /// Represents a set of claim identifiers used in DCQL.
 /// </summary>
-public record ClaimSet
-{
-    public IReadOnlyList<ClaimIdentifier> Claims { get; }
-
-    public ClaimSet(IReadOnlyList<ClaimIdentifier> claims) => Claims = claims;
-}
+public record ClaimSet(IReadOnlyList<ClaimIdentifier> Claims);
 
 public static class ClaimSetFun
 {
