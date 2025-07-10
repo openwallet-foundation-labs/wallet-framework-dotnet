@@ -8,7 +8,7 @@ namespace WalletFramework.MdocLib.Reader;
 
 public record EngagementUri(Base64UrlString Value, CBORObject AsCbor)
 {
-    public const string Scheme = "mdoc://";
+    public const string Scheme = "mdoc:";
     
     public static Validation<EngagementUri> FromString(string input)
     {
