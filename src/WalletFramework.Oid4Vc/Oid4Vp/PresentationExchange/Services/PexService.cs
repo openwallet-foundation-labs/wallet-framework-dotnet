@@ -88,7 +88,7 @@ public class PexService(
         return new AuthorizationResponse
         {
             PresentationSubmission = presentationSubmission,
-            // VpToken = vpToken.Count > 1 ? JsonConvert.SerializeObject(vpToken) : vpToken[0],
+            VpToken = JObject.Parse(vpToken[0]),
             State = authorizationRequest.State
         };
     }
