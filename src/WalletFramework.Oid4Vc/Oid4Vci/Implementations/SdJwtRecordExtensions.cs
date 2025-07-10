@@ -1,4 +1,5 @@
 using System.Drawing;
+using System.IdentityModel.Tokens.Jwt;
 using SD_JWT.Models;
 using WalletFramework.Core.Credentials;
 using WalletFramework.Core.Cryptography.Models;
@@ -55,5 +56,18 @@ public static class SdJwtRecordExtensions
     internal static SdJwtDoc ToSdJwtDoc(this SdJwtRecord record)
     {
         return new SdJwtDoc(record.EncodedIssuerSignedJwt + "~" + string.Join("~", record.Disclosures) + "~");
+    }
+
+    public static Dictionary<string, string> GetClaims(this SdJwtRecord record)
+    {
+        var jwt = record.EncodedIssuerSignedJwt;
+        var decoded = new JwtSecurityToken(jwt);
+        
+        var payload = decoded.Claims
+            .Select(c => new { c.Type, c.Value })
+            // .Distinct(c => c.Type)
+            .Filter(arg => !arg.Type.Contains("_sd"))
+            .ToDictionary(c => c.Type, c => c.Value);
+        return payload;
     }
 }

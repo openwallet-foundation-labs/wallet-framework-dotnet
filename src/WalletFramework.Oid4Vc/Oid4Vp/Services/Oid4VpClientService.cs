@@ -723,7 +723,6 @@ public class Oid4VpClientService : IOid4VpClientService
 
     public async Task<PresentationRequest> ProcessDcApiRequest(AuthorizationRequest dcApiRequest)
     {
-        // var authorizationRequest = new AuthorizationRequest(dcApiRequest);
         var candidateQueryResult = await _candidateQueryService.Query(dcApiRequest);
         var presentationRequest = new PresentationRequest(dcApiRequest, candidateQueryResult);
         return presentationRequest;
@@ -783,13 +782,15 @@ public class Oid4VpClientService : IOid4VpClientService
                 case SdJwtRecord sdJwt:
                     format = Format.ValidFormat(sdJwt.Format).UnwrapOrThrow();
                     
+                    var audience = $"origin:https://{authorizationRequest.ClientId}";
+
                     presentation = await _sdJwtVcHolderService.CreatePresentation(
                         sdJwt,
                         [.. claims],
                         txDataBase64UrlStringsOption,
                         txDataHashesAsHexOption,
                         txDataHashesAlgOption,
-                        $"origin:{authorizationRequest.ClientId}",
+                        audience,
                         authorizationRequest.Nonce);
 
                     presentedCredential = sdJwt;
