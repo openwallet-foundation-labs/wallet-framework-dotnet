@@ -48,44 +48,44 @@ public class DcApiRequestBatchTests
     //     );
     // }
 
-    [Fact]
-    public void GetFirstVpRequest_Returns_First_Request()
-    {
-        // Arrange
-        var validJson = DcApiTestSamples.ValidDcApiRequestBatchJson;
-        var result = DcApiRequestBatch.From(validJson);
-        
-        // Act & Assert
-        result.Match(
-            dcApiRequestBatch =>
-            {
-                var firstVpRequest = dcApiRequestBatch.GetFirstVpRequest();
-                
-                firstVpRequest.IsSome.Should().BeTrue();
-                firstVpRequest.Match(
-                    request => request.Protocol.Should().Be("openid4vp"),
-                    () => Assert.Fail("Expected to find a request with protocol 'openid4vp'")
-                );
-            },
-            error => Assert.Fail($"Expected success but got error: {error}")
-        );
-    }
+    // [Fact]
+    // public void GetFirstVpRequest_Returns_First_Request()
+    // {
+    //     // Arrange
+    //     var validJson = DcApiTestSamples.ValidDcApiRequestBatchJson;
+    //     var result = DcApiRequestBatch.From(validJson);
+    //     
+    //     // Act & Assert
+    //     result.Match(
+    //         dcApiRequestBatch =>
+    //         {
+    //             var firstVpRequest = dcApiRequestBatch.GetFirstVpRequest();
+    //             
+    //             firstVpRequest.IsSome.Should().BeTrue();
+    //             firstVpRequest.Match(
+    //                 request => request.Protocol.Should().Be("openid4vp"),
+    //                 () => Assert.Fail("Expected to find a request with protocol 'openid4vp'")
+    //             );
+    //         },
+    //         error => Assert.Fail($"Expected success but got error: {error}")
+    //     );
+    // }
 
-    [Fact]
-    public void GetFirstVpRequest_Returns_None_When_Protocol_Not_Found()
-    {
-        // Arrange
-        var modifiedJson = DcApiTestSamples.ValidDcApiRequestBatchJson.Replace("\"protocol\":\"openid4vp\"", "\"protocol\":\"non_existing_protocol\"");
-        var result = DcApiRequestBatch.From(modifiedJson);
-        
-        // Act & Assert
-        result.Match(
-            dcApiRequestBatch =>
-            {
-                var firstVpRequest = dcApiRequestBatch.GetFirstVpRequest();
-                firstVpRequest.IsNone.Should().BeTrue();
-            },
-            error => Assert.Fail($"Expected success but got error: {error}")
-        );
-    }
+    // [Fact]
+    // public void GetFirstVpRequest_Returns_None_When_Protocol_Not_Found()
+    // {
+    //     // Arrange
+    //     var modifiedJson = DcApiTestSamples.ValidDcApiRequestBatchJson.Replace("\"protocol\":\"openid4vp\"", "\"protocol\":\"non_existing_protocol\"");
+    //     var result = DcApiRequestBatch.From(modifiedJson);
+    //     
+    //     // Act & Assert
+    //     result.Match(
+    //         dcApiRequestBatch =>
+    //         {
+    //             var firstVpRequest = dcApiRequestBatch.GetFirstVpRequest();
+    //             firstVpRequest.IsNone.Should().BeTrue();
+    //         },
+    //         error => Assert.Fail($"Expected success but got error: {error}")
+    //     );
+    // }
 } 

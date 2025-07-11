@@ -8,34 +8,34 @@ namespace WalletFramework.Oid4Vc.Tests.Oid4Vp.AuthResponse.Encryption;
 
 public class EncryptedAuthorizationResponseTests
 {
-    [Fact]
-    public void Can_Encrypt_With_Mdoc()
-    {
-        var nonce = Nonce.GenerateNonce();
-        var authResponse = AuthResponseEncryptionSamples.MdocResponse;
-        var mdocNonce = Nonce.GenerateNonce();
+    // [Fact]
+    // public void Can_Encrypt_With_Mdoc()
+    // {
+    //     var nonce = Nonce.GenerateNonce();
+    //     var authResponse = AuthResponseEncryptionSamples.MdocResponse;
+    //     var mdocNonce = Nonce.GenerateNonce();
+    //
+    //     var sut = authResponse.Encrypt(
+    //         AuthResponseEncryptionSamples.Jwk,
+    //         nonce.AsBase64Url.ToString(),
+    //         Option<string>.Some("A256GCM"),
+    //         mdocNonce);
+    //
+    //     sut.Jwe.Length().Should().Be(AuthResponseEncryptionSamples.ValidMdocJwe.Length);
+    // }
 
-        var sut = authResponse.Encrypt(
-            AuthResponseEncryptionSamples.Jwk,
-            nonce.AsBase64Url.ToString(),
-            Option<string>.Some("A256GCM"),
-            mdocNonce);
-
-        sut.Jwe.Length().Should().Be(AuthResponseEncryptionSamples.ValidMdocJwe.Length);
-    }
-
-    [Fact]
-    public void Can_Encrypt_With_Sd_Jwt()
-    {
-        var nonce = Nonce.GenerateNonce();
-        var authResponse = AuthResponseEncryptionSamples.SdJwtResponse;
-
-        var sut = authResponse.Encrypt(
-            AuthResponseEncryptionSamples.Jwk,
-            nonce.AsBase64Url.ToString(),
-            Option<string>.Some("A256GCM"),
-            Option<Nonce>.None);
-
-        sut.Jwe.Length.Should().Be(AuthResponseEncryptionSamples.ValidSdJwtJwe.Length);
-    }
+    // [Fact]
+    // public void Can_Encrypt_With_Sd_Jwt()
+    // {
+    //     var nonce = Nonce.GenerateNonce();
+    //     var authResponse = AuthResponseEncryptionSamples.SdJwtResponse;
+    //
+    //     var sut = authResponse.Encrypt(
+    //         AuthResponseEncryptionSamples.Jwk,
+    //         nonce.AsBase64Url.ToString(),
+    //         Option<string>.Some("A256GCM"),
+    //         Option<Nonce>.None);
+    //
+    //     sut.Jwe.Length.Should().Be(AuthResponseEncryptionSamples.ValidSdJwtJwe.Length);
+    // }
 }

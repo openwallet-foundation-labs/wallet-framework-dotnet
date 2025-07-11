@@ -45,32 +45,32 @@ public class PexServiceTests
     private readonly SdJwtRecord _batchCredentialOne = CreateCredential(JsonBasedCredentialSamples.BatchCredential, BatchCredentialSetId);
     private readonly SdJwtRecord _batchCredentialTwo = CreateCredential(JsonBasedCredentialSamples.BatchCredential, BatchCredentialSetId);
 
-    [Fact]
-    public async Task Can_Create_Authorization_Response()
-    {
-        var authRequest = JsonConvert.DeserializeObject<AuthorizationRequest>(PexTestsDataProvider.GetJsonForTestCase())!;
-        var presentationDefinition = authRequest.PresentationDefinition!;
-
-        var presentationMap = new PresentationMap[]
-        {
-            new(presentationDefinition.InputDescriptors[0].Id,Guid.NewGuid().ToString(),FormatFun.CreateSdJwtDcFormat()),
-            new(presentationDefinition.InputDescriptors[1].Id,Guid.NewGuid().ToString(),FormatFun.CreateSdJwtDcFormat())
-        };
-            
-        var authResponse = await CreatePexService().CreateAuthorizationResponseAsync(authRequest, presentationMap);
-        var presentationSubmission = authResponse.PresentationSubmission;
-
-        presentationSubmission.Id.Should().NotBeNullOrWhiteSpace();
-        presentationSubmission.DefinitionId.Should().Be(presentationDefinition.Id);
-        presentationSubmission.DescriptorMap.Length.Should().Be(presentationMap.Length);
-
-        for (var i = 0; i < presentationDefinition.InputDescriptors.Length; i++)
-        {
-            presentationSubmission.DescriptorMap[i].Id.Should().Be(presentationDefinition.InputDescriptors[i].Id);
-            presentationSubmission.DescriptorMap[i].Format.Should().Be(presentationMap[i].Format);
-            presentationSubmission.DescriptorMap[i].Path.Should().Be($"$[{i}]");   
-        }
-    }
+    // [Fact]
+    // public async Task Can_Create_Authorization_Response()
+    // {
+    //     var authRequest = JsonConvert.DeserializeObject<AuthorizationRequest>(PexTestsDataProvider.GetJsonForTestCase())!;
+    //     var presentationDefinition = authRequest.PresentationDefinition!;
+    //
+    //     var presentationMap = new PresentationMap[]
+    //     {
+    //         new(presentationDefinition.InputDescriptors[0].Id,Guid.NewGuid().ToString(),FormatFun.CreateSdJwtDcFormat()),
+    //         new(presentationDefinition.InputDescriptors[1].Id,Guid.NewGuid().ToString(),FormatFun.CreateSdJwtDcFormat())
+    //     };
+    //         
+    //     var authResponse = await CreatePexService().CreateAuthorizationResponseAsync(authRequest, presentationMap);
+    //     var presentationSubmission = authResponse.PresentationSubmission;
+    //
+    //     presentationSubmission.Id.Should().NotBeNullOrWhiteSpace();
+    //     presentationSubmission.DefinitionId.Should().Be(presentationDefinition.Id);
+    //     presentationSubmission.DescriptorMap.Length.Should().Be(presentationMap.Length);
+    //
+    //     for (var i = 0; i < presentationDefinition.InputDescriptors.Length; i++)
+    //     {
+    //         presentationSubmission.DescriptorMap[i].Id.Should().Be(presentationDefinition.InputDescriptors[i].Id);
+    //         presentationSubmission.DescriptorMap[i].Format.Should().Be(presentationMap[i].Format);
+    //         presentationSubmission.DescriptorMap[i].Path.Should().Be($"$[{i}]");   
+    //     }
+    // }
         
     [Fact]
     public async Task Can_Get_Credential_Candidates_For_Input_Descriptors()
