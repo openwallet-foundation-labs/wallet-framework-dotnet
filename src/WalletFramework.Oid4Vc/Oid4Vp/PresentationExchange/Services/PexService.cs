@@ -84,11 +84,11 @@ public class PexService(
         var presentationSubmission = await CreatePresentationSubmission(
             authorizationRequest.PresentationDefinition,
             descriptorMaps.ToArray());
-
+        
         return new AuthorizationResponse
         {
             PresentationSubmission = presentationSubmission,
-            VpToken = vpToken.Count > 1 ? JsonConvert.SerializeObject(vpToken) : vpToken[0],
+            VpToken = JObject.Parse(vpToken[0]),
             State = authorizationRequest.State
         };
     }

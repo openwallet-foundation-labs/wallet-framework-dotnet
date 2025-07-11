@@ -19,4 +19,8 @@
         <ProjectReference Include="..\WalletFramework.MdocVc\WalletFramework.MdocVc.csproj" />
         <ProjectReference Include="..\WalletFramework.SdJwtVc\WalletFramework.SdJwtVc.csproj" />
     </ItemGroup>
+
+    <ItemGroup>
+      <Folder Include="Oid4Vp\DcApi\Models\" />
+    </ItemGroup>
 </Project>
