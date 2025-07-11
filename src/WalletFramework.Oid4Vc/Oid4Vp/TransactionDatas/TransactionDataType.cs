@@ -29,7 +29,11 @@ public static class SupportedTransactionDataTypeConstants
 
     public const string Qes = "qes_authorization";
     
+    public const string CscQes = "https://cloudsignatureconsortium.org/2025/qes";
+    
     public const string QCertCreation = "qcert_creation_acceptance";
+    
+    public const string CscQCertCreation = "https://cloudsignatureconsortium.org/2025/qc-request";
 }
 
 public readonly struct TransactionDataType
@@ -55,7 +59,9 @@ public readonly struct TransactionDataType
         {
             SupportedTransactionDataTypeConstants.Payment => new TransactionDataType(TransactionDataTypeValue.Payment),
             SupportedTransactionDataTypeConstants.Qes => new TransactionDataType(TransactionDataTypeValue.Qes),
+            SupportedTransactionDataTypeConstants.CscQes => new TransactionDataType(TransactionDataTypeValue.Qes),
             SupportedTransactionDataTypeConstants.QCertCreation => new TransactionDataType(TransactionDataTypeValue.QCertCreation),
+            SupportedTransactionDataTypeConstants.CscQCertCreation => new TransactionDataType(TransactionDataTypeValue.QCertCreation),
             _ => throw new ArgumentOutOfRangeException()
         };
     }
