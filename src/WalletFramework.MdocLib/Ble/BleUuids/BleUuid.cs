@@ -29,11 +29,12 @@ public readonly struct BleUuid
     {
         try
         {
-            return FromString(cbor.AsString());
+            var uuid = new Guid(cbor.GetByteString());
+            return new BleUuid(uuid.ToString());
         }
         catch (Exception e)
         {
-            return new CborIsNotATextStringError(name, e);
+            return new CborIsNotAByteStringError(name, e);
         }
     }
 }    
