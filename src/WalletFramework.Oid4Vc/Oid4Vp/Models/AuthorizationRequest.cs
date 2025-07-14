@@ -9,9 +9,9 @@ using WalletFramework.Oid4Vc.Oid4Vp.Dcql.Models;
 using WalletFramework.Oid4Vc.Oid4Vp.Errors;
 using WalletFramework.Oid4Vc.Oid4Vp.PresentationExchange.Models;
 using WalletFramework.Oid4Vc.Oid4Vp.TransactionDatas;
-using static WalletFramework.Oid4Vc.Oid4Vp.Models.ClientIdScheme;
 using WalletFramework.Oid4Vc.Qes.Authorization;
 using WalletFramework.Oid4Vc.RelyingPartyAuthentication;
+using static WalletFramework.Oid4Vc.Oid4Vp.Models.ClientIdScheme;
 
 namespace WalletFramework.Oid4Vc.Oid4Vp.Models;
 
@@ -21,7 +21,12 @@ namespace WalletFramework.Oid4Vc.Oid4Vp.Models;
 public record AuthorizationRequest
 {
     public const string DirectPost = "direct_post";
+
     public const string DirectPostJwt = "direct_post.jwt";
+    
+    public const string DcApi = "dc_api";
+    
+    public const string DcApiJwt = "dc_api.jwt";
 
     private const string VpToken = "vp_token";
 
@@ -32,7 +37,7 @@ public record AuthorizationRequest
     ///     Gets the client id scheme.
     /// </summary>
     [JsonProperty("client_id_scheme")]
-    public ClientIdScheme ClientIdScheme { get; }
+    public ClientIdScheme? ClientIdScheme { get; }
 
     /// <summary>
     ///     Gets the client metadata. Contains the Verifier metadata.
@@ -60,7 +65,7 @@ public record AuthorizationRequest
     ///     Gets the client id. The Identifier of the Verifier.
     /// </summary>
     [JsonProperty("client_id")]
-    public string ClientId { get; }
+    public string? ClientId { get; }
 
     /// <summary>
     ///     Gets the nonce. Random string for session binding.
@@ -120,10 +125,10 @@ public record AuthorizationRequest
 
     [JsonConstructor]
     private AuthorizationRequest(
-        ClientIdScheme clientIdScheme,
+        ClientIdScheme? clientIdScheme,
         PresentationDefinition presentationDefinition,
         DcqlQuery dcqlQuery,
-        string clientId,
+        string? clientId,
         string nonce,
         string responseUri,
         string responseMode,
@@ -133,16 +138,19 @@ public record AuthorizationRequest
         string? state,
         VerifierAttestation[] verifierAttestations)
     {
-        if (SupportedClientIdSchemes.Exists(supportedClientIdScheme =>
-                clientId.StartsWith($"{supportedClientIdScheme}:")))
+        if (clientId is not null)
         {
-            ClientIdScheme = clientId.Split(':')[0];
-            ClientId = clientId.Split(':')[1];
-        }
-        else
-        {
-            ClientId = clientId;
-            ClientIdScheme = clientIdScheme;
+            if (SupportedClientIdSchemes.Exists(supportedClientIdScheme =>
+                    clientId.StartsWith($"{supportedClientIdScheme}:")))
+            {
+                ClientIdScheme = clientId.Split(':')[0];
+                ClientId = clientId.Split(':')[1];
+            }
+            else
+            {
+                ClientId = clientId;
+                ClientIdScheme = clientIdScheme;
+            }
         }
 
         ClientMetadata = clientMetadata;
@@ -190,15 +198,15 @@ public record AuthorizationRequest
         }
     }
 
-    private static Validation<AuthorizationRequestCancellation, AuthorizationRequest> CreateAuthorizationRequest(
+    public static Validation<AuthorizationRequestCancellation, AuthorizationRequest> CreateAuthorizationRequest(
         JObject authRequestJObject)
     {
         var responseUriOption = AuthorizationRequestExtensions.GetResponseUriMaybe(authRequestJObject);
-        if (!IsHaipConform(authRequestJObject))
-        {
-            var error = new InvalidRequestError("The authorization request does not match the HAIP");
-            return new AuthorizationRequestCancellation(responseUriOption, [error]);
-        }
+        // if (!IsHaipConform(authRequestJObject))
+        // {
+        //     var error = new InvalidRequestError("The authorization request does not match the HAIP");
+        //     return new AuthorizationRequestCancellation(responseUriOption, [error]);
+        // }
             
         var authRequestValidation = 
             authRequestJObject.ToObject<AuthorizationRequest>()
@@ -278,6 +286,7 @@ public record AuthorizationRequest
         return authRequestValidation.ToLangExtValidation(responseUriOption);
     }
 
+    // ReSharper disable once UnusedMember.Local
     private static bool IsHaipConform(JObject authorizationRequestJson)
     {
         var responseType = authorizationRequestJson["response_type"]!.ToString();

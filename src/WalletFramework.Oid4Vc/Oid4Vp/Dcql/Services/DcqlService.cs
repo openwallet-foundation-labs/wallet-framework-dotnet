@@ -1,9 +1,10 @@
 using Hyperledger.Aries.Agents;
 using LanguageExt;
-using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using WalletFramework.Core.Functional;
 using WalletFramework.Core.Credentials.Abstractions;
 using WalletFramework.Oid4Vc.Oid4Vci.Abstractions;
+using WalletFramework.Oid4Vc.Oid4Vp.AuthResponse;
 using WalletFramework.Oid4Vc.Oid4Vp.Dcql.CredentialQueries;
 using WalletFramework.Oid4Vc.Oid4Vp.Dcql.Models;
 using WalletFramework.Oid4Vc.Oid4Vp.Models;
@@ -46,13 +47,12 @@ public class DcqlService(
         AuthorizationRequest authorizationRequest,
         PresentationMap[] presentationMaps)
     {
-        var vpToken = presentationMaps.ToDictionary(
-            presentationItem => presentationItem.Identifier,
-            presentationItem => presentationItem.Presentation);
+        var dcqlVpToken = DcqlVpTokenFun.FromPresentationMaps(presentationMaps);
+        var vpToken = new VpToken(dcqlVpToken);
         
         return new AuthorizationResponse
         {
-            VpToken = JsonConvert.SerializeObject(vpToken),
+            VpToken = vpToken,
             State = authorizationRequest.State
         };
     }

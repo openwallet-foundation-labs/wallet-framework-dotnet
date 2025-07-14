@@ -49,8 +49,8 @@ public class PexServiceTests
     public async Task Can_Create_Authorization_Response()
     {
         var authRequest = JsonConvert.DeserializeObject<AuthorizationRequest>(PexTestsDataProvider.GetJsonForTestCase())!;
-        var presentationDefinition = authRequest.PresentationDefinition!;
-
+        var presentationDefinition = authRequest.PresentationDefinition;
+    
         var presentationMap = new PresentationMap[]
         {
             new(presentationDefinition.InputDescriptors[0].Id,Guid.NewGuid().ToString(),FormatFun.CreateSdJwtDcFormat()),
@@ -58,12 +58,12 @@ public class PexServiceTests
         };
             
         var authResponse = await CreatePexService().CreateAuthorizationResponseAsync(authRequest, presentationMap);
-        var presentationSubmission = authResponse.PresentationSubmission;
-
+        var presentationSubmission = authResponse.PresentationSubmission!;
+    
         presentationSubmission.Id.Should().NotBeNullOrWhiteSpace();
         presentationSubmission.DefinitionId.Should().Be(presentationDefinition.Id);
         presentationSubmission.DescriptorMap.Length.Should().Be(presentationMap.Length);
-
+    
         for (var i = 0; i < presentationDefinition.InputDescriptors.Length; i++)
         {
             presentationSubmission.DescriptorMap[i].Id.Should().Be(presentationDefinition.InputDescriptors[i].Id);
