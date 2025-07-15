@@ -1,9 +1,10 @@
 using Org.BouncyCastle.OpenSsl;
 using Org.BouncyCastle.X509;
+using WalletFramework.Oid4Vc.RelyingPartyAuthentication.Abstractions;
 
 namespace WalletFramework.Oid4Vc.RelyingPartyAuthentication.Implementations;
 
-public class IRpRegistrarService : Abstractions.IRpRegistrarService
+public class RpRegistrarService : IRpRegistrarService
 {
     private const string HardcodedCertificate = @"
 -----BEGIN CERTIFICATE-----

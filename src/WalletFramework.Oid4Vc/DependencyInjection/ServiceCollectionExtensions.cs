@@ -33,7 +33,6 @@ using WalletFramework.Oid4Vc.RelyingPartyAuthentication.Abstractions;
 using WalletFramework.Oid4Vc.RelyingPartyAuthentication.Implementations;
 using WalletFramework.SdJwtVc;
 using WalletFramework.SdJwtVc.Services;
-using IRpRegistrarService = WalletFramework.Oid4Vc.RelyingPartyAuthentication.Implementations.IRpRegistrarService;
 
 namespace WalletFramework.Oid4Vc.DependencyInjection;
 
@@ -47,15 +46,19 @@ public static class ServiceCollectionExtensions
     {
         builder.AddSingleton<IAesGcmEncryption, AesGcmEncryption>();
         builder.AddSingleton<IAuthFlowSessionStorage, AuthFlowSessionStorage>();
-        builder.AddSingleton<IAuthorizationResponseEncryptionService, AuthorizationResponseEncryptionService>();
         builder.AddSingleton<IAuthorizationRequestService, AuthorizationRequestService>();
+        builder.AddSingleton<IAuthorizationResponseEncryptionService, AuthorizationResponseEncryptionService>();
+        builder.AddSingleton<ICandidateQueryService, CandidateQueryService>();
+        builder.AddSingleton<IClientAttestationService, ClientAttestationService>();
         builder.AddSingleton<ICoseSign1Signer, CoseSign1Signer>();
+        builder.AddSingleton<ICredentialNonceService, CredentialNonceService>();
         builder.AddSingleton<ICredentialOfferService, CredentialOfferService>();
         builder.AddSingleton<ICredentialRequestService, CredentialRequestService>();
         builder.AddSingleton<ICredentialSetService, CredentialSetService>();
         builder.AddSingleton<ICredentialSetStorage, CredentialSetStorage>();
-        builder.AddSingleton<IDcqlService, DcqlService>();
         builder.AddSingleton<IDPopHttpClient, DPopHttpClient>();
+        builder.AddSingleton<IDcApiService, DcApiService>();
+        builder.AddSingleton<IDcqlService, DcqlService>();
         builder.AddSingleton<IIssuerMetadataService, IssuerMetadataService>();
         builder.AddSingleton<IMdocAuthenticationService, MdocAuthenticationService>();
         builder.AddSingleton<IMdocCandidateService, MdocCandidateService>();
@@ -66,15 +69,13 @@ public static class ServiceCollectionExtensions
         builder.AddSingleton<IOid4VpHaipClient, Oid4VpHaipClient>();
         builder.AddSingleton<IOid4VpRecordService, Oid4VpRecordService>();
         builder.AddSingleton<IPexService, PexService>();
-        builder.AddSingleton<ICandidateQueryService, CandidateQueryService>();
+        builder.AddSingleton<IPresentationService, PresentationService>();
         builder.AddSingleton<IRecordsMigrationService, RecordsMigrationService>();
         builder.AddSingleton<IRpAuthService, RpAuthService>();
-        builder.AddSingleton<RelyingPartyAuthentication.Abstractions.IRpRegistrarService, IRpRegistrarService>();
+        builder.AddSingleton<IRpRegistrarService, RpRegistrarService>();
         builder.AddSingleton<IStatusListService, StatusListService>();
         builder.AddSingleton<ITokenService, TokenService>();
         builder.AddSingleton<IVctMetadataService, VctMetadataService>();
-        builder.AddSingleton<ICredentialNonceService, CredentialNonceService>();
-        builder.AddSingleton<IClientAttestationService, ClientAttestationService>();
 
         builder.AddSdJwtVcServices();
         

@@ -14,8 +14,16 @@ public record VpToken(OneOf<DcqlVpToken, string> Value)
     public string AsString()
     {
         return Value.Match(
-            dcql => dcql.AsString(),
+            dcql => dcql.AsJsonString(),
             pex => pex
+        );
+    }
+
+    public JObject AsJObject()
+    {
+        return Value.Match(
+            dcql => dcql.AsJObject(),
+pex => throw new ArgumentException("PEX is not supported")
         );
     }
 }
@@ -82,7 +90,7 @@ public class VpTokenConverter : JsonConverter<VpToken>
 // VP Draft 29; This is the correct one
 public record DcqlVpToken(Dictionary<CredentialQueryId, List<Presentation>> Presentations)
 {
-    public string AsString()
+    public string AsJsonString()
     {
         var jObject = new JObject();
         
@@ -92,6 +100,16 @@ public record DcqlVpToken(Dictionary<CredentialQueryId, List<Presentation>> Pres
         }
         
         return jObject.ToString();
+    }
+
+    public JObject AsJObject()
+    {
+        var jObject = new JObject();
+        foreach (var pair in Presentations)
+        {
+            jObject[pair.Key.AsString()] = new JArray(pair.Value.Select(presentation => presentation.Value));
+        }
+        return jObject;
     }
 }
 

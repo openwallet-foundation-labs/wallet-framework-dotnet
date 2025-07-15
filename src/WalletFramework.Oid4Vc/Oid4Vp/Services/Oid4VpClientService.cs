@@ -14,7 +14,6 @@ using WalletFramework.Core.Credentials.Abstractions;
 using WalletFramework.Core.Functional;
 using WalletFramework.MdocLib;
 using WalletFramework.MdocLib.Device;
-using WalletFramework.MdocLib.Device.Abstractions;
 using WalletFramework.MdocLib.Device.Response;
 using WalletFramework.MdocLib.Elements;
 using WalletFramework.MdocLib.Security;
@@ -27,7 +26,6 @@ using WalletFramework.Oid4Vc.Oid4Vci.AuthFlow.Abstractions;
 using WalletFramework.Oid4Vc.Oid4Vci.AuthFlow.Models;
 using WalletFramework.Oid4Vc.Oid4Vci.CredConfiguration.Models;
 using WalletFramework.Oid4Vc.Oid4Vci.Extensions;
-using WalletFramework.Oid4Vc.Oid4Vci.Implementations;
 using WalletFramework.Oid4Vc.Oid4Vp.AuthResponse.Encryption;
 using WalletFramework.Oid4Vc.Oid4Vp.AuthResponse.Encryption.Abstractions;
 using WalletFramework.Oid4Vc.Oid4Vp.Dcql.CredentialQueries;
@@ -42,7 +40,6 @@ using WalletFramework.SdJwtVc.Services.SdJwtVcHolderService;
 using static Newtonsoft.Json.JsonConvert;
 using static WalletFramework.MdocLib.Security.Cose.ProtectedHeaders;
 using Format = WalletFramework.Oid4Vc.Oid4Vci.CredConfiguration.Models.Format;
-using WalletFramework.Oid4Vc.Oid4Vp.DcApi.Models;
 
 namespace WalletFramework.Oid4Vc.Oid4Vp.Services;
 
@@ -53,44 +50,45 @@ public class Oid4VpClientService : IOid4VpClientService
     ///     Initializes a new instance of the <see cref="Oid4VpClientService" /> class.
     /// </summary>
     /// <param name="agentProvider">The agent provider</param>
+    /// <param name="authFlowSessionStorage">The Auth Flow Session Storage.</param>
     /// <param name="authorizationRequestService">The authorization request service.</param>
     /// <param name="authorizationResponseEncryptionService">The authorization response encryption service.</param>
-    /// <param name="httpClientFactory">The http client factory to create http clients.</param>
-    /// <param name="sdJwtVcHolderService">The service responsible for SD-JWT related operations.</param>
-    /// <param name="mdocAuthenticationService">The mdoc authentication service.</param>
-    /// <param name="oid4VpHaipClient">The service responsible for OpenId4VP related operations.</param>
-    /// <param name="logger">The ILogger.</param>
     /// <param name="candidateQueryService">The Presentation Candidate service.</param>
-    /// <param name="authFlowSessionStorage">The Auth Flow Session Storage.</param>
-    /// <param name="oid4VpRecordService">The service responsible for OidPresentationRecord related operations.</param>
+    /// <param name="clientAttestationService">The client attestation service.</param>
+    /// <param name="httpClientFactory">The http client factory to create http clients.</param>
+    /// <param name="logger">The ILogger.</param>
     /// <param name="mDocStorage">The service responsible for mDOc storage operations.</param>
+    /// <param name="oid4VpHaipClient">The service responsible for OpenId4VP related operations.</param>
+    /// <param name="oid4VpRecordService">The service responsible for OidPresentationRecord related operations.</param>
+    /// <param name="presentationService">The authorization response service.</param>
+    /// <param name="sdJwtVcHolderService">The service responsible for SD-JWT related operations.</param>
     public Oid4VpClientService(
         IAgentProvider agentProvider,
         IAuthFlowSessionStorage authFlowSessionStorage,
         IAuthorizationRequestService authorizationRequestService,
         IAuthorizationResponseEncryptionService authorizationResponseEncryptionService,
+        ICandidateQueryService candidateQueryService,
+        IClientAttestationService clientAttestationService,
         IHttpClientFactory httpClientFactory,
         ILogger<Oid4VpClientService> logger,
-        IMdocAuthenticationService mdocAuthenticationService,
         IMdocStorage mDocStorage,
         IOid4VpHaipClient oid4VpHaipClient,
         IOid4VpRecordService oid4VpRecordService,
-        IClientAttestationService clientAttestationService,
-        ICandidateQueryService candidateQueryService,
+        IPresentationService presentationService,
         ISdJwtVcHolderService sdJwtVcHolderService)
     {
         _agentProvider = agentProvider;
         _authFlowSessionStorage = authFlowSessionStorage;
         _authorizationRequestService = authorizationRequestService;
         _authorizationResponseEncryptionService = authorizationResponseEncryptionService;
+        _candidateQueryService = candidateQueryService;
+        _clientAttestationService = clientAttestationService;
         _httpClientFactory = httpClientFactory;
         _logger = logger;
         _mDocStorage = mDocStorage;
-        _mdocAuthenticationService = mdocAuthenticationService;
         _oid4VpHaipClient = oid4VpHaipClient;
         _oid4VpRecordService = oid4VpRecordService;
-        _clientAttestationService = clientAttestationService;
-        _candidateQueryService = candidateQueryService;
+        _presentationService = presentationService;
         _sdJwtVcHolderService = sdJwtVcHolderService;
     }
 
@@ -98,14 +96,14 @@ public class Oid4VpClientService : IOid4VpClientService
     private readonly IAuthFlowSessionStorage _authFlowSessionStorage;
     private readonly IAuthorizationRequestService _authorizationRequestService;
     private readonly IAuthorizationResponseEncryptionService _authorizationResponseEncryptionService;
+    private readonly ICandidateQueryService _candidateQueryService;
+    private readonly IClientAttestationService _clientAttestationService;
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly ILogger<Oid4VpClientService> _logger;
-    private readonly IMdocAuthenticationService _mdocAuthenticationService;
     private readonly IMdocStorage _mDocStorage;
-    private readonly ICandidateQueryService _candidateQueryService;
     private readonly IOid4VpHaipClient _oid4VpHaipClient;
     private readonly IOid4VpRecordService _oid4VpRecordService;
-    private readonly IClientAttestationService _clientAttestationService;
+    private readonly IPresentationService _presentationService;
     private readonly ISdJwtVcHolderService _sdJwtVcHolderService;
 
     public async Task<Option<Uri>> AbortAuthorizationRequest(AuthorizationRequestCancellation cancellation)
@@ -147,102 +145,9 @@ public class Oid4VpClientService : IOid4VpClientService
     {
         var credentials = selectedCredentials.ToList();
 
-        var mdocNonce = Option<Nonce>.None;
-
-        var presentations = new List<(PresentationMap PresentationMap, ICredential PresentedCredential)>();
-        foreach (var credential in credentials)
-        {
-            var credentialRequirement = authorizationRequest.Requirements.Match<OneOf<CredentialQuery, InputDescriptor>>(
-                dcqlQuery => dcqlQuery.CredentialQueries.Single(credentialQuery => credentialQuery.Id == credential.Identifier),
-                presentationDefinition => presentationDefinition.InputDescriptors.Single(inputDescriptor => inputDescriptor.Id == credential.Identifier));
-            
-            var credentialRequirementId = credentialRequirement.Match(
-                credentialQuery => credentialQuery.Id,
-                inputDescriptor => inputDescriptor.Id);
-            
-            var claims = credentialRequirement.Match(
-                credential.GetClaimsToDiscloseAsStrs,
-                inputDescriptor => inputDescriptor.GetRequestedAttributes()
-            );
-
-            var txDataBase64UrlStringsOption = credential
-                .Uc5TransactionData
-                .OnSome(list => list.Select(data => data.Encoded.AsString));
-            
-            var txDataHashesOption = credential
-                .TransactionData
-                .OnSome(list =>
-                {
-                    return list.Select(txData =>
-                    {
-                        var hashesAlg = txData.GetHashesAlg().First();
-                        return txData.Hash(hashesAlg);
-                    });
-                });
-            
-            var txDataHashesAsHexOption = txDataHashesOption
-                .OnSome(hashes => hashes.Select(hash => hash.AsHex));
-
-            var txDataHashesAlgOption = txDataHashesOption
-                .OnSome(hashes => hashes.First().Alg.AsString);
-
-            Format format;
-            ICredential presentedCredential;
-
-            string presentation;
-            switch (credential.Credential)
-            {
-                case SdJwtRecord sdJwt:
-                    format = Format.ValidFormat(sdJwt.Format).UnwrapOrThrow();
-                    
-                    presentation = await _sdJwtVcHolderService.CreatePresentation(
-                        sdJwt,
-                        [.. claims],
-                        txDataBase64UrlStringsOption,
-                        txDataHashesAsHexOption,
-                        txDataHashesAlgOption,
-                        authorizationRequest.ClientIdScheme.AsString() + ":" + authorizationRequest.ClientId,
-                        authorizationRequest.Nonce);
-
-                    presentedCredential = sdJwt;
-                    break;
-                case MdocRecord mdocRecord:
-                    format = FormatFun.CreateMdocFormat();
-
-                    var toDisclose = claims.Select(claim =>
-                        {
-                            // TODO: This is needed because in mdoc the requested attributes look like this: $['Namespace']['ElementId']. Refactor this more clean
-                            var keys = claim.Split(["['", "']"], StringSplitOptions.RemoveEmptyEntries);
-
-                            var nameSpace = NameSpace.ValidNameSpace(keys[0]).UnwrapOrThrow();
-                            var elementId = ElementIdentifier
-                                .ValidElementIdentifier(keys[1])
-                                .UnwrapOrThrow();
-
-                            return (NameSpace: nameSpace, ElementId: elementId);
-                        })
-                        .GroupBy(nameSpaceAndElementId => nameSpaceAndElementId.NameSpace, tuple => tuple.ElementId)
-                        .ToDictionary(group => group.Key, group => group.ToList());
-
-                    var mdoc = mdocRecord.Mdoc.SelectivelyDisclose(toDisclose);
-
-                    var handover = authorizationRequest.ToVpHandover();
-                    mdocNonce = handover.MdocGeneratedNonce;
-                    var sessionTranscript = handover.ToSessionTranscript();
-                    var authenticatedMdoc = await _mdocAuthenticationService.Authenticate(
-                        mdoc, sessionTranscript, mdocRecord.KeyId);
-
-                    presentation = new Document(authenticatedMdoc).BuildDeviceResponse().EncodeToBase64Url();
-
-                    presentedCredential = mdocRecord;
-
-                    break;
-                default:
-                    throw new ArgumentOutOfRangeException(nameof(credential.Credential));
-            }
-
-            presentations.Add((PresentationMap: new PresentationMap(credentialRequirementId, presentation, format), PresentedCredential: presentedCredential));
-        }
+        var (presentations, mdocNonce) = await _presentationService.CreatePresentations(
+            authorizationRequest, 
+            credentials);
 
         var authorizationResponse = await _oid4VpHaipClient.CreateAuthorizationResponseAsync(
             authorizationRequest,
@@ -366,7 +271,7 @@ public class Oid4VpClientService : IOid4VpClientService
         var oidPresentationRecord = new OidPresentationRecord
         {
             Id = Guid.NewGuid().ToString(),
-            ClientId = authorizationRequest.ClientId,
+            ClientId = authorizationRequest.ClientId!,
             ClientMetadata = authorizationRequest.ClientMetadata,
             Name = authorizationRequest.Requirements.Match(
                 _ => Option<string>.None,
@@ -650,7 +555,7 @@ public class Oid4VpClientService : IOid4VpClientService
         var oidPresentationRecord = new OidPresentationRecord
         {
             Id = Guid.NewGuid().ToString(),
-            ClientId = authorizationRequest.ClientId,
+            ClientId = authorizationRequest.ClientId!,
             ClientMetadata = authorizationRequest.ClientMetadata,
             Name = authorizationRequest.Requirements.Match(
                 _ => Option<string>.None,
@@ -719,134 +624,5 @@ public class Oid4VpClientService : IOid4VpClientService
         });
 
         return (await result.Traverse(candidates => candidates)).Flatten();
-    }
-
-    public async Task<PresentationRequest> ProcessDcApiRequest(AuthorizationRequest dcApiRequest)
-    {
-        var candidateQueryResult = await _candidateQueryService.Query(dcApiRequest);
-        var presentationRequest = new PresentationRequest(dcApiRequest, candidateQueryResult);
-        return presentationRequest;
-    }
-
-    public async Task<OneOf<AuthorizationResponse,EncryptedAuthorizationResponse>> AcceptDcApiRequest(
-        AuthorizationRequest authorizationRequest,
-        IEnumerable<SelectedCredential> selectedCredentials)
-    {
-        var credentials = selectedCredentials.ToList();
-
-        var mdocNonce = Option<Nonce>.None;
-
-        var presentations = new List<(PresentationMap PresentationMap, ICredential PresentedCredential)>();
-        foreach (var credential in credentials)
-        {
-            var credentialRequirement = authorizationRequest.Requirements.Match<OneOf<CredentialQuery, InputDescriptor>>(
-                dcqlQuery => dcqlQuery.CredentialQueries.Single(credentialQuery => credentialQuery.Id == credential.Identifier),
-                presentationDefinition => presentationDefinition.InputDescriptors.Single(inputDescriptor => inputDescriptor.Id == credential.Identifier));
-            
-            var credentialRequirementId = credentialRequirement.Match(
-                credentialQuery => credentialQuery.Id,
-                inputDescriptor => inputDescriptor.Id);
-            
-            var claims = credentialRequirement.Match(
-                credential.GetClaimsToDiscloseAsStrs,
-                inputDescriptor => inputDescriptor.GetRequestedAttributes()
-            );
-
-            var txDataBase64UrlStringsOption = credential
-                .Uc5TransactionData
-                .OnSome(list => list.Select(data => data.Encoded.AsString));
-            
-            var txDataHashesOption = credential
-                .TransactionData
-                .OnSome(list =>
-                {
-                    return list.Select(txData =>
-                    {
-                        var hashesAlg = txData.GetHashesAlg().First();
-                        return txData.Hash(hashesAlg);
-                    });
-                });
-            
-            var txDataHashesAsHexOption = txDataHashesOption
-                .OnSome(hashes => hashes.Select(hash => hash.AsHex));
-
-            var txDataHashesAlgOption = txDataHashesOption
-                .OnSome(hashes => hashes.First().Alg.AsString);
-
-            Format format;
-            ICredential presentedCredential;
-
-            string presentation;
-            switch (credential.Credential)
-            {
-                case SdJwtRecord sdJwt:
-                    format = Format.ValidFormat(sdJwt.Format).UnwrapOrThrow();
-                    
-                    var audience = $"origin:https://{authorizationRequest.ClientId}";
-
-                    presentation = await _sdJwtVcHolderService.CreatePresentation(
-                        sdJwt,
-                        [.. claims],
-                        txDataBase64UrlStringsOption,
-                        txDataHashesAsHexOption,
-                        txDataHashesAlgOption,
-                        audience,
-                        authorizationRequest.Nonce);
-
-                    presentedCredential = sdJwt;
-                    break;
-                case MdocRecord mdocRecord:
-                    format = FormatFun.CreateMdocFormat();
-
-                    var toDisclose = claims.Select(claim =>
-                        {
-                            // TODO: This is needed because in mdoc the requested attributes look like this: $['Namespace']['ElementId']. Refactor this more clean
-                            var keys = claim.Split(["['", "']"], StringSplitOptions.RemoveEmptyEntries);
-
-                            var nameSpace = NameSpace.ValidNameSpace(keys[0]).UnwrapOrThrow();
-                            var elementId = ElementIdentifier
-                                .ValidElementIdentifier(keys[1])
-                                .UnwrapOrThrow();
-
-                            return (NameSpace: nameSpace, ElementId: elementId);
-                        })
-                        .GroupBy(nameSpaceAndElementId => nameSpaceAndElementId.NameSpace, tuple => tuple.ElementId)
-                        .ToDictionary(group => group.Key, group => group.ToList());
-
-                    var mdoc = mdocRecord.Mdoc.SelectivelyDisclose(toDisclose);
-
-                    var handover = authorizationRequest.ToVpHandover();
-                    mdocNonce = handover.MdocGeneratedNonce;
-                    var sessionTranscript = handover.ToSessionTranscript();
-                    var authenticatedMdoc = await _mdocAuthenticationService.Authenticate(
-                        mdoc, sessionTranscript, mdocRecord.KeyId);
-
-                    presentation = new Document(authenticatedMdoc).BuildDeviceResponse().EncodeToBase64Url();
-
-                    presentedCredential = mdocRecord;
-
-                    break;
-                default:
-                    throw new ArgumentOutOfRangeException(nameof(credential.Credential));
-            }
-
-            presentations.Add((PresentationMap: new PresentationMap(credentialRequirementId, presentation, format), PresentedCredential: presentedCredential));
-        }
-
-        var authorizationResponse = await _oid4VpHaipClient.CreateAuthorizationResponseAsync(
-            authorizationRequest,
-            presentations.Select(tuple => tuple.PresentationMap).ToArray()
-        );
-
-        switch (authorizationRequest.ResponseMode)
-        {
-            case AuthorizationRequest.DcApiJwt:
-                return await _authorizationResponseEncryptionService.Encrypt(
-                    authorizationResponse,
-                    authorizationRequest,
-                    mdocNonce);
-            default:
-                return authorizationResponse;
-        }
     }
 }

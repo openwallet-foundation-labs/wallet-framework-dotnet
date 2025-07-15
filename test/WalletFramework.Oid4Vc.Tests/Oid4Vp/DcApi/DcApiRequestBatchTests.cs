@@ -2,6 +2,7 @@ using FluentAssertions;
 using WalletFramework.Core.Functional;
 using WalletFramework.Oid4Vc.Oid4Vp.DcApi;
 using WalletFramework.Oid4Vc.Oid4Vp.DcApi.Models;
+using WalletFramework.Oid4Vc.Oid4Vp.Errors;
 
 namespace WalletFramework.Oid4Vc.Tests.Oid4Vp.DcApi;
 
@@ -113,7 +114,7 @@ public class DcApiRequestBatchTests
     }
 
     [Fact]
-    public void GetFirstVpRequest_Returns_None_When_Protocol_Not_Found()
+    public void GetFirstVpRequest_Returns_Error_When_Protocol_Not_Found()
     {
         // Arrange
         var modifiedJson = DcApiSamples.ValidDcApiUnsignedRequestBatchJson.Replace($"\"protocol\":\"{DcApiConstants.UnsignedProtocol}\"", "\"protocol\":\"non_existing_protocol\"");
@@ -121,12 +122,8 @@ public class DcApiRequestBatchTests
         
         // Act & Assert
         result.Match(
-            dcApiRequestBatch =>
-            {
-                var firstVpRequest = dcApiRequestBatch.GetFirstVpRequest();
-                firstVpRequest.IsNone.Should().BeTrue();
-            },
-            error => Assert.Fail($"Expected success but got error: {error}")
+            _ => Assert.Fail("Expected error but got success"),
+            error => error.Should().ContainItemsAssignableTo<InvalidRequestError>()
         );
     }
 } 

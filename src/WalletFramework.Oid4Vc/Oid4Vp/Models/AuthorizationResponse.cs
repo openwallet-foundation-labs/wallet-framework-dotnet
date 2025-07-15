@@ -44,4 +44,18 @@ public static class AuthorizationResponseFun
 
         return new FormUrlEncodedContent(dict);
     }
+
+    public static JObject AsJObject(this AuthorizationResponse authorizationResponse)
+    {
+        var jObject = new JObject
+        {
+            { "vp_token", authorizationResponse.VpToken.AsJObject() },
+            { "state", authorizationResponse.State ?? string.Empty }
+        };
+
+        if(authorizationResponse.PresentationSubmission is not null)
+            jObject.Add("presentation_submission", JObject.FromObject(authorizationResponse.PresentationSubmission));
+
+        return jObject;
+    }
 }
