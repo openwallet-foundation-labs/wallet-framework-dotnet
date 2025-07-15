@@ -28,9 +28,7 @@ public record AuthorizationRequest
     
     public const string DcApiJwt = "dc_api.jwt";
 
-    private const string VpToken = "vp_token";
-
-    public static readonly string[] SupportedClientIdSchemes =
+    private static readonly string[] SupportedClientIdSchemes =
         [RedirectUriScheme, VerifierAttestationScheme, X509SanDnsScheme];
 
     /// <summary>
@@ -202,11 +200,6 @@ public record AuthorizationRequest
         JObject authRequestJObject)
     {
         var responseUriOption = AuthorizationRequestExtensions.GetResponseUriMaybe(authRequestJObject);
-        // if (!IsHaipConform(authRequestJObject))
-        // {
-        //     var error = new InvalidRequestError("The authorization request does not match the HAIP");
-        //     return new AuthorizationRequestCancellation(responseUriOption, [error]);
-        // }
             
         var authRequestValidation = 
             authRequestJObject.ToObject<AuthorizationRequest>()
@@ -284,39 +277,6 @@ public record AuthorizationRequest
         }
         
         return authRequestValidation.ToLangExtValidation(responseUriOption);
-    }
-
-    // ReSharper disable once UnusedMember.Local
-    private static bool IsHaipConform(JObject authorizationRequestJson)
-    {
-        var responseType = authorizationRequestJson["response_type"]!.ToString();
-        var responseUri = authorizationRequestJson["response_uri"]!.ToString();
-        var responseMode = authorizationRequestJson["response_mode"]!.ToString();
-        var redirectUri = authorizationRequestJson["redirect_uri"];
-        var authorizationRequestClientId = authorizationRequestJson["client_id"]!.ToString();
-
-        string clientId;
-        string clientIdScheme;
-        if (SupportedClientIdSchemes.Exists(supportedClientIdScheme =>
-                authorizationRequestClientId.StartsWith($"{supportedClientIdScheme}:")))
-        {
-            clientIdScheme = authorizationRequestClientId.Split(':')[0];
-            clientId = authorizationRequestClientId.Split(':')[1];
-        }
-        else
-        {
-            clientIdScheme = authorizationRequestJson["client_id_scheme"]!.ToString();
-            clientId = authorizationRequestClientId;
-        }
-
-        return
-            (responseType == VpToken
-             && responseMode == DirectPost) || (responseMode == DirectPostJwt
-                                                && !string.IsNullOrEmpty(responseUri)
-                                                && redirectUri is null
-                                                && (clientIdScheme is X509SanDnsScheme or VerifierAttestationScheme
-                                                    || (clientIdScheme is RedirectUriScheme &&
-                                                        clientId == responseUri)));
     }
 }
 
