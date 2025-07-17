@@ -1,4 +1,5 @@
 ﻿using PeterO.Cbor;
+using WalletFramework.Core.Cryptography.Models;
 using WalletFramework.Core.Functional;
 using WalletFramework.MdocLib.Cbor;
 using WalletFramework.MdocLib.Device.Abstractions;
@@ -8,7 +9,7 @@ using WalletFramework.MdocLib.Security.Errors;
 
 namespace WalletFramework.MdocLib.Security;
 
-public record SessionEstablishment(CoseKey EReaderKey, EncryptedDeviceRequest Data);
+public record SessionEstablishment(PublicKey EReaderKey, EncryptedDeviceRequest Data);
 
 public static class SessionEstablishmentFun
 {
@@ -17,7 +18,7 @@ public static class SessionEstablishmentFun
         var result = CBORObject.NewMap();
 
         var keyLabel = CBORObject.FromObject("eReaderKey");
-        result.Add(keyLabel, data.EReaderKey);
+        result.Add(keyLabel, data.EReaderKey.ToCoseKey().ToCbor().ToTaggedCborByteString());
 
         var dataLabel = CBORObject.FromObject("data");
         result.Add(dataLabel, data.Data.Encrypted);
@@ -41,7 +42,7 @@ public static class SessionEstablishmentFun
         });
         var eReaderKey = sessionEstablishmentCbor.GetByLabel("eReaderKey").OnSuccess(dataCbor =>
         {
-            var eReaderKey = CoseKey.FromCbor(dataCbor);
+            var eReaderKey = CoseKey.FromCborBytes(dataCbor);
 
             return eReaderKey.IsSuccess ? eReaderKey : new SessionEstablishmentError();
         });
@@ -49,6 +50,6 @@ public static class SessionEstablishmentFun
         return
             from encrypted in data
             from key in eReaderKey
-            select new SessionEstablishment(key, encrypted);
+            select new SessionEstablishment(key.Value, encrypted);
     }
 }
