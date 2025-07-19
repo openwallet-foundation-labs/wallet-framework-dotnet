@@ -9,6 +9,7 @@ using WalletFramework.MdocLib.Issuer;
 using WalletFramework.MdocLib.Security.Cose;
 using WalletFramework.Oid4Vc.Oid4Vci.Abstractions;
 using WalletFramework.Oid4Vc.Oid4Vci.Implementations;
+using WalletFramework.Oid4Vc.Oid4Vp.AuthResponse;
 using WalletFramework.Oid4Vc.Oid4Vp.Models;
 using WalletFramework.Oid4Vc.Oid4Vp.PresentationExchange.Models;
 using WalletFramework.Oid4Vc.Oid4Vp.Query;
@@ -84,11 +85,11 @@ public class PexService(
         var presentationSubmission = await CreatePresentationSubmission(
             authorizationRequest.PresentationDefinition,
             descriptorMaps.ToArray());
-
+        
         return new AuthorizationResponse
         {
             PresentationSubmission = presentationSubmission,
-            VpToken = vpToken.Count > 1 ? JsonConvert.SerializeObject(vpToken) : vpToken[0],
+            VpToken = new VpToken(vpToken[0]),
             State = authorizationRequest.State
         };
     }

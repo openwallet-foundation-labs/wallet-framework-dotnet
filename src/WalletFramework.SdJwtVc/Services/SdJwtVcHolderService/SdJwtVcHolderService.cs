@@ -104,8 +104,8 @@ public class SdJwtVcHolderService(
         await recordService.UpdateAsync(context.Wallet, record);
 }
 
-internal static class SdJwtRecordExtensions
+public static class SdJwtRecordExtensions
 {
-    internal static SdJwtDoc ToSdJwtDoc(this SdJwtRecord record) =>
+    public static SdJwtDoc ToSdJwtDoc(this SdJwtRecord record) =>
         new(record.EncodedIssuerSignedJwt + "~" + string.Join("~", record.Disclosures) + "~");
 }
