@@ -75,7 +75,7 @@ public static class ReaderEngagementFun
     {
         var engagementBytes = readerEngagement.ToCbor().EncodeToBytes();
         var base64UrlStr = Base64UrlString.CreateBase64UrlString(engagementBytes);
-        return "mdoc://" + base64UrlStr;
+        return "mdoc:" + base64UrlStr;
     }
 
     public static BleUuid GetServiceUuid(this ReaderEngagement readerEngagement)
