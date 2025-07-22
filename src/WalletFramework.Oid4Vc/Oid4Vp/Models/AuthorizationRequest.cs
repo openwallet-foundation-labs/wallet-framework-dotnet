@@ -141,8 +141,8 @@ public record AuthorizationRequest
             if (SupportedClientIdSchemes.Exists(supportedClientIdScheme =>
                     clientId.StartsWith($"{supportedClientIdScheme}:")))
             {
-                ClientIdScheme = clientId.Split(':')[0];
-                ClientId = clientId.Split(':')[1];
+                ClientIdScheme = clientId.Split(':', 2)[0];
+                ClientId = clientId.Split(':', 2)[1];
             }
             else
             {
