@@ -1,9 +1,11 @@
 using LanguageExt;
 using OneOf;
+using WalletFramework.Core.Functional;
 using WalletFramework.Oid4Vc.Oid4Vp.AuthResponse.Encryption;
 using WalletFramework.Oid4Vc.Oid4Vp.AuthResponse.Encryption.Abstractions;
 using WalletFramework.Oid4Vc.Oid4Vp.DcApi.Models;
 using WalletFramework.Oid4Vc.Oid4Vp.Models;
+using WalletFramework.Oid4Vc.Oid4Vp.TransactionDatas;
 
 namespace WalletFramework.Oid4Vc.Oid4Vp.Services;
 
@@ -39,8 +41,14 @@ public class DcApiService : IDcApiService
     {
         var candidateQueryResult = await _candidateQueryService.Query(dcApiRequest);
         var presentationRequest = new PresentationRequest(dcApiRequest, candidateQueryResult);
-        return presentationRequest;
+        
+        var vpTxDataOption = dcApiRequest.TransactionData;
+        return vpTxDataOption.Match(
+            vpTxData => TransactionDataFun.ProcessVpTransactionData(presentationRequest, vpTxData).UnwrapOrThrow(),
+            () => presentationRequest
+        );
     }
+    
 
     /// <inheritdoc />
     public async Task<OneOf<AuthorizationResponse, EncryptedAuthorizationResponse>> AcceptDcApiRequest(
