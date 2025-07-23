@@ -6,6 +6,8 @@ using WalletFramework.MdocLib;
 using WalletFramework.MdocLib.Device.Abstractions;
 using WalletFramework.MdocLib.Device.Response;
 using WalletFramework.MdocLib.Elements;
+using WalletFramework.MdocLib.Security;
+using WalletFramework.MdocLib.Security.Abstractions;
 using WalletFramework.MdocVc;
 using WalletFramework.Oid4Vc.Oid4Vci.CredConfiguration.Models;
 using WalletFramework.Oid4Vc.Oid4Vp.DcApi.Models;
@@ -97,7 +99,7 @@ public class PresentationService : IPresentationService
                 case AuthorizationRequest.DcApi:
                 case AuthorizationRequest.DcApiJwt:
                     audience = origin.Match(
-                        x => $"origin:{x}",
+                        aud => $"origin:{aud}",
                         () => "origin:" + authorizationRequest.ClientId
                     );
                     break;
@@ -146,9 +148,42 @@ public class PresentationService : IPresentationService
 
                     var mdoc = mdocRecord.Mdoc.SelectivelyDisclose(toDisclose);
 
-                    var handover = authorizationRequest.ToVpHandover();
-                    mdocNonce = handover.MdocGeneratedNonce;
-                    var sessionTranscript = handover.ToSessionTranscript();
+
+                    SessionTranscript sessionTranscript;
+                    switch (authorizationRequest.ResponseMode)
+                    {
+                        case AuthorizationRequest.DcApi:
+                            var handoverInfo = new OpenId4VpDcApiHandoverInfo(
+                                origin.UnwrapOrThrow(),
+                                authorizationRequest.Nonce,
+                                Option<byte[]>.None
+                            );
+
+                            var handover = new OpenId4VpDcApiHandover(handoverInfo);
+                            sessionTranscript = handover.ToSessionTranscript();
+                            mdocNonce = handover.MdocGeneratedNonce;
+                            break;
+                        case AuthorizationRequest.DcApiJwt:
+                            var dcApiHandoverInfo = new OpenId4VpDcApiHandoverInfo(
+                                origin.UnwrapOrThrow(),
+                                authorizationRequest.Nonce,
+                                Option<byte[]>.None
+                            );
+
+                            var dcApiHandover = new OpenId4VpDcApiHandover(dcApiHandoverInfo);
+                            mdocNonce = dcApiHandover.MdocGeneratedNonce;
+                            sessionTranscript = dcApiHandover.ToSessionTranscript();
+                            break;
+                        case AuthorizationRequest.DirectPost:
+                        case AuthorizationRequest.DirectPostJwt:
+                            var vpHandover = authorizationRequest.ToVpHandover();
+                            mdocNonce = vpHandover.MdocGeneratedNonce;
+                            sessionTranscript = vpHandover.ToSessionTranscript();
+                            break;
+                        default:
+                            throw new ArgumentOutOfRangeException(nameof(authorizationRequest.ResponseMode));
+                    }
+
                     var authenticatedMdoc = await _mdocAuthenticationService.Authenticate(
                         mdoc, sessionTranscript, mdocRecord.KeyId);
 
