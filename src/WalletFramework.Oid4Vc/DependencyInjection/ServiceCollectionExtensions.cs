@@ -48,6 +48,7 @@ public static class ServiceCollectionExtensions
         builder.AddSingleton<IAuthFlowSessionStorage, AuthFlowSessionStorage>();
         builder.AddSingleton<IAuthorizationRequestService, AuthorizationRequestService>();
         builder.AddSingleton<IAuthorizationResponseEncryptionService, AuthorizationResponseEncryptionService>();
+        builder.AddSingleton<IVerifierKeyService, VerifierKeyService>();
         builder.AddSingleton<ICandidateQueryService, CandidateQueryService>();
         builder.AddSingleton<IClientAttestationService, ClientAttestationService>();
         builder.AddSingleton<ICoseSign1Signer, CoseSign1Signer>();
