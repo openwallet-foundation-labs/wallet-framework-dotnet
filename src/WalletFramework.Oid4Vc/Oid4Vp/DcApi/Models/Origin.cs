@@ -7,4 +7,6 @@ public record Origin(string Value)
     public static implicit operator Origin(string value) => new(value);
     
     public override string ToString() => Value;
+    
+    public string AsString() => Value;
 }
