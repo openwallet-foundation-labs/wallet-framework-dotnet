@@ -19,10 +19,16 @@ public record DocumentDigest(
         var uriValidation = 
             from documentLocationUri in jObject.GetByKey("documentLocation_uri")
             select new Uri(documentLocationUri.ToString());
+        
+        var hrefValidation = 
+            from documentLocationUri in jObject.GetByKey("href")
+            select new Uri(documentLocationUri.ToString());
 
         return
             from label in labelValidation
-            let uriOption = uriValidation.ToOption()
+            let uriOption = hrefValidation.ToOption().Match(
+                hrefUri => hrefUri,
+                () => uriValidation.ToOption())
             select new DocumentDigest(label, uriOption);
     }
 }

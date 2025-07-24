@@ -6,7 +6,7 @@ using static WalletFramework.MdocLib.Constants;
 
 namespace WalletFramework.MdocLib;
 
-public readonly struct DocType
+public readonly record struct DocType
 {
     private string Value { get; }
 

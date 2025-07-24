@@ -9,11 +9,11 @@ using WalletFramework.Core.Functional.Errors;
 using WalletFramework.Core.Json;
 using WalletFramework.MdocLib;
 using WalletFramework.MdocVc;
-using WalletFramework.Oid4Vc.Oid4Vci.Implementations;
 using WalletFramework.Oid4Vc.Oid4Vp.ClaimPaths;
 using WalletFramework.Oid4Vc.Oid4Vp.Dcql.CredentialQueries;
 using WalletFramework.Oid4Vc.RelyingPartyAuthentication.RegistrationCertificate;
 using WalletFramework.SdJwtVc.Models.Records;
+using WalletFramework.SdJwtVc.Services.SdJwtVcHolderService;
 using static WalletFramework.Oid4Vc.Oid4Vp.Dcql.Models.ClaimQueryConstants;
 
 namespace WalletFramework.Oid4Vc.Oid4Vp.Dcql.Models;

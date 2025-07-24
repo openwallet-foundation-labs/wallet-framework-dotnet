@@ -6,10 +6,19 @@ namespace WalletFramework.Oid4Vc.Tests.QCertCreation;
 
 public class QCertCreationTests
 {
-    [Fact]
-    public void Can_Parse_QCertCreation_Transaction_Data()
+    [Theory]
+    [InlineData(nameof(QCertCreationTransactionDataSamples.QCertJsonSample))]
+    [InlineData(nameof(QCertCreationTransactionDataSamples.CscQCertJsonSample))]
+    public void Can_Parse_QCertCreation_Transaction_Data(string sampleName)
     {
-        var sample = QCertCreationTransactionDataSamples.GetBase64UrlStringSample();
+        var jsonSample = sampleName switch
+        {
+            nameof(QCertCreationTransactionDataSamples.QCertJsonSample) => QCertCreationTransactionDataSamples.QCertJsonSample,
+            nameof(QCertCreationTransactionDataSamples.CscQCertJsonSample) => QCertCreationTransactionDataSamples.CscQCertJsonSample,
+            _ => throw new ArgumentException($"Unknown sample name: {sampleName}")
+        };
+
+        var sample = QCertCreationTransactionDataSamples.ToBase64UrlString(jsonSample);
 
         var sut = TransactionData.FromBase64Url(sample);
         sut.Match(
@@ -19,7 +28,7 @@ public class QCertCreationTests
             },
             errors =>
             {
-                Assert.Fail("QCertCreationtTransactionData Validation failed");
+                Assert.Fail($"QCertCreationTransactionData Validation failed for sample: {sampleName}");
             });
     }
 }
