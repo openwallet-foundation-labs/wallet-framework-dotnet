@@ -83,6 +83,7 @@ public record DcApiRequestItem
         switch (protocol)
         {
             case DcApiConstants.UnsignedProtocol:
+            case DcApiConstants.LegacyProtocol:
                 var r = AuthorizationRequest.CreateAuthorizationRequest(jObject);
                 return LiftRequest(r);
             case DcApiConstants.SignedProtocol:
