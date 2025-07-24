@@ -1,4 +1,6 @@
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using WalletFramework.Oid4Vc.Oid4Vp.AuthResponse;
 using WalletFramework.Oid4Vc.Oid4Vp.PresentationExchange.Models;
 
 namespace WalletFramework.Oid4Vc.Oid4Vp.Models;
@@ -12,12 +14,12 @@ public class AuthorizationResponse
     ///     Gets or sets the VP Token.
     /// </summary>
     [JsonProperty("vp_token")]
-    public string VpToken { get; set; } = null!;
+    public VpToken VpToken { get; set; } = null!;
         
     /// <summary>
     ///   Gets or sets the Presentation Submission.
     /// </summary>
-    [JsonProperty("presentation_submission")]
+    [JsonProperty("presentation_submission", NullValueHandling = NullValueHandling.Ignore)]
     public PresentationSubmission? PresentationSubmission { get; set; }
         
     /// <summary>
@@ -33,7 +35,7 @@ public static class AuthorizationResponseFun
     {
         var dict = new Dictionary<string, string>
         {
-            { "vp_token", authorizationResponse.VpToken },
+            { "vp_token", authorizationResponse.VpToken.AsString() },
             { "state", authorizationResponse.State ?? string.Empty }
         };
         
@@ -41,5 +43,19 @@ public static class AuthorizationResponseFun
             dict.Add("presentation_submission", JsonConvert.SerializeObject(authorizationResponse.PresentationSubmission));
 
         return new FormUrlEncodedContent(dict);
+    }
+
+    public static JObject AsJObject(this AuthorizationResponse authorizationResponse)
+    {
+        var jObject = new JObject
+        {
+            { "vp_token", authorizationResponse.VpToken.AsJObject() },
+            { "state", authorizationResponse.State ?? string.Empty }
+        };
+
+        if(authorizationResponse.PresentationSubmission is not null)
+            jObject.Add("presentation_submission", JObject.FromObject(authorizationResponse.PresentationSubmission));
+
+        return jObject;
     }
 }
