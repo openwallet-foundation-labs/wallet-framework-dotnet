@@ -11,7 +11,7 @@ namespace WalletFramework.MdocLib.Security;
 public record SessionTranscript(
     Option<DeviceEngagement> DeviceEngagement,
     Option<PublicKey> ReaderKey,
-    IHandover Handover);
+    Option<IHandover> Handover);
 
 public static class SessionTranscriptFun
 {
@@ -45,9 +45,12 @@ public static class SessionTranscriptFun
                 result.Add(CBORObject.Null);
             }
         );
-        
-        result.Add(sessionTranscript.Handover.ToCbor());
 
+        sessionTranscript.Handover.Match(
+            handover => { result.Add(handover.ToCbor()); },
+            () => { result.Add(CBORObject.Null); }
+        );
+        
         return result;
     }
 }
