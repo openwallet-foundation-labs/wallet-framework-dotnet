@@ -22,7 +22,8 @@ public record ClientMetadata
         string? jwksUri,
         string? policyUri,
         string? tosUri,
-        Formats formats)
+        Formats vpFormats,
+        Formats vpFormatsSupported)
     {
         AuthorizationEncryptedResponseEnc = authorizationEncryptedResponseEnc;
         EncryptedResponseEncValuesSupported = encryptedResponseEncValuesSupported;
@@ -35,7 +36,8 @@ public record ClientMetadata
         JwksUri = jwksUri;
         PolicyUri = policyUri;
         TosUri = tosUri;
-        Formats = formats;
+        VpFormats = vpFormats;
+        VpFormatsSupported = vpFormatsSupported;
     }
 
     /// <summary>
@@ -103,7 +105,14 @@ public record ClientMetadata
 
     /// <summary>
     ///     The URI to a human-readable terms of service document for the client (verifier).
+    ///     This is deprecated and replaced by vp_formats_supported but kept for now for backwards compatibility.
     /// </summary>
     [JsonProperty("vp_formats")]
-    public Formats Formats { get; init; }
+    public Formats VpFormats { get; init; }
+
+     /// <summary>
+     ///     The URI to a human-readable terms of service document for the client (verifier).
+     /// </summary>
+     [JsonProperty("vp_formats_supported")]
+     public Formats VpFormatsSupported { get; init; }
 }
