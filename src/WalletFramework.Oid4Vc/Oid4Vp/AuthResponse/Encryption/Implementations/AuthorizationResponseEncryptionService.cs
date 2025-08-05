@@ -17,7 +17,7 @@ public class AuthorizationResponseEncryptionService(IVerifierKeyService verifier
         return response.Encrypt(
             verifierPubKey,
             request.Nonce,
-            request.ClientMetadata?.AuthorizationEncryptedResponseEnc,
+            request.ClientMetadata?.EncryptedResponseEncValuesSupported ?? request.ClientMetadata?.AuthorizationEncryptedResponseEnc,
             mdocNonce);
     }
 }
