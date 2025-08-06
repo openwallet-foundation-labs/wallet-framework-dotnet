@@ -1,4 +1,5 @@
 using LanguageExt;
+using WalletFramework.Core.Functional;
 using WalletFramework.Oid4Vc.Oid4Vp.AuthResponse.Encryption.Abstractions;
 using WalletFramework.Oid4Vc.Oid4Vp.Models;
 
@@ -14,10 +15,15 @@ public class AuthorizationResponseEncryptionService(IVerifierKeyService verifier
     {
         var verifierPubKey = await verifierKeyService.GetPublicKey(request);
         
+        var supportedAlgorithms = (request.ClientMetadata?.EncryptedResponseEncValuesSupported).AsOption().Match(
+                encValues => encValues,
+                () => (request.ClientMetadata?.AuthorizationEncryptedResponseEnc).AsOption().OnSome(encValue => new[] { encValue })
+            );
+        
         return response.Encrypt(
             verifierPubKey,
             request.Nonce,
-            request.ClientMetadata?.EncryptedResponseEncValuesSupported ?? request.ClientMetadata?.AuthorizationEncryptedResponseEnc,
+            supportedAlgorithms,
             mdocNonce);
     }
 }

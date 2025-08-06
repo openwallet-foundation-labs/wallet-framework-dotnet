@@ -12,7 +12,7 @@ public record ClientMetadata
     // Needed for Newtonsoft Json Serialization
     public ClientMetadata(
         string? authorizationEncryptedResponseEnc,
-        string? encryptedResponseEncValuesSupported,
+        string[]? encryptedResponseEncValuesSupported,
         string[] redirectUris,
         string? clientName,
         string? clientUri,
@@ -51,7 +51,7 @@ public record ClientMetadata
     ///     Defined the encoding that should be used when an encrypted Auth Response is requested by the verifier.
     /// </summary>
     [JsonProperty("encrypted_response_enc_values_supported")]
-    public string? EncryptedResponseEncValuesSupported { get; init; }
+    public string[]? EncryptedResponseEncValuesSupported { get; init; }
 
     /// <summary>
     ///    The redirect URIs of the client (verifier).
