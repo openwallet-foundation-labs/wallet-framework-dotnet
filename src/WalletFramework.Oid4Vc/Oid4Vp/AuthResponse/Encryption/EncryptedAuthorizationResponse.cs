@@ -12,7 +12,7 @@ using WalletFramework.Oid4Vc.Oid4Vp.Models;
 
 namespace WalletFramework.Oid4Vc.Oid4Vp.AuthResponse.Encryption;
 
-public record EncryptedAuthorizationResponse(string Jwe, Option<string> State)
+public record EncryptedAuthorizationResponse(string Jwe)
 {
     public override string ToString() => Jwe;
 }
@@ -64,7 +64,7 @@ public static class EncryptedAuthorizationResponseFun
             extraProtectedHeaders: headers,
             settings: settings);
 
-        return new EncryptedAuthorizationResponse(jwe, response.State);
+        return new EncryptedAuthorizationResponse(jwe);
     }
 
     public static FormUrlEncodedContent ToFormUrl(this EncryptedAuthorizationResponse response)
@@ -73,8 +73,6 @@ public static class EncryptedAuthorizationResponseFun
         {
             { "response", response.ToString() }
         };
-
-        response.State.IfSome(state => content["state"] = state);
 
         return new FormUrlEncodedContent(content);
     }
