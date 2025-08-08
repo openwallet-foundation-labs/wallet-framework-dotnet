@@ -44,6 +44,7 @@ public record ClientMetadata
     ///     Defined the encoding that should be used when an encrypted Auth Response is requested by the verifier.
     ///     Replaced by encrypted_response_enc_values_supported but kept for now for backwards compatibility.
     /// </summary>
+    [Obsolete("This property is obsolete.")]
     [JsonProperty("authorization_encrypted_response_enc")]
     public string? AuthorizationEncryptedResponseEnc { get; init; }
 
@@ -107,6 +108,7 @@ public record ClientMetadata
     ///     The URI to a human-readable terms of service document for the client (verifier).
     ///     This is deprecated and replaced by vp_formats_supported but kept for now for backwards compatibility.
     /// </summary>
+    [Obsolete("This property is obsolete.")]
     [JsonProperty("vp_formats")]
     public Formats VpFormats { get; init; }
 

@@ -185,7 +185,7 @@ public class AuthorizationRequestService(
         return FromStr(await httpClient.GetStringAsync(authRequestByReference.RequestUri), Option<string>.None);
     }
     
-    private async Task<OneOf<Option<ClientMetadata>, AuthorizationRequestCancellation>> FetchClientMetadata(AuthorizationRequest authorizationRequest)
+    private async Task<Validation<AuthorizationRequestCancellation, Option<ClientMetadata>>> FetchClientMetadata(AuthorizationRequest authorizationRequest)
     {
         return await authorizationRequest.ClientMetadata.AsOption().Match(
             clientMetadata =>
@@ -194,10 +194,10 @@ public class AuthorizationRequestService(
                 {
                     var error = new VpFormatsNotSupportedError("The provided vp_formats_supported values are not supported");
                     var authorizationCancellation = new AuthorizationRequestCancellation(authorizationRequest.GetResponseUriMaybe(), [error]);
-                    return Task.FromResult((OneOf<Option<ClientMetadata>, AuthorizationRequestCancellation>) authorizationCancellation);
+                    return Task.FromResult((Validation<AuthorizationRequestCancellation, Option<ClientMetadata>>) authorizationCancellation);
                 }
                 
-                return Task.FromResult<OneOf<Option<ClientMetadata>, AuthorizationRequestCancellation>>(clientMetadata.AsOption());
+                return Task.FromResult<Validation<AuthorizationRequestCancellation, Option<ClientMetadata>>>(clientMetadata.AsOption());
             },
             async () =>
             {
@@ -216,7 +216,7 @@ public class AuthorizationRequestService(
                 {
                     var error = new VpFormatsNotSupportedError("The provided vp_formats_supported values are not supported");
                     var authorizationCancellation = new AuthorizationRequestCancellation(authorizationRequest.GetResponseUriMaybe(), [error]);
-                    return (OneOf<Option<ClientMetadata>, AuthorizationRequestCancellation>) authorizationCancellation;
+                    return (Validation<AuthorizationRequestCancellation, Option<ClientMetadata>>) authorizationCancellation;
                 }
                 
                 return clientMetadata.AsOption();

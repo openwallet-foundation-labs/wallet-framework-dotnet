@@ -9,6 +9,7 @@ using Org.BouncyCastle.Security;
 using WalletFramework.Core.Base64Url;
 using WalletFramework.Oid4Vc.Oid4Vp.Jwk;
 using WalletFramework.Oid4Vc.Oid4Vp.Models;
+using static WalletFramework.Oid4Vc.Constants;
 
 namespace WalletFramework.Oid4Vc.Oid4Vp.AuthResponse.Encryption;
 
@@ -24,8 +25,6 @@ public static class EncryptedAuthorizationResponseFun
         ["A256GCM"] = JweEncryption.A256GCM,
         ["A128CBC-HS256"] = JweEncryption.A128CBC_HS256
     };
-    
-    const string DefaultEncAlgorithm = "A256GCM";
     
     public static EncryptedAuthorizationResponse Encrypt(
         this AuthorizationResponse response,
@@ -54,7 +53,7 @@ public static class EncryptedAuthorizationResponseFun
         var selectedEncAlgorithm = encryptedResponseEncAlgorithms.Match(
             encAlgs => encAlgs.FirstOrDefault(encAlg => SupportedEncAlgorithmsMap.ContainsKey(encAlg)) 
                     ?? throw new NotSupportedException("Unsupported response encryption algorithms requested by verifier."),
-            () => DefaultEncAlgorithm);
+            () => DefaultResponseEncryptionEncAlgorithm);
         
         var jwe = JWE.EncryptBytes(
             response.ToJson().GetUTF8Bytes(),

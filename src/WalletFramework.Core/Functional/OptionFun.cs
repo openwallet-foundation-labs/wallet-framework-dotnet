@@ -96,7 +96,7 @@ public static class OptionFun
             // ReSharper disable once PossibleMultipleEnumeration
             : Some(enumerable);
 
-    public static Option<T> AsOption<T>(this T? value) where T : class =>
+    public static Option<T> AsOption<T>(this T? value) =>
         value != null ? Option<T>.Some(value) : Option<T>.None;
     
     public static T UnwrapOrThrow<T>(this Option<T> option, Exception e) =>
