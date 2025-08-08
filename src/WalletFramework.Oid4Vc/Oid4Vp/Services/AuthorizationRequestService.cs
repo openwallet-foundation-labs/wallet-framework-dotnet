@@ -3,7 +3,6 @@ using System.Web;
 using LanguageExt;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using OneOf;
 using WalletFramework.Core.Functional;
 using WalletFramework.Oid4Vc.Oid4Vp.Errors;
 using WalletFramework.Oid4Vc.Oid4Vp.Models;
