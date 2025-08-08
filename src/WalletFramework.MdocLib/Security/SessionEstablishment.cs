@@ -9,19 +9,19 @@ using WalletFramework.MdocLib.Security.Errors;
 
 namespace WalletFramework.MdocLib.Security;
 
-public record SessionEstablishment(PublicKey EReaderKey, EncryptedDeviceRequest Data);
+public record SessionEstablishment(PublicKey EReaderKey, EncryptedDeviceRequest Request);
 
 public static class SessionEstablishmentFun
 {
-    public static CBORObject ToCbor(this SessionEstablishment data)
+    public static CBORObject ToCbor(this SessionEstablishment session)
     {
         var result = CBORObject.NewMap();
 
         var keyLabel = CBORObject.FromObject("eReaderKey");
-        result.Add(keyLabel, data.EReaderKey.ToCoseKey().ToCbor().ToTaggedCborByteString());
+        result.Add(keyLabel, session.EReaderKey.ToCoseKey().ToCbor().ToTaggedCborByteString());
 
         var dataLabel = CBORObject.FromObject("data");
-        result.Add(dataLabel, data.Data.Encrypted);
+        result.Add(dataLabel, session.Request.Encrypted);
 
         return result;
     }
