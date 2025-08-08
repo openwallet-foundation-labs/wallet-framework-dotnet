@@ -70,6 +70,7 @@ public class AuthorizationRequestService(
                             .WithX509()
                             .WithClientMetadata(clientMetadataOption),
                         RedirectUri => requestObject
+                            .ValidateClientIdPrefix()
                             .WithClientMetadata(clientMetadataOption),
                         //TODO: Remove Did in the future (kept for now for compatibility)
                         Did => requestObject
