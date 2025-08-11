@@ -1,6 +1,9 @@
 using LanguageExt;
 using Newtonsoft.Json;
+using OneOf;
+using WalletFramework.Oid4Vc.Oid4Vp.Dcql.Models;
 using WalletFramework.Oid4Vc.Oid4Vp.Jwk;
+using WalletFramework.Oid4Vc.Oid4Vp.PresentationExchange.Models;
 
 namespace WalletFramework.Oid4Vc.Oid4Vp.Models;
 
@@ -110,11 +113,87 @@ public record ClientMetadata
     /// </summary>
     [Obsolete("This property is obsolete.")]
     [JsonProperty("vp_formats")]
-    public Formats VpFormats { get; init; }
+    public Formats? VpFormats { get; init; }
 
      /// <summary>
      ///     The URI to a human-readable terms of service document for the client (verifier).
      /// </summary>
      [JsonProperty("vp_formats_supported")]
-     public Formats VpFormatsSupported { get; init; }
+     public Formats? VpFormatsSupported { get; init; }
+}
+
+public static class ClientMetadataExtensions
+{
+    public static bool IsVpFormatsSupported(this ClientMetadata clientMetadata, OneOf<DcqlQuery, PresentationDefinition> requirements)
+    {
+        return requirements.Match(
+            dcql =>
+            {
+                var walletMetadata = WalletMetadata.CreateDefault();
+                
+                var (sdJwtRequested, mdocRequested) = 
+                    (dcql.CredentialQueries.Any(query => query.Format == Constants.SdJwtDcFormat || query.Format == Constants.SdJwtVcFormat),
+                        dcql.CredentialQueries.Any(query => query.Format == Constants.MdocFormat));
+                
+                return (sdJwtRequested, mdocRequested) switch
+                {
+                    (true, false) => IsSdJwtVpFormatSupported(clientMetadata, walletMetadata),
+                    (false, true) => IsMdocVpFormatSupported(clientMetadata, walletMetadata),
+                    (true, true) => IsSdJwtVpFormatSupported(clientMetadata, walletMetadata) &&
+                                    IsMdocVpFormatSupported(clientMetadata, walletMetadata),
+                    _ => true
+                };
+            },
+            _ => true);
+    }
+    
+    private static bool IsMdocVpFormatSupported(ClientMetadata clientMetadata, WalletMetadata walletMetadata)
+    {
+        var rpSupportedVpFormats = clientMetadata.VpFormatsSupported ?? clientMetadata.VpFormats;
+        var walletMetadataSupportedVpFormats = walletMetadata.VpFormatsSupported;
+
+        if (rpSupportedVpFormats?.MDocFormat == null)
+            return true;
+        
+        if (rpSupportedVpFormats.MDocFormat.IssuerAuthAlgValues != null && 
+            !rpSupportedVpFormats.MDocFormat.IssuerAuthAlgValues.Any(clientAlg => walletMetadataSupportedVpFormats.MDocFormat!.IssuerAuthAlgValues!.Contains(clientAlg)))
+            return false;
+        
+        if (rpSupportedVpFormats.MDocFormat.DeviceAuthAlgValues != null && 
+            !rpSupportedVpFormats.MDocFormat.DeviceAuthAlgValues.Any(clientAlg => walletMetadataSupportedVpFormats.MDocFormat!.DeviceAuthAlgValues!.Contains(clientAlg)))
+            return false;
+
+        return true;
+    }
+
+    private static bool IsSdJwtVpFormatSupported(ClientMetadata clientMetadata, WalletMetadata walletMetadata)
+    {
+        var rpSupportedVpFormats = clientMetadata.VpFormatsSupported ?? clientMetadata.VpFormats;
+        var walletMetadataSupportedVpFormats = walletMetadata.VpFormatsSupported;
+
+        if (rpSupportedVpFormats?.SdJwtDcFormat != null)
+        {
+            if (rpSupportedVpFormats.SdJwtDcFormat.IssuerSignedJwtAlgValues != null && 
+                !rpSupportedVpFormats.SdJwtDcFormat.IssuerSignedJwtAlgValues.Any(clientAlg => walletMetadataSupportedVpFormats.SdJwtDcFormat!.IssuerSignedJwtAlgValues!.Contains(clientAlg)))
+                return false;
+    
+            if (rpSupportedVpFormats.SdJwtDcFormat.KeyBindingJwtAlgValues != null && 
+                !rpSupportedVpFormats.SdJwtDcFormat.KeyBindingJwtAlgValues.Any(clientAlg => walletMetadataSupportedVpFormats.SdJwtDcFormat!.KeyBindingJwtAlgValues!.Contains(clientAlg)))
+                return false;
+        }
+
+        //TODO: Remove SdJwtVcFormat in the future as it is deprecated (kept for now for backwards compatibility)
+        if (rpSupportedVpFormats?.SdJwtVcFormat != null)
+        {
+            if (rpSupportedVpFormats.SdJwtVcFormat.IssuerSignedJwtAlgValues != null && 
+                !rpSupportedVpFormats.SdJwtVcFormat.IssuerSignedJwtAlgValues.Any(clientAlg => walletMetadataSupportedVpFormats.SdJwtVcFormat!.IssuerSignedJwtAlgValues!.Contains(clientAlg)))
+                return false;
+    
+            if (rpSupportedVpFormats.SdJwtVcFormat.KeyBindingJwtAlgValues != null && 
+                !rpSupportedVpFormats.SdJwtVcFormat.KeyBindingJwtAlgValues.Any(clientAlg => walletMetadataSupportedVpFormats.SdJwtVcFormat!.KeyBindingJwtAlgValues!.Contains(clientAlg)))
+                return false;
+        }
+        
+        return true;
+    }
 }

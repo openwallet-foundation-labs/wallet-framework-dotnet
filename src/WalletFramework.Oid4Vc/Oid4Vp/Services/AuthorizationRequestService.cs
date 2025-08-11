@@ -189,7 +189,7 @@ public class AuthorizationRequestService(
         return await authorizationRequest.ClientMetadata.AsOption().Match(
             clientMetadata =>
             {
-                if (!IsVpFormatsSupported(authorizationRequest))
+                if (clientMetadata.IsVpFormatsSupported(authorizationRequest.Requirements))
                 {
                     var error = new VpFormatsNotSupportedError("The provided vp_formats_supported values are not supported");
                     var authorizationCancellation = new AuthorizationRequestCancellation(authorizationRequest.GetResponseUriMaybe(), [error]);
@@ -210,8 +210,11 @@ public class AuthorizationRequestService(
                 var response = await httpClient.GetAsync(authorizationRequest.ClientMetadataUri);
                 var clientMetadataJsonString = await response.Content.ReadAsStringAsync();
                 var clientMetadata = DeserializeObject<ClientMetadata>(clientMetadataJsonString);
-                
-                if (!IsVpFormatsSupported(authorizationRequest))
+
+                if (clientMetadata == null)
+                    return Option<ClientMetadata>.None;
+                    
+                if (clientMetadata.IsVpFormatsSupported(authorizationRequest.Requirements))
                 {
                     var error = new VpFormatsNotSupportedError("The provided vp_formats_supported values are not supported");
                     var authorizationCancellation = new AuthorizationRequestCancellation(authorizationRequest.GetResponseUriMaybe(), [error]);
@@ -220,79 +223,5 @@ public class AuthorizationRequestService(
                 
                 return clientMetadata.AsOption();
             });
-    }
-    
-    
-    private bool IsVpFormatsSupported(AuthorizationRequest authorizationRequest)
-    {
-        return authorizationRequest.Requirements.Match(
-            dcql =>
-            {
-                var walletMetadata = WalletMetadata.CreateDefault();
-                
-                var (sdJwtRequested, mdocRequested) = 
-                    (dcql.CredentialQueries.Any(query => query.Format == Constants.SdJwtDcFormat || query.Format == Constants.SdJwtVcFormat),
-                        dcql.CredentialQueries.Any(query => query.Format == Constants.MdocFormat));
-                
-                return (sdJwtRequested, mdocRequested) switch
-                {
-                    (true, false) => IsSdJwtVpFormatSupported(authorizationRequest, walletMetadata),
-                    (false, true) => IsMdocVpFormatSupported(authorizationRequest, walletMetadata),
-                    (true, true) => IsSdJwtVpFormatSupported(authorizationRequest, walletMetadata) &&
-                                   IsMdocVpFormatSupported(authorizationRequest, walletMetadata),
-                    _ => true
-                };
-            },
-            _ => true);
-    }
-    
-    private bool IsMdocVpFormatSupported(AuthorizationRequest authorizationRequest, WalletMetadata walletMetadata)
-    {
-        var rpSupportedVpFormats = authorizationRequest.ClientMetadata?.VpFormatsSupported ?? authorizationRequest.ClientMetadata?.VpFormats;
-        var walletMetadataSupportedVpFormats = walletMetadata.VpFormatsSupported;
-
-        if (rpSupportedVpFormats?.MDocFormat == null)
-            return true;
-        
-        if (rpSupportedVpFormats.MDocFormat.IssuerAuthAlgValues != null && 
-            !rpSupportedVpFormats.MDocFormat.IssuerAuthAlgValues.Any(clientAlg => walletMetadataSupportedVpFormats.MDocFormat!.IssuerAuthAlgValues!.Contains(clientAlg)))
-            return false;
-        
-        if (rpSupportedVpFormats.MDocFormat.DeviceAuthAlgValues != null && 
-            !rpSupportedVpFormats.MDocFormat.DeviceAuthAlgValues.Any(clientAlg => walletMetadataSupportedVpFormats.MDocFormat!.DeviceAuthAlgValues!.Contains(clientAlg)))
-            return false;
-
-        return true;
-    }
-
-    private bool IsSdJwtVpFormatSupported(AuthorizationRequest authorizationRequest, WalletMetadata walletMetadata)
-    {
-        var rpSupportedVpFormats = authorizationRequest.ClientMetadata?.VpFormatsSupported ?? authorizationRequest.ClientMetadata?.VpFormats;
-        var walletMetadataSupportedVpFormats = walletMetadata.VpFormatsSupported;
-
-        if (rpSupportedVpFormats?.SdJwtDcFormat != null)
-        {
-            if (rpSupportedVpFormats.SdJwtDcFormat.IssuerSignedJwtAlgValues != null && 
-                !rpSupportedVpFormats.SdJwtDcFormat.IssuerSignedJwtAlgValues.Any(clientAlg => walletMetadataSupportedVpFormats.SdJwtDcFormat!.IssuerSignedJwtAlgValues!.Contains(clientAlg)))
-                return false;
-    
-            if (rpSupportedVpFormats.SdJwtDcFormat.KeyBindingJwtAlgValues != null && 
-                !rpSupportedVpFormats.SdJwtDcFormat.KeyBindingJwtAlgValues.Any(clientAlg => walletMetadataSupportedVpFormats.SdJwtDcFormat!.KeyBindingJwtAlgValues!.Contains(clientAlg)))
-                return false;
-        }
-
-        //TODO: Remove SdJwtVcFormat in the future as it is deprecated (kept for now for backwards compatibility)
-        if (rpSupportedVpFormats?.SdJwtVcFormat != null)
-        {
-            if (rpSupportedVpFormats.SdJwtVcFormat.IssuerSignedJwtAlgValues != null && 
-                !rpSupportedVpFormats.SdJwtVcFormat.IssuerSignedJwtAlgValues.Any(clientAlg => walletMetadataSupportedVpFormats.SdJwtVcFormat!.IssuerSignedJwtAlgValues!.Contains(clientAlg)))
-                return false;
-    
-            if (rpSupportedVpFormats.SdJwtVcFormat.KeyBindingJwtAlgValues != null && 
-                !rpSupportedVpFormats.SdJwtVcFormat.KeyBindingJwtAlgValues.Any(clientAlg => walletMetadataSupportedVpFormats.SdJwtVcFormat!.KeyBindingJwtAlgValues!.Contains(clientAlg)))
-                return false;
-        }
-        
-        return true;
     }
 }
