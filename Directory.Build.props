@@ -25,8 +25,8 @@
     </PropertyGroup>
     <!--Versions of packages used across the repository-->
     <PropertyGroup Label="Package Versions">
-        <MicrosoftAspNetCoreHttpAbstractionsVersion>2.2.0</MicrosoftAspNetCoreHttpAbstractionsVersion>
-        <MicrosoftAspNetCoreHttpExtensionsVersion>2.2.0</MicrosoftAspNetCoreHttpExtensionsVersion>
+        <MicrosoftAspNetCoreHttpAbstractionsVersion>2.3.0</MicrosoftAspNetCoreHttpAbstractionsVersion>
+        <MicrosoftAspNetCoreHttpExtensionsVersion>2.3.0</MicrosoftAspNetCoreHttpExtensionsVersion>
         <MicrosoftAspNetCoreHttpVersion>2.2.2</MicrosoftAspNetCoreHttpVersion>
         <MicrosoftCodeAnalysisFxCopAnalyzersVersion>3.0.0</MicrosoftCodeAnalysisFxCopAnalyzersVersion>
         <MicrosoftExtensionsHostingVersion>3.1.5</MicrosoftExtensionsHostingVersion>
