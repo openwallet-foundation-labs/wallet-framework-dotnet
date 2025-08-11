@@ -23,6 +23,8 @@ public struct AuthFlowSessionState
     /// <param name="authFlowSessionState"></param>
     /// <returns></returns>
     public static implicit operator string(AuthFlowSessionState authFlowSessionState) => authFlowSessionState.Value;
+
+    public string AsString() => Value;
         
     public static Validation<AuthFlowSessionState> ValidAuthFlowSessionState(string authFlowSessionState)
     {

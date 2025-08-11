@@ -1,10 +1,9 @@
 using OneOf;
 using WalletFramework.Core.Credentials.Abstractions;
-using WalletFramework.Core.Functional;
 using WalletFramework.MdocLib;
 using WalletFramework.MdocVc;
+using WalletFramework.SdJwtVc;
 using WalletFramework.SdJwtVc.Models;
-using WalletFramework.SdJwtVc.Models.Records;
 
 namespace WalletFramework.Oid4Vc.Credential;
 
@@ -14,10 +13,12 @@ public static class CredentialFun
     {
         switch (credential)
         {
-            case SdJwtRecord sdJwt:
-                return Vct.ValidVct(sdJwt.Vct).UnwrapOrThrow();
-            case MdocRecord mdoc:
-                return mdoc.DocType;
+            case SdJwtCredential sdJwt:
+                return sdJwt.Vct;
+            // case MdocRecord mdoc:
+            //     return mdoc.DocType;
+            case MdocCredential mdoc:
+                return mdoc.Mdoc.DocType;
             default:
                 throw new InvalidOperationException("Invalid credential type");
         }

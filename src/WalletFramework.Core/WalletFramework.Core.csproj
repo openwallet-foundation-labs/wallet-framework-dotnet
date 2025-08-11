@@ -13,5 +13,6 @@
       <PackageReference Include="OneOf" Version="3.0.271" />
       <PackageReference Include="Portable.BouncyCastle" Version="1.9.0" />
         <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="7.5.2" />
+        <PackageReference Include="System.Reactive" Version="6.0.1" />
     </ItemGroup>
 </Project>

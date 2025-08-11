@@ -5,6 +5,7 @@ using LanguageExt;
 using WalletFramework.Core.Cryptography.Models;
 using WalletFramework.Core.Credentials;
 using WalletFramework.MdocVc;
+using WalletFramework.MdocVc.Display;
 
 namespace WalletFramework.Oid4Vc.Tests.Samples;
 
@@ -15,14 +16,14 @@ public static class MdocSamples
 
     public static Mdoc Mdoc => Mdoc.ValidMdoc(EncodedMdocBase64UrlStr).UnwrapOrThrow();
 
-    public static MdocRecord MdocRecord =>
-        new(
-            Mdoc,
-            Option<List<MdocDisplay>>.None,
-            KeyId.CreateKeyId(),
-            CredentialSetId.CreateCredentialSetId(),
-            CredentialState.Active,
-            Option<DateTime>.None,
-            false
-        );
+    // public static MdocRecord MdocRecord =>
+    //     new(
+    //         Mdoc,
+    //         Option<List<MdocDisplay>>.None,
+    //         KeyId.CreateKeyId(),
+    //         CredentialSetId.CreateCredentialSetId(),
+    //         CredentialState.Active,
+    //         Option<DateTime>.None,
+    //         false
+    //     );
 }
