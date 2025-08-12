@@ -46,7 +46,7 @@
         <MediatrExtensionsMicrosoftDependencyInjectionVersion>8.0.1</MediatrExtensionsMicrosoftDependencyInjectionVersion>
         <MediatrVersion>8.0.2</MediatrVersion>
         <MicroElementsSwashbuckleFluentValidationVersion>4.0.0</MicroElementsSwashbuckleFluentValidationVersion>
-        <MoqVersion>4.14.5</MoqVersion>
+        <MoqVersion>4.20.72</MoqVersion>
         <MultiformatsBaseVersion>2.0.2</MultiformatsBaseVersion>
         <NewtonsoftJsonVersion>13.0.1</NewtonsoftJsonVersion>
         <NLogConfigVersion>4.7.2</NLogConfigVersion>
