@@ -31,7 +31,7 @@
         <MicrosoftCodeAnalysisFxCopAnalyzersVersion>3.0.0</MicrosoftCodeAnalysisFxCopAnalyzersVersion>
         <MicrosoftExtensionsHostingVersion>3.1.5</MicrosoftExtensionsHostingVersion>
         <MicrosoftExtensionsHttpVersion>3.1.5</MicrosoftExtensionsHttpVersion>
-        <MicrosoftExtensionsLoggingVersion>3.1.5</MicrosoftExtensionsLoggingVersion>
+        <MicrosoftExtensionsLoggingVersion>9.0.8</MicrosoftExtensionsLoggingVersion>
         <MicrosoftNETTestSdkVersion>16.6.1</MicrosoftNETTestSdkVersion>
         <SystemReactiveLinqVersion>4.4.1</SystemReactiveLinqVersion>
         <SystemTextJsonVersion>4.7.2</SystemTextJsonVersion>
