@@ -1,4 +1,5 @@
 using FluentAssertions;
+using LanguageExt;
 using WalletFramework.Core.Functional;
 using WalletFramework.Oid4Vc.Oid4Vp.Dcql.CredentialQueries;
 using WalletFramework.Oid4Vc.Oid4Vp.Dcql.Models;
@@ -26,10 +27,10 @@ public class ClientMetadataTests
         };
 
         // Act
-        var result = clientMetadata.IsVpFormatsSupported(dcqlQuery);
+        var result = clientMetadata.VpFormatsSupportedValidation(dcqlQuery, Option<Uri>.None);
 
         // Assert
-        result.Should().BeTrue();
+        result.IsSuccess.Should().BeTrue();
     }
     
     [Fact]
@@ -69,10 +70,10 @@ public class ClientMetadataTests
         };
 
         // Act
-        var result = clientMetadata.IsVpFormatsSupported(dcqlQuery);
+        var result = clientMetadata.VpFormatsSupportedValidation(dcqlQuery, Option<Uri>.None);
 
         // Assert
-        result.Should().BeTrue();
+        result.IsSuccess.Should().BeTrue();
     }
     
     [Fact]
@@ -104,10 +105,10 @@ public class ClientMetadataTests
         };
 
         // Act
-        var result = clientMetadata.IsVpFormatsSupported(dcqlQuery);
+        var result = clientMetadata.VpFormatsSupportedValidation(dcqlQuery, Option<Uri>.None);
 
         // Assert
-        result.Should().BeTrue();
+        result.IsSuccess.Should().BeTrue();
     }
     
     [Fact]
@@ -149,10 +150,10 @@ public class ClientMetadataTests
         };
 
         // Act
-        var result = clientMetadata.IsVpFormatsSupported(dcqlQuery);
+        var result = clientMetadata.VpFormatsSupportedValidation(dcqlQuery, Option<Uri>.None);
 
         // Assert
-        result.Should().BeTrue();
+        result.IsSuccess.Should().BeTrue();
     }
     
     [Fact]
@@ -184,10 +185,10 @@ public class ClientMetadataTests
         };
 
         // Act
-        var result = clientMetadata.IsVpFormatsSupported(dcqlQuery);
+        var result = clientMetadata.VpFormatsSupportedValidation(dcqlQuery, Option<Uri>.None);
 
         // Assert
-        result.Should().BeFalse();
+        result.IsSuccess.Should().BeFalse();
     }
     
     [Fact]
@@ -219,10 +220,10 @@ public class ClientMetadataTests
         };
 
         // Act
-        var result = clientMetadata.IsVpFormatsSupported(dcqlQuery);
+        var result = clientMetadata.VpFormatsSupportedValidation(dcqlQuery, Option<Uri>.None);
 
         // Assert
-        result.Should().BeFalse();
+        result.IsSuccess.Should().BeFalse();
     }
 
     private static ClientMetadata CreateClientMetadata() => 

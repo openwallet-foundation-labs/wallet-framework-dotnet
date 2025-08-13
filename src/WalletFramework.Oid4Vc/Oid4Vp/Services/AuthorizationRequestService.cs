@@ -187,17 +187,7 @@ public class AuthorizationRequestService(
     private async Task<Validation<AuthorizationRequestCancellation, Option<ClientMetadata>>> FetchClientMetadata(AuthorizationRequest authorizationRequest)
     {
         return await authorizationRequest.ClientMetadata.AsOption().Match(
-            clientMetadata =>
-            {
-                if (clientMetadata.IsVpFormatsSupported(authorizationRequest.Requirements))
-                {
-                    var error = new VpFormatsNotSupportedError("The provided vp_formats_supported values are not supported");
-                    var authorizationCancellation = new AuthorizationRequestCancellation(authorizationRequest.GetResponseUriMaybe(), [error]);
-                    return Task.FromResult((Validation<AuthorizationRequestCancellation, Option<ClientMetadata>>) authorizationCancellation);
-                }
-                
-                return Task.FromResult<Validation<AuthorizationRequestCancellation, Option<ClientMetadata>>>(clientMetadata.AsOption());
-            },
+            clientMetadata => Task.FromResult(clientMetadata.VpFormatsSupportedValidation(authorizationRequest.Requirements, authorizationRequest.GetResponseUriMaybe())),
             async () =>
             {
                 if (string.IsNullOrWhiteSpace(authorizationRequest.ClientMetadataUri))
@@ -214,14 +204,7 @@ public class AuthorizationRequestService(
                 if (clientMetadata == null)
                     return Option<ClientMetadata>.None;
                     
-                if (clientMetadata.IsVpFormatsSupported(authorizationRequest.Requirements))
-                {
-                    var error = new VpFormatsNotSupportedError("The provided vp_formats_supported values are not supported");
-                    var authorizationCancellation = new AuthorizationRequestCancellation(authorizationRequest.GetResponseUriMaybe(), [error]);
-                    return (Validation<AuthorizationRequestCancellation, Option<ClientMetadata>>) authorizationCancellation;
-                }
-                
-                return clientMetadata.AsOption();
+                return clientMetadata.VpFormatsSupportedValidation(authorizationRequest.Requirements, authorizationRequest.GetResponseUriMaybe());
             });
     }
 }
