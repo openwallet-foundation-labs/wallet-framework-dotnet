@@ -17,7 +17,7 @@ public class DcqlParsingTests
 
         dcqlQuery.CredentialQueries[0].Id.AsString().Should().Be("pid");
         dcqlQuery.CredentialQueries[0].Format.Should().Be("dc+sd-jwt");
-        dcqlQuery.CredentialQueries[0].Meta!.Vcts!
+        dcqlQuery.CredentialQueries[0].Meta.Vcts!
             .First()
             .Should()
             .Be("https://credentials.example.com/identity_credential");
@@ -48,7 +48,7 @@ public class DcqlParsingTests
         var cred = sut.CredentialQueries[0];
         cred.Id.AsString().Should().Be("idcard");
         cred.Format.Should().Be("dc+sd-jwt");
-        cred.Meta!.Vcts!.Should().ContainSingle().Which.Should()
+        cred.Meta.Vcts!.Should().ContainSingle().Which.Should()
             .Be("ID-Card");
         cred.Claims!.Length.Should().Be(4);
         cred.Claims[0].Id!.AsString().Should().Be("a");
