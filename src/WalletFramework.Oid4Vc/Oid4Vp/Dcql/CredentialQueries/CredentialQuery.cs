@@ -58,8 +58,15 @@ public class CredentialQuery
     {
         var id = json.GetByKey(IdJsonKey)
             .OnSuccess(token => token.ToJValue())
-            .OnSuccess(value => CredentialQueryId.Create(value.Value?.ToString() ?? string.Empty))
-            .ToOption();
+            .OnSuccess(value =>
+            {
+                if (string.IsNullOrWhiteSpace(value.Value?.ToString()))
+                {
+                    return new StringIsNullOrWhitespaceError<CredentialQueryId>();
+                }
+
+                return CredentialQueryId.Create(value.Value.ToString());
+            });
 
         var format = json.GetByKey(FormatJsonKey)
             .OnSuccess(token => token.ToJValue())
@@ -99,13 +106,13 @@ public class CredentialQuery
     }
 
     private static CredentialQuery Create(
-        Option<CredentialQueryId> id,
+        CredentialQueryId id,
         string format,
         CredentialMetaQuery meta,
         Option<IEnumerable<ClaimQuery>> claims,
         Option<IEnumerable<ClaimSet>> claimSets) => new()
     {
-        Id = id.ToNullable(),
+        Id = id,
         Format = format,
         Meta = meta,
         Claims = claims.ToNullable()?.ToArray(),
