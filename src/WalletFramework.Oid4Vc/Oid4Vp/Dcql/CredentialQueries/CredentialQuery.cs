@@ -30,7 +30,8 @@ public class CredentialQuery
     ///     An object defining additional properties requested by the Verifier.
     /// </summary>
     [JsonProperty(MetaJsonKey)]
-    public CredentialMetaQuery? Meta { get; set; }
+    [JsonConverter(typeof(CredentialMetaQueryJsonConverter))]
+    public CredentialMetaQuery Meta { get; set; } = null!;
 
     /// <summary>
     ///     This MUST be a string that specifies the format of the requested Verifiable Credential.
@@ -57,8 +58,15 @@ public class CredentialQuery
     {
         var id = json.GetByKey(IdJsonKey)
             .OnSuccess(token => token.ToJValue())
-            .OnSuccess(value => CredentialQueryId.Create(value.Value?.ToString() ?? string.Empty))
-            .ToOption();
+            .OnSuccess(value =>
+            {
+                if (string.IsNullOrWhiteSpace(value.Value?.ToString()))
+                {
+                    return new StringIsNullOrWhitespaceError<CredentialQueryId>();
+                }
+
+                return CredentialQueryId.Create(value.Value.ToString());
+            });
 
         var format = json.GetByKey(FormatJsonKey)
             .OnSuccess(token => token.ToJValue())
@@ -98,13 +106,13 @@ public class CredentialQuery
     }
 
     private static CredentialQuery Create(
-        Option<CredentialQueryId> id,
+        CredentialQueryId id,
         string format,
         CredentialMetaQuery meta,
         Option<IEnumerable<ClaimQuery>> claims,
         Option<IEnumerable<ClaimSet>> claimSets) => new()
     {
-        Id = id.ToNullable(),
+        Id = id,
         Format = format,
         Meta = meta,
         Claims = claims.ToNullable()?.ToArray(),
@@ -127,40 +135,33 @@ public static class CredentialQueryConstants
 
 public static class CredentialQueryFun
 {
-    public static Option<OneOf<Vct, DocType>> GetRequestedCredentialType(this CredentialQuery credentialQuery)
-    {
-        switch (credentialQuery.Format)
+    public static OneOf<Vct, DocType> GetRequestedCredentialType(this CredentialQuery credentialQuery) => 
+        credentialQuery.Format switch
         {
-            case Constants.SdJwtVcFormat:
-            case Constants.SdJwtDcFormat:
-                return credentialQuery.Meta?.Vcts?.Any() == true
-                    ? Option<OneOf<Vct, DocType>>.Some(
-                        Vct.ValidVct(credentialQuery.Meta!.Vcts!.First()).UnwrapOrThrow())
-                    : Option<OneOf<Vct, DocType>>.None;
-            case Constants.MdocFormat:
-                return credentialQuery.Meta?.Doctype?.Any() == true
-                    ? Option<OneOf<Vct, DocType>>.Some(DocType.ValidDoctype(credentialQuery.Meta!.Doctype).UnwrapOrThrow())
-                    : Option<OneOf<Vct, DocType>>.None;
-            default:
-                return Option<OneOf<Vct, DocType>>.None;
-        }
-    }
+            Constants.SdJwtVcFormat or Constants.SdJwtDcFormat 
+                => Vct.ValidVct(credentialQuery.Meta.Vcts!.First()).UnwrapOrThrow(),
+            Constants.MdocFormat
+                => DocType.ValidDoctype(credentialQuery.Meta.Doctype).UnwrapOrThrow(),
+            _ => throw new InvalidOperationException("Only sd-jwt-dc and mdoc formats are supported.")
+        };
 
     public static Option<PresentationCandidate> FindMatchingCandidate(
         this CredentialQuery credentialQuery,
         IEnumerable<ICredential> credentials)
     {
         // Determine the credential types requested by the query
-        var requestedTypes = credentialQuery.Meta?.Vcts?.Concat([credentialQuery.Meta.Doctype]).ToArray();
+        var requestedTypes = credentialQuery.Format switch
+        {
+            Constants.SdJwtVcFormat or Constants.SdJwtDcFormat 
+                => credentialQuery.Meta.Vcts!.ToArray(),
+            Constants.MdocFormat 
+                => [credentialQuery.Meta.Doctype!],
+            _ => []
+        };
 
         // Filter credentials by requested types (if any)
         var credentialsWhereTypeMatches = credentials
-            .Where(credential =>
-            {
-                return requestedTypes == null 
-                    || !requestedTypes.Any()
-                    || requestedTypes.Contains(credential.GetCredentialTypeAsString());
-            })
+            .Where(credential => requestedTypes.Contains(credential.GetCredentialTypeAsString()))
             .ToArray();
         
         // Get the claims and claim sets to be disclosed

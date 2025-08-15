@@ -12,18 +12,19 @@ namespace WalletFramework.Oid4Vc.Oid4Vp.Dcql.Models;
 /// <summary>
 /// The credential query meta.
 /// </summary>
+
 public class CredentialMetaQuery
 {
     /// <summary>
     /// Specifies allowed values for the type of the requested Verifiable credential.
     /// </summary>
-    [JsonProperty("vct_values")]
+    [JsonProperty(VctValuesJsonKey)]
     public IEnumerable<string>? Vcts { get; set; }
     
     /// <summary>
     /// Specifies an allowed value for the doctype of the requested Verifiable credential.
     /// </summary>
-    [JsonProperty("doctype_value")]
+    [JsonProperty(DoctypeValueJsonKey)]
     public string? Doctype { get; set; }
     
     public static Validation<CredentialMetaQuery> FromJObject(JObject json)
@@ -54,6 +55,12 @@ public class CredentialMetaQuery
                 return ValidationFun.Valid(value.Value.ToString());
             })
             .ToOption();
+
+        if (vcts.IsSome == doctype.IsSome)
+        {
+            return new ObjectRequirementsAreNotMetError<CredentialMetaQuery>(
+                "In the CredentialMetaQuery the 'vct_values' and 'doctype_value' must be mutually exclusive.");
+        }
         
         return ValidationFun.Valid(Create)
             .Apply(vcts)
