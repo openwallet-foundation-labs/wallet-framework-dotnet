@@ -182,7 +182,13 @@ public static class RequestObjectExtensions
         else
             throw new InvalidOperationException("Validation of trust chain failed");
     }
-
+    
+    public static RequestObject ValidateClientIdPrefix(this RequestObject requestObject) => 
+        requestObject.ClientIdScheme.Value == ClientIdScheme.ClientIdSchemeValue.RedirectUri 
+        && requestObject.ToAuthorizationRequest().ResponseUri != requestObject.ClientId
+        ? throw new InvalidOperationException("When client_id_prefix is 'redirect_uri', the response_uri must match the client_id")
+        : requestObject;
+    
     internal static List<X509Certificate> GetCertificates(this RequestObject requestObject)
     {
         var x5C = ((JwtSecurityToken)requestObject).Header.X5c;
