@@ -56,7 +56,7 @@ public class CredentialMetaQuery
             })
             .ToOption();
 
-        if (!(vcts.IsSome ^ doctype.IsSome))
+        if (vcts.IsSome == doctype.IsSome)
         {
             return new ObjectRequirementsAreNotMetError<CredentialMetaQuery>(
                 "In the CredentialMetaQuery the 'vct_values' and 'doctype_value' must be mutually exclusive.");
