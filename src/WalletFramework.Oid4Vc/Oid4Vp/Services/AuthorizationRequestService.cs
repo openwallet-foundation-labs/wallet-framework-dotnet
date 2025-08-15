@@ -61,22 +61,23 @@ public class AuthorizationRequestService(
                         {
                             var error = new InvalidRequestError($"Client ID Scheme {requestObject.ClientIdScheme} is not supported");
     
-                            Validation<AuthorizationRequestCancellation, RequestObject> result = 
-                                requestObject.ClientIdScheme.Value switch
-                                {
-                                    X509SanDns => requestObject
-                                        .ValidateJwtSignature()
-                                        .ValidateTrustChain()
-                                        .ValidateSanName()
-                                        .WithX509()
-                                        .WithClientMetadata(clientMetadataOption),
-                                    RedirectUri => requestObject
-                                        .WithClientMetadata(clientMetadataOption),
-                                    //TODO: Remove Did in the future (kept for now for compatibility)
-                                    Did => requestObject
-                                        .WithClientMetadata(clientMetadataOption),
-                                    _ => new AuthorizationRequestCancellation(authRequest.GetResponseUriMaybe(), [error])
-                                };
+                Validation<AuthorizationRequestCancellation, RequestObject> result = 
+                    requestObject.ClientIdScheme.Value switch
+                    {
+                        X509SanDns => requestObject
+                            .ValidateJwtSignature()
+                            .ValidateTrustChain()
+                            .ValidateSanName()
+                            .WithX509()
+                            .WithClientMetadata(clientMetadataOption),
+                        RedirectUri => requestObject
+                            .ValidateClientIdPrefix()
+                            .WithClientMetadata(clientMetadataOption),
+                        //TODO: Remove Did in the future (kept for now for compatibility)
+                        Did => requestObject
+                            .WithClientMetadata(clientMetadataOption),
+                        _ => new AuthorizationRequestCancellation(authRequest.GetResponseUriMaybe(), [error])
+                    };
 
                             return result;
                         },
