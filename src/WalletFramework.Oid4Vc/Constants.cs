@@ -9,4 +9,6 @@ public static class Constants
     public const string MdocFormat = "mso_mdoc";
 
     public const string RegistrationCertificateFormat = "jwt";
+    
+    public const string DefaultResponseEncryptionEncAlgorithm = "A256GCM";
 }

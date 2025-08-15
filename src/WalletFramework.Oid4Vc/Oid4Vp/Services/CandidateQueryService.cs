@@ -19,7 +19,7 @@ public class CandidateQueryService(
             {
                 return pexService.FindPresentationCandidatesAsync(
                     presentationDefinition,
-                    authRequest.ClientMetadata?.Formats
+                    authRequest.ClientMetadata?.VpFormatsSupported ?? authRequest.ClientMetadata?.VpFormats
                 );
             }
         );

@@ -10,12 +10,12 @@ public class MDocFormat
     /// <summary>
     ///     Gets the names of supported algorithms.
     /// </summary>
-    [JsonProperty("alg")]
-    public string[]? Alg { get; private set; }
+    [JsonProperty("issuerauth_alg_values")]
+    public string[]? IssuerAuthAlgValues { get; init; }
         
     /// <summary>
     ///     Gets the names of supported proof types.
     /// </summary>
-    [JsonProperty("proof_type")]
-    public string[]? ProofTypes { get; private set; }
+    [JsonProperty("deviceauth_alg_values")]
+    public string[]? DeviceAuthAlgValues { get; init; }
 }
