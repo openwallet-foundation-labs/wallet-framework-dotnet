@@ -1,6 +1,7 @@
 using LanguageExt;
 using WalletFramework.Core.Base64Url;
 using WalletFramework.Core.Functional;
+using WalletFramework.Core.Functional.Enumerable;
 using WalletFramework.Oid4Vc.Oid4Vp.Errors;
 using WalletFramework.Oid4Vc.Oid4Vp.Models;
 using WalletFramework.Oid4Vc.Oid4Vp.TransactionDatas.Errors;
@@ -122,12 +123,12 @@ internal static class TransactionDataFun
 
                 foreach (var txData in transactionDatas)
                 {
-                    var found = indexedCandidates.FirstOrDefault(tuple =>
+                    var findings = indexedCandidates.Where(tuple =>
                     {
                         return new[] { tuple.candidate }.FindCandidateForTransactionData(txData).IsSuccess;
-                    });
+                    }).ToList();
 
-                    if (found == default)
+                    if (findings.IsEmpty())
                     {
                         return new InvalidTransactionDataError(
                             $"No credentials found that satisfy the transaction data with type {txData.GetTransactionDataType().AsString()}",
@@ -135,8 +136,11 @@ internal static class TransactionDataFun
                     }
 
                     // Update the candidate with the transaction data
-                    var updated = found.candidate.AddTransactionDatas([txData]);
-                    updatedCandidates[(found.setIdx, found.candIdx)] = updated;
+                    foreach (var found in findings)
+                    {
+                        var updated = found.candidate.AddTransactionDatas([txData]);
+                        updatedCandidates[(found.setIdx, found.candIdx)] = updated;
+                    }
                 }
 
                 // Reconstruct sets with updated candidates
