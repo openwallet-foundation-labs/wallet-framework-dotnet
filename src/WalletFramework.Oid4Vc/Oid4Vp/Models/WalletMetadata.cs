@@ -1,3 +1,4 @@
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
 namespace WalletFramework.Oid4Vc.Oid4Vp.Models;
@@ -47,11 +48,11 @@ public record WalletMetadata
     
     public string ToJsonString()
     {
-        return new JObject
+        return JsonConvert.SerializeObject(new JObject
         {
             [VpFormatsSupportedIdentifier] = JObject.FromObject(VpFormatsSupported),
             [ClientIdPrefixesSupportedIdentifier] = new JArray {ClientIdPrefixesSupported.Select(x => x.AsString())},
             [ClientIdSchemesSupportedIdentifier] = new JArray {ClientIdPrefixesSupported.Select(x => x.AsString())},
-        }.ToString();
+        });
     }
 } 
