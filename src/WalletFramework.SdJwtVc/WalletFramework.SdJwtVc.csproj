@@ -7,7 +7,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Hyperledger.Aries\Hyperledger.Aries.csproj" />
     <ProjectReference Include="..\WalletFramework.Core\WalletFramework.Core.csproj" />
     <ProjectReference Include="..\WalletFramework.Storage\WalletFramework.Storage.csproj" />
   </ItemGroup>

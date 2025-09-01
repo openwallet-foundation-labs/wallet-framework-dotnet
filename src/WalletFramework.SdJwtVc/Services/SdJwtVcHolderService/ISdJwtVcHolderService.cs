@@ -1,8 +1,4 @@
-using Hyperledger.Aries.Agents;
-using Hyperledger.Aries.Storage;
 using LanguageExt;
-using WalletFramework.Core.Credentials;
-// using WalletFramework.SdJwtVc.Models.Records;
 
 namespace WalletFramework.SdJwtVc.Services.SdJwtVcHolderService;
 
@@ -11,16 +7,6 @@ namespace WalletFramework.SdJwtVc.Services.SdJwtVcHolderService;
 /// </summary>
 public interface ISdJwtVcHolderService
 {
-    // /// <summary>
-    // ///     Deletes a specific SD-JWT record by its ID.
-    // /// </summary>
-    // /// <param name="context">The agent context.</param>
-    // /// <param name="recordId">The ID of the SD-JWT credential record to delete.</param>
-    // /// <returns>
-    // ///     A task representing the asynchronous operation. The task result indicates whether the deletion was successful.
-    // /// </returns>
-    // Task<bool> DeleteAsync(IAgentContext context, string recordId);
-
     /// <summary>
     ///     Creates a SD-JWT in presentation format where the provided claims are disclosed.
     ///     The key binding is optional and can be activated by providing an audience and a nonce.
@@ -44,50 +30,4 @@ public interface ISdJwtVcHolderService
         Option<string> transactionDataHashesAlg,
         string? audience = null,
         string? nonce = null);
-        
-    // /// <summary>
-    // ///     Retrieves a specific SD-JWT record by its ID.
-    // /// </summary>
-    // /// <param name="context">The agent context.</param>
-    // /// <param name="credentialId">The ID of the SD-JWT credential record to retrieve.</param>
-    // /// <returns>
-    // ///     A task representing the asynchronous operation. The task result contains the <see cref="SdJwtRecord" />
-    // ///     associated with the given ID.
-    // /// </returns>
-    // Task<SdJwtRecord> GetAsync(IAgentContext context, string credentialId);
-
-    // /// <summary>
-    // ///     Lists SD-JWT records based on specified criteria.
-    // /// </summary>
-    // /// <param name="context">The agent context.</param>
-    // /// <param name="query">The search query to filter SD-JWT records. Default is null, meaning no filter.</param>
-    // /// <param name="count">The maximum number of records to retrieve. Default is 100.</param>
-    // /// <param name="skip">The number of records to skip. Default is 0.</param>
-    // /// <returns>
-    // ///     A task representing the asynchronous operation. The task result contains a list of <see cref="SdJwtRecord" />
-    // ///     that match the criteria.
-    // /// </returns>
-    // Task<List<SdJwtRecord>> ListAsync(
-    //     IAgentContext context,
-    //     ISearchQuery? query = null,
-    //     int count = 100,
-    //     int skip = 0);
-
-    // Task<Option<IEnumerable<SdJwtRecord>>> ListAsync(IAgentContext context, CredentialSetId setId);
-
-    // /// <summary>
-    // ///     Updates a SD-JWT record.
-    // /// </summary>
-    // /// <param name="context">The agent context.</param>
-    // /// <param name="record">The SD-JWT record to be saved</param>
-    // /// <returns>A task representing the asynchronous operation. The task result contains the ID of the stored JWT record.</returns>
-    // Task UpdateAsync(IAgentContext context, SdJwtRecord record);
-    
-    // /// <summary>
-    // ///     Adds a SD-JWT record.
-    // /// </summary>
-    // /// <param name="context">The agent context.</param>
-    // /// <param name="record">The SD-JWT record to be saved</param>
-    // /// <returns>A task representing the asynchronous operation. The task result contains the ID of the stored JWT record.</returns>
-    // Task AddAsync(IAgentContext context, SdJwtRecord record);
 }

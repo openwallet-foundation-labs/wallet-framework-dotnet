@@ -1,7 +1,7 @@
 using System.Net.Http.Headers;
 using System.Web;
-using Hyperledger.Aries.Utils;
 using LanguageExt;
+using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using WalletFramework.Core.Functional;

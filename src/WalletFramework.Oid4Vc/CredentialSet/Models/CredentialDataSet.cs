@@ -24,9 +24,6 @@ public sealed record CredentialDataSet(
     Option<DateTime> DeletedAt,
     string IssuerId)
 {
-    public static CredentialDataSet FromCredentials(IEnumerable<ICredential> credentials) =>
-        FromCredentials(credentials, Option<string>.None);
-
     public static CredentialDataSet FromCredentials(IEnumerable<ICredential> credentials, Option<string> issuerIdHint)
     {
         var credentialArray = credentials as ICredential[] ?? credentials.ToArray();
