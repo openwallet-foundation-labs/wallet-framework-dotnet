@@ -21,7 +21,7 @@
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\WalletFramework.SdJwtLib\WalletFramework.SdJwtLib.csproj" />
+      <ProjectReference Include="..\..\src\WalletFramework.SdJwtLib\WalletFramework.SdJwtLib.csproj" />
     </ItemGroup>
 
 </Project>
