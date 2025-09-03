@@ -3,12 +3,12 @@ using System.IdentityModel.Tokens.Jwt;
 using Hyperledger.Aries.Storage;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using SD_JWT.Models;
 using WalletFramework.Core.Credentials;
 using WalletFramework.Core.Credentials.Abstractions;
 using WalletFramework.Core.Cryptography.Models;
 using WalletFramework.Core.Functional;
 using WalletFramework.Core.StatusList;
+using WalletFramework.SdJwtLib.Models;
 using WalletFramework.SdJwtVc.Models.Credential;
 using WalletFramework.SdJwtVc.Models.Credential.Attributes;
 

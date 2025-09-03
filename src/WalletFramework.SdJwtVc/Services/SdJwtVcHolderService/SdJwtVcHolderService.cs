@@ -2,9 +2,9 @@ using Hyperledger.Aries;
 using Hyperledger.Aries.Agents;
 using Hyperledger.Aries.Storage;
 using LanguageExt;
-using SD_JWT.Models;
-using SD_JWT.Roles;
 using WalletFramework.Core.Credentials;
+using WalletFramework.SdJwtLib.Models;
+using WalletFramework.SdJwtLib.Roles;
 using WalletFramework.SdJwtVc.Models.Records;
 
 namespace WalletFramework.SdJwtVc.Services.SdJwtVcHolderService;

@@ -1,9 +1,9 @@
 using System.Drawing;
-using SD_JWT.Models;
 using WalletFramework.Core.Credentials;
 using WalletFramework.Core.Cryptography.Models;
 using WalletFramework.Core.Functional;
 using WalletFramework.Oid4Vc.Oid4Vci.CredConfiguration.Models.SdJwt;
+using WalletFramework.SdJwtLib.Models;
 using WalletFramework.SdJwtVc.Models.Credential;
 using WalletFramework.SdJwtVc.Models.Records;
 

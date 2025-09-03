@@ -1,12 +1,11 @@
 using Newtonsoft.Json.Linq;
-using SD_JWT.Models;
 using WalletFramework.Core.ClaimPaths;
 using WalletFramework.Core.Functional;
 using WalletFramework.Core.Json.Errors;
 using WalletFramework.MdocLib;
 using WalletFramework.Core.ClaimPaths.Errors;
 using WalletFramework.MdocLib.Elements;
-using LanguageExt;
+using WalletFramework.SdJwtLib.Models;
 using static WalletFramework.Core.ClaimPaths.ClaimPathSelectionFun;
 
 namespace WalletFramework.Oid4Vc.Oid4Vp.ClaimPaths;
