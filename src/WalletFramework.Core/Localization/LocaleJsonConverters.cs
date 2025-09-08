@@ -5,7 +5,7 @@ using Newtonsoft.Json;
 
 namespace WalletFramework.Core.Localization;
 
-public sealed class LocalCo : JsonConverter<Locale>
+public sealed class LocalJsonConverter : JsonConverter<Locale>
 {
     public override void WriteJson(JsonWriter writer, Locale value, JsonSerializer serializer)
     {
