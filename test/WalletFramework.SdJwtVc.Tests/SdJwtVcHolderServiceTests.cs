@@ -1,11 +1,11 @@
 using Hyperledger.Aries.Storage;
 using LanguageExt;
 using Moq;
-using SD_JWT.Models;
-using SD_JWT.Roles;
-using SD_JWT.Roles.Implementation;
 using WalletFramework.Core.Credentials;
 using WalletFramework.Core.Cryptography.Models;
+using WalletFramework.SdJwtLib.Models;
+using WalletFramework.SdJwtLib.Roles;
+using WalletFramework.SdJwtLib.Roles.Implementation;
 using WalletFramework.SdJwtVc.Models.Credential;
 using WalletFramework.SdJwtVc.Models.Credential.Attributes;
 using WalletFramework.SdJwtVc.Models.Records;

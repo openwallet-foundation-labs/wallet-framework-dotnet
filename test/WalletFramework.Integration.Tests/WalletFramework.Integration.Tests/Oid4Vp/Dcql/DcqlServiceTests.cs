@@ -3,7 +3,6 @@ using Hyperledger.Aries.Agents;
 using Hyperledger.Aries.Storage;
 using Moq;
 using Newtonsoft.Json.Linq;
-using SD_JWT.Roles.Implementation;
 using WalletFramework.Core.ClaimPaths;
 using WalletFramework.Core.Credentials;
 using WalletFramework.Core.Credentials.Abstractions;
@@ -12,11 +11,11 @@ using WalletFramework.Core.Functional;
 using WalletFramework.Oid4Vc;
 using WalletFramework.Oid4Vc.Oid4Vci.Abstractions;
 using WalletFramework.Oid4Vc.Oid4Vp.Dcql.CredentialQueries;
-using WalletFramework.Oid4Vc.Oid4Vp.Dcql.CredentialSets;
 using WalletFramework.Oid4Vc.Oid4Vp.Dcql.Models;
 using WalletFramework.Oid4Vc.Oid4Vp.Dcql.Services;
 using WalletFramework.Oid4Vc.Oid4Vp.Models;
 using WalletFramework.Oid4Vc.Tests.Samples;
+using WalletFramework.SdJwtLib.Roles.Implementation;
 using WalletFramework.SdJwtVc.Models.Credential;
 using WalletFramework.SdJwtVc.Models.Credential.Attributes;
 using WalletFramework.SdJwtVc.Models.Records;
@@ -54,17 +53,20 @@ public class DcqlServiceTests
         var batchCredentialQuery = CreateCredentialQuery(
             Guid.NewGuid().ToString(),
             Constants.SdJwtDcFormat,
-            [idClaimQuery, CreateCredentialClaimQuery(["issuer"]), CreateCredentialClaimQuery(["batchExp"])]);
+            [idClaimQuery, CreateCredentialClaimQuery(["issuer"]), CreateCredentialClaimQuery(["batchExp"])], 
+            CreateCredentialMetaQuery([_batchCredentialOne.Vct]));
 
         var driverLicenseCredentialQuery = CreateCredentialQuery(
             Guid.NewGuid().ToString(),
             Constants.SdJwtDcFormat,
-            [idClaimQuery, CreateCredentialClaimQuery(["issuer"]), CreateCredentialClaimQuery(["dateOfBirth"])]);
+            [idClaimQuery, CreateCredentialClaimQuery(["issuer"]), CreateCredentialClaimQuery(["dateOfBirth"])],
+            CreateCredentialMetaQuery([_driverCredential.Vct]));
 
         var universityCredentialQuery = CreateCredentialQuery(
             Guid.NewGuid().ToString(),
             Constants.SdJwtDcFormat,
-            [CreateCredentialClaimQuery(["degree"])]);
+            [CreateCredentialClaimQuery(["degree"])], 
+            CreateCredentialMetaQuery([_universityCredential.Vct]));
         
         var driverLicenseCredentialSetCandidate = new CredentialSetCandidate(DriverLicenseCredentialSetId,
             new List<ICredential> { _driverCredential });
@@ -111,7 +113,8 @@ public class DcqlServiceTests
         var identityCredentialCredentialQuery = CreateCredentialQuery(
             Guid.NewGuid().ToString(),
             Constants.SdJwtDcFormat,
-            [cityClaimQuery, CreateCredentialClaimQuery(["vct"]), CreateCredentialClaimQuery(["iss"])]);
+            [cityClaimQuery, CreateCredentialClaimQuery(["vct"]), CreateCredentialClaimQuery(["iss"])], 
+            CreateCredentialMetaQuery([_alternativeNestedCredential.Vct]));
     
         var expected = new List<PresentationCandidate>
         {
@@ -144,7 +147,8 @@ public class DcqlServiceTests
         var identityCredentialCredentialQuery = CreateCredentialQuery(
             Guid.NewGuid().ToString(),
             Constants.SdJwtDcFormat,
-            [vctClaimQuery, CreateCredentialClaimQuery(["address", "city"]), CreateCredentialClaimQuery(["iss"])]);
+            [vctClaimQuery, CreateCredentialClaimQuery(["address", "city"]), CreateCredentialClaimQuery(["iss"])], 
+            CreateCredentialMetaQuery([_nestedCredential.Vct, _alternativeNestedCredential.Vct]));
     
         var expected = new List<PresentationCandidate>
         {
@@ -177,7 +181,8 @@ public class DcqlServiceTests
                 CreateCredentialClaimQuery(["iss"]),
                 CreateCredentialClaimQuery(["dateOfBirth"]),
                 CreateCredentialClaimQuery(["name"])
-            ]);
+            ], 
+            CreateCredentialMetaQuery([_driverCredential.Vct]));
     
         var dcqlService = CreateDcqlService();
     
@@ -197,7 +202,8 @@ public class DcqlServiceTests
         var driverLicenseCredentialQuery = CreateCredentialQuery(
             Guid.NewGuid().ToString(),
             Constants.SdJwtDcFormat,
-            [idClaimQuery, CreateCredentialClaimQuery(["issuer"]), CreateCredentialClaimQuery(["dateOfBirth"])]);
+            [idClaimQuery, CreateCredentialClaimQuery(["issuer"]), CreateCredentialClaimQuery(["dateOfBirth"])], 
+            CreateCredentialMetaQuery([_driverCredential.Vct]));
     
         var dcqlService = CreateDcqlService();
     
@@ -258,14 +264,23 @@ public class DcqlServiceTests
         
         return credentialQueryClaim;
     }
+    
+    private static CredentialMetaQuery CreateCredentialMetaQuery(string[] type)
+    {
+        return CredentialMetaQuery.FromJObject(new JObject()
+        {
+            ["vct_values"] = new JArray() { type }
+        }).UnwrapOrThrow();
+    }
 
-    private static CredentialQuery CreateCredentialQuery(string id, string format, ClaimQuery[] credentialQueryClaims)
+    private static CredentialQuery CreateCredentialQuery(string id, string format, ClaimQuery[] credentialQueryClaims, CredentialMetaQuery metaQuery)
     {
         var credentialQuery = new CredentialQuery
         {
             Id = CredentialQueryId.Create(id).UnwrapOrThrow(),
             Format = format,
-            Claims = credentialQueryClaims
+            Claims = credentialQueryClaims,
+            Meta = metaQuery
         };
         return credentialQuery;
     }
