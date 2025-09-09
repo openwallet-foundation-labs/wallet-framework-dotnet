@@ -57,7 +57,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WalletFramework.IsoProximit
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WalletFramework.Core.Tests", "..\test\WalletFramework.Core.Tests\WalletFramework.Core.Tests.csproj", "{BBD79F15-66E1-47A2-819E-A0644F514E40}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "SD-JWT", "SD-JWT", "{EC94F3B3-9321-4E5A-88F4-8B1C4E90F32C}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "SdJwt", "SdJwt", "{EC94F3B3-9321-4E5A-88F4-8B1C4E90F32C}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WalletFramework.SdJwtLib", "WalletFramework.SdJwtLib\WalletFramework.SdJwtLib.csproj", "{01F973A3-ED07-4396-8DD9-71EA691A7301}"
 EndProject
