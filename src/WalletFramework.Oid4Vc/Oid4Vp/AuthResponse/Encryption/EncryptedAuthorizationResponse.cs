@@ -6,25 +6,31 @@ using Org.BouncyCastle.Crypto.Modes;
 using Org.BouncyCastle.Crypto.Parameters;
 using Org.BouncyCastle.Security;
 using WalletFramework.Core.Base64Url;
-using WalletFramework.Core.Functional;
 using WalletFramework.Core.String;
 using WalletFramework.Oid4Vc.Oid4Vp.Jwk;
 using WalletFramework.Oid4Vc.Oid4Vp.Models;
+using static WalletFramework.Oid4Vc.Constants;
 
 namespace WalletFramework.Oid4Vc.Oid4Vp.AuthResponse.Encryption;
 
-public record EncryptedAuthorizationResponse(string Jwe, Option<string> State)
+public record EncryptedAuthorizationResponse(string Jwe)
 {
     public override string ToString() => Jwe;
 }
 
 public static class EncryptedAuthorizationResponseFun
 {
+    private static readonly IReadOnlyDictionary<string, JweEncryption> SupportedEncAlgorithmsMap = new Dictionary<string, JweEncryption>
+    {
+        ["A256GCM"] = JweEncryption.A256GCM,
+        ["A128CBC-HS256"] = JweEncryption.A128CBC_HS256
+    };
+    
     public static EncryptedAuthorizationResponse Encrypt(
         this AuthorizationResponse response,
         JsonWebKey verifierPubKey,
         string apv,
-        Option<string> authorizationEncryptedResponseEnc,
+        Option<string[]> encryptedResponseEncAlgorithms,
         Option<Nonce> mdocNonce)
     {
         var apvBase64 = Base64UrlString.CreateBase64UrlString(apv.GetUtf8Bytes());
@@ -44,20 +50,20 @@ public static class EncryptedAuthorizationResponseFun
         var settings = new JwtSettings();
         settings.RegisterJwe(JweEncryption.A256GCM, new AesGcmEncryption());
 
+        var selectedEncAlgorithm = encryptedResponseEncAlgorithms.Match(
+            encAlgs => encAlgs.FirstOrDefault(encAlg => SupportedEncAlgorithmsMap.ContainsKey(encAlg)) 
+                    ?? throw new NotSupportedException("Unsupported response encryption algorithms requested by verifier."),
+            () => DefaultResponseEncryptionEncAlgorithm);
+        
         var jwe = JWE.EncryptBytes(
             response.ToJson().GetUtf8Bytes(),
             [new JweRecipient(JweAlgorithm.ECDH_ES, verifierPubKey.ToEcdh())],
-            authorizationEncryptedResponseEnc.ToNullable() switch {
-                "A256GCM" => JweEncryption.A256GCM,
-                "A128CBC-HS256" => JweEncryption.A128CBC_HS256,
-                null => JweEncryption.A256GCM,
-                _ => throw new NotSupportedException("Unsupported response encryption algorithm requested by verifier.")
-            },
+            SupportedEncAlgorithmsMap[selectedEncAlgorithm],
             mode: SerializationMode.Compact,
             extraProtectedHeaders: headers,
             settings: settings);
 
-        return new EncryptedAuthorizationResponse(jwe, response.State);
+        return new EncryptedAuthorizationResponse(jwe);
     }
 
     public static FormUrlEncodedContent ToFormUrl(this EncryptedAuthorizationResponse response)
@@ -66,8 +72,6 @@ public static class EncryptedAuthorizationResponseFun
         {
             { "response", response.ToString() }
         };
-
-        response.State.IfSome(state => content["state"] = state);
 
         return new FormUrlEncodedContent(content);
     }

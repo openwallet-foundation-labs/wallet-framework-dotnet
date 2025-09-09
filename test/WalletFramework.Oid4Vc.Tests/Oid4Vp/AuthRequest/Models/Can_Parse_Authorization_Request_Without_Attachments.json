@@ -19,9 +19,10 @@
         } ]
     },
     "client_metadata" : {
-        "vp_formats" : {
+        "vp_formats_supported" : {
             "mso_mdoc" : {
-                "alg" : [ "EdDSA", "ES256", "ES384" ]
+                "issuerauth_alg_values": ["-7", "-9", "-200"],
+                "deviceauth_alg_values": ["-7"]
             },
             "vc+sd-jwt" : {
                 "kb-jwt_alg_values" : [ "EdDSA", "ES256", "ES384", "ES256K" ],

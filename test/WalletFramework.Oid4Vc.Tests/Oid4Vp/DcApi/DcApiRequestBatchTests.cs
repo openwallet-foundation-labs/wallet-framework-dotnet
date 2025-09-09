@@ -36,7 +36,7 @@ public class DcApiRequestBatchTests
                 var credentialQuery = dcApiRequest.DcqlQuery.CredentialQueries[0];
                 credentialQuery.Id.AsString().Should().Be("cred1");
                 credentialQuery.Format.Should().Be("mso_mdoc");
-                credentialQuery.Meta!.Doctype.Should().Be("org.iso.18013.5.1.mDL");
+                credentialQuery.Meta.Doctype.Should().Be("org.iso.18013.5.1.mDL");
                 credentialQuery.Claims.Should().HaveCount(2);
                 
                 var firstClaim = credentialQuery.Claims![0];
@@ -77,7 +77,7 @@ public class DcApiRequestBatchTests
                 var credentialQuery = dcApiRequest.DcqlQuery.CredentialQueries[0];
                 credentialQuery.Id.AsString().Should().Be("cred1");
                 credentialQuery.Format.Should().Be("mso_mdoc");
-                credentialQuery.Meta!.Doctype.Should().Be("org.iso.18013.5.1.mDL");
+                credentialQuery.Meta.Doctype.Should().Be("org.iso.18013.5.1.mDL");
                 credentialQuery.Claims.Should().HaveCount(2);
                 
                 var firstClaim = credentialQuery.Claims![0];

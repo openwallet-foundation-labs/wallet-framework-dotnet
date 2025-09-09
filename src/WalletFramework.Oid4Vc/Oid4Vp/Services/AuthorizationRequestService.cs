@@ -55,10 +55,12 @@ public class AuthorizationRequestService(
             async requestObject =>
             {
                 var authRequest = requestObject.ToAuthorizationRequest();
-                var clientMetadataOption = 
-                    await FetchClientMetadata(authRequest).OnException(_ => Option<ClientMetadata>.None);
-
-                var error = new InvalidRequestError($"Client ID Scheme {requestObject.ClientIdScheme} is not supported");
+                return (await FetchClientMetadata(authRequest)
+                    .OnException(_ => Option<ClientMetadata>.None))
+                    .Match(
+                        clientMetadataOption => 
+                        {
+                            var error = new InvalidRequestError($"Client ID Scheme {requestObject.ClientIdScheme} is not supported");
     
                 Validation<AuthorizationRequestCancellation, RequestObject> result = 
                     requestObject.ClientIdScheme.Value switch
@@ -70,6 +72,7 @@ public class AuthorizationRequestService(
                             .WithX509()
                             .WithClientMetadata(clientMetadataOption),
                         RedirectUri => requestObject
+                            .ValidateClientIdPrefix()
                             .WithClientMetadata(clientMetadataOption),
                         //TODO: Remove Did in the future (kept for now for compatibility)
                         Did => requestObject
@@ -77,7 +80,9 @@ public class AuthorizationRequestService(
                         _ => new AuthorizationRequestCancellation(authRequest.GetResponseUriMaybe(), [error])
                     };
 
-                return result;
+                            return result;
+                        },
+                        cancellation => cancellation);
             },
             seq => seq);
     }
@@ -118,19 +123,24 @@ public class AuthorizationRequestService(
         
         return await CreateAuthorizationRequest(jsonString).MatchAsync(async authRequest =>
             {
-                var clientMetadataOption = 
-                    await FetchClientMetadata(authRequest).OnException(_ => Option<ClientMetadata>.None);
-                    
-                var error = new InvalidRequestError($"Client ID Scheme {authRequest.ClientIdScheme} is not supported");
-            
-                Validation<AuthorizationRequestCancellation, AuthorizationRequest> result = 
-                    authRequest.ClientIdScheme.Value switch
-                    {
-                        RedirectUri => authRequest.WithClientMetadata(clientMetadataOption),
-                        _ => new AuthorizationRequestCancellation(authRequest.GetResponseUriMaybe(), [error])
-                    };
+                return (await FetchClientMetadata(authRequest)
+                    .OnException(_ => Option<ClientMetadata>.None))
+                    .Match(
+                        clientMetadataOption =>
+                        {
+                            var error = new InvalidRequestError($"Client ID Scheme {authRequest.ClientIdScheme} is not supported");
+                
+                            Validation<AuthorizationRequestCancellation, AuthorizationRequest> result = 
+                                authRequest.ClientIdScheme.Value switch
+                                {
+                                    RedirectUri => authRequest.WithClientMetadata(clientMetadataOption),
+                                    _ => new AuthorizationRequestCancellation(authRequest.GetResponseUriMaybe(), [error])
+                                };
 
-                return result;
+                            return result;
+                        },
+                        cancellation => cancellation
+                    );
             },
             seq => seq);
     }
@@ -156,25 +166,10 @@ public class AuthorizationRequestService(
         httpClient.DefaultRequestHeaders.Clear();
         httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/oauth-authz-req+jwt"));
         
-        var walletNonce = Base64UrlEncoder.Encode(Guid.NewGuid().ToString());
         var keyValuePairs = new List<KeyValuePair<string, string>>();
+        var walletNonce = Nonce.GenerateNonce().AsBase64Url.AsString;
         keyValuePairs.Add(new KeyValuePair<string, string>("wallet_nonce", walletNonce));
-        keyValuePairs.Add(new KeyValuePair<string, string>("wallet_metadata", new JObject()
-        { 
-            ["vp_formats_supported"] = new JObject() 
-            {
-                ["dc+sd-jwt"] = new JObject() 
-                { 
-                    ["sd-jwt_alg_values"] = new JArray(){ "ES256", "ES384", "ES512", "RS256" }, 
-                    ["kb-jwt_alg_values"] = new JArray(){ "ES256" } 
-                },
-                ["mso_mdoc"] = new JObject() 
-                { 
-                    ["issuerauth_alg_values"] = new JArray(){ "-7", "-35", "-36", "-8" }, 
-                    ["deviceauth_alg_values"] = new JArray(){ "-7" } 
-                }
-            } 
-        }.ToString()));
+        keyValuePairs.Add(new KeyValuePair<string, string>("wallet_metadata", WalletMetadata.CreateDefault().ToJsonString()));
         
         var response = await httpClient.PostAsync(authRequestByReference.RequestUri, new FormUrlEncodedContent(keyValuePairs));
         response.EnsureSuccessStatusCode();
@@ -191,21 +186,27 @@ public class AuthorizationRequestService(
         return FromStr(await httpClient.GetStringAsync(authRequestByReference.RequestUri), Option<string>.None);
     }
     
-    private async Task<Option<ClientMetadata>> FetchClientMetadata(AuthorizationRequest authorizationRequest)
+    private async Task<Validation<AuthorizationRequestCancellation, Option<ClientMetadata>>> FetchClientMetadata(AuthorizationRequest authorizationRequest)
     {
-        var httpClient = httpClientFactory.CreateClient();
-        httpClient.DefaultRequestHeaders.Clear();
-        httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+        return await authorizationRequest.ClientMetadata.AsOption().Match(
+            clientMetadata => Task.FromResult(clientMetadata.VpFormatsSupportedValidation(authorizationRequest.Requirements, authorizationRequest.GetResponseUriMaybe())),
+            async () =>
+            {
+                if (string.IsNullOrWhiteSpace(authorizationRequest.ClientMetadataUri))
+                    return Option<ClientMetadata>.None;
+                
+                var httpClient = httpClientFactory.CreateClient();
+                httpClient.DefaultRequestHeaders.Clear();
+                httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+                
+                var response = await httpClient.GetAsync(authorizationRequest.ClientMetadataUri);
+                var clientMetadataJsonString = await response.Content.ReadAsStringAsync();
+                var clientMetadata = DeserializeObject<ClientMetadata>(clientMetadataJsonString);
 
-        if (authorizationRequest.ClientMetadata != null)
-            return authorizationRequest.ClientMetadata;
-
-        if (string.IsNullOrWhiteSpace(authorizationRequest.ClientMetadataUri))
-            return null;
-            
-        var response = await httpClient.GetAsync(authorizationRequest.ClientMetadataUri);
-        var clientMetadata = await response.Content.ReadAsStringAsync();
-        
-        return DeserializeObject<ClientMetadata>(clientMetadata);
+                if (clientMetadata == null)
+                    return Option<ClientMetadata>.None;
+                    
+                return clientMetadata.VpFormatsSupportedValidation(authorizationRequest.Requirements, authorizationRequest.GetResponseUriMaybe());
+            });
     }
 }
