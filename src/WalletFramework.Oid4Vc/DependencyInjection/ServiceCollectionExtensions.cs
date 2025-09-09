@@ -41,8 +41,6 @@ using WalletFramework.SdJwtVc;
 using WalletFramework.SdJwtVc.Persistence;
 using WalletFramework.SdJwtVc.Services;
 using WalletFramework.Storage;
-using WalletFramework.Storage.Repositories;
-using WalletFramework.Storage.Database.DependencyInjection;
 using WalletFramework.Storage.Records;
 
 namespace WalletFramework.Oid4Vc.DependencyInjection;
@@ -55,12 +53,7 @@ public static class ServiceCollectionExtensions
     /// <param name="builder"> The builder. </param>
     public static IServiceCollection AddOpenIdServices(this IServiceCollection builder)
     {
-        // builder.AddSingleton<ICredentialSetStorage, CredentialSetStorage>();
-        // builder.AddSingleton<IMdocStorage, MdocStorage>();
-        // builder.AddSingleton<IMigrationStepsProvider, MigrationStepsProvider>();
-        // builder.AddSingleton<IRecordsMigrationService, RecordsMigrationService>();
         builder.AddSingleton<IAesGcmEncryption, AesGcmEncryption>();
-        // Removed legacy IAuthFlowSessionStorage in favor of generic repository
         builder.AddSingleton<IAuthorizationRequestService, AuthorizationRequestService>();
         builder.AddSingleton<IAuthorizationResponseEncryptionService, AuthorizationResponseEncryptionService>();
         builder.AddSingleton<ICandidateQueryService, CandidateQueryService>();
@@ -80,7 +73,6 @@ public static class ServiceCollectionExtensions
         builder.AddSingleton<IOid4VciClientService, Oid4VciClientService>();
         builder.AddSingleton<IOid4VpClientService, Oid4VpClientService>();
         builder.AddSingleton<IOid4VpHaipClient, Oid4VpHaipClient>();
-        // builder.AddSingleton<IOid4VpRecordService, Oid4VpRecordService>();
         builder.AddSingleton<IPexService, PexService>();
         builder.AddSingleton<IPresentationService, PresentationService>();
         builder.AddSingleton<IRpAuthService, RpAuthService>();

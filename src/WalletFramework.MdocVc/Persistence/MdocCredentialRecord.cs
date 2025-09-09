@@ -27,7 +27,7 @@ public sealed record MdocCredentialRecord : RecordBase
         Serialized = MdocCredentialSerializer.Serialize(mdoc);
     }
 
-    public MdocCredential ToDomain()
+    public MdocCredential ToDomainModel()
     {
         return MdocCredentialSerializer.Deserialize(Serialized).UnwrapOrThrow();
     }

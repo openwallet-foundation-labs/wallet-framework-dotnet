@@ -1,4 +1,3 @@
-using Hyperledger.Aries.Extensions;
 using Jose;
 using LanguageExt;
 using Microsoft.IdentityModel.Tokens;
@@ -8,6 +7,7 @@ using Org.BouncyCastle.Crypto.Parameters;
 using Org.BouncyCastle.Security;
 using WalletFramework.Core.Base64Url;
 using WalletFramework.Core.Functional;
+using WalletFramework.Core.String;
 using WalletFramework.Oid4Vc.Oid4Vp.Jwk;
 using WalletFramework.Oid4Vc.Oid4Vp.Models;
 
@@ -27,7 +27,7 @@ public static class EncryptedAuthorizationResponseFun
         Option<string> authorizationEncryptedResponseEnc,
         Option<Nonce> mdocNonce)
     {
-        var apvBase64 = Base64UrlString.CreateBase64UrlString(apv.GetUTF8Bytes());
+        var apvBase64 = Base64UrlString.CreateBase64UrlString(apv.GetUtf8Bytes());
 
         var headers = new Dictionary<string, object>
         {
@@ -45,7 +45,7 @@ public static class EncryptedAuthorizationResponseFun
         settings.RegisterJwe(JweEncryption.A256GCM, new AesGcmEncryption());
 
         var jwe = JWE.EncryptBytes(
-            response.ToJson().GetUTF8Bytes(),
+            response.ToJson().GetUtf8Bytes(),
             [new JweRecipient(JweAlgorithm.ECDH_ES, verifierPubKey.ToEcdh())],
             authorizationEncryptedResponseEnc.ToNullable() switch {
                 "A256GCM" => JweEncryption.A256GCM,

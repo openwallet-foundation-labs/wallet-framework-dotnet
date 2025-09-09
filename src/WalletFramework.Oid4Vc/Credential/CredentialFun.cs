@@ -11,17 +11,12 @@ public static class CredentialFun
 {
     public static OneOf<Vct, DocType> GetCredentialType(this ICredential credential)
     {
-        switch (credential)
+        return credential switch
         {
-            case SdJwtCredential sdJwt:
-                return sdJwt.Vct;
-            // case MdocRecord mdoc:
-            //     return mdoc.DocType;
-            case MdocCredential mdoc:
-                return mdoc.Mdoc.DocType;
-            default:
-                throw new InvalidOperationException("Invalid credential type");
-        }
+            SdJwtCredential sdJwt => sdJwt.Vct,
+            MdocCredential mdoc => mdoc.Mdoc.DocType,
+            _ => throw new InvalidOperationException("Invalid credential type")
+        };
     }
     
     public static string GetCredentialTypeAsString(this ICredential credential)

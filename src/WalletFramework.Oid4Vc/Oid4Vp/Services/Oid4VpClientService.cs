@@ -1,7 +1,6 @@
 using System.Net.Mime;
 using System.Security.Cryptography;
 using System.Text;
-using Hyperledger.Aries.Extensions;
 using LanguageExt;
 using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
@@ -11,6 +10,7 @@ using SD_JWT.Models;
 using WalletFramework.Core.Credentials;
 using WalletFramework.Core.Credentials.Abstractions;
 using WalletFramework.Core.Functional;
+using WalletFramework.Core.String;
 using WalletFramework.MdocLib;
 using WalletFramework.MdocLib.Device;
 using WalletFramework.MdocLib.Device.Response;
@@ -358,7 +358,7 @@ public class Oid4VpClientService : IOid4VpClientService
                     var kbJwt = presentation[presentation.LastIndexOf('~')..][1..];
                     var kbJwtWithoutSignature = kbJwt[..kbJwt.LastIndexOf('.')];
 
-                    var kbJwtWithoutSignatureHash = sha256.ComputeHash(kbJwtWithoutSignature.GetUTF8Bytes());
+                    var kbJwtWithoutSignatureHash = sha256.ComputeHash(kbJwtWithoutSignature.GetUtf8Bytes());
 
                     var sdJwtContent = new JObject
                     {

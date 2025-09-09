@@ -41,7 +41,7 @@ public class MdocCredentialRepository(IRepository<MdocCredentialRecord> reposito
         var records = await repository.Find(config.ToPredicate());
         return
             from credentialRecords in records
-            let credentials = credentialRecords.Select(r => r.ToDomain())
+            let credentials = credentialRecords.Select(r => r.ToDomainModel())
             select credentials.ToList();
     }
 
@@ -49,7 +49,7 @@ public class MdocCredentialRepository(IRepository<MdocCredentialRecord> reposito
     {
         var guid = Guid.Parse(id.AsString());
         var record = await repository.GetById(guid);
-        return record.Map(r => r.ToDomain());
+        return record.Map(r => r.ToDomainModel());
     }
 
     public virtual async Task<Option<List<MdocCredential>>> ListAll()
@@ -57,7 +57,7 @@ public class MdocCredentialRepository(IRepository<MdocCredentialRecord> reposito
         var records = await repository.ListAll();
         return
             from credentialRecords in records
-            let credentials = credentialRecords.Select(r => r.ToDomain())
+            let credentials = credentialRecords.Select(r => r.ToDomainModel())
             select credentials.ToList();
     }
 

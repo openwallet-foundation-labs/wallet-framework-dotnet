@@ -59,7 +59,7 @@ public class CompletedPresentationRepository(IRepository<CompletedPresentationRe
     {
         var records = await repository.Find(config.ToPredicate());
         return from recs in records
-               let domains = recs.Select(r => r.ToDomain())
+               let domains = recs.Select(r => r.ToDomainModel())
                select domains.ToList();
     }
 
@@ -68,14 +68,14 @@ public class CompletedPresentationRepository(IRepository<CompletedPresentationRe
         var records = await repository.Find(r => r.PresentationId == id);
         return from recs in records
                let record = recs.FirstOrDefault()
-               select record?.ToDomain();
+               select record?.ToDomainModel();
     }
 
     public async Task<Option<List<CompletedPresentation>>> ListAll()
     {
         var records = await repository.ListAll();
         return from recs in records
-               let domains = recs.Select(r => r.ToDomain())
+               let domains = recs.Select(r => r.ToDomainModel())
                select domains.ToList();
     }
 

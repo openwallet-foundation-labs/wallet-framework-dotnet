@@ -51,9 +51,3 @@ public class SdJwtVcHolderService(IHolder holder, ISdJwtSigner signer) : ISdJwtV
         return presentationFormat.Value;
     }
 }
-
-public static class SdJwtRecordExtensions
-{
-    public static SdJwtDoc ToSdJwtDoc(this SdJwtCredential record) =>
-        new(record.EncodedIssuerSignedJwt + "~" + string.Join("~", record.Disclosures) + "~");
-}

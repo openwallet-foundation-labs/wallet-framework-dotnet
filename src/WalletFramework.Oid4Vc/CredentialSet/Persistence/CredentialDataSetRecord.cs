@@ -68,7 +68,7 @@ public sealed record CredentialDataSetRecord : RecordBase
         IssuerId = domain.IssuerId;
     }
 
-    public CredentialDataSet ToDomain()
+    public CredentialDataSet ToDomainModel()
     {
         var setId = CredentialSetId.ValidCredentialSetId(RecordId.ToString()).UnwrapOrThrow();
 

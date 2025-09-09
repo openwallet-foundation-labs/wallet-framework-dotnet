@@ -55,14 +55,14 @@ public record SdJwtCredentialRecord : RecordBase
         DisclosuresJson = JsonConvert.SerializeObject(credential.Disclosures);
     }
 
-    public SdJwtCredential ToDomain()
+    public SdJwtCredential ToDomainModel()
     {
         var credentialId = CredentialId.ValidCredentialId(RecordId.ToString()).UnwrapOrThrow();
         var setId = Core.Credentials.CredentialSetId.ValidCredentialSetId(CredentialSetId).UnwrapOrThrow();
         var keyId = Core.Cryptography.Models.KeyId.ValidKeyId(KeyId).UnwrapOrThrow();
         var state = Enum.Parse<CredentialState>(CredentialState);
         var expires = ExpiresAt is null ? Option<DateTime>.None : Option<DateTime>.Some(ExpiresAt.Value);
-        
+
 
         var displaysOption = string.IsNullOrWhiteSpace(DisplaysJson)
             ? Option<List<SdJwtDisplay>>.None

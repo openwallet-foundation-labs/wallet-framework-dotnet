@@ -26,7 +26,7 @@ public class SdJwtCredentialRepository(IRepository<SdJwtCredentialRecord> reposi
     {
         var guid = Guid.Parse(id.AsString());
         var record = await repository.GetById(guid);
-        return record.Map(r => r.ToDomain());
+        return record.Map(r => r.ToDomainModel());
     }
 
     public async Task<Option<List<SdJwtCredential>>> Find(ISearchConfig<SdJwtCredentialRecord> config)
@@ -34,7 +34,7 @@ public class SdJwtCredentialRepository(IRepository<SdJwtCredentialRecord> reposi
         var records = await repository.Find(config.ToPredicate());
         return
             from credentialRecords in records
-            let credentials = credentialRecords.Select(r => r.ToDomain())
+            let credentials = credentialRecords.Select(r => r.ToDomainModel())
             select credentials.ToList();
     }
 
@@ -43,7 +43,7 @@ public class SdJwtCredentialRepository(IRepository<SdJwtCredentialRecord> reposi
         var records = await repository.ListAll();
         return
             from credentialRecords in records
-            let credentials = credentialRecords.Select(r => r.ToDomain())
+            let credentials = credentialRecords.Select(r => r.ToDomainModel())
             select credentials.ToList();
     }
 

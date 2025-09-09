@@ -13,8 +13,6 @@ using WalletFramework.Oid4Vc.Oid4Vp.ClaimPaths;
 using WalletFramework.Oid4Vc.Oid4Vp.Dcql.CredentialQueries;
 using WalletFramework.Oid4Vc.RelyingPartyAuthentication.RegistrationCertificate;
 using WalletFramework.SdJwtVc;
-// using WalletFramework.SdJwtVc.Models.Records;
-// using WalletFramework.SdJwtVc.Services.SdJwtVcHolderService;
 using static WalletFramework.Oid4Vc.Oid4Vp.Dcql.Models.ClaimQueryConstants;
 
 namespace WalletFramework.Oid4Vc.Oid4Vp.Dcql.Models;

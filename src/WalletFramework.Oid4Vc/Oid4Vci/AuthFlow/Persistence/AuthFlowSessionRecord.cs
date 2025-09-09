@@ -26,7 +26,7 @@ public sealed record AuthFlowSessionRecord : RecordBase
         Serialized = domain.EncodeToJson().ToString();
     }
 
-    public AuthFlowSession ToDomain()
+    public AuthFlowSession ToDomainModel()
     {
         return AuthFlowSessionJson.DecodeFromJson(JObject.Parse(Serialized));
     }

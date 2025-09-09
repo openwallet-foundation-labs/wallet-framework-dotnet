@@ -190,7 +190,7 @@ public class CompletedPresentationRecordCrudTests : IDisposable
     {
         var presentation = CreateSamplePresentation();
         var record = new CompletedPresentationRecord(presentation);
-        var back = record.ToDomain();
+        var back = record.ToDomainModel();
 
         back.PresentationId.Should().Be(presentation.PresentationId);
         back.ClientId.Should().Be(presentation.ClientId);

@@ -55,11 +55,6 @@ public record SdJwtCredential : ICredential
 
     public SdJwtDoc SdJwtDoc { get; init; } = null!;
 
-    // Parameterless constructor for EF
-    public SdJwtCredential()
-    {
-    }
-
     public SdJwtCredential(
         SdJwtDoc sdJwtDoc,
         CredentialId credentialId,
@@ -77,7 +72,7 @@ public record SdJwtCredential : ICredential
         Displays = displays;
         var vctValue = sdJwtDoc.UnsecuredPayload.SelectToken("vct")?.Value<string>()
                        ?? throw new ArgumentNullException(nameof(Vct), "vct claim is missing or null");
-        Vct = WalletFramework.SdJwtVc.Models.Vct.ValidVct(vctValue).UnwrapOrThrow();
+        Vct = Vct.ValidVct(vctValue).UnwrapOrThrow();
         KeyId = keyId;
         CredentialState = credentialState;
         OneTimeUse = oneTimeUse;

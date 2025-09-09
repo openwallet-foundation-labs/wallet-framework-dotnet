@@ -29,7 +29,7 @@ public sealed record CompletedPresentationRecord : RecordBase
         Serialized = JsonConvert.SerializeObject(domain);
     }
 
-    public CompletedPresentation ToDomain()
+    public CompletedPresentation ToDomainModel()
     {
         return JsonConvert.DeserializeObject<CompletedPresentation>(Serialized)!;
     }

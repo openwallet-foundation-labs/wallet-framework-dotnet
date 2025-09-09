@@ -33,20 +33,20 @@ public class CredentialDataSetRepository(IRepository<CredentialDataSetRecord> re
     public virtual async Task<Option<List<CredentialDataSet>>> Find(ISearchConfig<CredentialDataSetRecord> config)
     {
         var records = await repository.Find(config.ToPredicate());
-        return from rs in records select rs.Select(r => r.ToDomain()).ToList();
+        return from rs in records select rs.Select(r => r.ToDomainModel()).ToList();
     }
 
     public virtual async Task<Option<CredentialDataSet>> GetById(CredentialSetId id)
     {
         var guid = Guid.Parse(id.AsString());
         var record = await repository.GetById(guid);
-        return record.Map(r => r.ToDomain());
+        return record.Map(r => r.ToDomainModel());
     }
 
     public virtual async Task<Option<List<CredentialDataSet>>> ListAll()
     {
         var records = await repository.ListAll();
-        return from rs in records select rs.Select(r => r.ToDomain()).ToList();
+        return from rs in records select rs.Select(r => r.ToDomainModel()).ToList();
     }
 
     public virtual async Task<Unit> Update(CredentialDataSet domain)

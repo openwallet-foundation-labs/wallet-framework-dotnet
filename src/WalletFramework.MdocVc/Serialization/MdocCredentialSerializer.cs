@@ -1,4 +1,3 @@
-using LanguageExt;
 using Newtonsoft.Json.Linq;
 using WalletFramework.Core.Functional;
 using WalletFramework.Core.Json;

@@ -104,7 +104,7 @@ public class MdocCredentialTests
         sut.DocType.Should().Be(MdocSamples.DocType);
         
         // Verify that the serialized data contains the correct credential information
-        var deserializedCredential = sut.ToDomain();
+        var deserializedCredential = sut.ToDomainModel();
         deserializedCredential.CredentialId.AsString().Should().Be(credentialId.AsString());
         deserializedCredential.CredentialSetId.AsString().Should().Be(credentialSetId.AsString());
         deserializedCredential.KeyId.AsString().Should().Be(keyId.AsString());
@@ -130,7 +130,7 @@ public class MdocCredentialTests
         );
 
         // Act
-        var sut = new MdocCredentialRecord(credential).ToDomain();
+        var sut = new MdocCredentialRecord(credential).ToDomainModel();
 
         // Assert
         sut.CredentialState.Should().Be(CredentialState.Active);
