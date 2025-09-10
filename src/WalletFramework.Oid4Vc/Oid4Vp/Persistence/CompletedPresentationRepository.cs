@@ -8,17 +8,17 @@ namespace WalletFramework.Oid4Vc.Oid4Vp.Persistence;
 public class CompletedPresentationRepository(IRepository<CompletedPresentationRecord> repository)
     : IDomainRepository<CompletedPresentation, CompletedPresentationRecord, string>
 {
-    public async Task<Unit> Add(CompletedPresentation domain)
+    public async Task<Unit> Add(CompletedPresentation domainModel)
     {
-        var toStore = domain with { LastTimeUsed = DateTimeOffset.UtcNow };
+        var toStore = domainModel with { LastTimeUsed = DateTimeOffset.UtcNow };
         await repository.Add(new CompletedPresentationRecord(toStore));
         return Unit.Default;
     }
 
-    public async Task<Unit> AddMany(IEnumerable<CompletedPresentation> domains)
+    public async Task<Unit> AddMany(IEnumerable<CompletedPresentation> domainModels)
     {
         var now = DateTimeOffset.UtcNow;
-        var records = domains.Select(d => new CompletedPresentationRecord(d with { LastTimeUsed = now }));
+        var records = domainModels.Select(d => new CompletedPresentationRecord(d with { LastTimeUsed = now }));
         await repository.AddMany(records);
         return Unit.Default;
     }
@@ -39,9 +39,9 @@ public class CompletedPresentationRepository(IRepository<CompletedPresentationRe
         return Unit.Default;
     }
 
-    public async Task<Unit> Delete(CompletedPresentation domain)
+    public async Task<Unit> Delete(CompletedPresentation domainModel)
     {
-        var recs = await repository.Find(r => r.PresentationId == domain.PresentationId);
+        var recs = await repository.Find(r => r.PresentationId == domainModel.PresentationId);
         await recs.Match(
             Some: async list =>
             {
@@ -79,20 +79,20 @@ public class CompletedPresentationRepository(IRepository<CompletedPresentationRe
                select domains.ToList();
     }
 
-    public async Task<Unit> Update(CompletedPresentation domain)
+    public async Task<Unit> Update(CompletedPresentation domainModel)
     {
-        var existingOpt = await repository.Find(r => r.ClientId == domain.ClientId);
+        var existingOpt = await repository.Find(r => r.ClientId == domainModel.ClientId);
 
         await existingOpt.Match(
             Some: async list =>
             {
                 var existing = list.First();
-                var updated = existing with { Serialized = JsonConvert.SerializeObject(domain) };
+                var updated = existing with { Serialized = JsonConvert.SerializeObject(domainModel) };
                 await repository.Update(updated);
             },
             None: async () =>
             {
-                var toStore = domain with { LastTimeUsed = DateTimeOffset.UtcNow };
+                var toStore = domainModel with { LastTimeUsed = DateTimeOffset.UtcNow };
                 await repository.Add(new CompletedPresentationRecord(toStore));
             });
 

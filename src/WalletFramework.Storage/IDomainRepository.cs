@@ -3,21 +3,21 @@ using WalletFramework.Storage.Records;
 
 namespace WalletFramework.Storage;
 
-public interface IDomainRepository<TDomain, TRecord, in TId> where TRecord : RecordBase
+public interface IDomainRepository<TDomainModel, TRecord, in TId> where TRecord : RecordBase
 {
-    Task<Unit> Add(TDomain domain);
+    Task<Unit> Add(TDomainModel domainModel);
 
-    Task<Unit> AddMany(IEnumerable<TDomain> domains);
+    Task<Unit> AddMany(IEnumerable<TDomainModel> domainModels);
 
-    Task<Option<TDomain>> GetById(TId id);
+    Task<Option<TDomainModel>> GetById(TId id);
 
-    Task<Option<List<TDomain>>> Find(ISearchConfig<TRecord> config);
+    Task<Option<List<TDomainModel>>> Find(ISearchConfig<TRecord> config);
 
-    Task<Option<List<TDomain>>> ListAll();
+    Task<Option<List<TDomainModel>>> ListAll();
 
-    Task<Unit> Update(TDomain domain);
+    Task<Unit> Update(TDomainModel domainModel);
 
     Task<Unit> Delete(TId id);
     
-    Task<Unit> Delete(TDomain domain);
+    Task<Unit> Delete(TDomainModel domainModel);
 }

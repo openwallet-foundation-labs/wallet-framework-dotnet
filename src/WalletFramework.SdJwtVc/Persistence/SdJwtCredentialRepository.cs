@@ -8,16 +8,16 @@ namespace WalletFramework.SdJwtVc.Persistence;
 public class SdJwtCredentialRepository(IRepository<SdJwtCredentialRecord> repository)
     : IDomainRepository<SdJwtCredential, SdJwtCredentialRecord, CredentialId>
 {
-    public async Task<Unit> Add(SdJwtCredential domain)
+    public async Task<Unit> Add(SdJwtCredential domainModel)
     {
-        var record = new SdJwtCredentialRecord(domain);
+        var record = new SdJwtCredentialRecord(domainModel);
         await repository.Add(record);
         return Unit.Default;
     }
 
-    public async Task<Unit> AddMany(IEnumerable<SdJwtCredential> domains)
+    public async Task<Unit> AddMany(IEnumerable<SdJwtCredential> domainModels)
     {
-        var records = domains.Select(domain => new SdJwtCredentialRecord(domain));
+        var records = domainModels.Select(domain => new SdJwtCredentialRecord(domain));
         await repository.AddMany(records);
         return Unit.Default;
     }
@@ -47,9 +47,9 @@ public class SdJwtCredentialRepository(IRepository<SdJwtCredentialRecord> reposi
             select credentials.ToList();
     }
 
-    public async Task<Unit> Update(SdJwtCredential domain)
+    public async Task<Unit> Update(SdJwtCredential domainModel)
     {
-        var record = new SdJwtCredentialRecord(domain);
+        var record = new SdJwtCredentialRecord(domainModel);
         await repository.Update(record);
         return Unit.Default;
     }
@@ -61,9 +61,9 @@ public class SdJwtCredentialRepository(IRepository<SdJwtCredentialRecord> reposi
         return Unit.Default;
     }
 
-    public async Task<Unit> Delete(SdJwtCredential domain)
+    public async Task<Unit> Delete(SdJwtCredential domainModel)
     {
-        var record = new SdJwtCredentialRecord(domain);
+        var record = new SdJwtCredentialRecord(domainModel);
         await repository.Remove(record);
         return Unit.Default;
     }

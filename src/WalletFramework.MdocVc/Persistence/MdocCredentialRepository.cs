@@ -8,16 +8,16 @@ namespace WalletFramework.MdocVc.Persistence;
 public class MdocCredentialRepository(IRepository<MdocCredentialRecord> repository)
     : IDomainRepository<MdocCredential, MdocCredentialRecord, CredentialId>
 {
-    public virtual async Task<Unit> Add(MdocCredential domain)
+    public virtual async Task<Unit> Add(MdocCredential domainModel)
     {
-        var record = new MdocCredentialRecord(domain);
+        var record = new MdocCredentialRecord(domainModel);
         await repository.Add(record);
         return Unit.Default;
     }
 
-    public virtual async Task<Unit> AddMany(IEnumerable<MdocCredential> domains)
+    public virtual async Task<Unit> AddMany(IEnumerable<MdocCredential> domainModels)
     {
-        var records = domains.Select(d => new MdocCredentialRecord(d));
+        var records = domainModels.Select(d => new MdocCredentialRecord(d));
         await repository.AddMany(records);
         return Unit.Default;
     }
@@ -29,9 +29,9 @@ public class MdocCredentialRepository(IRepository<MdocCredentialRecord> reposito
         return Unit.Default;
     }
 
-    public virtual async Task<Unit> Delete(MdocCredential domain)
+    public virtual async Task<Unit> Delete(MdocCredential domainModel)
     {
-        var record = new MdocCredentialRecord(domain);
+        var record = new MdocCredentialRecord(domainModel);
         await repository.Remove(record);
         return Unit.Default;
     }
@@ -61,9 +61,9 @@ public class MdocCredentialRepository(IRepository<MdocCredentialRecord> reposito
             select credentials.ToList();
     }
 
-    public virtual async Task<Unit> Update(MdocCredential domain)
+    public virtual async Task<Unit> Update(MdocCredential domainModel)
     {
-        var record = new MdocCredentialRecord(domain);
+        var record = new MdocCredentialRecord(domainModel);
         await repository.Update(record);
         return Unit.Default;
     }

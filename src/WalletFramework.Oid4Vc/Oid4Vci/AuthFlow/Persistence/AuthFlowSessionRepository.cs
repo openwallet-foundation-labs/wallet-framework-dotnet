@@ -8,29 +8,29 @@ namespace WalletFramework.Oid4Vc.Oid4Vci.AuthFlow.Persistence;
 public class AuthFlowSessionRepository(IRepository<AuthFlowSessionRecord> repository)
     : IDomainRepository<AuthFlowSession, AuthFlowSessionRecord, AuthFlowSessionState>
 {
-    public async Task<Unit> Add(AuthFlowSession domain)
+    public async Task<Unit> Add(AuthFlowSession domainModel)
     {
-        var sessionState = domain.AuthFlowSessionState.AsString();
+        var sessionState = domainModel.AuthFlowSessionState.AsString();
 
         var existingOpt = await repository.Find(r => r.SessionState == sessionState);
         await existingOpt.Match(
             Some: async list =>
             {
                 var existing = list.First();
-                var updated = existing with { Serialized = domain.EncodeToJson().ToString() };
+                var updated = existing with { Serialized = domainModel.EncodeToJson().ToString() };
                 await repository.Update(updated);
             },
             None: async () =>
             {
-                await repository.Add(new AuthFlowSessionRecord(domain));
+                await repository.Add(new AuthFlowSessionRecord(domainModel));
             });
 
         return Unit.Default;
     }
 
-    public async Task<Unit> AddMany(IEnumerable<AuthFlowSession> domains)
+    public async Task<Unit> AddMany(IEnumerable<AuthFlowSession> domainModels)
     {
-        var records = domains.Select(d => new AuthFlowSessionRecord(d));
+        var records = domainModels.Select(d => new AuthFlowSessionRecord(d));
         await repository.AddMany(records);
         return Unit.Default;
     }
@@ -49,9 +49,9 @@ public class AuthFlowSessionRepository(IRepository<AuthFlowSessionRecord> reposi
         return Unit.Default;
     }
 
-    public async Task<Unit> Delete(AuthFlowSession domain)
+    public async Task<Unit> Delete(AuthFlowSession domainModel)
     {
-        var idStr = domain.AuthFlowSessionState.AsString();
+        var idStr = domainModel.AuthFlowSessionState.AsString();
         var recs = await repository.Find(r => r.SessionState == idStr);
         await recs.Match(
             Some: async list =>
@@ -88,19 +88,19 @@ public class AuthFlowSessionRepository(IRepository<AuthFlowSessionRecord> reposi
                select domains.ToList();
     }
 
-    public async Task<Unit> Update(AuthFlowSession domain)
+    public async Task<Unit> Update(AuthFlowSession domainModel)
     {
-        var idStr = domain.AuthFlowSessionState.AsString();
+        var idStr = domainModel.AuthFlowSessionState.AsString();
         var existingOpt = await repository.Find(r => r.SessionState == idStr);
 
         await existingOpt.Match(
             Some: async list =>
             {
                 var existing = list.First();
-                var updated = existing with { Serialized = domain.EncodeToJson().ToString() };
+                var updated = existing with { Serialized = domainModel.EncodeToJson().ToString() };
                 await repository.Update(updated);
             },
-            None: async () => { await repository.Add(new AuthFlowSessionRecord(domain)); });
+            None: async () => { await repository.Add(new AuthFlowSessionRecord(domainModel)); });
 
         return Unit.Default;
     }

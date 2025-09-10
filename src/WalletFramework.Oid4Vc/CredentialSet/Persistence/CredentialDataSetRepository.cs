@@ -9,16 +9,16 @@ namespace WalletFramework.Oid4Vc.CredentialSet.Persistence;
 public class CredentialDataSetRepository(IRepository<CredentialDataSetRecord> repository)
     : IDomainRepository<CredentialDataSet, CredentialDataSetRecord, CredentialSetId>
 {
-    public virtual async Task<Unit> Add(CredentialDataSet domain)
+    public virtual async Task<Unit> Add(CredentialDataSet domainModel)
     {
-        var record = new CredentialDataSetRecord(domain);
+        var record = new CredentialDataSetRecord(domainModel);
         await repository.Add(record);
         return Unit.Default;
     }
 
-    public virtual async Task<Unit> AddMany(IEnumerable<CredentialDataSet> domains)
+    public virtual async Task<Unit> AddMany(IEnumerable<CredentialDataSet> domainModels)
     {
-        var records = domains.Select(domain => new CredentialDataSetRecord(domain));
+        var records = domainModels.Select(domain => new CredentialDataSetRecord(domain));
         await repository.AddMany(records);
         return Unit.Default;
     }
@@ -49,16 +49,16 @@ public class CredentialDataSetRepository(IRepository<CredentialDataSetRecord> re
         return from rs in records select rs.Select(r => r.ToDomainModel()).ToList();
     }
 
-    public virtual async Task<Unit> Update(CredentialDataSet domain)
+    public virtual async Task<Unit> Update(CredentialDataSet domainModel)
     {
-        var record = new CredentialDataSetRecord(domain);
+        var record = new CredentialDataSetRecord(domainModel);
         await repository.Update(record);
         return Unit.Default;
     }
 
-    public virtual async Task<Unit> Delete(CredentialDataSet domain)
+    public virtual async Task<Unit> Delete(CredentialDataSet domainModel)
     {
-        var record = new CredentialDataSetRecord(domain);
+        var record = new CredentialDataSetRecord(domainModel);
         await repository.Remove(record);
         return Unit.Default;
     }
