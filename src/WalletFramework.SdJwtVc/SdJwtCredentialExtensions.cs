@@ -1,4 +1,4 @@
-using SD_JWT.Models;
+using WalletFramework.SdJwtLib.Models;
 
 namespace WalletFramework.SdJwtVc;
 

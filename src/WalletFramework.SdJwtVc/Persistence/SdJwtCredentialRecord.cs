@@ -2,9 +2,9 @@ using LanguageExt;
 using Newtonsoft.Json;
 using WalletFramework.Core.Credentials;
 using WalletFramework.Core.Functional;
+using WalletFramework.SdJwtLib.Models;
 using WalletFramework.SdJwtVc.Models.Credential;
 using WalletFramework.Storage.Records;
-using SD_JWT.Models;
 
 namespace WalletFramework.SdJwtVc.Persistence;
 

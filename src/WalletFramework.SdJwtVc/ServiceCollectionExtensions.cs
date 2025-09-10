@@ -1,6 +1,6 @@
 using Microsoft.Extensions.DependencyInjection;
-using SD_JWT.Roles;
-using SD_JWT.Roles.Implementation;
+using WalletFramework.SdJwtLib.Roles;
+using WalletFramework.SdJwtLib.Roles.Implementation;
 using WalletFramework.SdJwtVc.Services.SdJwtVcHolderService;
 
 namespace WalletFramework.SdJwtVc;

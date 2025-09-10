@@ -1,8 +1,8 @@
 using System.Globalization;
 using Newtonsoft.Json.Linq;
-using SD_JWT.Models;
 using WalletFramework.Core.Functional;
 using WalletFramework.Oid4Vc.Oid4Vci.CredResponse.SdJwt.Errors;
+using WalletFramework.SdJwtLib.Models;
 
 namespace WalletFramework.Oid4Vc.Oid4Vci.CredResponse.SdJwt;
 

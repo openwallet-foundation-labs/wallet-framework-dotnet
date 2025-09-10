@@ -1,12 +1,11 @@
 using System.Drawing;
-using System.IdentityModel.Tokens.Jwt;
 using LanguageExt;
 using Newtonsoft.Json.Linq;
-using SD_JWT.Models;
 using WalletFramework.Core.Credentials;
 using WalletFramework.Core.Cryptography.Models;
 using WalletFramework.Core.Functional;
 using WalletFramework.Oid4Vc.Oid4Vci.CredConfiguration.Models.SdJwt;
+using WalletFramework.SdJwtLib.Models;
 using WalletFramework.SdJwtVc;
 using WalletFramework.SdJwtVc.Models.Credential;
 
@@ -42,10 +41,7 @@ public static class SdJwtCredentialExtensions
                 };
             }).ToList();
 
-        var tokenHandler = new JwtSecurityTokenHandler();
-        var token = tokenHandler.ReadJwtToken(sdJwtDoc.IssuerSignedJwt);
-
-        var expiresAt = sdJwtDoc.UnsecuredPayload.SelectToken("exp")?.Value<long>() is long exp
+        var expiresAt = sdJwtDoc.UnsecuredPayload.SelectToken("exp")?.Value<long>() is { } exp
             ? Option<DateTime>.Some(DateTimeOffset.FromUnixTimeSeconds(exp).DateTime)
             : Option<DateTime>.None;
 

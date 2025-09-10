@@ -8,11 +8,8 @@
 
   <ItemGroup>
     <ProjectReference Include="..\WalletFramework.Core\WalletFramework.Core.csproj" />
+    <ProjectReference Include="..\WalletFramework.SdJwtLib\WalletFramework.SdJwtLib.csproj" />
     <ProjectReference Include="..\WalletFramework.Storage\WalletFramework.Storage.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <PackageReference Include="SD-JWT" Version="0.1.0-rc.67" />
   </ItemGroup>
 
   <ItemGroup>

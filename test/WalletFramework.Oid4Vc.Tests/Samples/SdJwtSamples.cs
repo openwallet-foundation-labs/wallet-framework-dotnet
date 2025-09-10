@@ -1,10 +1,8 @@
 using LanguageExt;
-using SD_JWT.Models;
 using WalletFramework.Core.Credentials;
 using WalletFramework.Core.Cryptography.Models;
-using WalletFramework.Core.Functional;
+using WalletFramework.SdJwtLib.Models;
 using WalletFramework.SdJwtVc;
-using WalletFramework.SdJwtVc.Models;
 using WalletFramework.SdJwtVc.Models.Credential;
 
 namespace WalletFramework.Oid4Vc.Tests.Samples;

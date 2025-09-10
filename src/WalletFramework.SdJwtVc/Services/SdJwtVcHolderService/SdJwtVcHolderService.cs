@@ -1,6 +1,6 @@
 using LanguageExt;
-using SD_JWT.Models;
-using SD_JWT.Roles;
+using WalletFramework.SdJwtLib.Models;
+using WalletFramework.SdJwtLib.Roles;
 
 namespace WalletFramework.SdJwtVc.Services.SdJwtVcHolderService;
 

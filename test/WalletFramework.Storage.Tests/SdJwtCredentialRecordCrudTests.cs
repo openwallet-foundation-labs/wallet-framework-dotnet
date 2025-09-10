@@ -3,11 +3,11 @@ using LanguageExt;
 using Microsoft.Extensions.DependencyInjection;
 using WalletFramework.Core.Credentials;
 using WalletFramework.Core.Cryptography.Models;
+using WalletFramework.SdJwtLib.Models;
 using WalletFramework.SdJwtVc;
 using WalletFramework.Storage.Database;
 using WalletFramework.SdJwtVc.Models.Credential;
 using WalletFramework.SdJwtVc.Persistence;
-using SD_JWT.Models;
 
 namespace WalletFramework.Storage.Tests;
 

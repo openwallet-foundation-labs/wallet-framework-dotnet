@@ -1,7 +1,6 @@
 using LanguageExt;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using SD_JWT.Models;
 using WalletFramework.Core.ClaimPaths;
 using WalletFramework.Core.Credentials.Abstractions;
 using WalletFramework.Core.Functional;
@@ -12,6 +11,7 @@ using WalletFramework.MdocVc;
 using WalletFramework.Oid4Vc.Oid4Vp.ClaimPaths;
 using WalletFramework.Oid4Vc.Oid4Vp.Dcql.CredentialQueries;
 using WalletFramework.Oid4Vc.RelyingPartyAuthentication.RegistrationCertificate;
+using WalletFramework.SdJwtLib.Models;
 using WalletFramework.SdJwtVc;
 using static WalletFramework.Oid4Vc.Oid4Vp.Dcql.Models.ClaimQueryConstants;
 
@@ -231,8 +231,6 @@ public static class ClaimQueryFun
         {
             case SdJwtCredential sdJwt:
                 return claims.AreFulfilledBy(sdJwt.SdJwtDoc);
-            // case MdocRecord mdoc:
-            //     return claims.AreFulfilledBy(mdoc.Mdoc);
             case MdocCredential mdoc:
                 return claims.AreFulfilledBy(mdoc.Mdoc);
             default:

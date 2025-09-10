@@ -1,5 +1,5 @@
 using Newtonsoft.Json.Linq;
-using SD_JWT.Roles.Issuer;
+using WalletFramework.SdJwtLib.Roles.Issuer;
 
 namespace WalletFramework.Oid4Vc.Tests.Samples;
 

@@ -62,6 +62,7 @@ jobs:
                 dotnet test test/WalletFramework.MdocVc.Tests --configuration $BUILD_CONFIG --no-restore --no-build
                 dotnet test test/WalletFramework.Oid4Vc.Tests --configuration $BUILD_CONFIG --no-restore --no-build
                 dotnet test test/WalletFramework.SdJwtVc.Tests --configuration $BUILD_CONFIG --no-restore --no-build
+                dotnet test test/WalletFramework.SdJwtLib.Tests --configuration $BUILD_CONFIG --no-restore --no-build
 
             - name: Pack WalletFramework
               run: dotnet pack $SOLUTION --configuration $BUILD_CONFIG -p:Version=$APP_VERSION --no-build --output .
