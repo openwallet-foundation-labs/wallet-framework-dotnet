@@ -1,5 +1,6 @@
 using System.Text;
 using LanguageExt;
+using Microsoft.IdentityModel.Tokens;
 using OneOf;
 using WalletFramework.Core.Cryptography.Abstractions;
 using WalletFramework.Core.Cryptography.Models;
@@ -21,6 +22,7 @@ using WalletFramework.Oid4Vc.Oid4Vci.Extensions;
 using WalletFramework.Oid4Vc.Oid4Vci.Issuer.Models;
 using WalletFramework.Oid4Vc.Oid4Vci.CredRequest.Models.SdJwt;
 using WalletFramework.Oid4Vc.Oid4Vci.CredResponse;
+using WalletFramework.Oid4Vc.Oid4Vp.DcApi.Models;
 using WalletFramework.Oid4Vc.Oid4Vp.Models;
 using WalletFramework.SdJwtVc.Services.SdJwtVcHolderService;
 
@@ -69,7 +71,7 @@ public class CredentialRequestService : ICredentialRequestService
             Some: _ =>
             {
                 if (format == Constants.MdocFormat)
-                    sessionTranscript = authorizationRequest.UnwrapOrThrow(new Exception()).ToVpHandover()
+                    sessionTranscript = Handover.FromAuthorizationRequest(authorizationRequest.UnwrapOrThrow(new Exception()), Option<Origin>.None, Option<JsonWebKey>.None)
                         .ToSessionTranscript();
                 return Task.CompletedTask;
             },
