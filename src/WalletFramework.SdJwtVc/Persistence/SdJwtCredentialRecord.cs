@@ -63,7 +63,6 @@ public record SdJwtCredentialRecord : RecordBase
         var state = Enum.Parse<CredentialState>(CredentialState);
         var expires = ExpiresAt is null ? Option<DateTime>.None : Option<DateTime>.Some(ExpiresAt.Value);
 
-
         var displaysOption = string.IsNullOrWhiteSpace(DisplaysJson)
             ? Option<List<SdJwtDisplay>>.None
             : JsonConvert.DeserializeObject<List<SdJwtDisplay>>(DisplaysJson!);

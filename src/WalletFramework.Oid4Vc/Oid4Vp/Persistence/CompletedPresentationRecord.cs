@@ -1,5 +1,6 @@
 using Newtonsoft.Json;
 using WalletFramework.Storage.Records;
+using WalletFramework.Oid4Vc.Oid4Vp;
 
 namespace WalletFramework.Oid4Vc.Oid4Vp.Persistence;
 
@@ -26,11 +27,11 @@ public sealed record CompletedPresentationRecord : RecordBase
     {
         PresentationId = domain.PresentationId;
         ClientId = domain.ClientId;
-        Serialized = JsonConvert.SerializeObject(domain);
+        Serialized = domain.Serialize();
     }
 
     public CompletedPresentation ToDomainModel()
     {
-        return JsonConvert.DeserializeObject<CompletedPresentation>(Serialized)!;
+        return CompletedPresentationExtensions.Deserialize(Serialized);
     }
 }

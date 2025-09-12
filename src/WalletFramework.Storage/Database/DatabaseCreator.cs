@@ -1,6 +1,7 @@
 using LanguageExt;
 using Microsoft.EntityFrameworkCore;
 using WalletFramework.Storage.Database.Exceptions;
+using WalletFramework.Storage.Providers;
 
 namespace WalletFramework.Storage.Database;
 

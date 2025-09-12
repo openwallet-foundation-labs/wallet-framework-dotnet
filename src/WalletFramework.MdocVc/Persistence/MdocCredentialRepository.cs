@@ -8,14 +8,14 @@ namespace WalletFramework.MdocVc.Persistence;
 public class MdocCredentialRepository(IRepository<MdocCredentialRecord> repository)
     : IDomainRepository<MdocCredential, MdocCredentialRecord, CredentialId>
 {
-    public virtual async Task<Unit> Add(MdocCredential domainModel)
+    public async Task<Unit> Add(MdocCredential domainModel)
     {
         var record = new MdocCredentialRecord(domainModel);
         await repository.Add(record);
         return Unit.Default;
     }
 
-    public virtual async Task<Unit> AddMany(IEnumerable<MdocCredential> domainModels)
+    public async Task<Unit> AddMany(IEnumerable<MdocCredential> domainModels)
     {
         var records = domainModels.Select(d => new MdocCredentialRecord(d));
         await repository.AddMany(records);
@@ -36,7 +36,7 @@ public class MdocCredentialRepository(IRepository<MdocCredentialRecord> reposito
         return Unit.Default;
     }
 
-    public virtual async Task<Option<List<MdocCredential>>> Find(ISearchConfig<MdocCredentialRecord> config)
+    public async Task<Option<List<MdocCredential>>> Find(ISearchConfig<MdocCredentialRecord> config)
     {
         var records = await repository.Find(config.ToPredicate());
         return
@@ -45,14 +45,14 @@ public class MdocCredentialRepository(IRepository<MdocCredentialRecord> reposito
             select credentials.ToList();
     }
 
-    public virtual async Task<Option<MdocCredential>> GetById(CredentialId id)
+    public async Task<Option<MdocCredential>> GetById(CredentialId id)
     {
         var guid = Guid.Parse(id.AsString());
         var record = await repository.GetById(guid);
         return record.Map(r => r.ToDomainModel());
     }
 
-    public virtual async Task<Option<List<MdocCredential>>> ListAll()
+    public async Task<Option<List<MdocCredential>>> ListAll()
     {
         var records = await repository.ListAll();
         return
