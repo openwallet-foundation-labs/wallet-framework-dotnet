@@ -1,57 +1,62 @@
+using LanguageExt;
 using WalletFramework.Core.Credentials;
 using WalletFramework.Core.Cryptography.Models;
-using WalletFramework.SdJwtVc.Models.Credential.Attributes;
-using WalletFramework.SdJwtVc.Models.Records;
+using WalletFramework.SdJwtLib.Models;
+using WalletFramework.SdJwtVc;
+using WalletFramework.SdJwtVc.Models.Credential;
 
 namespace WalletFramework.Oid4Vc.Tests.Samples;
 
 public static class SdJwtSamples
 {
-    public static SdJwtRecord GetIdCardCredential()
+    public static SdJwtCredential GetIdCardCredential()
     {
         const string encodedSdJwt = "eyJraWQiOiJiZmFmYjkzMy1iNzQ4LTQ3ODYtODc1Ny0zYzg0ZWFlNmUzZGUiLCJ0eXAiOiJ2YytzZC1qd3QiLCJhbGciOiJFUzI1NiJ9.eyJfc2QiOlsiUVBEUFFCbEEzdk9QaU9qR0lRRXBOc1l5S2Zjd2M1T3dDUlV5eWY2QTlRbyIsIk9LMWJpZXUwR0RIZWVRc2lzRkxOcUdmX0Z4eW5HT0dTNHl5Q2dZeFVhTkEiLCJUSkJ4ajBGSmdTQlUxMzVDSDRacFJieTRfVG4tNWR4TFJBX0paRnNscXhjIiwiaFBjV0phVkRJdDlDZ1E3bWxzNmFSVFR6bHZ0NmlMYzlUWFRJZ2VuZDFWayIsIkNhZm9TdzRiMWdsV196ckdyN3lodFFyQ3RIYW51NG15MVBxTGtXQkx5aFkiXSwibmJmIjoxNzA2NTQyNjgxLCJ2Y3QiOiJJRC1DYXJkIiwiX3NkX2FsZyI6InNoYS0yNTYiLCJpc3MiOiJodHRwczovL2U4MGMtMjE3LTExMS0xMDgtMTc0Lm5ncm9rLWZyZWUuYXBwIiwiY25mIjp7Imp3ayI6eyJrdHkiOiJFQyIsImNydiI6IlAtMjU2IiwieCI6Img2VUtiVXQ1SW4yTzVwUzUxYXRWaERuTDl0SGR4S3lkMTZXTG94R2dFQzQiLCJ5IjoiMDdIX05RcmlxRmxSb0JjVk5ZVW5aS2wwQ1A0U0NiN3RxU0NWWFNDTWh0ayJ9fSwiZXhwIjoxNzM4MjUxNDgxLCJpYXQiOjE3MTY5OTA0MDAsInN0YXR1cyI6eyJpZHgiOjYsInVyaSI6Imh0dHBzOi8vZTgwYy0yMTctMTExLTEwOC0xNzQubmdyb2stZnJlZS5hcHAvc3RhdHVzLWxpc3RzP3JlZ2lzdHJ5SWQ9YmQ1MDllMzYtNTQzNy00Zjg4LTkzYTUtNDEzNDA3ZjZiZDhmIn19.-3GEPOjEn4bopEGyy8ho_kFSfQVmkkZiFKMebtiZE6EsyRnunJtA46M_SwHQjmSm-73zIeRX7L7Rpszm8dkFhQ~WyJfSU1WWFVtc052bm9YTDR3NVRPSFpnIiwiYWRkcmVzcyIseyJzdHJlZXRfYWRkcmVzcyI6IjQyIE1hcmtldCBTdHJlZXQiLCJwb3N0YWxfY29kZSI6IjEyMzQ1In1d~WyJ3RzkzbExRRFBDUVgxTUtCYW5mVkVRIiwibGFzdF9uYW1lIiwiRG9lIl0~WyJFa1h0a0JHZXd2dkthRXlzTWhyVGJnIiwibmF0aW9uYWxpdGllcyIsWyJCcml0aXNoIiwiQmV0ZWxnZXVzaWFuIl1d~WyJzQlh2dVQxRHhaN0NrMTdJUXQzWWd3IiwiZmlyc3RfbmFtZSIsIkpvaG4iXQ~WyJoRWphWTA2WmFsNUZTS0pXSm9kUjZnIiwiZGVncmVlcyIsW3sidW5pdmVyc2l0eSI6IlVuaXZlcnNpdHkgb2YgQmV0ZWxnZXVzZSIsInR5cGUiOiJCYWNoZWxvciBvZiBTY2llbmNlIn0seyJ1bml2ZXJzaXR5IjoiVW5pdmVyc2l0eSBvZiBCZXRlbGdldXNlIiwidHlwZSI6Ik1hc3RlciBvZiBTY2llbmNlIn1dXQ~";
-        var keyId = KeyId.CreateKeyId();
-        
-        var record = new SdJwtRecord(
-            encodedSdJwt,
-            new Dictionary<string, ClaimMetadata>(),
-            [],
-            keyId,
-            CredentialSetId.CreateCredentialSetId()
-        );
+        var sdJwtDoc = new SdJwtDoc(encodedSdJwt);
+        var credential = new SdJwtCredential(
+            sdJwtDoc,
+            CredentialId.CreateCredentialId(),
+            CredentialSetId.CreateCredentialSetId(),
+            Option<List<SdJwtDisplay>>.None,
+            KeyId.CreateKeyId(),
+            CredentialState.Active,
+            false,
+            Option<DateTime>.None);
 
-        return record;
+        return credential;
     }
 
-    public static SdJwtRecord GetIdCard2Credential()
+    public static SdJwtCredential GetIdCard2Credential()
     {
         const string encoded = "eyJ4NWMiOlsiTUlJQi9qQ0NBYVdnQXdJQkFnSVFYM0E0SDBYTlN4Q1Fhamg4Snp4dE16QUtCZ2dxaGtqT1BRUURBakFpTVNBd0hnWURWUVFERXhkMFpYTjBMbU52Ym01bFkzUnZjaTVzYVhOemFTNXBiekFlRncweU5ERXlNRGt4TnpNME1UTmFGdzB5TmpFeU1Ea3hOelEwTVROYU1DSXhJREFlQmdOVkJBTVRGM1JsYzNRdVkyOXVibVZqZEc5eUxteHBjM05wTG1sdk1Ga3dFd1lIS29aSXpqMENBUVlJS29aSXpqMERBUWNEUWdBRWlUMzhZREhadksveVlOYis3ZXUySzhHNmd2TVA0ZEMwQWFtcFpscjRtZ1RPKytlU3MxUkJvdUxYYzhEKzYyS2ZCS3dmN3g0MEd1SkdvN1ZWVDB5cTRLT0J2RENCdVRBT0JnTlZIUThCQWY4RUJBTUNCNEF3Q1FZRFZSMFRCQUl3QURBZEJnTlZIU1VFRmpBVUJnZ3JCZ0VGQlFjREFRWUlLd1lCQlFVSEF3SXdQUVlEVlIwUkJEWXdOSUlaS2k1MFpYTjBMbU52Ym01bFkzUnZjaTVzYVhOemFTNXBiNElYZEdWemRDNWpiMjV1WldOMGIzSXViR2x6YzJrdWFXOHdId1lEVlIwakJCZ3dGb0FVTnVCbVljSG1HdnlGVWNwdTk5K0pFWndGbFJJd0hRWURWUjBPQkJZRUZEYmdabUhCNWhyOGhWSEtidmZmaVJHY0JaVVNNQW9HQ0NxR1NNNDlCQU1DQTBjQU1FUUNJRTZVZkNSSkZGOVFQeGRYVEZvOXZIY2FhVGRyY0N6QXNyQ2RtdG9KOGh0TEFpQnIwY2RJd0lIUE9XWkUrNWZWb1lIV3hrV1ZrdVVXbDMxTDdERmFkNlNwQXc9PSJdLCJ0eXAiOiJkYytzZC1qd3QiLCJhbGciOiJFUzI1NiJ9.eyJfc2QiOlsiR1czaWxIZnIzWGxvc19RZEhxU0ZXN0tLbHAwN2ZSUVRMQnd5NVpoN01IcyIsIk1ucFFqWWNPcUl1LUh0QVpfb2dQNko5TXBReHJleVJLVWRWYjQxOGkwX2siLCJRYTBHT1NmREpobk5YMnQyNXIzWXRWclBaN2xiUm9hTnRKcUlWU0dkYlFBIiwiX3VEbXRJQV9tVjZLSlVTLXQtb25yZGZpc0ZRTHZFYUtEVW5EdlBGbzRqTSIsInVYT09sUE8xYUZhZjJJcFJwTHpWaTBKRi1yZUdvek9xLWxRTXNkdmg3Y0EiXSwibmJmIjoxNzA2NTQyNjgxLCJ2Y3QiOiJJRC1DYXJkLTIiLCJfc2RfYWxnIjoic2hhLTI1NiIsImlzcyI6Imh0dHBzOi8vdGVzdC5pbyIsImNuZiI6eyJqd2siOnsia3R5IjoiRUMiLCJjcnYiOiJQLTI1NiIsIngiOiJlT2lTOUlidENSWUpRWmRwSUIzQWYxcGwtODhhTG9tbWk5WHRZYzJuUC1nIiwieSI6ImxldEVJNmFKbXp5cDJtWXk4Y090bTl6Ukk1QlJEMXJIQVFrV1lxTW5wcHMifX0sImV4cCI6MTg5NjAxNzg4MSwiaWF0IjoxNzQ2NzA5OTE5LCJzdGF0dXMiOnsiaWR4IjoiNDIyMSIsInVyaSI6Imh0dHBzOi8vdGVzdC5pby9zdGF0dXMtbGlzdHM_cmVnaXN0cnlJZD03NzE5NmEyYy01ZmIzLTQyZjMtOWJlMC0xOTE0Y2Y5ZDg1NzgifX0.GaugaQOpUrQhd_oAmg_y6uUm2uiAcgWPQXPtU9AlOoyOq-lLDb5rg2s55Rb5ziCWxZiAf7_ncDnPoWCV1PAcvA~WyJySDU2am52N2xhYjhhSGZiQ0s3N3lnIiwiZmlyc3RfbmFtZSIsIkpvaG4iXQ~WyIzY250clFDV1NLTXFUNHRiMlNHRXNnIiwibGFzdF9uYW1lIiwiRG9lIl0~WyJDUFd2V0dTRWdCeUwwN3dKS1Jwc1R3Iiwic3RyZWV0X2FkZHJlc3MiLCI0MiBNYXJrZXQgU3RyZWV0Il0~WyJXT2ExdkxrSzdCeTZaWEhjcFBNSWJRIiwicG9zdGFsX2NvZGUiLCIxMjM0NSJd~WyJhZnFEbHRvSmVnMmk2LWRfV2V6bkVBIiwiYWRkcmVzcyIseyJfc2QiOlsiTGk5UV9BM2EzcWxvZ0JXSHFMOWEtVjR6V2hDT3pEZjk2T2RheEp1T18xdyIsInVqTDY5bEtNY3FmN0x6OXJqRmhHY3ZlX3ZVYlhiUkJCeV83c1ZqNHVienciXX1d~WyJpT1RJSFh3dlFGenFKMmdGVy1IcWZnIix7InR5cGUiOiJCYWNoZWxvciBvZiBTY2llbmNlIiwidW5pdmVyc2l0eSI6IlVuaXZlcnNpdHkgb2YgQmV0ZWxnZXVzZSJ9XQ~WyJ5LU5oeURISC1CZW9Mc2tfQlpFcXFnIix7InR5cGUiOiJNYXN0ZXIgb2YgU2NpZW5jZSIsInVuaXZlcnNpdHkiOiJVbml2ZXJzaXR5IG9mIEJldGVsZ2V1c2UifV0~WyJHeGkxd05FUE16S1NLTHo1bUg5Rjh3IiwiZGVncmVlcyIsW3siLi4uIjoidEszcHBOaTlQVjItelB2Z2M0WFh0dGhUc1FSdmFFOUU5b1ZMcnRqeThDayJ9LHsiLi4uIjoicDJySGEzUmNCN2xOaTAtOEwydG9uZE1UTFBnalU2WkppV0lFZ3lya2wwRSJ9XV0~WyJfMm1nOC1xZkJYX1FiYTRWY3RDc3B3IiwibmF0aW9uYWxpdGllcyIsWyJCcml0aXNoIiwiQmV0ZWxnZXVzaWFuIl1d~";
-        var keyId = KeyId.CreateKeyId();
-        
-        var record = new SdJwtRecord(
-            encoded,
-            new Dictionary<string, ClaimMetadata>(),
-            [],
-            keyId,
-            CredentialSetId.CreateCredentialSetId()
-        );
+        var sdJwtDoc = new SdJwtDoc(encoded);
+        var credential = new SdJwtCredential(
+            sdJwtDoc,
+            CredentialId.CreateCredentialId(),
+            CredentialSetId.CreateCredentialSetId(),
+            Option<List<SdJwtDisplay>>.None,
+            KeyId.CreateKeyId(),
+            CredentialState.Active,
+            false,
+            Option<DateTime>.None);
 
-        return record;
+        return credential;
     }
 
-    public static SdJwtRecord GetIdCard3Credential()
+    public static SdJwtCredential GetIdCard3Credential()
     {
         const string encodedSdJwt = "eyJraWQiOiJiZmFmYjkzMy1iNzQ4LTQ3ODYtODc1Ny0zYzg0ZWFlNmUzZGUiLCJ0eXAiOiJ2YytzZC1qd3QiLCJhbGciOiJFUzI1NiJ9.eyJfc2QiOlsiUVBEUFFCbEEzdk9QaU9qR0lRRXBOc1l5S2Zjd2M1T3dDUlV5eWY2QTlRbyIsIk9LMWJpZXUwR0RIZWVRc2lzRkxOcUdmX0Z4eW5HT0dTNHl5Q2dZeFVhTkEiLCJUSkJ4ajBGSmdTQlUxMzVDSDRacFJieTRfVG4tNWR4TFJBX0paRnNscXhjIiwiaFBjV0phVkRJdDlDZ1E3bWxzNmFSVFR6bHZ0NmlMYzlUWFRJZ2VuZDFWayIsIkNhZm9TdzRiMWdsV196ckdyN3lodFFyQ3RIYW51NG15MVBxTGtXQkx5aFkiXSwibmJmIjoxNzA2NTQyNjgxLCJ2Y3QiOiJJRC1DYXJkLTMiLCJfc2RfYWxnIjoic2hhLTI1NiIsImlzcyI6Imh0dHBzOi8vZTgwYy0yMTctMTExLTEwOC0xNzQubmdyb2stZnJlZS5hcHAvIiwiY25mIjp7Imp3ayI6eyJrdHkiOiJFQyIsImNydiI6IlAtMjU2IiwieCI6Img2VUtiVXQ1SW4yTzVwUzUxYXRWaERuTDl0SGR4S3lkMTZXTG94R2dFQzQiLCJ5IjoiMDdIX05RcmlxRmxSb0JjVk5ZVW5aS2wwQ1A0U0NiN3RxU0NWWFNDTWh0ayJ9fSwiZXhwIjoxNzM4MjUxNDgxLCJpYXQiOjE3MTY5OTA0MDAsInN0YXR1cyI6eyJpZHgiOjYsInVyaSI6Imh0dHBzOi8vZTgwYy0yMTctMTExLTEwOC0xNzQubmdyb2stZnJlZS5hcHAvc3RhdHVzLWxpc3RzP3JlZ2lzdHJ5SWQ9YmQ1MDllMzYtNTQzNy00Zjg4LTkzYTUtNDEzNDA3ZjZiZDhmIn19.-3GEPOjEn4bopEGyy8ho_kFSfQVmkkZiFKMebtiZE6EsyRnunJtA46M_SwHQjmSm-73zIeRX7L7Rpszm8dkFhQ~WyJfSU1WWFVtc052bm9YTDR3NVRPSFpnIiwiYWRkcmVzcyIseyJzdHJlZXRfYWRkcmVzcyI6IjQyIE1hcmtldCBTdHJlZXQiLCJwb3N0YWxfY29kZSI6IjEyMzQ1In1d~WyJ3RzkzbExRRFBDUVgxTUtCYW5mVkVRIiwibGFzdF9uYW1lIiwiRG9lIl0~WyJFa1h0a0JHZXd2dkthRXlzTWhyVGJnIiwibmF0aW9uYWxpdGllcyIsWyJCcml0aXNoIiwiQmV0ZWxnZXVzaWFuIl1d~WyJzQlh2dVQxRHhaN0NrMTdJUXQzWWd3IiwiZmlyc3RfbmFtZSIsIkpvaG4iXQ~WyJoRWphWTA2WmFsNUZTS0pXSm9kUjZnIiwiZGVncmVlcyIsW3sidW5pdmVyc2l0eSI6IlVuaXZlcnNpdHkgb2YgQmV0ZWxnZXVzZSIsInR5cGUiOiJCYWNoZWxvciBvZiBTY2llbmNlIn0seyJ1bml2ZXJzaXR5IjoiVW5pdmVyc2l0eSBvZiBCZXRlbGdldXNlIiwidHlwZSI6Ik1hc3RlciBvZiBTY2llbmNlIn1dXQ~";
-        var keyId = KeyId.CreateKeyId();
+        var sdJwtDoc = new SdJwtDoc(encodedSdJwt);
+        var credential = new SdJwtCredential(
+            sdJwtDoc,
+            CredentialId.CreateCredentialId(),
+            CredentialSetId.CreateCredentialSetId(),
+            Option<List<SdJwtDisplay>>.None,
+            KeyId.CreateKeyId(),
+            CredentialState.Active,
+            false,
+            Option<DateTime>.None);
 
-        var record = new SdJwtRecord(
-            encodedSdJwt,
-            new Dictionary<string, ClaimMetadata>(),
-            [],
-            keyId,
-            CredentialSetId.CreateCredentialSetId()
-        );
-
-        return record;
+        return credential;
     }
 }

@@ -1,0 +1,36 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="coverlet.collector" Version="6.0.0" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.8.0" />
+    <PackageReference Include="SQLitePCLRaw.bundle_e_sqlite3" Version="3.0.1" />
+    <PackageReference Include="xunit" Version="2.9.0" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.4.3">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+    <PackageReference Include="FluentAssertions" Version="6.12.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="Xunit" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\WalletFramework.Oid4Vc\WalletFramework.Oid4Vc.csproj" />
+    <ProjectReference Include="..\..\src\WalletFramework.Storage\WalletFramework.Storage.csproj" />
+    <ProjectReference Include="..\..\src\WalletFramework.Storage.Unencrypted\WalletFramework.Storage.Unencrypted.csproj" />
+    <ProjectReference Include="..\..\src\WalletFramework.MdocVc\WalletFramework.MdocVc.csproj" />
+    <ProjectReference Include="..\..\src\WalletFramework.SdJwtVc\WalletFramework.SdJwtVc.csproj" />
+    <ProjectReference Include="..\..\src\WalletFramework.TestSamples\WalletFramework.TestSamples.csproj" />
+  </ItemGroup>
+</Project>

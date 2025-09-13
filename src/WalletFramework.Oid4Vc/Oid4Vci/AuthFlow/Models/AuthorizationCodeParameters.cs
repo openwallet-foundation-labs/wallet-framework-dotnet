@@ -25,7 +25,7 @@ public record AuthorizationCodeParameters
     public string Verifier { get; }
 
     [JsonConstructor]
-    internal AuthorizationCodeParameters(string challenge, string verifier)
+    public AuthorizationCodeParameters(string challenge, string verifier)
     {
         if (string.IsNullOrWhiteSpace(challenge) || string.IsNullOrWhiteSpace(verifier))
         {

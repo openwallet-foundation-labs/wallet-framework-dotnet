@@ -6,7 +6,7 @@ using WalletFramework.Oid4Vc.Oid4Vci.CredOffer.Errors;
 
 namespace WalletFramework.Oid4Vc.Oid4Vci.CredOffer.Models;
 
-public readonly struct CredentialConfigurationId
+public readonly record struct CredentialConfigurationId
 {
     private string Value { get; }
 

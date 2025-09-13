@@ -1,8 +1,16 @@
 using FluentAssertions;
+using LanguageExt;
+using WalletFramework.Core.Credentials;
+using WalletFramework.Core.Cryptography.Models;
+using WalletFramework.Core.Functional;
+using WalletFramework.MdocLib;
+using WalletFramework.MdocVc;
+using WalletFramework.MdocVc.Display;
 using WalletFramework.Oid4Vc.Oid4Vp.Models;
 using WalletFramework.Oid4Vc.Tests.Oid4Vp.Dcql.Samples;
 using WalletFramework.Oid4Vc.Tests.Samples;
 using static WalletFramework.Oid4Vc.Oid4Vp.Dcql.DcqlFun;
+using MdocSamples = WalletFramework.TestSamples.MdocSamples;
 
 namespace WalletFramework.Oid4Vc.Tests.Oid4Vp.Dcql;
 
@@ -11,7 +19,7 @@ public class DcqlFindingCandidatesTests
     [Fact]
     public void Can_Process_Mdoc_Credential_Query()
     {
-        var mdoc = MdocSamples.MdocRecord;
+        var mdoc = GetMdocCredentialSample();
         var query = DcqlSamples.GetMdocGivenNameQuery();
 
         var sut = query.ProcessWith([mdoc]);
@@ -47,7 +55,7 @@ public class DcqlFindingCandidatesTests
     [Fact]
     public void Can_Process_Mdoc_Credential_Query_With_Multiple_Claims()
     {
-        var mdoc = MdocSamples.MdocRecord;
+        var mdoc = GetMdocCredentialSample();
         var query = DcqlSamples.GetMdocGivenNameAndFamilyNameQuery();
 
         var sut = query.ProcessWith([mdoc]);
@@ -84,8 +92,8 @@ public class DcqlFindingCandidatesTests
     [Fact]
     public void Can_Process_Mdoc_Credential_Query_With_Multiple_Credentials_In_One_Candidate()
     {
-        var mdoc1 = MdocSamples.MdocRecord;
-        var mdoc2 = MdocSamples.MdocRecord;
+        var mdoc1 = GetMdocCredentialSample();
+        var mdoc2 = GetMdocCredentialSample();
         var query = DcqlSamples.GetMdocGivenNameQuery();
 
         var sut = query.ProcessWith([mdoc1, mdoc2]);
@@ -121,7 +129,7 @@ public class DcqlFindingCandidatesTests
     [Fact]
     public void Can_Process_Query_That_Asks_For_SdJwt_And_Mdoc_At_The_Same_Time()
     {
-        var mdoc = MdocSamples.MdocRecord;
+        var mdoc = GetMdocCredentialSample();
         var sdJwt = SdJwtSamples.GetIdCardCredential();
         var query = DcqlSamples.GetMdocAndSdJwtFamilyNameQuery();
 
@@ -283,7 +291,7 @@ public class DcqlFindingCandidatesTests
     [Fact]
     public void No_Match_Returns_None_For_Mdoc()
     {
-        var mdoc = MdocSamples.MdocRecord;
+        var mdoc = GetMdocCredentialSample();
         var query = DcqlSamples.GetNoMatchErrorClaimPathQuery();
 
         var sut = query.ProcessWith([mdoc]);
@@ -292,5 +300,20 @@ public class DcqlFindingCandidatesTests
             _ => Assert.Fail(),
             () => { }
         );
+    }
+
+    private MdocCredential GetMdocCredentialSample()
+    {
+        var encodedMdoc = MdocSamples.GetEncodedMdocSample();
+        var mdoc = Mdoc.ValidMdoc(encodedMdoc).UnwrapOrThrow();
+        var credentialId = CredentialId.CreateCredentialId();
+        var credentialSetId = CredentialSetId.CreateCredentialSetId();
+        var keyId = KeyId.CreateKeyId();
+        var credentialState = CredentialState.Active;
+        var oneTimeUse = false;
+
+        var mdocCredential = new MdocCredential(mdoc, credentialId, credentialSetId, Option<List<MdocDisplay>>.None, keyId, credentialState, oneTimeUse, Option<DateTime>.None);
+        
+        return mdocCredential;
     }
 } 

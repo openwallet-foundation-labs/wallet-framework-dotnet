@@ -12,6 +12,8 @@ public readonly record struct CredentialSetId
         Value = value;
     }
 
+    public string AsString() => Value;
+
     public override string ToString() => Value;
 
     public static implicit operator string(CredentialSetId credentialSetId) => credentialSetId.Value;
