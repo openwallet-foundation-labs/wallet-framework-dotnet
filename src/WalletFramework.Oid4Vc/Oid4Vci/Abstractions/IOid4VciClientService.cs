@@ -55,7 +55,7 @@ public interface IOid4VciClientService
     /// <returns>
     /// A list of credentials.
     /// </returns>
-    Task<Validation<IEnumerable<CredentialSetRecord>>> RequestCredentialSet(
+    Task<Validation<IEnumerable<CredentialDataSet>>> RequestCredentialSet(
         IssuanceSession issuanceSession, 
         Option<ClientAttestationDetails> clientAttestationDetails);
     
@@ -89,7 +89,7 @@ public interface IOid4VciClientService
     /// <param name="credentialOfferMetadata">Credential offer and Issuer Metadata</param>
     /// <param name="clientAttestationDetails">The client attestation details</param>
     /// <param name="transactionCode">The Transaction Code.</param>
-    Task<Validation<IEnumerable<CredentialSetRecord>>> AcceptOffer(
+    Task<Validation<IEnumerable<CredentialDataSet>>> AcceptOffer(
         CredentialOfferMetadata credentialOfferMetadata,
         Option<ClientAttestationDetails> clientAttestationDetails,
         string? transactionCode);
