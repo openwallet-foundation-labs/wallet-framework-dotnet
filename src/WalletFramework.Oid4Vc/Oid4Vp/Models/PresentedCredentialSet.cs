@@ -15,7 +15,7 @@ public record PresentedCredentialSet
     
     public Option<Vct> SdJwtCredentialType { get; init; }
     
-    public Option<DocType> MDocCredentialType { get; init; }
+    public Option<DocType> MdocCredentialType { get; init; }
 
     public Dictionary<string, PresentedClaim> PresentedClaims { get; init; } = null!;
 }
@@ -36,7 +36,7 @@ public static class PresentedCredentialSetExtensions
         presentedCredentialSet.SdJwtCredentialType.IfSome(sdJwtType =>
             result.Add(SdJwtCredentialTypeJsonKey, sdJwtType.ToString()));
         
-        presentedCredentialSet.MDocCredentialType.IfSome(mDocType =>
+        presentedCredentialSet.MdocCredentialType.IfSome(mDocType =>
             result.Add(MDocCredentialTypeJsonKey, mDocType.ToString()));
         
         var jObjectDictionary = new JObject();
@@ -82,7 +82,7 @@ public static class PresentedCredentialSetExtensions
         {
             CredentialSetId = CredentialSetId .ValidCredentialSetId(credentialSetId).UnwrapOrThrow(),
             SdJwtCredentialType = sdJwtCredentialType,
-            MDocCredentialType = mDocCredentialType,
+            MdocCredentialType = mDocCredentialType,
             PresentedClaims = presentedClaims.ToDictionary(kvp => kvp.ClaimName, kvp => kvp.ClaimValue)
         };
     }
