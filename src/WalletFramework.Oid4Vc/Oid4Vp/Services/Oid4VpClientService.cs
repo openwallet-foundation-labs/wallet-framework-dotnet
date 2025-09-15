@@ -411,13 +411,16 @@ public class Oid4VpClientService : IOid4VpClientService
                         .ToDictionary(group => group.Key, group => group.ToList());
 
                     var mdoc = mdocRecord.Mdoc.SelectivelyDisclose(toDisclose);
+
+                    var responseEncryptionKey = authorizationRequest.ResponseMode == AuthorizationRequest.DirectPostJwt
+                        ? await _verifierKeyService.GetPublicKey(authorizationRequest)
+                        : Option<JsonWebKey>.None;
                     
                     var handover = Handover.FromAuthorizationRequest(
                         authorizationRequest, 
                         Option<Origin>.None, 
-                        authorizationRequest.ResponseMode == AuthorizationRequest.DirectPostJwt
-                            ? await _verifierKeyService.GetPublicKey(authorizationRequest)
-                            : Option<JsonWebKey>.None);
+                        responseEncryptionKey);
+                    
                     mdocNonce = handover.GetMdocNonce();
                     var sessionTranscript = handover.ToSessionTranscript();
 

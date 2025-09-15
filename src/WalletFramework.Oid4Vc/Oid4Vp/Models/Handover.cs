@@ -16,31 +16,25 @@ public record Handover
 
     public static Handover FromAuthorizationRequest(AuthorizationRequest request, Option<Origin> origin, Option<JsonWebKey> verifierPublicKey)
     {
-        return origin.Match(
-            originForDcApiHandover =>
-            {
-
-                var dcApiHandoverInfo = new OpenId4VpDcApiHandoverInfo(
-                    originForDcApiHandover,
+        return request.ResponseMode switch
+        {
+            AuthorizationRequest.DcApi or AuthorizationRequest.DcApiJwt =>
+                new Handover(new OpenId4VpDcApiHandover(new OpenId4VpDcApiHandoverInfo(
+                    origin.UnwrapOrThrow(),
                     request.Nonce,
-                    verifierPublicKey.OnSome(JwkFun.GetThumbprint)
-                );
-                
-                return new Handover(new OpenId4VpDcApiHandover(dcApiHandoverInfo));
-            },
-            () =>
-            {
-                var handoverInfo = new OpenId4VpHandoverInfo(
-                    request.ClientIdScheme != null 
+                    verifierPublicKey.OnSome(JwkFun.GetThumbprint)))),
+    
+            AuthorizationRequest.DirectPost or AuthorizationRequest.DirectPostJwt =>
+                new Handover(new OpenId4VpHandover(new OpenId4VpHandoverInfo(
+                    request.ClientIdScheme != null
                         ? $"{request.ClientIdScheme.AsString()}:{request.ClientId}"
                         : request.ClientId!,
                     request.Nonce,
                     request.ResponseUri,
-                    verifierPublicKey.OnSome(JwkFun.GetThumbprint)
-                );
+                    verifierPublicKey.OnSome(JwkFun.GetThumbprint)))),
 
-                return new Handover(new OpenId4VpHandover(handoverInfo));
-            });
+            _ => throw new ArgumentException($"Unsupported response mode: {request.ResponseMode}")
+        };
     }
 
     public Nonce GetMdocNonce()

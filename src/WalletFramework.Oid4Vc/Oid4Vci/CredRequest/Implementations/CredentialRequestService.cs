@@ -71,8 +71,14 @@ public class CredentialRequestService : ICredentialRequestService
             Some: _ =>
             {
                 if (format == Constants.MdocFormat)
-                    sessionTranscript = Handover.FromAuthorizationRequest(authorizationRequest.UnwrapOrThrow(new Exception()), Option<Origin>.None, Option<JsonWebKey>.None)
-                        .ToSessionTranscript();
+                {
+                    var handover = Handover.FromAuthorizationRequest(
+                        authorizationRequest.UnwrapOrThrow(new Exception()),
+                        Option<Origin>.None,
+                        Option<JsonWebKey>.None);
+                    sessionTranscript = handover.ToSessionTranscript();
+                }
+                
                 return Task.CompletedTask;
             },
             None: async () =>
