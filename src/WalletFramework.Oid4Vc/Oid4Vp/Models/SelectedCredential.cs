@@ -20,10 +20,9 @@ public record SelectedCredential(
 public static class SelectedCredentialFun
 {
     /// <summary>
-    ///     Returns the string representations of claims to disclose for the given credential and format.
+    /// Returns the string representations of claims to disclose for the given credential and format.
     /// </summary>
-    public static IReadOnlyList<string> GetClaimsToDiscloseAsStrs(this SelectedCredential selectedCredential,
-        CredentialQuery query)
+    public static IReadOnlyList<string> GetClaimsToDiscloseAsStrs(this SelectedCredential selectedCredential, CredentialQuery query)
     {
         return selectedCredential.ClaimsToDisclose.Match(
             claims => claims.AsStrings(query.Format),

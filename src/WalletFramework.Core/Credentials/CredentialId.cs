@@ -3,7 +3,7 @@ using WalletFramework.Core.Functional;
 
 namespace WalletFramework.Core.Credentials;
 
-public readonly record struct CredentialId
+public readonly struct CredentialId
 {
     private string Value { get; }
 
@@ -11,8 +11,6 @@ public readonly record struct CredentialId
     {
         Value = value;
     }
-
-    public string AsString() => Value;
 
     public override string ToString() => Value;
 

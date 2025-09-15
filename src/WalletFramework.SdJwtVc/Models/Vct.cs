@@ -6,7 +6,7 @@ using WalletFramework.Core.Json;
 
 namespace WalletFramework.SdJwtVc.Models;
 
-public readonly record struct Vct
+public readonly struct Vct
 {
     private string Value { get; }
 

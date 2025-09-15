@@ -1,49 +1,44 @@
+using Hyperledger.Aries.Agents;
 using LanguageExt;
+using Newtonsoft.Json.Linq;
 using WalletFramework.Core.Functional;
 using WalletFramework.Core.Credentials.Abstractions;
+using WalletFramework.Oid4Vc.Oid4Vci.Abstractions;
 using WalletFramework.Oid4Vc.Oid4Vp.AuthResponse;
 using WalletFramework.Oid4Vc.Oid4Vp.Dcql.CredentialQueries;
 using WalletFramework.Oid4Vc.Oid4Vp.Dcql.Models;
 using WalletFramework.Oid4Vc.Oid4Vp.Models;
+using WalletFramework.SdJwtVc.Services.SdJwtVcHolderService;
 using static LanguageExt.Option<WalletFramework.Oid4Vc.Oid4Vp.Models.PresentationCandidate>;
-using WalletFramework.Storage;
-using WalletFramework.MdocVc;
-using WalletFramework.MdocVc.Persistence;
-using WalletFramework.Core.Credentials;
-using WalletFramework.SdJwtVc;
-using WalletFramework.SdJwtVc.Persistence;
 
 namespace WalletFramework.Oid4Vc.Oid4Vp.Dcql.Services;
 
 public class DcqlService(
-    IDomainRepository<MdocCredential, MdocCredentialRecord, CredentialId> mdocCredentialRepository,
-    IDomainRepository<SdJwtCredential, SdJwtCredentialRecord, CredentialId> sdJwtCredentialRepository) : IDcqlService
+    IAgentProvider agentProvider,
+    IMdocStorage mdocStorage,
+    ISdJwtVcHolderService sdJwtVcHolderService) : IDcqlService
 {
     public async Task<CandidateQueryResult> Query(DcqlQuery query)
     {
-        var sdJwtRecords = await sdJwtCredentialRepository.ListAll();
-        var mdocsOption = await mdocCredentialRepository.ListAll();
-
-        var sdJwts = sdJwtRecords.ToNullable() ?? [];
+        var context = await agentProvider.GetContextAsync();
+        var sdJwtRecords = await sdJwtVcHolderService.ListAsync(context);
+        var mdocsOption = await mdocStorage.ListAll();
         var mdocs = mdocsOption.ToNullable() ?? [];
         
-        var credentials = sdJwts.Cast<ICredential>().Concat(mdocs);
+        var credentials = sdJwtRecords.Cast<ICredential>().Concat(mdocs);
         return query.ProcessWith(credentials);
     }
 
     public async Task<Option<PresentationCandidate>> QuerySingle(CredentialQuery query)
     {
-        var sdJwtRecords = await sdJwtCredentialRepository.ListAll();
-        var sdJwtCandidate = 
-            from record in sdJwtRecords
-            from candidate in query.FindMatchingCandidate(record)
-            select candidate;
+        var context = await agentProvider.GetContextAsync();
+        var sdJwtRecords = await sdJwtVcHolderService.ListAsync(context);
+        var sdJwtCandidate = query.FindMatchingCandidate(sdJwtRecords);
 
-        var mdocRecords = await mdocCredentialRepository.ListAll();
-        var mdocCandidate = 
-            from record in mdocRecords
-            from candidate in query.FindMatchingCandidate(record)
-            select candidate;
+        var mdocRecords = await mdocStorage.ListAll();
+        var mdocCandidate = from record in mdocRecords
+                                                         from candidate in query.FindMatchingCandidate(record)
+                                                         select candidate;
 
         return sdJwtCandidate.Match(Some, () => mdocCandidate);
     }

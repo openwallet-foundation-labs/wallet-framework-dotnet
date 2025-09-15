@@ -1,27 +1,27 @@
 using System.IdentityModel.Tokens.Jwt;
+using Hyperledger.Aries.Agents;
 using LanguageExt;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using WalletFramework.Core.Credentials.Abstractions;
 using WalletFramework.Core.Functional;
 using WalletFramework.MdocLib.Issuer;
 using WalletFramework.MdocLib.Security.Cose;
+using WalletFramework.Oid4Vc.Oid4Vci.Abstractions;
+using WalletFramework.Oid4Vc.Oid4Vci.Implementations;
 using WalletFramework.Oid4Vc.Oid4Vp.AuthResponse;
 using WalletFramework.Oid4Vc.Oid4Vp.Models;
 using WalletFramework.Oid4Vc.Oid4Vp.PresentationExchange.Models;
 using WalletFramework.Oid4Vc.Oid4Vp.Query;
-using WalletFramework.MdocVc.Persistence;
-using WalletFramework.Storage;
-using WalletFramework.Core.Credentials;
-using WalletFramework.MdocVc;
-using WalletFramework.SdJwtVc;
-using WalletFramework.SdJwtVc.Persistence;
+using WalletFramework.SdJwtVc.Services.SdJwtVcHolderService;
 
 namespace WalletFramework.Oid4Vc.Oid4Vp.PresentationExchange.Services;
 
 /// <inheritdoc />
 public class PexService(
-    IDomainRepository<MdocCredential, MdocCredentialRecord, CredentialId> mdocRepository,
-    IDomainRepository<SdJwtCredential, SdJwtCredentialRecord, CredentialId> sdJwtRepository) : IPexService
+    IAgentProvider agentProvider,
+    IMdocStorage mdocStorage,
+    ISdJwtVcHolderService sdJwtVcHolderService) : IPexService
 {
     public async Task<CandidateQueryResult> FindPresentationCandidatesAsync(PresentationDefinition presentationDefinition, Option<Formats> supportedFormatSigningAlgorithms)
     {
@@ -142,22 +142,24 @@ public class PexService(
         InputDescriptor inputDescriptor,
         Option<Formats> supportedFormatSigningAlgorithms)
     {
-        var sdJwtRecords = await sdJwtRepository.ListAll();
-        var mdocRecords = await mdocRepository.ListAll();
+        var context = await agentProvider.GetContextAsync();
         
-        var filteredSdJwtRecords = sdJwtRecords.OnSome(credentials => credentials.Where(sdJwtCredential =>
+        var sdJwtRecords = await sdJwtVcHolderService.ListAsync(context);
+        var mdocRecords = await mdocStorage.ListAll();
+        
+        var filteredSdJwtRecords = sdJwtRecords.Where(record =>
         {
-            var doc = sdJwtCredential.SdJwtDoc;
+            var doc = record.ToSdJwtDoc();
             
             var handler = new JwtSecurityTokenHandler();
             var issuerSignedJwt = handler.ReadJwtToken(doc.IssuerSignedJwt);
 
             return issuerSignedJwt.Header.TryGetValue("alg", out var alg)
                    && supportedFormatSigningAlgorithms.Match(
-                       formats => (formats.SdJwtVcFormat?.IssuerSignedJwtAlgValues?.Contains(alg.ToString() ?? string.Empty) ?? true) 
-                                  || (formats.SdJwtDcFormat?.IssuerSignedJwtAlgValues?.Contains(alg.ToString() ?? string.Empty) ?? true),
-                       () => (inputDescriptor.Formats?.SdJwtVcFormat?.IssuerSignedJwtAlgValues?.Contains(alg.ToString() ?? string.Empty) ?? true) 
-                           || (inputDescriptor.Formats?.SdJwtDcFormat?.IssuerSignedJwtAlgValues?.Contains(alg.ToString() ?? string.Empty) ?? true))
+                       formats => (formats.SdJwtVcFormat?.IssuerSignedJwtAlgValues?.Contains(alg.ToString()) ?? true) 
+                                  || (formats.SdJwtDcFormat?.IssuerSignedJwtAlgValues?.Contains(alg.ToString()) ?? true),
+                       () => (inputDescriptor.Formats?.SdJwtVcFormat?.IssuerSignedJwtAlgValues?.Contains(alg.ToString()) ?? true) 
+                           || (inputDescriptor.Formats?.SdJwtDcFormat?.IssuerSignedJwtAlgValues?.Contains(alg.ToString()) ?? true))
                    && inputDescriptor.Constraints.Fields!.All(field =>
                    {
                        try
@@ -176,12 +178,12 @@ public class PexService(
                            return false;
                        }
                    });
-        }).Cast<ICredential>());
+        }).Cast<ICredential>().AsOption();
 
         var filteredMdocRecords = mdocRecords.OnSome(records => records
             .Where(record =>
             {
-                return record.Mdoc.DocType == inputDescriptor.Id
+                return record.DocType == inputDescriptor.Id
                        && record.Mdoc.IssuerSigned.IssuerAuth.ProtectedHeaders.Value.TryGetValue(new CoseLabel(1), out var alg)
                        && inputDescriptor.Constraints.Fields!.All(field =>
                        {

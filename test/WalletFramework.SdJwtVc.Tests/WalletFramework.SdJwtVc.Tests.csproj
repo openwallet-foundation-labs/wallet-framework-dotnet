@@ -24,6 +24,8 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\src\Hyperledger.Aries\Hyperledger.Aries.csproj" />
     <ProjectReference Include="..\..\src\WalletFramework.SdJwtVc\WalletFramework.SdJwtVc.csproj" />
   </ItemGroup>
+
 </Project>

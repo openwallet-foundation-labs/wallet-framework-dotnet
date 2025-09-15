@@ -283,7 +283,7 @@ public static class DcqlSamples
                         ""doctype_value"": ""org.iso.18013.5.1.mDL""
                     },
                     ""claims"": [
-                        { ""path"": [""org.iso.18013.5.1"", ""given_name""] },
+                        { ""path"": [""org.iso.18013.5.1"", ""document_number""] },
                         { ""path"": [""org.iso.18013.5.1"", ""family_name""] }
                     ]
                 }

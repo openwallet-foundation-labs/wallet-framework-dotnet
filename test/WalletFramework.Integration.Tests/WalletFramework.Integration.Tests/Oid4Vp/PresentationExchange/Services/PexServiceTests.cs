@@ -1,5 +1,6 @@
 using FluentAssertions;
-using LanguageExt;
+using Hyperledger.Aries.Agents;
+using Hyperledger.Aries.Storage;
 using Moq;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -8,8 +9,7 @@ using WalletFramework.Core.Credentials.Abstractions;
 using WalletFramework.Core.Cryptography.Models;
 using WalletFramework.Core.Functional;
 using WalletFramework.Integration.Tests.Oid4Vp.PresentationExchange.Models;
-using WalletFramework.MdocVc;
-using WalletFramework.MdocVc.Persistence;
+using WalletFramework.Oid4Vc.Oid4Vci.Abstractions;
 using WalletFramework.Oid4Vc.Oid4Vci.CredConfiguration.Models;
 using WalletFramework.Oid4Vc.Oid4Vp.Models;
 using WalletFramework.Oid4Vc.Oid4Vp.PresentationExchange.Models;
@@ -17,17 +17,18 @@ using WalletFramework.Oid4Vc.Oid4Vp.PresentationExchange.Services;
 using WalletFramework.Oid4Vc.Tests.Extensions;
 using WalletFramework.Oid4Vc.Tests.Samples;
 using WalletFramework.SdJwtLib.Roles.Implementation;
-using WalletFramework.SdJwtVc;
 using WalletFramework.SdJwtVc.Models.Credential;
-using WalletFramework.SdJwtVc.Persistence;
-using WalletFramework.Storage;
+using WalletFramework.SdJwtVc.Models.Credential.Attributes;
+using WalletFramework.SdJwtVc.Models.Records;
+using WalletFramework.SdJwtVc.Services.SdJwtVcHolderService;
 
 namespace WalletFramework.Integration.Tests.Oid4Vp.PresentationExchange.Services;
 
 public class PexServiceTests
 {
-    private readonly Mock<IDomainRepository<MdocCredential, MdocCredentialRecord, CredentialId>> _mdocRepository = new();
-    private readonly Mock<IDomainRepository<SdJwtCredential, SdJwtCredentialRecord, CredentialId>> _sdJwtRepository = new();
+    private readonly Mock<IAgentProvider> _agentProviderMock = new();
+    private readonly Mock<IMdocStorage> _mdocStorageMock = new();
+    private readonly Mock<ISdJwtVcHolderService> _sdJwtVcHolderServiceMock = new();
 
     private static readonly CredentialSetId DriverLicenseCredentialSetId = CredentialSetId.CreateCredentialSetId();
     private static readonly CredentialSetId DriverLicenseCredentialCloneSetId = CredentialSetId.CreateCredentialSetId();
@@ -36,13 +37,13 @@ public class PexServiceTests
     private static readonly CredentialSetId AlternativeNestedCredentialSetId = CredentialSetId.CreateCredentialSetId();
     private static readonly CredentialSetId BatchCredentialSetId = CredentialSetId.CreateCredentialSetId();
 
-    private readonly SdJwtCredential _driverCredential = CreateCredential(JsonBasedCredentialSamples.DriverCredential, DriverLicenseCredentialSetId);
-    private readonly SdJwtCredential _driverCredentialClone = CreateCredential(JsonBasedCredentialSamples.DriverCredential, DriverLicenseCredentialCloneSetId);
-    private readonly SdJwtCredential _universityCredential = CreateCredential(JsonBasedCredentialSamples.UniversityCredential, UniversityCredentialSetId);
-    private readonly SdJwtCredential _nestedCredential = CreateCredential(JsonBasedCredentialSamples.NestedCredential, NestedCredentialSetId);
-    private readonly SdJwtCredential _alternativeNestedCredential = CreateCredential(JsonBasedCredentialSamples.AlternativeNestedCredential, AlternativeNestedCredentialSetId);
-    private readonly SdJwtCredential _batchCredentialOne = CreateCredential(JsonBasedCredentialSamples.BatchCredential, BatchCredentialSetId);
-    private readonly SdJwtCredential _batchCredentialTwo = CreateCredential(JsonBasedCredentialSamples.BatchCredential, BatchCredentialSetId);
+    private readonly SdJwtRecord _driverCredential = CreateCredential(JsonBasedCredentialSamples.DriverCredential, DriverLicenseCredentialSetId);
+    private readonly SdJwtRecord _driverCredentialClone = CreateCredential(JsonBasedCredentialSamples.DriverCredential, DriverLicenseCredentialCloneSetId);
+    private readonly SdJwtRecord _universityCredential = CreateCredential(JsonBasedCredentialSamples.UniversityCredential, UniversityCredentialSetId);
+    private readonly SdJwtRecord _nestedCredential = CreateCredential(JsonBasedCredentialSamples.NestedCredential, NestedCredentialSetId);
+    private readonly SdJwtRecord _alternativeNestedCredential = CreateCredential(JsonBasedCredentialSamples.AlternativeNestedCredential, AlternativeNestedCredentialSetId);
+    private readonly SdJwtRecord _batchCredentialOne = CreateCredential(JsonBasedCredentialSamples.BatchCredential, BatchCredentialSetId);
+    private readonly SdJwtRecord _batchCredentialTwo = CreateCredential(JsonBasedCredentialSamples.BatchCredential, BatchCredentialSetId);
 
     [Fact]
     public async Task Can_Create_Authorization_Response()
@@ -80,24 +81,26 @@ public class PexServiceTests
         idFilter.PrivateSet(x => x.Const, "123");
 
         var batchInputDescriptor = CreateInputDescriptor(
-            CreateConstraints([CreateField("$.id", idFilter), CreateField("$.issuer"), CreateField("$.batchExp")]),
-            CreateFormat(["ES256"]),
+            CreateConstraints(new[]
+                { CreateField("$.id", idFilter), CreateField("$.issuer"), CreateField("$.batchExp") }),
+            CreateFormat(new[] { "ES256" }),
             Guid.NewGuid().ToString(),
             "EU Driver's License",
             "We can only accept digital driver's licenses issued by national authorities of member states or trusted notarial auditors.",
-            ["A"]);
+            new[] { "A" });
         
         var driverLicenseInputDescriptor = CreateInputDescriptor(
-            CreateConstraints([CreateField("$.id", idFilter), CreateField("$.issuer"), CreateField("$.dateOfBirth")]),
-            CreateFormat(["ES256"]),
+            CreateConstraints(new[]
+                { CreateField("$.id", idFilter), CreateField("$.issuer"), CreateField("$.dateOfBirth") }),
+            CreateFormat(new[] { "ES256" }),
             Guid.NewGuid().ToString(),
             "EU Driver's License",
             "We can only accept digital driver's licenses issued by national authorities of member states or trusted notarial auditors.",
-            ["A"]);
+            new[] { "A" });
 
         var universityInputDescriptor = CreateInputDescriptor(
-            CreateConstraints([CreateField("$.degree")]),
-            CreateFormat(["ES256"]),
+            CreateConstraints(new[] { CreateField("$.degree") }),
+            CreateFormat(new[] { "ES256" }),
             Guid.NewGuid().ToString(),
             "University Degree",
             "We can only accept digital university degrees.");
@@ -146,12 +149,13 @@ public class PexServiceTests
         idFilter.PrivateSet(x => x.Const, "Berlin");
 
         var identityCredentialInputDescriptor = CreateInputDescriptor(
-            CreateConstraints([CreateField("$.address.city", idFilter), CreateField("$.vct"), CreateField("$.iss")]),
-            CreateFormat(["ES256"]),
+            CreateConstraints(new[]
+                { CreateField("$.address.city", idFilter), CreateField("$.vct"), CreateField("$.iss") }),
+            CreateFormat(new[] { "ES256" }),
             Guid.NewGuid().ToString(),
             "Identity Credential",
             "We can only accept digital identity credentials.",
-            ["A"]);
+            new[] { "A" });
 
         var expected = new List<PresentationCandidate>
         {
@@ -182,12 +186,13 @@ public class PexServiceTests
         vctFilter.PrivateSet(x => x.Const, "IdentityCredential");
 
         var identityCredentialInputDescriptor = CreateInputDescriptor(
-            CreateConstraints([CreateField("$.address.city"), CreateField("$.vct", vctFilter), CreateField("$.iss")]),
-            CreateFormat(["ES256"]),
+            CreateConstraints(new[]
+                { CreateField("$.address.city"), CreateField("$.vct", vctFilter), CreateField("$.iss") }),
+            CreateFormat(new[] { "ES256" }),
             Guid.NewGuid().ToString(),
             "Identity Credential",
             "We can only accept digital identity credentials.",
-            ["A"]);
+            new[] { "A" });
 
         var expected = new List<PresentationCandidate>
         {
@@ -214,12 +219,12 @@ public class PexServiceTests
             new List<ICredential> { _universityCredential });
 
         var enumVctFilter = new Filter();
-        enumVctFilter.PrivateSet(x => x.Enum, ["UniversityDegreeCredential", "vctTypeTwo"]);
+        enumVctFilter.PrivateSet(x => x.Enum, new[] { "UniversityDegreeCredential", "vctTypeTwo" });
         enumVctFilter.PrivateSet(x => x.Type, "string");
 
         var universityInputDescriptor = CreateInputDescriptor(
-            CreateConstraints([CreateField("$.degree"), CreateField("$.vct", enumVctFilter)]),
-            CreateFormat(["ES256"]),
+            CreateConstraints(new[] { CreateField("$.degree"), CreateField("$.vct", enumVctFilter) }),
+            CreateFormat(new[] { "ES256" }),
             Guid.NewGuid().ToString(),
             "University Degree",
             "We can only accept digital university degrees.");
@@ -246,12 +251,12 @@ public class PexServiceTests
     public async Task Cant_Get_Credential_Candidates_For_Input_Descriptors_With_Enum_Filter_Not_Fulfilled()
     {
         var enumVctFilter = new Filter();
-        enumVctFilter.PrivateSet(x => x.Enum, ["vctTypeTwo", "vctTypeTwo"]);
+        enumVctFilter.PrivateSet(x => x.Enum, new[] { "vctTypeTwo", "vctTypeTwo" });
         enumVctFilter.PrivateSet(x => x.Type, "string");
 
         var universityInputDescriptor = CreateInputDescriptor(
-            CreateConstraints([CreateField("$.degree"), CreateField("$.vct", enumVctFilter)]),
-            CreateFormat(["ES256"]),
+            CreateConstraints(new[] { CreateField("$.degree"), CreateField("$.vct", enumVctFilter) }),
+            CreateFormat(new[] { "ES256" }),
             Guid.NewGuid().ToString(),
             "University Degree",
             "We can only accept digital university degrees.");
@@ -270,11 +275,12 @@ public class PexServiceTests
     {
         // Arrange
         var driverLicenseInputDescriptor = CreateInputDescriptor(
-            CreateConstraints([
+            CreateConstraints(new[]
+            {
                 CreateField("$.id"), CreateField("$.issuer"),
                 CreateField("$.dateOfBirth"), CreateField("$.name")
-            ]),
-            CreateFormat(["ES256"]),
+            }),
+            CreateFormat(new[] { "ES256" }),
             Guid.NewGuid().ToString(),
             "EU Driver's License",
             "We can only accept digital driver's licenses issued by national authorities of member states or trusted notarial auditors.");
@@ -314,9 +320,9 @@ public class PexServiceTests
 
     private IPexService CreatePexService()
     {
-        _sdJwtRepository
-            .Setup(x => x.ListAll())
-            .ReturnsAsync(() => new List<SdJwtCredential>
+        _sdJwtVcHolderServiceMock
+            .Setup(x => x.ListAsync(It.IsAny<IAgentContext>(), It.IsAny<ISearchQuery?>(), It.IsAny<int>(), It.IsAny<int>()))
+            .ReturnsAsync(() => new List<SdJwtRecord>
             { 
                 _driverCredential,
                 _driverCredentialClone,
@@ -327,25 +333,22 @@ public class PexServiceTests
                 _batchCredentialTwo
             });
         
-        return new PexService(_mdocRepository.Object, _sdJwtRepository.Object);
+        return new PexService(_agentProviderMock.Object, _mdocStorageMock.Object, _sdJwtVcHolderServiceMock.Object);
     }
         
-    private static SdJwtCredential CreateCredential(JObject payload, CredentialSetId credentialSetId)
+    private static SdJwtRecord CreateCredential(JObject payload, CredentialSetId credentialSetId)
     {
         // Arrange
         const string jwk = "{\"kty\":\"EC\",\"d\":\"1_2Dagk1gvTIOX-DLPe7GHNsGLJMc7biySNA-so7TXE\",\"use\":\"sig\",\"crv\":\"P-256\",\"x\":\"X6sZhH_kFp_oKYiPXW-LvUyAv9mHp1xYcpAK3yy0wGY\",\"y\":\"p0URU7tgWbh42miznti0NVKM36fpJBbIfnF8ZCYGryE\",\"alg\":\"ES256\"}";
         var issuedSdJwt = new Issuer().IssueCredential(payload, jwk);
         var keyId = KeyId.CreateKeyId();
 
-        var record = new SdJwtCredential(
-            issuedSdJwt,
-            CredentialId.CreateCredentialId(),
-            credentialSetId,
-            Option<List<SdJwtDisplay>>.None,
+        var record = new SdJwtRecord(
+            issuedSdJwt.IssuanceFormat,
+            new Dictionary<string, ClaimMetadata>(),
+            new List<SdJwtDisplay>(), 
             keyId,
-            CredentialState.Active,
-            false,
-            Option<DateTime>.None);
+            credentialSetId);
             
         return record;
     }
@@ -361,7 +364,7 @@ public class PexServiceTests
     private static Field CreateField(string path, Filter? filter = null)
     {
         var field = new Field();
-        field.PrivateSet(x => x.Path, [path]);
+        field.PrivateSet(x => x.Path, new[] { path });
 
         if (filter != null)
         {

@@ -1,8 +1,10 @@
 using System.Security.Cryptography;
 using System.Text;
+using Hyperledger.Aries.Agents;
 using LanguageExt;
 using Microsoft.IdentityModel.Tokens;
 using WalletFramework.Oid4Vc.Oid4Vci.Abstractions;
+using WalletFramework.Oid4Vc.Oid4Vci.AuthFlow.Abstractions;
 using WalletFramework.Oid4Vc.Oid4Vci.AuthFlow.Models;
 using WalletFramework.Oid4Vc.Oid4Vci.Authorization.Abstractions;
 using WalletFramework.Oid4Vc.Oid4Vci.Authorization.Models;
@@ -19,60 +21,82 @@ using WalletFramework.Core.String;
 using WalletFramework.MdocLib;
 using WalletFramework.MdocVc;
 using WalletFramework.Oid4Vc.ClientAttestation;
+using WalletFramework.Oid4Vc.CredentialSet;
 using WalletFramework.Oid4Vc.CredentialSet.Models;
 using WalletFramework.Oid4Vc.Oid4Vci.Authorization.DPop.Models;
 using WalletFramework.Oid4Vc.Oid4Vci.CredentialNonce.Abstractions;
 using WalletFramework.Oid4Vc.Oid4Vp.Models;
 using WalletFramework.SdJwtVc.Models;
-using WalletFramework.Storage;
+using WalletFramework.SdJwtVc.Services.SdJwtVcHolderService;
 using static Newtonsoft.Json.JsonConvert;
-using WalletFramework.Oid4Vc.CredentialSet.Persistence;
-using WalletFramework.Core.Credentials;
-using WalletFramework.MdocVc.Persistence;
-using WalletFramework.Oid4Vc.Oid4Vci.AuthFlow;
-using WalletFramework.Oid4Vc.Oid4Vci.AuthFlow.Persistence;
-using WalletFramework.SdJwtVc;
-using WalletFramework.SdJwtVc.Persistence;
 
 namespace WalletFramework.Oid4Vc.Oid4Vci.Implementations;
 
-/// <summary>
-///     Initializes a new instance of the <see cref="Oid4VciClientService" /> class.
-/// </summary>    
-/// <param name="authFlowSessionRepository">The authorization flow session storage service.</param>
-/// <param name="clientAttestationService">The client attestation service.</param>
-/// <param name="credentialOfferService">The credential offer service.</param>
-/// <param name="credentialRequestService">The credential request service.</param>
-/// <param name="credentialDataSetRepository">The repository for storing credential data sets.</param>
-/// <param name="sdJwtCredentialRepository">The repository for storing SD-JWT credentials.</param>
-/// <param name="mdocCredentialRepository">The repository for storing mDOC credentials.</param>
-/// <param name="httpClientFactory">The factory to create HTTP client instances.</param>
-/// <param name="issuerMetadataService">The issuer metadata service.</param>
-/// <param name="credentialNonceService">The credential nonce service.</param>
-/// <param name="tokenService">The token service.</param>
-public class Oid4VciClientService(
-    IClientAttestationService clientAttestationService,
-    ICredentialNonceService credentialNonceService,
-    ICredentialOfferService credentialOfferService,
-    ICredentialRequestService credentialRequestService,
-    IDomainRepository<AuthFlowSession, AuthFlowSessionRecord, AuthFlowSessionState> authFlowSessionRepository,
-    IDomainRepository<CredentialDataSet, CredentialDataSetRecord, CredentialSetId> credentialDataSetRepository,
-    IDomainRepository<MdocCredential, MdocCredentialRecord, CredentialId> mdocCredentialRepository,
-    IDomainRepository<SdJwtCredential, SdJwtCredentialRecord, CredentialId> sdJwtCredentialRepository,
-    IHttpClientFactory httpClientFactory,
-    IIssuerMetadataService issuerMetadataService,
-    ITokenService tokenService) : IOid4VciClientService
+/// <inheritdoc />
+public class Oid4VciClientService : IOid4VciClientService
 {
     private const string AuthorizationCodeGrantTypeIdentifier = "authorization_code";
     private const string PreAuthorizedCodeGrantTypeIdentifier = "urn:ietf:params:oauth:grant-type:pre-authorized_code";
 
-    private readonly HttpClient _httpClient = httpClientFactory.CreateClient();
+    /// <summary>
+    ///     Initializes a new instance of the <see cref="Oid4VciClientService" /> class.
+    /// </summary>
+    /// <param name="credentialOfferService"></param>
+    /// <param name="credentialRequestService">The credential request service. </param>
+    /// <param name="issuerMetadataService"></param>
+    /// <param name="httpClientFactory">
+    ///     The factory to create instances of <see cref="_httpClient" />. Used for making HTTP
+    ///     requests.
+    /// </param>
+    /// <param name="authFlowSessionAuthFlowSessionStorage">The authorization record service</param>
+    /// <param name="sdJwtService"></param>
+    /// <param name="tokenService">The token service.</param>
+    /// <param name="credentialSetStorage"></param>
+    /// <param name="agentProvider"></param>
+    /// <param name="mdocStorage"></param>
+    public Oid4VciClientService(
+        IAgentProvider agentProvider,
+        IAuthFlowSessionStorage authFlowSessionAuthFlowSessionStorage,
+        IClientAttestationService clientAttestationService,
+        ICredentialOfferService credentialOfferService,
+        ICredentialRequestService credentialRequestService,
+        ICredentialSetStorage credentialSetStorage,
+        IHttpClientFactory httpClientFactory,
+        IIssuerMetadataService issuerMetadataService,
+        IMdocStorage mdocStorage,
+        ISdJwtVcHolderService sdJwtService,
+        ICredentialNonceService credentialNonceService,
+        ITokenService tokenService)
+    {
+        _agentProvider = agentProvider;
+        _authFlowSessionStorage = authFlowSessionAuthFlowSessionStorage;
+        _clientAttestationService = clientAttestationService;
+        _credentialOfferService = credentialOfferService;
+        _credentialRequestService = credentialRequestService;
+        _credentialSetStorage = credentialSetStorage;
+        _httpClient = httpClientFactory.CreateClient();
+        _issuerMetadataService = issuerMetadataService;
+        _mdocStorage = mdocStorage;
+        _sdJwtService = sdJwtService;
+        _credentialNonceService = credentialNonceService;
+        _tokenService = tokenService;
+    }
 
+    private readonly HttpClient _httpClient;
+    private readonly IAgentProvider _agentProvider;
+    private readonly IAuthFlowSessionStorage _authFlowSessionStorage;
+    private readonly IClientAttestationService _clientAttestationService;
+    private readonly ICredentialOfferService _credentialOfferService;
+    private readonly ICredentialRequestService _credentialRequestService;
+    private readonly ICredentialSetStorage _credentialSetStorage;
+    private readonly IIssuerMetadataService _issuerMetadataService;
+    private readonly IMdocStorage _mdocStorage;
+    private readonly ISdJwtVcHolderService _sdJwtService;
+    private readonly ICredentialNonceService _credentialNonceService;
+    private readonly ITokenService _tokenService;
+    
     /// <inheritdoc />
-    public async Task<Uri> InitiateAuthFlow(
-        CredentialOfferMetadata offer,
-        ClientOptions clientOptions,
-        Option<ClientAttestationDetails> clientAttestationDetails)
+    public async Task<Uri> InitiateAuthFlow(CredentialOfferMetadata offer, ClientOptions clientOptions, Option<ClientAttestationDetails> clientAttestationDetails)
     {
         var authorizationCodeParameters = CreateAndStoreCodeChallenge();
         var sessionId = AuthFlowSessionState.CreateAuthFlowSessionState();
@@ -95,11 +119,11 @@ public class Oid4VciClientService(
             .CredentialConfigurationsSupported
             .Where(config => offer.CredentialOffer.CredentialConfigurationIds.Contains(config.Key))
             .Select(pair => pair.Value.Match(
-                _ => new AuthorizationDetails(
+                sdJwt => new AuthorizationDetails(
                     pair.Key.ToString(),
                     issuerMetadata.AuthorizationServers.ToNullable()?.Select(id => id.ToString()).ToArray()
                 ),
-                _ => new AuthorizationDetails(
+                mdoc => new AuthorizationDetails(
                     pair.Key.ToString(),
                     issuerMetadata.AuthorizationServers.ToNullable()?.Select(id => id.ToString()).ToArray())
                 )
@@ -138,13 +162,13 @@ public class Oid4VciClientService(
             Option<OAuthToken>.None, 
             offer.CredentialOffer.CredentialConfigurationIds);
 
-        var session = new AuthFlowSession(
-            sessionId,
+        var context = await _agentProvider.GetContextAsync();
+        await _authFlowSessionStorage.StoreAsync(
+            context,
             authorizationData,
             authorizationCodeParameters,
+            sessionId,
             Option<int>.None);
-        
-        await authFlowSessionRepository.Add(session);
             
         return authorizationRequestUri;
     }
@@ -155,7 +179,7 @@ public class Oid4VciClientService(
             some => some,
             () => Core.Localization.Constants.DefaultLocale);
         
-        var issuerMetadata = issuerMetadataService.ProcessMetadata(uri, locale);
+        var issuerMetadata = _issuerMetadataService.ProcessMetadata(uri, locale);
         
         return await issuerMetadata.Match(
             async validIssuerMetadata =>
@@ -215,12 +239,13 @@ public class Oid4VciClientService(
                         .Select(config => config.Key)
                         .ToList());
 
-                var session = new AuthFlowSession(
-                    sessionId,
+                var context = await _agentProvider.GetContextAsync();
+                await _authFlowSessionStorage.StoreAsync(
+                    context,
                     authorizationData,
                     authorizationCodeParameters,
+                    sessionId,
                     specVersion);
-                await authFlowSessionRepository.Add(session);
             
                 return authorizationRequestUri;
             },
@@ -234,7 +259,7 @@ public class Oid4VciClientService(
         
         await clientAttestationDetails.IfSomeAsync(async attestationDetails =>
         {
-            var combinedWalletAttestation = await clientAttestationService.GetCombinedWalletAttestationAsync(attestationDetails, authorizationServerMetadata);
+            var combinedWalletAttestation = await _clientAttestationService.GetCombinedWalletAttestationAsync(attestationDetails, authorizationServerMetadata);
             _httpClient.AddClientAttestationPopHeader(combinedWalletAttestation);
         });
         
@@ -251,10 +276,7 @@ public class Oid4VciClientService(
                        + "&request_uri=" + System.Net.WebUtility.UrlEncode(parResponse.RequestUri.ToString()));
     }
     
-    public async Task<Validation<IEnumerable<CredentialDataSet>>> AcceptOffer(
-        CredentialOfferMetadata credentialOfferMetadata,
-        Option<ClientAttestationDetails> clientAttestationDetails,
-        string? transactionCode)
+    public async Task<Validation<IEnumerable<CredentialSetRecord>>> AcceptOffer(CredentialOfferMetadata credentialOfferMetadata, Option<ClientAttestationDetails> clientAttestationDetails, string? transactionCode)
     {
         var issuerMetadata = credentialOfferMetadata.IssuerMetadata;
         
@@ -272,7 +294,7 @@ public class Oid4VciClientService(
 
         var authorizationServerMetadata = await FetchAuthorizationServerMetadataAsync(issuerMetadata, credentialOfferMetadata.CredentialOffer);
         
-        var token = await tokenService.RequestToken(
+        var token = await _tokenService.RequestToken(
             tokenRequest,
             authorizationServerMetadata,
             clientAttestationDetails,
@@ -282,7 +304,7 @@ public class Oid4VciClientService(
         var configurationId = credentialOfferMetadata.CredentialOffer.CredentialConfigurationIds.First();
         var configurationPair = issuerMetadata.CredentialConfigurationsSupported.Single(config => config.Key == configurationId);
         
-        var validResponses = await credentialRequestService.RequestCredentials(
+        var validResponses = await _credentialRequestService.RequestCredentials(
             configurationPair,
             issuerMetadata,
             token,
@@ -290,62 +312,58 @@ public class Oid4VciClientService(
             Option<AuthorizationRequest>.None,
             Option<int>.None);
 
-        var credentialSets = new List<CredentialDataSet>();
+        var credentialSets = new List<CredentialSetRecord>();
         var result =
             from responses in validResponses
-            let setId = CredentialSetId.CreateCredentialSetId()
+            let credentialSet = new CredentialSetRecord()
             select
                 from response in responses
                 let credentialsOrTransactionId = response.CredentialsOrTransactionId
                 select credentialsOrTransactionId.Match(
                     async creds =>
                     {
-                        var records = new List<ICredential>();
                         foreach (var credential in creds)
                         {
                             await credential.Value.Match(
                                 async sdJwt =>
                                 {
-                                    var record = sdJwt.Decoded.ToCredential(
+                                    var record = sdJwt.Decoded.ToRecord(
                                         configurationPair.Value.AsT0,
                                         response.KeyId,
-                                        setId,
+                                        credentialSet.CredentialSetId,
                                         creds.Count > 1);
                                     
-                                    await sdJwtCredentialRepository.Add(record);
-                                    records.Add(record);
+                                    var context = await _agentProvider.GetContextAsync();
+                                    await _sdJwtService.AddAsync(context, record);
+
+                                    credentialSet.AddSdJwtData(record);
                                 },
                                 async mdoc =>
                                 {
                                     var displays = MdocFun.CreateMdocDisplays(configurationPair.Value.AsT1);
                                     
-                                    var mdocCredential = new MdocCredential(
-                                        mdoc.Decoded,
-                                        CredentialId.CreateCredentialId(), 
-                                        setId,
+                                    var record = mdoc.Decoded.ToRecord(
                                         displays,
                                         response.KeyId,
-                                        CredentialState.Active,
-                                        creds.Count > 1,
-                                        Option<DateTime>.None);
+                                        credentialSet.CredentialSetId,
+                                        creds.Count > 1);
                                     
-                                    await mdocCredentialRepository.Add(mdocCredential);
-                                    records.Add(mdocCredential);
+                                    await _mdocStorage.Add(record);
+
+                                    credentialSet.AddMDocData(record, issuerMetadata.CredentialIssuer);
                                 });
                         }
-                        
-                        var dataSet = CredentialDataSet.FromCredentials(
-                            records,
-                            issuerMetadata.CredentialIssuer.ToString());
-                        
-                        credentialSets.Add(dataSet);
+                        credentialSets.Add(credentialSet);
                     },
                     // ReSharper disable once UnusedParameter.Local
                     transactionId => throw new NotImplementedException());
 
         await result.OnSuccess(async tasks => await Task.WhenAll(tasks));
         
-        await credentialDataSetRepository.AddMany(credentialSets);
+        foreach (var credentialSet in credentialSets)
+        {
+            await _credentialSetStorage.Add(credentialSet);
+        }
         
         return credentialSets;
     }
@@ -357,20 +375,19 @@ public class Oid4VciClientService(
             () => Core.Localization.Constants.DefaultLocale);
         
         var result =
-            from offer in credentialOfferService.ProcessCredentialOffer(credentialOffer, locale)
-            from metadata in issuerMetadataService.ProcessMetadata(offer.CredentialIssuer, locale)
+            from offer in _credentialOfferService.ProcessCredentialOffer(credentialOffer, locale)
+            from metadata in _issuerMetadataService.ProcessMetadata(offer.CredentialIssuer, locale)
             select new CredentialOfferMetadata(offer, metadata);
 
         return await result;
     }
 
     /// <inheritdoc />
-    public async Task<Validation<IEnumerable<CredentialDataSet>>> RequestCredentialSet(
-        IssuanceSession issuanceSession,
-        Option<ClientAttestationDetails> clientAttestationDetails)
+    public async Task<Validation<IEnumerable<CredentialSetRecord>>> RequestCredentialSet(IssuanceSession issuanceSession, Option<ClientAttestationDetails> clientAttestationDetails)
     {
-        var session = (await authFlowSessionRepository.GetById(issuanceSession.AuthFlowSessionState))
-            .UnwrapOrThrow(new InvalidOperationException("Auth flow session not found"));
+        var context = await _agentProvider.GetContextAsync();
+        
+        var session = await _authFlowSessionStorage.GetAsync(context, issuanceSession.AuthFlowSessionState);
         
         var relevantConfigurations = session
             .AuthorizationData
@@ -378,9 +395,7 @@ public class Oid4VciClientService(
             .CredentialConfigurationsSupported
             .Where(config => session.AuthorizationData.CredentialConfigurationIds.Contains(config.Key));
 
-        var configurations = relevantConfigurations.ToList();
-        
-        var scopes = configurations
+        var scopes = relevantConfigurations
             .Select(config => config.Value.Match(
                 sdJwtConfig => sdJwtConfig.CredentialConfiguration.Scope.OnSome(scope => scope.ToString()),
                 mdDocConfig => mdDocConfig.CredentialConfiguration.Scope.OnSome(scope => scope.ToString())))
@@ -397,17 +412,17 @@ public class Oid4VciClientService(
             ClientId = session.AuthorizationData.ClientOptions.ClientId
         };
         
-        var token = await tokenService.RequestToken(
+        var token = await _tokenService.RequestToken(
             tokenRequest,
             session.AuthorizationData.AuthorizationServerMetadata,
             clientAttestationDetails,
             session.AuthorizationData.IssuerMetadata.CredentialNonceEndpoint);
         
         //TODO: Make sure that it does not always request all available credConfigurations
-        var credentialSets = new List<CredentialDataSet>();
-        foreach (var configuration in configurations)
+        var credentialSets = new List<CredentialSetRecord>();
+        foreach (var configuration in relevantConfigurations)
         {
-            var validResponses = await credentialRequestService.RequestCredentials(
+            var validResponses = await _credentialRequestService.RequestCredentials(
                 configuration,
                 session.AuthorizationData.IssuerMetadata,
                 token,
@@ -417,7 +432,7 @@ public class Oid4VciClientService(
             
             var result =
                 from responses in validResponses
-                let setId = CredentialSetId.CreateCredentialSetId()
+                let credentialSet = new CredentialSetRecord()
                 select
                     from response in responses
                     let cNonce = response.CNonce
@@ -428,7 +443,7 @@ public class Oid4VciClientService(
                             token = await session.AuthorizationData.IssuerMetadata.CredentialNonceEndpoint.Match(
                                 Some: async credentialNonceEndpoint =>
                                 {
-                                    var credentialNonce = await credentialNonceService.GetCredentialNonce(credentialNonceEndpoint);
+                                    var credentialNonce = await _credentialNonceService.GetCredentialNonce(credentialNonceEndpoint);
                                     return token.Match<OneOf<OAuthToken, DPopToken>>(
                                         oAuth => oAuth with { CNonce = credentialNonce.Value },
                                         dPop => dPop with
@@ -438,7 +453,7 @@ public class Oid4VciClientService(
                                 },
                                 None: () =>
                                 {
-                                    return Task.FromResult( token.Match<OneOf<OAuthToken, DPopToken>>(
+                                    return Task.FromResult<OneOf<OAuthToken, DPopToken>>( token.Match<OneOf<OAuthToken, DPopToken>>(
                                         oAuth => oAuth with { CNonce = cNonce.ToNullable() },
                                         dPop => dPop with
                                         {
@@ -446,43 +461,38 @@ public class Oid4VciClientService(
                                         }));
                                 });
                             
-                            var records = new List<ICredential>();
                             foreach (var credential in creds)
                             {
                                 await credential.Value.Match(
                                     async sdJwt =>
                                     {
-                                        var record = sdJwt.Decoded.ToCredential(
+                                        var record = sdJwt.Decoded.ToRecord(
                                             configuration.Value.AsT0,
                                             response.KeyId,
-                                            setId,
+                                            credentialSet.CredentialSetId,
                                             creds.Count > 1);
                                         
-                                        await sdJwtCredentialRepository.Add(record);
-                                        records.Add(record);
+                                        await _sdJwtService.AddAsync(context, record);
+
+                                        credentialSet.AddSdJwtData(record);
+                                        // credentialSets.Add(credentialSet);
                                     },
                                     async mdoc =>
                                     {
                                         var displays = MdocFun.CreateMdocDisplays(configuration.Value.AsT1);
                                         
-                                        var mdocCredential = new MdocCredential(
-                                            mdoc.Decoded,
-                                            CredentialId.CreateCredentialId(),
-                                            setId,
+                                        var record = mdoc.Decoded.ToRecord(
                                             displays,
                                             response.KeyId,
-                                            CredentialState.Active,
-                                            creds.Count > 1,
-                                            Option<DateTime>.None);
+                                            credentialSet.CredentialSetId,
+                                            creds.Count > 1);
                                         
-                                        await mdocCredentialRepository.Add(mdocCredential);
-                                        records.Add(mdocCredential);
+                                        await _mdocStorage.Add(record);
+
+                                        credentialSet.AddMDocData(record, session.AuthorizationData.IssuerMetadata.CredentialIssuer);
                                     });   
                             }
-                            var dataSet = CredentialDataSet.FromCredentials(
-                                records,
-                                session.AuthorizationData.IssuerMetadata.CredentialIssuer.ToString());
-                            credentialSets.Add(dataSet);
+                            credentialSets.Add(credentialSet);
                         },
                         // ReSharper disable once UnusedParameter.Local
                         transactionId => throw new NotImplementedException());
@@ -490,9 +500,12 @@ public class Oid4VciClientService(
             await result.OnSuccess(async tasks => await Task.WhenAll(tasks));
         }
 
-        await credentialDataSetRepository.AddMany(credentialSets);
+        foreach (var credentialSet in credentialSets)
+        {
+            await _credentialSetStorage.Add(credentialSet);
+        }
         
-        await authFlowSessionRepository.Delete(session.AuthFlowSessionState);
+        await _authFlowSessionStorage.DeleteAsync(context, session.AuthFlowSessionState);
         
         return credentialSets;
     }
@@ -501,17 +514,17 @@ public class Oid4VciClientService(
     /// <inheritdoc />
     public async Task<Validation<IEnumerable<OnDemandCredentialSet>>> RequestOnDemandCredentialSet(IssuanceSession issuanceSession, AuthorizationRequest authorizationRequest, Option<ClientAttestationDetails> clientAttestationDetails)
     {
-        var session = (await authFlowSessionRepository.GetById(issuanceSession.AuthFlowSessionState))
-            .UnwrapOrThrow(new InvalidOperationException("Auth flow session not found"));
+        var context = await _agentProvider.GetContextAsync();
+        
+        var session = await _authFlowSessionStorage.GetAsync(context, issuanceSession.AuthFlowSessionState);
         
         var relevantConfigurations = session
             .AuthorizationData
             .IssuerMetadata
             .CredentialConfigurationsSupported
             .Where(config => session.AuthorizationData.CredentialConfigurationIds.Contains(config.Key));
-
-        var configurations = relevantConfigurations.ToList();
-        var scopes = configurations
+        
+        var scopes = relevantConfigurations
             .Select(config => config.Value.Match(
                 sdJwtConfig => sdJwtConfig.CredentialConfiguration.Scope.OnSome(scope => scope.ToString()),
                 mdDocConfig => mdDocConfig.CredentialConfiguration.Scope.OnSome(scope => scope.ToString())))
@@ -528,18 +541,18 @@ public class Oid4VciClientService(
             ClientId = session.AuthorizationData.ClientOptions.ClientId
         };
         
-        var token = await tokenService.RequestToken(
+        var token = await _tokenService.RequestToken(
             tokenRequest,
             session.AuthorizationData.AuthorizationServerMetadata,
             clientAttestationDetails,
             session.AuthorizationData.IssuerMetadata.CredentialNonceEndpoint);
 
-        var credentials = new List<(CredentialDataSet, List<ICredential>)>();
+        var credentials = new List<(CredentialSetRecord, List<ICredential>)>();
         
         //TODO: Make sure that it does not always request all available credConfigurations
-        foreach (var configuration in configurations)
+        foreach (var configuration in relevantConfigurations)
         {
-            var validResponses = await credentialRequestService.RequestCredentials(
+            var validResponses = await _credentialRequestService.RequestCredentials(
                 configuration,
                 session.AuthorizationData.IssuerMetadata,
                 token,
@@ -549,7 +562,7 @@ public class Oid4VciClientService(
             
             var result =
                 from responses in validResponses
-                let setId = CredentialSetId.CreateCredentialSetId()
+                let credentialSet = new CredentialSetRecord()
                 select
                     from response in responses
                     let cNonce = response.CNonce
@@ -560,12 +573,14 @@ public class Oid4VciClientService(
                             token = await session.AuthorizationData.IssuerMetadata.CredentialNonceEndpoint.Match(
                                 Some: async credentialNonceEndpoint =>
                                 {
-                                    var credentialNonce = await credentialNonceService.GetCredentialNonce(credentialNonceEndpoint);
+                                    var credentialNonce = await _credentialNonceService.GetCredentialNonce(credentialNonceEndpoint);
                                     return token.Match<OneOf<OAuthToken, DPopToken>>(
                                         oAuth =>
                                         {
-                                            var newAuthData = session.AuthorizationData with { OAuthToken = oAuth };
-                                            session = session with { AuthorizationData = newAuthData };
+                                            session.AuthorizationData = session.AuthorizationData with
+                                            {
+                                                OAuthToken = oAuth
+                                            };
                                             
                                             return oAuth with
                                             {
@@ -574,8 +589,10 @@ public class Oid4VciClientService(
                                         },
                                         dPop =>
                                         {
-                                            var newAuthData2 = session.AuthorizationData with { OAuthToken = dPop.Token };
-                                            session = session with { AuthorizationData = newAuthData2 };
+                                            session.AuthorizationData = session.AuthorizationData with
+                                            {
+                                                OAuthToken = dPop.Token
+                                            };
                                             
                                             return dPop with
                                             {
@@ -585,18 +602,22 @@ public class Oid4VciClientService(
                                 },
                                 None: () =>
                                 {
-                                    return Task.FromResult(token.Match<OneOf<OAuthToken, DPopToken>>(
+                                    return Task.FromResult<OneOf<OAuthToken, DPopToken>>( token.Match<OneOf<OAuthToken, DPopToken>>(
                                         oAuth =>
                                         {
-                                            var newAuthData3 = session.AuthorizationData with { OAuthToken = oAuth };
-                                            session = session with { AuthorizationData = newAuthData3 };
+                                            session.AuthorizationData = session.AuthorizationData with
+                                            {
+                                                OAuthToken = oAuth
+                                            };
                                             
                                             return oAuth with { CNonce = cNonce.ToNullable() };
                                         },
                                         dPop =>
                                         {
-                                            var newAuthData4 = session.AuthorizationData with { OAuthToken = dPop.Token };
-                                            session = session with { AuthorizationData = newAuthData4 };
+                                            session.AuthorizationData = session.AuthorizationData with
+                                            {
+                                                OAuthToken = dPop.Token
+                                            };
                                             
                                             return dPop with
                                             {
@@ -611,38 +632,35 @@ public class Oid4VciClientService(
                                 var record = credential.Value.Match<ICredential>(
                                 sdJwt =>
                                 {
-                                    var record = sdJwt.Decoded.ToCredential(
+                                    var record = sdJwt.Decoded.ToRecord(
                                         configuration.Value.AsT0,
                                         response.KeyId,
-                                        setId,
+                                        credentialSet.CredentialSetId,
                                         creds.Count > 1);
-                                    records.Add(record);
+
+                                    credentialSet.AddSdJwtData(record);
+
                                     return record;
                                 },
                                 mdoc =>
                                 {
                                     var displays = MdocFun.CreateMdocDisplays(configuration.Value.AsT1);
                                     
-                                    var mdocCredential = new MdocCredential(
-                                        mdoc.Decoded,
-                                        CredentialId.CreateCredentialId(),
-                                        setId,
+                                    var record = mdoc.Decoded.ToRecord(
                                         displays,
                                         response.KeyId,
-                                        CredentialState.Active,
-                                        creds.Count > 1,
-                                        Option<DateTime>.None);
-                                    records.Add(mdocCredential);
-                                    return mdocCredential;
+                                        credentialSet.CredentialSetId,
+                                        creds.Count > 1);
+
+                                    credentialSet.AddMDocData(record, session.AuthorizationData.IssuerMetadata.CredentialIssuer);
+
+                                    return record;
                                 });
                                 
                                 records.Add(record);
                             }
                             
-                            var dataSet = CredentialDataSet.FromCredentials(
-                                records,
-                                session.AuthorizationData.IssuerMetadata.CredentialIssuer.ToString());
-                            credentials.Add((dataSet, records));
+                            credentials.Add((credentialSet, records));
                         },
                         // ReSharper disable once UnusedParameter.Local
                         transactionId => throw new NotImplementedException());
@@ -650,17 +668,22 @@ public class Oid4VciClientService(
             await result.OnSuccess(async tasks => await Task.WhenAll(tasks));
         }
         
-        await authFlowSessionRepository.Update(session);
+        await _authFlowSessionStorage.UpdateAsync(context, session);
 
         return credentials.Select(credential => new OnDemandCredentialSet(credential.Item1, credential.Item2)).ToList();
     }
 
     private static AuthorizationCodeParameters CreateAndStoreCodeChallenge()
     {
-        var randomNumber = RandomNumberGenerator.GetBytes(32);
+        var rng = new RNGCryptoServiceProvider();
+        var randomNumber = new byte[32];
+        rng.GetBytes(randomNumber);
+
         var codeVerifier = Base64UrlEncoder.Encode(randomNumber);
 
-        var bytes = SHA256.HashData(Encoding.UTF8.GetBytes(codeVerifier));
+        var sha256 = SHA256.Create();
+        var bytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(codeVerifier));
+
         var codeChallenge = Base64UrlEncoder.Encode(bytes);
 
         return new AuthorizationCodeParameters(codeChallenge, codeVerifier);

@@ -1,6 +1,5 @@
 using LanguageExt;
 using OneOf;
-using WalletFramework.Core.Credentials;
 using WalletFramework.Core.Credentials.Abstractions;
 using WalletFramework.Core.Functional;
 using WalletFramework.MdocLib;
@@ -17,10 +16,8 @@ using WalletFramework.Oid4Vc.Oid4Vp.Jwk;
 using WalletFramework.Oid4Vc.Oid4Vp.Models;
 using WalletFramework.Oid4Vc.Oid4Vp.PresentationExchange.Models;
 using WalletFramework.Oid4Vc.Oid4Vp.TransactionDatas;
-using WalletFramework.SdJwtVc;
-using WalletFramework.SdJwtVc.Persistence;
+using WalletFramework.SdJwtVc.Models.Records;
 using WalletFramework.SdJwtVc.Services.SdJwtVcHolderService;
-using WalletFramework.Storage;
 
 namespace WalletFramework.Oid4Vc.Oid4Vp.Services;
 
@@ -33,24 +30,19 @@ public class PresentationService : IPresentationService
     /// <param name="sdJwtVcHolderService">The service responsible for SD-JWT related operations.</param>
     /// <param name="mdocAuthenticationService">The mdoc authentication service.</param>
     /// <param name="verifierKeyService">The verifier key service.</param>
-    /// <param name="sdJwtRepository">The service responsible for SD-JWT storage operations.</param>
     public PresentationService(
         ISdJwtVcHolderService sdJwtVcHolderService,
         IMdocAuthenticationService mdocAuthenticationService,
-        IVerifierKeyService verifierKeyService,
-        IDomainRepository<SdJwtCredential, SdJwtCredentialRecord, CredentialId> sdJwtRepository)
+        IVerifierKeyService verifierKeyService)
     {
         _sdJwtVcHolderService = sdJwtVcHolderService;
         _mdocAuthenticationService = mdocAuthenticationService;
         _verifierKeyService = verifierKeyService;
-        _sdJwtRepository = sdJwtRepository;
     }
-
 
     private readonly ISdJwtVcHolderService _sdJwtVcHolderService;
     private readonly IMdocAuthenticationService _mdocAuthenticationService;
     private readonly IVerifierKeyService _verifierKeyService;
-    private readonly IDomainRepository<SdJwtCredential, SdJwtCredentialRecord, CredentialId> _sdJwtRepository;
 
     /// <inheritdoc />
     public async Task<(List<(PresentationMap PresentationMap, ICredential PresentedCredential)> Presentations, Option<Nonce> MdocNonce)> CreatePresentations(
@@ -106,20 +98,28 @@ public class PresentationService : IPresentationService
             Format format;
             ICredential presentedCredential;
 
-            var audience = authorizationRequest.ResponseMode switch
+            string audience;
+            switch (authorizationRequest.ResponseMode)
             {
-                AuthorizationRequest.DcApi or AuthorizationRequest.DcApiJwt => origin.Match(
-                    aud => $"origin:{aud}",
-                    () => "origin:" + authorizationRequest.ClientId),
-                AuthorizationRequest.DirectPost or AuthorizationRequest.DirectPostJwt => authorizationRequest
-                    .ClientIdScheme?.AsString() + ":" + authorizationRequest.ClientId,
-                _ => throw new ArgumentOutOfRangeException(nameof(authorizationRequest.ResponseMode))
-            };
+                case AuthorizationRequest.DcApi:
+                case AuthorizationRequest.DcApiJwt:
+                    audience = origin.Match(
+                        aud => $"origin:{aud}",
+                        () => "origin:" + authorizationRequest.ClientId
+                    );
+                    break;
+                case AuthorizationRequest.DirectPost:
+                case AuthorizationRequest.DirectPostJwt:
+                    audience = authorizationRequest.ClientIdScheme?.AsString() + ":" + authorizationRequest.ClientId;
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(authorizationRequest.ResponseMode));
+            }
 
             string presentation;
             switch (credential.Credential)
             {
-                case SdJwtCredential sdJwt:
+                case SdJwtRecord sdJwt:
                     format = Format.ValidFormat(sdJwt.Format).UnwrapOrThrow();
                     
                     presentation = await _sdJwtVcHolderService.CreatePresentation(
@@ -133,7 +133,7 @@ public class PresentationService : IPresentationService
 
                     presentedCredential = sdJwt;
                     break;
-                case MdocCredential mdocCredential:
+                case MdocRecord mdocRecord:
                     format = FormatFun.CreateMdocFormat();
 
                     var toDisclose = claims.Select(claim =>
@@ -151,7 +151,8 @@ public class PresentationService : IPresentationService
                         .GroupBy(nameSpaceAndElementId => nameSpaceAndElementId.NameSpace, tuple => tuple.ElementId)
                         .ToDictionary(group => group.Key, group => group.ToList());
 
-                    var mdoc = mdocCredential.Mdoc.SelectivelyDisclose(toDisclose);
+                    var mdoc = mdocRecord.Mdoc.SelectivelyDisclose(toDisclose);
+
 
                     SessionTranscript sessionTranscript;
                     switch (authorizationRequest.ResponseMode)
@@ -160,7 +161,8 @@ public class PresentationService : IPresentationService
                             var handoverInfo = new OpenId4VpDcApiHandoverInfo(
                                 origin.UnwrapOrThrow(),
                                 authorizationRequest.Nonce,
-                                Option<byte[]>.None);
+                                Option<byte[]>.None
+                            );
 
                             var handover = new OpenId4VpDcApiHandover(handoverInfo);
                             sessionTranscript = handover.ToSessionTranscript();
@@ -172,7 +174,8 @@ public class PresentationService : IPresentationService
                             var dcApiHandoverInfo = new OpenId4VpDcApiHandoverInfo(
                                 origin.UnwrapOrThrow(),
                                 authorizationRequest.Nonce,
-                                JwkFun.GetThumbprint(verifierPubKey));
+                                JwkFun.GetThumbprint(verifierPubKey)
+                            );
 
                             var dcApiHandover = new OpenId4VpDcApiHandover(dcApiHandoverInfo);
                             mdocNonce = dcApiHandover.MdocGeneratedNonce;
@@ -189,11 +192,11 @@ public class PresentationService : IPresentationService
                     }
 
                     var authenticatedMdoc = await _mdocAuthenticationService.Authenticate(
-                        mdoc, sessionTranscript, mdocCredential.KeyId);
+                        mdoc, sessionTranscript, mdocRecord.KeyId);
 
                     presentation = new Document(authenticatedMdoc).BuildDeviceResponse().EncodeToBase64Url();
 
-                    presentedCredential = mdocCredential;
+                    presentedCredential = mdocRecord;
                     break;
                 default:
                     throw new ArgumentOutOfRangeException(nameof(credential.Credential));
