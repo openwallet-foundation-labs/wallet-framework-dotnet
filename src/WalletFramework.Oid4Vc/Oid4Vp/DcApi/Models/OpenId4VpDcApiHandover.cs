@@ -10,24 +10,24 @@ using static WalletFramework.Oid4Vc.Oid4Vp.Models.Nonce;
 namespace WalletFramework.Oid4Vc.Oid4Vp.DcApi.Models;
 
 /// <summary>
-/// Represents OpenID4VPDCAPIHandover according to the OpenID4VP specification.
-/// Contains a fixed identifier and the SHA-256 hash of OpenID4VPDCAPIHandoverInfo
-/// Structure: ["OpenID4VPDCAPIHandover", OpenID4VPDCAPIHandoverInfoHash]
+///     Represents OpenID4VPDCAPIHandover according to the OpenID4VP specification.
+///     Contains a fixed identifier and the SHA-256 hash of OpenID4VPDCAPIHandoverInfo
+///     Structure: ["OpenID4VPDCAPIHandover", OpenID4VPDCAPIHandoverInfoHash]
 /// </summary>
 public record OpenId4VpDcApiHandover(OpenId4VpDcApiHandoverInfo HandoverInfo) : IHandover
 {
     /// <summary>
-    /// Mdoc generated nonce created during handover initialization
+    ///     Mdoc generated nonce created during handover initialization
     /// </summary>
     public Nonce MdocGeneratedNonce { get; } = GenerateNonce();
 
     /// <summary>
-    /// Fixed identifier for this handover type
+    ///     Fixed identifier for this handover type
     /// </summary>
     public const string HandoverTypeIdentifier = "OpenID4VPDCAPIHandover";
     
     /// <summary>
-    /// Converts the handover to CBOR representation as an array
+    ///     Converts the handover to CBOR representation as an array
     /// </summary>
     /// <returns>CBOR array containing [identifier, hash]</returns>
     public CBORObject ToCbor()
@@ -41,7 +41,7 @@ public record OpenId4VpDcApiHandover(OpenId4VpDcApiHandoverInfo HandoverInfo) : 
     }
     
     /// <summary>
-    /// Encodes the handover as CBOR bytes
+    ///     Encodes the handover as CBOR bytes
     /// </summary>
     /// <returns>CBOR-encoded bytes of the handover</returns>
     public byte[] ToCborBytes() => ToCbor().EncodeToBytes();
