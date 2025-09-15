@@ -20,11 +20,6 @@ public record OpenId4VpDcApiHandover(OpenId4VpDcApiHandoverInfo HandoverInfo) : 
     ///     Mdoc generated nonce created during handover initialization
     /// </summary>
     public Nonce MdocGeneratedNonce { get; } = GenerateNonce();
-
-    /// <summary>
-    ///     Fixed identifier for this handover type
-    /// </summary>
-    public const string HandoverTypeIdentifier = "OpenID4VPDCAPIHandover";
     
     /// <summary>
     ///     Converts the handover to CBOR representation as an array
@@ -33,15 +28,15 @@ public record OpenId4VpDcApiHandover(OpenId4VpDcApiHandoverInfo HandoverInfo) : 
     public CBORObject ToCbor()
     {
         var result = CBORObject.NewArray();
-        
-        result.Add(HandoverTypeIdentifier);
+
+        result.Add(HandoverConstants.DcApiHandoverTypeIdentifier);
         result.Add(HandoverInfo.ToHash().AsBytes);
         
         return result;
     }
     
     /// <summary>
-    ///     Encodes the handover as CBOR bytes
+    /// Encodes the handover as CBOR bytes
     /// </summary>
     /// <returns>CBOR-encoded bytes of the handover</returns>
     public byte[] ToCborBytes() => ToCbor().EncodeToBytes();
