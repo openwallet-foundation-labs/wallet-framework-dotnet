@@ -27,7 +27,6 @@ using WalletFramework.Oid4Vc.Oid4Vci.CredConfiguration.Models;
 using WalletFramework.Oid4Vc.Oid4Vci.Extensions;
 using WalletFramework.Oid4Vc.Oid4Vp.AuthResponse.Encryption;
 using WalletFramework.Oid4Vc.Oid4Vp.AuthResponse.Encryption.Abstractions;
-using WalletFramework.Oid4Vc.Oid4Vp.DcApi.Models;
 using WalletFramework.Oid4Vc.Oid4Vp.Dcql.CredentialQueries;
 using WalletFramework.Oid4Vc.Oid4Vp.Errors;
 using WalletFramework.Oid4Vc.Oid4Vp.Models;
@@ -416,12 +415,11 @@ public class Oid4VpClientService : IOid4VpClientService
                         ? await _verifierKeyService.GetPublicKey(authorizationRequest)
                         : Option<JsonWebKey>.None;
                     
-                    var handover = Handover.FromAuthorizationRequest(
-                        authorizationRequest, 
-                        Option<Origin>.None, 
+                    var handover = OpenId4VpHandover.FromAuthorizationRequest(
+                        authorizationRequest,
                         responseEncryptionKey);
                     
-                    mdocNonce = handover.GetMdocNonce();
+                    mdocNonce = handover.MdocGeneratedNonce;
                     var sessionTranscript = handover.ToSessionTranscript();
 
                     var deviceNamespaces =

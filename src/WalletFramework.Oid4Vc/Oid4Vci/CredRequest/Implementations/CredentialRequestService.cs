@@ -22,7 +22,6 @@ using WalletFramework.Oid4Vc.Oid4Vci.Extensions;
 using WalletFramework.Oid4Vc.Oid4Vci.Issuer.Models;
 using WalletFramework.Oid4Vc.Oid4Vci.CredRequest.Models.SdJwt;
 using WalletFramework.Oid4Vc.Oid4Vci.CredResponse;
-using WalletFramework.Oid4Vc.Oid4Vp.DcApi.Models;
 using WalletFramework.Oid4Vc.Oid4Vp.Models;
 using WalletFramework.SdJwtVc.Services.SdJwtVcHolderService;
 
@@ -72,9 +71,8 @@ public class CredentialRequestService : ICredentialRequestService
             {
                 if (format == Constants.MdocFormat)
                 {
-                    var handover = Handover.FromAuthorizationRequest(
+                    var handover = OpenId4VpHandover.FromAuthorizationRequest(
                         authorizationRequest.UnwrapOrThrow(new Exception()),
-                        Option<Origin>.None,
                         Option<JsonWebKey>.None);
                     sessionTranscript = handover.ToSessionTranscript();
                 }

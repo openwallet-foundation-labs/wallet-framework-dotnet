@@ -1,9 +1,12 @@
 using LanguageExt;
+using Microsoft.IdentityModel.Tokens;
 using PeterO.Cbor;
 using WalletFramework.Core.Cryptography.Models;
+using WalletFramework.Core.Functional;
 using WalletFramework.MdocLib.Device;
 using WalletFramework.MdocLib.Security;
 using WalletFramework.MdocLib.Security.Abstractions;
+using WalletFramework.Oid4Vc.Oid4Vp.Jwk;
 using static WalletFramework.Oid4Vc.Oid4Vp.Models.Nonce;
 
 namespace WalletFramework.Oid4Vc.Oid4Vp.Models;
@@ -49,4 +52,16 @@ public record OpenId4VpHandover(OpenId4VpHandoverInfo HandoverInfo) : IHandover
         );
     }
 
+    public static OpenId4VpHandover FromAuthorizationRequest(AuthorizationRequest request, Option<JsonWebKey> verifierPublicKey)
+    {
+        var handoverInfo = new OpenId4VpHandoverInfo(
+            request.ClientIdScheme != null
+                ? $"{request.ClientIdScheme.AsString()}:{request.ClientId}"
+                : request.ClientId!,
+            request.Nonce,
+            request.ResponseUri,
+            verifierPublicKey.OnSome(JwkFun.GetThumbprint));
+        
+        return new OpenId4VpHandover(handoverInfo);
+    }
 } 
