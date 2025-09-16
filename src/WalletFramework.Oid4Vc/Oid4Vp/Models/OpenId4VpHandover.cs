@@ -54,13 +54,16 @@ public record OpenId4VpHandover(OpenId4VpHandoverInfo HandoverInfo) : IHandover
 
     public static OpenId4VpHandover FromAuthorizationRequest(AuthorizationRequest request, Option<JsonWebKey> verifierPublicKey)
     {
+        var encryptionKey = verifierPublicKey.OnSome(JwkFun.GetThumbprint);
+        
         var handoverInfo = new OpenId4VpHandoverInfo(
             request.ClientIdScheme != null
                 ? $"{request.ClientIdScheme.AsString()}:{request.ClientId}"
                 : request.ClientId!,
             request.Nonce,
             request.ResponseUri,
-            verifierPublicKey.OnSome(JwkFun.GetThumbprint));
+            encryptionKey
+            );
         
         return new OpenId4VpHandover(handoverInfo);
     }

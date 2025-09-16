@@ -55,10 +55,13 @@ public record OpenId4VpDcApiHandover(OpenId4VpDcApiHandoverInfo HandoverInfo) : 
 
     public static OpenId4VpDcApiHandover FromAuthorizationRequest(AuthorizationRequest request, Origin origin, Option<JsonWebKey> verifierPublicKey)
     {
+        var encryptionKey = verifierPublicKey.OnSome(JwkFun.GetThumbprint);
+        
         var handoverInfo = new OpenId4VpDcApiHandoverInfo(
             origin,
             request.Nonce,
-            verifierPublicKey.OnSome(JwkFun.GetThumbprint));
+            encryptionKey
+            );
 
         return new OpenId4VpDcApiHandover(handoverInfo);
     }
