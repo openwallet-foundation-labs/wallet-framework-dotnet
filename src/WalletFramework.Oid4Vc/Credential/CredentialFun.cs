@@ -30,4 +30,14 @@ public static class CredentialFun
             docType => docType.ToString()
         );
     }
+    
+    public static bool SupportsKeyBinding(this ICredential credential)
+    {
+        return credential switch
+        {
+            SdJwtRecord sdJwt => sdJwt.KeyId is not null,
+            MdocRecord => true,
+            _ => throw new InvalidOperationException("Invalid credential type")
+        };
+    }
 }

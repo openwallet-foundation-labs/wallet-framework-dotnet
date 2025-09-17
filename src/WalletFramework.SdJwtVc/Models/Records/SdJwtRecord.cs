@@ -1,6 +1,7 @@
 using System.Collections.Immutable;
 using System.IdentityModel.Tokens.Jwt;
 using Hyperledger.Aries.Storage;
+using LanguageExt;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using WalletFramework.Core.Credentials;
@@ -109,17 +110,23 @@ public sealed class SdJwtRecord : RecordBase, ICredential
     ///     Gets the key record ID.
     /// </summary>
     [JsonIgnore]
-    public KeyId KeyId
+    public KeyId? KeyId
     {
         get
         {
             var str = Get();
-            return KeyId
+            if (string.IsNullOrEmpty(str))
+                return null;
+            
+            return WalletFramework.Core.Cryptography.Models.KeyId
                 .ValidKeyId(str)
                 .UnwrapOrThrow(new InvalidOperationException("Persisted Key-ID in SD-JWT Record is corrupt"));
         }
         private set
         {
+            if (value == null) 
+                return;
+            
             string keyId = value;
             Set(keyId);
         }
@@ -204,7 +211,7 @@ public sealed class SdJwtRecord : RecordBase, ICredential
         string serializedSdJwtWithDisclosures,
         Dictionary<string, ClaimMetadata>? displayedAttributes,
         List<SdJwtDisplay> display,
-        KeyId keyId,
+        Option<KeyId> keyId,
         CredentialSetId credentialSetId,
         bool isOneTimeUse = false)
     {
@@ -231,7 +238,7 @@ public sealed class SdJwtRecord : RecordBase, ICredential
         CredentialState = CredentialState.Active;
         OneTimeUse = isOneTimeUse;
         
-        KeyId = keyId;
+        KeyId = keyId.ToNullable();
         ExpiresAt = sdJwtDoc.UnsecuredPayload.SelectToken("exp")?.Value<long>() is not null
             ? DateTimeOffset.FromUnixTimeSeconds(sdJwtDoc.UnsecuredPayload.SelectToken("exp")!.Value<long>()).DateTime
             : null;
@@ -253,7 +260,7 @@ public sealed class SdJwtRecord : RecordBase, ICredential
         SdJwtDoc sdJwtDoc,
         Dictionary<string, ClaimMetadata>? displayedAttributes,
         List<SdJwtDisplay> display,
-        KeyId keyId,
+        Option<KeyId> keyId,
         CredentialSetId credentialSetId,
         bool isOneTimeUse = false)
     {
@@ -279,7 +286,7 @@ public sealed class SdJwtRecord : RecordBase, ICredential
         CredentialState = CredentialState.Active;
         OneTimeUse = isOneTimeUse;
         
-        KeyId = keyId;
+        KeyId = keyId.ToNullable();
         
         ExpiresAt = sdJwtDoc.UnsecuredPayload.SelectToken("exp")?.Value<long>() is not null
             ? DateTimeOffset.FromUnixTimeSeconds(sdJwtDoc.UnsecuredPayload.SelectToken("exp")!.Value<long>()).DateTime

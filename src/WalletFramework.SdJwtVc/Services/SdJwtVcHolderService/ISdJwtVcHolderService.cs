@@ -35,6 +35,7 @@ public interface ISdJwtVcHolderService
     /// <param name="transactionDataHashesAlg">The transaction data hashes alg</param>
     /// <param name="audience">The targeted audience</param>
     /// <param name="nonce">The nonce</param>
+    /// <param name="requireKeyBinding">Specifies whether the presentation requires a KeyBinding JWT</param>
     /// <returns>The SD-JWT in presentation format</returns>
     Task<string> CreatePresentation(
         SdJwtRecord sdJwt,
@@ -43,7 +44,8 @@ public interface ISdJwtVcHolderService
         Option<IEnumerable<string>> transactionDataHashes,
         Option<string> transactionDataHashesAlg,
         string? audience = null,
-        string? nonce = null);
+        string? nonce = null,
+        bool requireKeyBinding = true);
         
     /// <summary>
     ///     Retrieves a specific SD-JWT record by its ID.

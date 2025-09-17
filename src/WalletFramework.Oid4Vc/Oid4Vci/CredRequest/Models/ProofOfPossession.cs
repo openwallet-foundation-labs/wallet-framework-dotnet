@@ -6,7 +6,7 @@ namespace WalletFramework.Oid4Vc.Oid4Vci.CredRequest.Models;
 ///     Represents the proof of possession of the key material that the issued credential is bound to.
 ///     This contains the JWT that acts as the proof of possession, with the proof type being "jwt".
 /// </summary>
-// TODO: Unpure 
+[Obsolete("This type is obsolete and replaced by ProofsOfPossession.")]
 public class ProofOfPossession
 {
     /// <summary>
