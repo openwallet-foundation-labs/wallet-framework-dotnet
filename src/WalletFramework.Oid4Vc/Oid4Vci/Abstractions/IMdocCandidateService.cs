@@ -6,5 +6,5 @@ namespace WalletFramework.Oid4Vc.Oid4Vci.Abstractions;
 
 public interface IMdocCandidateService
 {
-    Task<Option<IEnumerable<MdocCredential>>> GetCandidates(DeviceRequest deviceRequest);
+    Task<Option<IEnumerable<MdocRecord>>> GetCandidates(DeviceRequest deviceRequest);
 }

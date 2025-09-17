@@ -15,15 +15,10 @@
         <PackageReference Include="NUnit3TestAdapter" Version="4.2.1"/>
         <PackageReference Include="NUnit.Analyzers" Version="3.3.0"/>
         <PackageReference Include="xunit" Version="2.9.0" />
-        <PackageReference Include="xunit.runner.visualstudio" Version="2.4.3">
-            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-            <PrivateAssets>all</PrivateAssets>
-        </PackageReference>
     </ItemGroup>
 
     <ItemGroup>
         <ProjectReference Include="..\..\src\WalletFramework.MdocVc\WalletFramework.MdocVc.csproj"/>
-        <ProjectReference Include="..\..\src\WalletFramework.TestSamples\WalletFramework.TestSamples.csproj" />
         <ProjectReference Include="..\WalletFramework.MdocLib.Tests\WalletFramework.MdocLib.Tests.csproj" />
     </ItemGroup>
 

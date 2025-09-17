@@ -1,5 +1,6 @@
 using FluentAssertions;
-using LanguageExt;
+using Hyperledger.Aries.Agents;
+using Hyperledger.Aries.Storage;
 using Moq;
 using Newtonsoft.Json.Linq;
 using WalletFramework.Core.ClaimPaths;
@@ -7,27 +8,26 @@ using WalletFramework.Core.Credentials;
 using WalletFramework.Core.Credentials.Abstractions;
 using WalletFramework.Core.Cryptography.Models;
 using WalletFramework.Core.Functional;
-using WalletFramework.MdocVc;
-using WalletFramework.MdocVc.Persistence;
 using WalletFramework.Oid4Vc;
+using WalletFramework.Oid4Vc.Oid4Vci.Abstractions;
 using WalletFramework.Oid4Vc.Oid4Vp.Dcql.CredentialQueries;
 using WalletFramework.Oid4Vc.Oid4Vp.Dcql.Models;
 using WalletFramework.Oid4Vc.Oid4Vp.Dcql.Services;
 using WalletFramework.Oid4Vc.Oid4Vp.Models;
 using WalletFramework.Oid4Vc.Tests.Samples;
-using WalletFramework.SdJwtVc;
 using WalletFramework.SdJwtLib.Roles.Implementation;
 using WalletFramework.SdJwtVc.Models.Credential;
 using WalletFramework.SdJwtVc.Models.Credential.Attributes;
-using WalletFramework.SdJwtVc.Persistence;
-using WalletFramework.Storage;
+using WalletFramework.SdJwtVc.Models.Records;
+using WalletFramework.SdJwtVc.Services.SdJwtVcHolderService;
 
 namespace WalletFramework.Integration.Tests.Oid4Vp.Dcql;
 
 public class DcqlServiceTests
 {
-    private readonly Mock<IDomainRepository<MdocCredential, MdocCredentialRecord, CredentialId>> _mdocStorageMock = new();
-    private readonly Mock<IDomainRepository<SdJwtCredential, SdJwtCredentialRecord, CredentialId>> _sdJwtVcHolderServiceMock = new();
+    private readonly Mock<IAgentProvider> _agentProviderMock = new();
+    private readonly Mock<IMdocStorage> _mdocStorageMock = new();
+    private readonly Mock<ISdJwtVcHolderService> _sdJwtVcHolderServiceMock = new();
 
     private static readonly CredentialSetId DriverLicenseCredentialSetId = CredentialSetId.CreateCredentialSetId();
     private static readonly CredentialSetId DriverLicenseCredentialCloneSetId = CredentialSetId.CreateCredentialSetId();
@@ -36,13 +36,13 @@ public class DcqlServiceTests
     private static readonly CredentialSetId AlternativeNestedCredentialSetId = CredentialSetId.CreateCredentialSetId();
     private static readonly CredentialSetId BatchCredentialSetId = CredentialSetId.CreateCredentialSetId();
 
-    private readonly SdJwtCredential _driverCredential = CreateCredential(JsonBasedCredentialSamples.DriverCredential, DriverLicenseCredentialSetId);
-    private readonly SdJwtCredential _driverCredentialClone = CreateCredential(JsonBasedCredentialSamples.DriverCredential, DriverLicenseCredentialCloneSetId);
-    private readonly SdJwtCredential _universityCredential = CreateCredential(JsonBasedCredentialSamples.UniversityCredential, UniversityCredentialSetId);
-    private readonly SdJwtCredential _nestedCredential = CreateCredential(JsonBasedCredentialSamples.NestedCredential, NestedCredentialSetId);
-    private readonly SdJwtCredential _alternativeNestedCredential = CreateCredential(JsonBasedCredentialSamples.AlternativeNestedCredential, AlternativeNestedCredentialSetId);
-    private readonly SdJwtCredential _batchCredentialOne = CreateCredential(JsonBasedCredentialSamples.BatchCredential, BatchCredentialSetId);
-    private readonly SdJwtCredential _batchCredentialTwo = CreateCredential(JsonBasedCredentialSamples.BatchCredential, BatchCredentialSetId);
+    private readonly SdJwtRecord _driverCredential = CreateCredential(JsonBasedCredentialSamples.DriverCredential, DriverLicenseCredentialSetId);
+    private readonly SdJwtRecord _driverCredentialClone = CreateCredential(JsonBasedCredentialSamples.DriverCredential, DriverLicenseCredentialCloneSetId);
+    private readonly SdJwtRecord _universityCredential = CreateCredential(JsonBasedCredentialSamples.UniversityCredential, UniversityCredentialSetId);
+    private readonly SdJwtRecord _nestedCredential = CreateCredential(JsonBasedCredentialSamples.NestedCredential, NestedCredentialSetId);
+    private readonly SdJwtRecord _alternativeNestedCredential = CreateCredential(JsonBasedCredentialSamples.AlternativeNestedCredential, AlternativeNestedCredentialSetId);
+    private readonly SdJwtRecord _batchCredentialOne = CreateCredential(JsonBasedCredentialSamples.BatchCredential, BatchCredentialSetId);
+    private readonly SdJwtRecord _batchCredentialTwo = CreateCredential(JsonBasedCredentialSamples.BatchCredential, BatchCredentialSetId);
 
     [Fact]
     public async Task Can_Get_Credential_Candidates_For_CredentialQuery()
@@ -217,8 +217,8 @@ public class DcqlServiceTests
     private IDcqlService CreateDcqlService()
     {
         _sdJwtVcHolderServiceMock
-            .Setup(x => x.ListAll())
-            .ReturnsAsync(() => new List<SdJwtCredential>
+            .Setup(x => x.ListAsync(It.IsAny<IAgentContext>(), It.IsAny<ISearchQuery?>(), It.IsAny<int>(), It.IsAny<int>()))
+            .ReturnsAsync(() => new List<SdJwtRecord>
             { 
                 _driverCredential,
                 _driverCredentialClone,
@@ -229,25 +229,22 @@ public class DcqlServiceTests
                 _batchCredentialTwo
             });
         
-        return new DcqlService(_mdocStorageMock.Object, _sdJwtVcHolderServiceMock.Object);
+        return new DcqlService(_agentProviderMock.Object, _mdocStorageMock.Object, _sdJwtVcHolderServiceMock.Object);
     }
         
-    private static SdJwtCredential CreateCredential(JObject payload, CredentialSetId credentialSetId)
+    private static SdJwtRecord CreateCredential(JObject payload, CredentialSetId credentialSetId)
     {
         // Arrange
         const string jwk = "{\"kty\":\"EC\",\"d\":\"1_2Dagk1gvTIOX-DLPe7GHNsGLJMc7biySNA-so7TXE\",\"use\":\"sig\",\"crv\":\"P-256\",\"x\":\"X6sZhH_kFp_oKYiPXW-LvUyAv9mHp1xYcpAK3yy0wGY\",\"y\":\"p0URU7tgWbh42miznti0NVKM36fpJBbIfnF8ZCYGryE\",\"alg\":\"ES256\"}";
         var issuedSdJwt = new Issuer().IssueCredential(payload, jwk);
         var keyId = KeyId.CreateKeyId();
 
-        var record = new SdJwtCredential(
-            issuedSdJwt,
-            CredentialId.CreateCredentialId(),
-            credentialSetId,
-            Option<List<SdJwtDisplay>>.None,
+        var record = new SdJwtRecord(
+            issuedSdJwt.IssuanceFormat,
+            new Dictionary<string, ClaimMetadata>(),
+            new List<SdJwtDisplay>(), 
             keyId,
-            CredentialState.Active,
-            false,
-            Option<DateTime>.None);
+            credentialSetId);
             
         return record;
     }

@@ -1,6 +1,8 @@
 using System.Net.Mime;
 using System.Security.Cryptography;
 using System.Text;
+using Hyperledger.Aries.Agents;
+using Hyperledger.Aries.Extensions;
 using LanguageExt;
 using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
@@ -9,7 +11,6 @@ using OneOf;
 using WalletFramework.Core.Credentials;
 using WalletFramework.Core.Credentials.Abstractions;
 using WalletFramework.Core.Functional;
-using WalletFramework.Core.String;
 using WalletFramework.MdocLib;
 using WalletFramework.MdocLib.Device;
 using WalletFramework.MdocLib.Device.Response;
@@ -17,11 +18,10 @@ using WalletFramework.MdocLib.Elements;
 using WalletFramework.MdocLib.Security;
 using WalletFramework.MdocLib.Security.Cose;
 using WalletFramework.MdocVc;
-using WalletFramework.MdocVc.Persistence;
 using WalletFramework.Oid4Vc.ClientAttestation;
 using WalletFramework.Oid4Vc.Errors;
-using WalletFramework.Oid4Vc.Oid4Vci.AuthFlow;
-using WalletFramework.Oid4Vc.Oid4Vci.AuthFlow.Persistence;
+using WalletFramework.Oid4Vc.Oid4Vci.Abstractions;
+using WalletFramework.Oid4Vc.Oid4Vci.AuthFlow.Abstractions;
 using WalletFramework.Oid4Vc.Oid4Vci.AuthFlow.Models;
 using WalletFramework.Oid4Vc.Oid4Vci.CredConfiguration.Models;
 using WalletFramework.Oid4Vc.Oid4Vci.Extensions;
@@ -30,16 +30,13 @@ using WalletFramework.Oid4Vc.Oid4Vp.AuthResponse.Encryption.Abstractions;
 using WalletFramework.Oid4Vc.Oid4Vp.Dcql.CredentialQueries;
 using WalletFramework.Oid4Vc.Oid4Vp.Errors;
 using WalletFramework.Oid4Vc.Oid4Vp.Models;
-using WalletFramework.Oid4Vc.Oid4Vp.Persistence;
 using WalletFramework.Oid4Vc.Oid4Vp.PresentationExchange.Models;
 using WalletFramework.Oid4Vc.Oid4Vp.TransactionDatas;
 using WalletFramework.Oid4Vc.Qes.Authorization;
 using WalletFramework.SdJwtLib.Models;
-using WalletFramework.SdJwtVc;
 using WalletFramework.SdJwtVc.Models;
-using WalletFramework.SdJwtVc.Persistence;
+using WalletFramework.SdJwtVc.Models.Records;
 using WalletFramework.SdJwtVc.Services.SdJwtVcHolderService;
-using WalletFramework.Storage;
 using static Newtonsoft.Json.JsonConvert;
 using static WalletFramework.MdocLib.Security.Cose.ProtectedHeaders;
 using Format = WalletFramework.Oid4Vc.Oid4Vci.CredConfiguration.Models.Format;
@@ -52,6 +49,7 @@ public class Oid4VpClientService : IOid4VpClientService
     /// <summary>
     ///     Initializes a new instance of the <see cref="Oid4VpClientService" /> class.
     /// </summary>
+    /// <param name="agentProvider">The agent provider</param>
     /// <param name="authFlowSessionStorage">The Auth Flow Session Storage.</param>
     /// <param name="authorizationRequestService">The authorization request service.</param>
     /// <param name="authorizationResponseEncryptionService">The authorization response encryption service.</param>
@@ -59,27 +57,27 @@ public class Oid4VpClientService : IOid4VpClientService
     /// <param name="clientAttestationService">The client attestation service.</param>
     /// <param name="httpClientFactory">The http client factory to create http clients.</param>
     /// <param name="logger">The ILogger.</param>
-    /// <param name="mdocRepository">The service responsible for mdoc storage operations.</param>
-    /// <param name="sdJwtRepository">The service responsible for SD-JWT storage operations.</param>
+    /// <param name="mDocStorage">The service responsible for mDOc storage operations.</param>
     /// <param name="oid4VpHaipClient">The service responsible for OpenId4VP related operations.</param>
-    /// <param name="presentationRepository">The service responsible for OidPresentationRecord related operations.</param>
+    /// <param name="oid4VpRecordService">The service responsible for OidPresentationRecord related operations.</param>
     /// <param name="presentationService">The authorization response service.</param>
     /// <param name="sdJwtVcHolderService">The service responsible for SD-JWT related operations.</param>
     public Oid4VpClientService(
-        IDomainRepository<AuthFlowSession, AuthFlowSessionRecord, AuthFlowSessionState> authFlowSessionStorage,
+        IAgentProvider agentProvider,
+        IAuthFlowSessionStorage authFlowSessionStorage,
         IAuthorizationRequestService authorizationRequestService,
         IAuthorizationResponseEncryptionService authorizationResponseEncryptionService,
         ICandidateQueryService candidateQueryService,
         IClientAttestationService clientAttestationService,
         IHttpClientFactory httpClientFactory,
         ILogger<Oid4VpClientService> logger,
-        IDomainRepository<MdocCredential, MdocCredentialRecord, CredentialId> mdocRepository,
-        IDomainRepository<SdJwtCredential, SdJwtCredentialRecord, CredentialId> sdJwtRepository,
-        IDomainRepository<CompletedPresentation, CompletedPresentationRecord, string> presentationRepository, 
+        IMdocStorage mDocStorage,
         IOid4VpHaipClient oid4VpHaipClient,
+        IOid4VpRecordService oid4VpRecordService,
         IPresentationService presentationService,
         ISdJwtVcHolderService sdJwtVcHolderService)
     {
+        _agentProvider = agentProvider;
         _authFlowSessionStorage = authFlowSessionStorage;
         _authorizationRequestService = authorizationRequestService;
         _authorizationResponseEncryptionService = authorizationResponseEncryptionService;
@@ -87,25 +85,24 @@ public class Oid4VpClientService : IOid4VpClientService
         _clientAttestationService = clientAttestationService;
         _httpClientFactory = httpClientFactory;
         _logger = logger;
-        _mdocRepository = mdocRepository;
-        _sdJwtRepository = sdJwtRepository;
+        _mDocStorage = mDocStorage;
         _oid4VpHaipClient = oid4VpHaipClient;
-        _presentationRepository = presentationRepository;
+        _oid4VpRecordService = oid4VpRecordService;
         _presentationService = presentationService;
         _sdJwtVcHolderService = sdJwtVcHolderService;
     }
 
-    private readonly IDomainRepository<AuthFlowSession, AuthFlowSessionRecord, AuthFlowSessionState> _authFlowSessionStorage;
+    private readonly IAgentProvider _agentProvider;
+    private readonly IAuthFlowSessionStorage _authFlowSessionStorage;
     private readonly IAuthorizationRequestService _authorizationRequestService;
     private readonly IAuthorizationResponseEncryptionService _authorizationResponseEncryptionService;
     private readonly ICandidateQueryService _candidateQueryService;
     private readonly IClientAttestationService _clientAttestationService;
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly ILogger<Oid4VpClientService> _logger;
-    private readonly IDomainRepository<MdocCredential, MdocCredentialRecord, CredentialId> _mdocRepository;
-    private readonly IDomainRepository<SdJwtCredential, SdJwtCredentialRecord, CredentialId> _sdJwtRepository;
-    private readonly IDomainRepository<CompletedPresentation, CompletedPresentationRecord, string> _presentationRepository;
+    private readonly IMdocStorage _mDocStorage;
     private readonly IOid4VpHaipClient _oid4VpHaipClient;
+    private readonly IOid4VpRecordService _oid4VpRecordService;
     private readonly IPresentationService _presentationService;
     private readonly ISdJwtVcHolderService _sdJwtVcHolderService;
 
@@ -183,27 +180,28 @@ public class Oid4VpClientService : IOid4VpClientService
         });
 
         // ToDo: when to delete these records?
+        var context = await _agentProvider.GetContextAsync();
         foreach (var credential in credentials)
         {
             switch (credential.Credential)
             {
-                case SdJwtCredential { OneTimeUse: true } sdJwtRecord:
-                    var credentialSetSdJwtRecords = await _sdJwtRepository.ListAll();
+                case SdJwtRecord { OneTimeUse: true } sdJwtRecord:
+                    var credentialSetSdJwtRecords = await _sdJwtVcHolderService.ListAsync(context, sdJwtRecord.GetCredentialSetId());
                     await credentialSetSdJwtRecords.Match(
                         async sdJwtRecords =>
                         {
                             if (sdJwtRecords.Count() > 1)
-                                await _sdJwtRepository.Delete(sdJwtRecord.GetId());
+                                await _sdJwtVcHolderService.DeleteAsync(context, sdJwtRecord.GetId());
                         },
                         () => Task.CompletedTask);
                     break;
-                case MdocCredential { OneTimeUse: true } mDocRecord:
-                    var credentialSetMdocRecords = await _mdocRepository.ListAll();
+                case MdocRecord { OneTimeUse: true } mDocRecord:
+                    var credentialSetMdocRecords = await _mDocStorage.List(mDocRecord.GetCredentialSetId());
                     await credentialSetMdocRecords.Match(
                         async mDocRecords =>
                         {
                             if (mDocRecords.Count() > 1)
-                                await _mdocRepository.Delete(mDocRecord.GetId());
+                                await _mDocStorage.Delete(mDocRecord);
                         },
                         () => Task.CompletedTask);
                     break;
@@ -223,7 +221,7 @@ public class Oid4VpClientService : IOid4VpClientService
 
             switch (presentation.PresentedCredential)
             {
-                case SdJwtCredential sdJwtRecord:
+                case SdJwtRecord sdJwtRecord:
                     var issuanceSdJwtDoc = sdJwtRecord.ToSdJwtDoc();
                     var sdJwtDoc = new SdJwtDoc(presentation.PresentationMap.Presentation);
 
@@ -250,13 +248,13 @@ public class Oid4VpClientService : IOid4VpClientService
                         PresentedClaims = presentedClaims.ToDictionary(itm => itm.key, itm => itm.value)
                     };
                     break;
-                case MdocCredential mdocCredential:
-                    var claims = mdocCredential.Mdoc.IssuerSigned.IssuerNameSpaces.Value.SelectMany(pair => pair.Value);
+                case MdocRecord mdocRecord:
+                    var claims = mdocRecord.Mdoc.IssuerSigned.IssuerNameSpaces.Value.SelectMany(pair => pair.Value);
 
                     result = new PresentedCredentialSet
                     {
-                        MdocCredentialType = mdocCredential.Mdoc.DocType,
-                        CredentialSetId = mdocCredential.GetCredentialSetId(),
+                        MDocCredentialType = mdocRecord.DocType,
+                        CredentialSetId = mdocRecord.GetCredentialSetId(),
                         PresentedClaims = claims.ToDictionary(
                             item => item.ElementId.ToString(),
                             item => new PresentedClaim { Value = item.Element.ToString() }
@@ -270,17 +268,18 @@ public class Oid4VpClientService : IOid4VpClientService
             return result;
         });
 
-        var oidPresentationRecord = new CompletedPresentation(
-            Guid.NewGuid().ToString(),
-            authorizationRequest.ClientId!,
-            presentedCredentials.ToList(),
-            authorizationRequest.ClientMetadata,
-            authorizationRequest.Requirements.Match(
+        var oidPresentationRecord = new OidPresentationRecord
+        {
+            Id = Guid.NewGuid().ToString(),
+            ClientId = authorizationRequest.ClientId!,
+            ClientMetadata = authorizationRequest.ClientMetadata,
+            Name = authorizationRequest.Requirements.Match(
                 _ => Option<string>.None,
                 presentationDefinition => presentationDefinition.Name),
-            DateTime.UtcNow);
+            PresentedCredentialSets = presentedCredentials.ToList()
+        };
 
-        await _presentationRepository.Add(oidPresentationRecord);
+        await _oid4VpRecordService.StoreAsync(context, oidPresentationRecord);
 
         var redirectUriJson = await responseMessage.Content.ReadAsStringAsync();
 
@@ -309,6 +308,8 @@ public class Oid4VpClientService : IOid4VpClientService
 
         var mdocNonce = Option<Nonce>.None;
         
+        var context = await _agentProvider.GetContextAsync();
+        
         var presentations = new List<(PresentationMap PresentationMap, ICredential PresentedCredential)>();
         foreach (var credential in credentials)
         {
@@ -332,8 +333,7 @@ public class Oid4VpClientService : IOid4VpClientService
             Format format;
             ICredential presentedCredential;
 
-            var session = (await _authFlowSessionStorage.GetById(issuanceSession.AuthFlowSessionState))
-                .UnwrapOrThrow(new InvalidOperationException("Auth flow session not found"));
+            var session = await _authFlowSessionStorage.GetAsync(context, issuanceSession.AuthFlowSessionState);
 
             var client = _httpClientFactory.CreateClient();
             client.WithAuthorizationHeader(session.AuthorizationData.OAuthToken.UnwrapOrThrow(new Exception()));
@@ -343,7 +343,7 @@ public class Oid4VpClientService : IOid4VpClientService
             var presentation = string.Empty;
             switch (credential.Credential)
             {
-                case SdJwtCredential sdJwt:
+                case SdJwtRecord sdJwt:
                     format = Format.ValidFormat(sdJwt.Format).UnwrapOrThrow();
 
                     presentation = await _sdJwtVcHolderService.CreatePresentation(
@@ -358,7 +358,7 @@ public class Oid4VpClientService : IOid4VpClientService
                     var kbJwt = presentation[presentation.LastIndexOf('~')..][1..];
                     var kbJwtWithoutSignature = kbJwt[..kbJwt.LastIndexOf('.')];
 
-                    var kbJwtWithoutSignatureHash = sha256.ComputeHash(kbJwtWithoutSignature.GetUtf8Bytes());
+                    var kbJwtWithoutSignatureHash = sha256.ComputeHash(kbJwtWithoutSignature.GetUTF8Bytes());
 
                     var sdJwtContent = new JObject
                     {
@@ -388,7 +388,7 @@ public class Oid4VpClientService : IOid4VpClientService
 
                     presentedCredential = sdJwt;
                     break;
-                case MdocCredential mdocCredential:
+                case MdocRecord mdocRecord:
                     format = FormatFun.CreateMdocFormat();
 
                     var toDisclose = claims.Select(claim =>
@@ -406,7 +406,7 @@ public class Oid4VpClientService : IOid4VpClientService
                         .GroupBy(nameSpaceAndElementId => nameSpaceAndElementId.NameSpace, tuple => tuple.ElementId)
                         .ToDictionary(group => group.Key, group => group.ToList());
 
-                    var mdoc = mdocCredential.Mdoc.SelectivelyDisclose(toDisclose);
+                    var mdoc = mdocRecord.Mdoc.SelectivelyDisclose(toDisclose);
 
                     var handover = authorizationRequest.ToVpHandover();
                     mdocNonce = handover.MdocGeneratedNonce;
@@ -459,7 +459,7 @@ public class Oid4VpClientService : IOid4VpClientService
                             .EncodeToBase64Url();
                     }
 
-                    presentedCredential = mdocCredential;
+                    presentedCredential = mdocRecord;
 
                     break;
                 default:
@@ -505,7 +505,7 @@ public class Oid4VpClientService : IOid4VpClientService
 
             switch (presentation.PresentedCredential)
             {
-                case SdJwtCredential sdJwtRecord:
+                case SdJwtRecord sdJwtRecord:
                     var issuanceSdJwtDoc = sdJwtRecord.ToSdJwtDoc();
                     var sdJwtDoc = new SdJwtDoc(presentation.PresentationMap.Presentation);
 
@@ -532,13 +532,13 @@ public class Oid4VpClientService : IOid4VpClientService
                         PresentedClaims = presentedClaims.ToDictionary(itm => itm.key, itm => itm.value)
                     };
                     break;
-                case MdocCredential mdocCredential:
-                    var claims = mdocCredential.Mdoc.IssuerSigned.IssuerNameSpaces.Value.SelectMany(pair => pair.Value);
+                case MdocRecord mdocRecord:
+                    var claims = mdocRecord.Mdoc.IssuerSigned.IssuerNameSpaces.Value.SelectMany(pair => pair.Value);
 
                     result = new PresentedCredentialSet
                     {
-                        MdocCredentialType = mdocCredential.Mdoc.DocType,
-                        CredentialSetId = mdocCredential.GetCredentialSetId(),
+                        MDocCredentialType = mdocRecord.DocType,
+                        CredentialSetId = mdocRecord.GetCredentialSetId(),
                         PresentedClaims = claims.ToDictionary(
                             item => item.ElementId.ToString(),
                             item => new PresentedClaim { Value = item.Element.ToString() }
@@ -552,18 +552,19 @@ public class Oid4VpClientService : IOid4VpClientService
             return result;
         });
 
-        var oidPresentationRecord = new CompletedPresentation(
-            Guid.NewGuid().ToString(),
-            authorizationRequest.ClientId!,
-            presentedCredentials.ToList(),
-            authorizationRequest.ClientMetadata,
-            authorizationRequest.Requirements.Match(
+        var oidPresentationRecord = new OidPresentationRecord
+        {
+            Id = Guid.NewGuid().ToString(),
+            ClientId = authorizationRequest.ClientId!,
+            ClientMetadata = authorizationRequest.ClientMetadata,
+            Name = authorizationRequest.Requirements.Match(
                 _ => Option<string>.None,
                 presentationDefinition => presentationDefinition.Name),
-            DateTime.UtcNow);
+            PresentedCredentialSets = presentedCredentials.ToList()
+        };
 
-        await _presentationRepository.Add(oidPresentationRecord);
-        
+        await _oid4VpRecordService.StoreAsync(context, oidPresentationRecord);
+
         var redirectUriJson = await responseMessage.Content.ReadAsStringAsync();
 
         try

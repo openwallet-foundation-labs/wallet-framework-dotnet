@@ -1,15 +1,27 @@
+using Hyperledger.Aries;
+using Hyperledger.Aries.Agents;
+using Hyperledger.Aries.Storage;
 using LanguageExt;
+using WalletFramework.Core.Credentials;
 using WalletFramework.SdJwtLib.Models;
 using WalletFramework.SdJwtLib.Roles;
+using WalletFramework.SdJwtVc.Models.Records;
 
 namespace WalletFramework.SdJwtVc.Services.SdJwtVcHolderService;
 
 /// <inheritdoc />
-public class SdJwtVcHolderService(IHolder holder, ISdJwtSigner signer) : ISdJwtVcHolderService
+public class SdJwtVcHolderService(
+    IHolder holder,
+    ISdJwtSigner signer,
+    IWalletRecordService recordService) : ISdJwtVcHolderService
 {
     /// <inheritdoc />
+    public virtual async Task AddAsync(IAgentContext context, SdJwtRecord record) =>
+        await recordService.AddAsync(context.Wallet, record);
+
+    /// <inheritdoc />
     public async Task<string> CreatePresentation(
-        SdJwtCredential credential,
+        SdJwtRecord credential,
         string[] disclosedClaimPaths,
         Option<IEnumerable<string>> transactionDataBase64UrlStrings,
         Option<IEnumerable<string>> transactionDataHashes,
@@ -50,4 +62,50 @@ public class SdJwtVcHolderService(IHolder holder, ISdJwtSigner signer) : ISdJwtV
 
         return presentationFormat.Value;
     }
+
+    /// <inheritdoc />
+    public virtual async Task<bool> DeleteAsync(IAgentContext context, string recordId) =>
+        await recordService.DeleteAsync<SdJwtRecord>(context.Wallet, recordId);
+
+    /// <inheritdoc />
+    public async Task<SdJwtRecord> GetAsync(IAgentContext context, string credentialId)
+    {
+        var record = await recordService.GetAsync<SdJwtRecord>(context.Wallet, credentialId);
+        if (record == null)
+            throw new AriesFrameworkException(ErrorCode.RecordNotFound, "SD-JWT Credential record not found");
+
+        return record;
+    }
+
+    /// <inheritdoc />
+    public Task<List<SdJwtRecord>> ListAsync(
+        IAgentContext context,
+        ISearchQuery? query = null,
+        int count = 100,
+        int skip = 0) => recordService.SearchAsync<SdJwtRecord>(context.Wallet, query, null, count, skip);
+
+    public async Task<Option<IEnumerable<SdJwtRecord>>> ListAsync(IAgentContext context, CredentialSetId id)
+    {
+        var sdJwtQuery = SearchQuery.Equal(
+            "~" + nameof(SdJwtRecord.CredentialSetId),
+            id);
+
+        var sdJwtRecords = await ListAsync(
+            context,
+            sdJwtQuery);
+
+        return sdJwtRecords.Any()
+            ? sdJwtRecords
+            : Option<IEnumerable<SdJwtRecord>>.None;
+    }
+
+    /// <inheritdoc />
+    public virtual async Task UpdateAsync(IAgentContext context, SdJwtRecord record) =>
+        await recordService.UpdateAsync(context.Wallet, record);
+}
+
+public static class SdJwtRecordExtensions
+{
+    public static SdJwtDoc ToSdJwtDoc(this SdJwtRecord record) =>
+        new(record.EncodedIssuerSignedJwt + "~" + string.Join("~", record.Disclosures) + "~");
 }

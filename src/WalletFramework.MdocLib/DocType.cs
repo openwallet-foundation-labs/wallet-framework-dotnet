@@ -12,8 +12,6 @@ public readonly record struct DocType
 
     private DocType(string docType) => Value = docType;
 
-    public string AsString() => Value;
-
     public override string ToString() => Value;
 
     public static implicit operator string(DocType docType) => docType.Value;
