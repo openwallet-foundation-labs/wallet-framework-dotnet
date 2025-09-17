@@ -26,6 +26,6 @@ public readonly struct CryptographicBindingMethod
     
     private static List<string> SupportedCryptographicBindingMethods => new()
     {
-        "jwt"
+        "jwk"
     };
 }
