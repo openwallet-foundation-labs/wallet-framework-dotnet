@@ -1,5 +1,6 @@
 using System.Text;
 using LanguageExt;
+using Microsoft.IdentityModel.Tokens;
 using OneOf;
 using WalletFramework.Core.Cryptography.Abstractions;
 using WalletFramework.Core.Cryptography.Models;
@@ -69,8 +70,13 @@ public class CredentialRequestService : ICredentialRequestService
             Some: _ =>
             {
                 if (format == Constants.MdocFormat)
-                    sessionTranscript = authorizationRequest.UnwrapOrThrow(new Exception()).ToVpHandover()
-                        .ToSessionTranscript();
+                {
+                    var handover = OpenId4VpHandover.FromAuthorizationRequest(
+                        authorizationRequest.UnwrapOrThrow(new Exception()),
+                        Option<JsonWebKey>.None);
+                    sessionTranscript = handover.ToSessionTranscript();
+                }
+                
                 return Task.CompletedTask;
             },
             None: async () =>
