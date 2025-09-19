@@ -28,8 +28,7 @@ public class SdJwtVcHolderService(
         Option<IEnumerable<string>> transactionDataHashes,
         Option<string> transactionDataHashesAlg,
         string? audience = null,
-        string? nonce = null,
-        bool requireKeyBinding = true)
+        string? nonce = null)
     {
         var sdJwtDoc = credential.ToSdJwtDoc();
         var disclosures = new List<Disclosure>();
@@ -44,8 +43,7 @@ public class SdJwtVcHolderService(
         var presentationFormat =
             holder.CreatePresentationFormat(credential.EncodedIssuerSignedJwt, disclosures.ToArray());
 
-        if (requireKeyBinding 
-            && !string.IsNullOrEmpty(credential.KeyId)
+        if (credential.KeyId.IsSome
             && !string.IsNullOrEmpty(nonce)
             && !string.IsNullOrEmpty(audience))
         {

@@ -121,10 +121,6 @@ public class PresentationService : IPresentationService
             {
                 case SdJwtRecord sdJwt:
                     format = Format.ValidFormat(sdJwt.Format).UnwrapOrThrow();
-
-                    var isKeyBindingRequired = credentialRequirement.Match(
-                        dcql => dcql.RequireCryptographicHolderBinding ?? true,
-                        pex => true);
                     
                     presentation = await _sdJwtVcHolderService.CreatePresentation(
                         sdJwt,
@@ -133,8 +129,7 @@ public class PresentationService : IPresentationService
                         txDataHashesAsHexOption,
                         txDataHashesAlgOption,
                         audience,
-                        authorizationRequest.Nonce,
-                        isKeyBindingRequired);
+                        authorizationRequest.Nonce);
 
                     presentedCredential = sdJwt;
                     break;

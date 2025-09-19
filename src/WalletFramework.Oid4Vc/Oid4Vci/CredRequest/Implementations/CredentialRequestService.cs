@@ -114,7 +114,7 @@ public class CredentialRequestService : ICredentialRequestService
             jwts.Add(await GenerateKbProofOfPossession(keyId, issuerMetadata, cNonce, clientOptions));
         }
         
-        return new ProofsOfPossession(ProofTypeId.ValidProofTypeId("jwt").UnwrapOrThrow(), jwts.ToArray());
+        return new ProofsOfPossession(ProofTypeId.GetJwtProofTypeId(), jwts.ToArray());
     }
 
     private async Task<string> GenerateKbProofOfPossession(

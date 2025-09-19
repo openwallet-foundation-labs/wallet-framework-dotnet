@@ -15,7 +15,7 @@ public static class ProofsOfPossessionFun
     {
         return new JObject
         {
-            [proofsOfPossession.ProofType.ToString()] = JArray.FromObject(proofsOfPossession.Jwt)
+            [proofsOfPossession.ProofType.AsString()] = JArray.FromObject(proofsOfPossession.Jwt)
         };
     }
 }

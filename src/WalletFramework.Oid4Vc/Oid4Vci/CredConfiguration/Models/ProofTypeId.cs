@@ -8,6 +8,8 @@ namespace WalletFramework.Oid4Vc.Oid4Vci.CredConfiguration.Models;
 
 public readonly struct ProofTypeId
 {
+    private const string JwtProofTypeId = "jwt";
+    
     private string Value { get; }
     
     private ProofTypeId(string value)
@@ -15,6 +17,8 @@ public readonly struct ProofTypeId
         Value = value;
     }
 
+    public string AsString() => Value;
+    
     public override string ToString() => Value;
 
     public static implicit operator string(ProofTypeId proofTypeId) => proofTypeId.ToString();
@@ -27,8 +31,11 @@ public readonly struct ProofTypeId
             : new ProofTypeIdNotSupportedError(str).ToInvalid<ProofTypeId>();
     });
 
+    public static ProofTypeId GetJwtProofTypeId() =>
+        new (JwtProofTypeId);
+    
     private static List<string> SupportedProofTypes => new()
     {
-        "jwt"
+        JwtProofTypeId
     };
 }

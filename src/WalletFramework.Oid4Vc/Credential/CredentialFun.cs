@@ -35,7 +35,7 @@ public static class CredentialFun
     {
         return credential switch
         {
-            SdJwtRecord sdJwt => sdJwt.KeyId is not null,
+            SdJwtRecord sdJwt => sdJwt.KeyId.IsSome,
             MdocRecord => true,
             _ => throw new InvalidOperationException("Invalid credential type")
         };

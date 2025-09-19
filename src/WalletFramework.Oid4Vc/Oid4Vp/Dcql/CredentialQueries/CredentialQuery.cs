@@ -43,7 +43,7 @@ public class CredentialQuery
     ///     A boolean which indicates whether the Verifier requires a Cryptographic Holder Binding proof
     /// </summary>
     [JsonProperty(RequireCryptographicHolderBindingJsonKey)]
-    public bool? RequireCryptographicHolderBinding { get; set; }
+    public bool RequireCryptographicHolderBinding { get; set; } = true;
     
     /// <summary>
     ///     This MUST be a CredentialQueryId identifying the Credential in the response.
@@ -105,8 +105,9 @@ public class CredentialQuery
 
         var requireCryptographicHolderBinding =
             json.GetByKey(RequireCryptographicHolderBindingJsonKey)
-                .OnSuccess(token => token.ToObject<bool>())
-                .ToOption();
+                .Match(
+                    jToken => jToken.ToObject<bool>(),
+                    _ => true);
         
         return ValidationFun.Valid(Create)
             .Apply(id)
@@ -121,14 +122,14 @@ public class CredentialQuery
         CredentialQueryId id,
         string format,
         CredentialMetaQuery meta,
-        Option<bool> requireCryptographicHolderBinding,
+        bool requireCryptographicHolderBinding,
         Option<IEnumerable<ClaimQuery>> claims,
         Option<IEnumerable<ClaimSet>> claimSets) => new()
     {
         Id = id,
         Format = format,
         Meta = meta,
-        RequireCryptographicHolderBinding = requireCryptographicHolderBinding.ToNullable(),
+        RequireCryptographicHolderBinding = requireCryptographicHolderBinding,
         Claims = claims.ToNullable()?.ToArray(),
         ClaimSets = claimSets.ToNullable()?.ToArray()
     };
@@ -181,7 +182,7 @@ public static class CredentialQueryFun
             .ToArray();
         
         // Filter credentials by cryptographic holder binding requirement (if specified)
-        var credentialsWhereBindingMatches = credentialQuery.RequireCryptographicHolderBinding == true
+        var credentialsWhereBindingMatches = credentialQuery.RequireCryptographicHolderBinding
             ? credentialsWhereTypeMatches.Where(credential => credential.SupportsKeyBinding()).ToArray()
             : credentialsWhereTypeMatches;
         
