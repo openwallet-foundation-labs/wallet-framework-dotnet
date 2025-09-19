@@ -1,4 +1,5 @@
 using Newtonsoft.Json.Linq;
+using WalletFramework.Oid4Vc.Oid4Vci.CredConfiguration.Models;
 
 namespace WalletFramework.Oid4Vc.Oid4Vci.CredRequest.Models;
 
@@ -6,7 +7,7 @@ namespace WalletFramework.Oid4Vc.Oid4Vci.CredRequest.Models;
 ///     Represents one or more proof of possessions of the key material that the issued credential is bound to.
 ///     This contains the jwts that acts as the proof of possessions.
 /// </summary>
-public record ProofsOfPossession(string ProofType, string[] Jwt);
+public record ProofsOfPossession(ProofTypeId ProofType, string[] Jwt);
 
 public static class ProofsOfPossessionFun
 {
@@ -14,7 +15,7 @@ public static class ProofsOfPossessionFun
     {
         return new JObject
         {
-            [proofsOfPossession.ProofType] = JArray.FromObject(proofsOfPossession.Jwt)
+            [proofsOfPossession.ProofType.AsString()] = JArray.FromObject(proofsOfPossession.Jwt)
         };
     }
 }

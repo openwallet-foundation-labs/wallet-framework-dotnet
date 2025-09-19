@@ -49,7 +49,7 @@ public class CredentialRequestService : ICredentialRequestService
     private readonly IKeyStore _keyStore;
 
     private async Task<CredentialRequest> CreateCredentialRequest(
-        KeyId keyId,
+        Option<KeyId> keyId,
         Format format,
         OneOf<CredentialIdentifier, CredentialConfigurationId> credentialIdentification,
         OneOf<OAuthToken, DPopToken> token,
@@ -79,7 +79,7 @@ public class CredentialRequestService : ICredentialRequestService
                 
                 return Task.CompletedTask;
             },
-            None: async () =>
+            None: async () => await keyId.IfSomeAsync(async id => 
             {
                 await issuerMetadata.BatchCredentialIssuance.Match(
                     Some: async batchCredentialIssuance =>
@@ -87,17 +87,18 @@ public class CredentialRequestService : ICredentialRequestService
                         await batchCredentialIssuance.BatchSize.Match(
                             Some: async batchSize =>
                             {
-                                proofs = await GetProofsOfPossessionAsync(Math.Min(MaxBatchSize, batchSize), keyId,
+                                proofs = await GetProofsOfPossessionAsync(Math.Min(MaxBatchSize, batchSize), id,
                                     issuerMetadata, cNonce, clientOptions);
                             },
                             None: async () =>
                             {
-                                proof = await GetProofOfPossessionAsync(keyId, issuerMetadata, cNonce, clientOptions);
+                                proof = await GetProofOfPossessionAsync(id, issuerMetadata, cNonce, clientOptions);
                             });
                     },
                     None: async () =>
-                        proof = await GetProofOfPossessionAsync(keyId, issuerMetadata, cNonce, clientOptions));
-            });
+                        proof = await GetProofOfPossessionAsync(id, issuerMetadata, cNonce, clientOptions));
+            })
+        );
         
         return new CredentialRequest(credentialIdentification, format, specVersion, proof, proofs, sessionTranscript);
     }
@@ -119,7 +120,7 @@ public class CredentialRequestService : ICredentialRequestService
             jwts.Add(await GenerateKbProofOfPossession(keyId, issuerMetadata, cNonce, clientOptions));
         }
         
-        return new ProofsOfPossession("jwt", jwts.ToArray());
+        return new ProofsOfPossession(ProofTypeId.GetJwtProofTypeId(), jwts.ToArray());
     }
 
     private async Task<string> GenerateKbProofOfPossession(
@@ -158,11 +159,16 @@ public class CredentialRequestService : ICredentialRequestService
         var responses = new List<Validation<CredentialResponse>>();
         foreach (var credentialIdentification in credentialIdentifications)
         {
-            var keyId = await _keyStore.GenerateKey(isPermanent: authorizationRequest.IsNone);
-
+            var keyId = Option<KeyId>.None;
+            
             var requestJson = await configurationPair.Value.Match(
                 async sdJwt =>
                 {
+                    await sdJwt.CredentialConfiguration.CryptographicBindingMethodsSupported.IfSomeAsync(async _ =>
+                    {
+                        keyId = await _keyStore.GenerateKey(isPermanent: authorizationRequest.IsNone);
+                    });
+                    
                     var vciRequest = await CreateCredentialRequest(
                         keyId,
                         sdJwt.Format,
@@ -178,6 +184,8 @@ public class CredentialRequestService : ICredentialRequestService
                 },
                 async mdoc =>
                 {
+                    keyId = await _keyStore.GenerateKey(isPermanent: authorizationRequest.IsNone);
+                    
                     var vciRequest = await CreateCredentialRequest(
                         keyId,
                         mdoc.Format,

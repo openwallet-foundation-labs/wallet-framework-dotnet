@@ -46,15 +46,15 @@ public record CredentialResponse
     public Option<int> CNonceExpiresIn { get; }
 
     /// <summary>
-    ///     The KeyId for the key which was used for the Key-Binding Proof
+    ///     OPTIONAL. The KeyId for the key which was used for the Key-Binding Proof. SD-JWTs may have no KeyId.
     /// </summary>
-    public KeyId KeyId { get; }
+    public Option<KeyId> KeyId { get; }
     
     private CredentialResponse(
         OneOf<List<Credential>, TransactionId> credentialsOrTransactionId,
         Option<string> cNonce,
         Option<int> cNonceExpiresIn,
-        KeyId keyId)
+        Option<KeyId> keyId)
     {
         CNonceExpiresIn = cNonceExpiresIn;
         CredentialsOrTransactionId = credentialsOrTransactionId;
@@ -66,10 +66,10 @@ public record CredentialResponse
         OneOf<List<Credential>, TransactionId> credentialsOrTransactionId,
         Option<string> cNonce,
         Option<int> cNonceExpiresIn,
-        KeyId keyId) =>
+        Option<KeyId> keyId) =>
         new(credentialsOrTransactionId, cNonce, cNonceExpiresIn, keyId);
 
-    public static Validation<CredentialResponse> ValidCredentialResponse(JObject response, KeyId keyId)
+    public static Validation<CredentialResponse> ValidCredentialResponse(JObject response, Option<KeyId> keyId)
     {
         // TODO: Implement transactionID
         var singleCredential =

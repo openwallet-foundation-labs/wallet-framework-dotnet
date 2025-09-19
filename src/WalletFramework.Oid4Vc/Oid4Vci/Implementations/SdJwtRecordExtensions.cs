@@ -1,4 +1,5 @@
 using System.Drawing;
+using LanguageExt;
 using WalletFramework.Core.Credentials;
 using WalletFramework.Core.Cryptography.Models;
 using WalletFramework.Core.Functional;
@@ -14,7 +15,7 @@ public static class SdJwtRecordExtensions
     public static SdJwtRecord ToRecord(
         this SdJwtDoc sdJwtDoc,
         SdJwtConfiguration configuration,
-        KeyId keyId,
+        Option<KeyId> keyId,
         CredentialSetId credentialSetId,
         bool isOneTimeUse)
     {

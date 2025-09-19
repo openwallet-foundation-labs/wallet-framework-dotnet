@@ -1,6 +1,7 @@
 using System.Collections.Immutable;
 using System.IdentityModel.Tokens.Jwt;
 using Hyperledger.Aries.Storage;
+using LanguageExt;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using WalletFramework.Core.Credentials;
@@ -11,6 +12,7 @@ using WalletFramework.Core.StatusList;
 using WalletFramework.SdJwtLib.Models;
 using WalletFramework.SdJwtVc.Models.Credential;
 using WalletFramework.SdJwtVc.Models.Credential.Attributes;
+using static WalletFramework.Core.Cryptography.Models.KeyId;
 
 namespace WalletFramework.SdJwtVc.Models.Records;
 
@@ -109,19 +111,17 @@ public sealed class SdJwtRecord : RecordBase, ICredential
     ///     Gets the key record ID.
     /// </summary>
     [JsonIgnore]
-    public KeyId KeyId
+    public Option<KeyId> KeyId
     {
         get
         {
             var str = Get();
-            return KeyId
-                .ValidKeyId(str)
-                .UnwrapOrThrow(new InvalidOperationException("Persisted Key-ID in SD-JWT Record is corrupt"));
+
+            return ValidKeyId(str).ToOption();
         }
         private set
         {
-            string keyId = value;
-            Set(keyId);
+            value.IfSome(keyId => Set((string)keyId));
         }
     }
 
@@ -204,7 +204,7 @@ public sealed class SdJwtRecord : RecordBase, ICredential
         string serializedSdJwtWithDisclosures,
         Dictionary<string, ClaimMetadata>? displayedAttributes,
         List<SdJwtDisplay> display,
-        KeyId keyId,
+        Option<KeyId> keyId,
         CredentialSetId credentialSetId,
         bool isOneTimeUse = false)
     {
@@ -253,7 +253,7 @@ public sealed class SdJwtRecord : RecordBase, ICredential
         SdJwtDoc sdJwtDoc,
         Dictionary<string, ClaimMetadata>? displayedAttributes,
         List<SdJwtDisplay> display,
-        KeyId keyId,
+        Option<KeyId> keyId,
         CredentialSetId credentialSetId,
         bool isOneTimeUse = false)
     {
