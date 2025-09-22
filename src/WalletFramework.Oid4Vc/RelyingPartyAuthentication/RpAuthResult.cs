@@ -1,7 +1,9 @@
+using LanguageExt;
 using WalletFramework.Core.Functional;
 using WalletFramework.Oid4Vc.Oid4Vp.Models;
 using WalletFramework.Oid4Vc.RelyingPartyAuthentication.AccessCertificates;
 using WalletFramework.Oid4Vc.RelyingPartyAuthentication.RegistrationCertificate;
+using static WalletFramework.Oid4Vc.RelyingPartyAuthentication.AccessCertificates.AccessCertificate;
 using static WalletFramework.Oid4Vc.RelyingPartyAuthentication.RpAuthResultFun;
 
 namespace WalletFramework.Oid4Vc.RelyingPartyAuthentication;
@@ -9,32 +11,35 @@ namespace WalletFramework.Oid4Vc.RelyingPartyAuthentication;
 public record RpAuthResult
 {
     public RpTrustLevel TrustLevel { get; }
+    
+    public Option<AccessCertificate> AccessCertificate { get; }
 
     private RpAuthResult(
         AccessCertificateValidationResult accessCertificateValidationResult,
-        OverAskingValidationResult overAskingValidationResult) =>
-        TrustLevel = CalculateTrustLevel(accessCertificateValidationResult, overAskingValidationResult);
+        OverAskingValidationResult overAskingValidationResult,
+        AccessCertificate accessCertificate) =>
+        (TrustLevel, AccessCertificate) = (CalculateTrustLevel(accessCertificateValidationResult, overAskingValidationResult), accessCertificate);
 
-    private RpAuthResult(RpTrustLevel trustLevel) => TrustLevel = trustLevel;
+    private RpAuthResult(RpTrustLevel trustLevel, Option<AccessCertificate> accessCertificate) => (TrustLevel, AccessCertificate) = (trustLevel, accessCertificate);
 
     public static RpAuthResult ValidateRequestObject(
         RequestObject requestObject,
         RpRegistrarCertificate rpRegistrarCertificate)
     {
-        var result =
-            from accessCertificate in AccessCertificate.FromRequestObject(requestObject)
-            let accessCertificateValidationResult = AccessCertificateValidationResult.Validate(accessCertificate, rpRegistrarCertificate)
-            let overAskingValidationResult = OverAskingValidationResult.Validate(requestObject)
-            select new RpAuthResult(accessCertificateValidationResult, overAskingValidationResult);
-
-        return result.Match(
-            rpAuthResult => rpAuthResult,
-            // TODO: Log
-            _ => new RpAuthResult(RpTrustLevel.ValidationFailed)
+        var accessCertificateValidation = FromRequestObject(requestObject);
+        
+        return accessCertificateValidation.Match(
+            accessCertificate =>
+            {
+                var accessCertificateValidationResult = AccessCertificateValidationResult.Validate(accessCertificate, rpRegistrarCertificate);
+                var overAskingValidationResult = OverAskingValidationResult.Validate(requestObject);
+                return new RpAuthResult(accessCertificateValidationResult, overAskingValidationResult, accessCertificate);
+            },
+            _ => new RpAuthResult(RpTrustLevel.ValidationFailed, Option<AccessCertificate>.None)
         );
     }
 
-    public static RpAuthResult GetWithLevelUnknown() => new(RpTrustLevel.Unknown);
+    public static RpAuthResult GetWithLevelUnknown() => new(RpTrustLevel.Unknown, Option<AccessCertificate>.None);
 }
 
 public static class RpAuthResultFun
