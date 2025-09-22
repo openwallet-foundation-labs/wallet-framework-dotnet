@@ -40,12 +40,18 @@ public class CredentialQuery
     public string Format { get; set; } = null!;
 
     /// <summary>
+    ///     A boolean which indicates whether the Verifier requires a Cryptographic Holder Binding proof
+    /// </summary>
+    [JsonProperty(RequireCryptographicHolderBindingJsonKey)]
+    public bool RequireCryptographicHolderBinding { get; set; } = true;
+    
+    /// <summary>
     ///     This MUST be a CredentialQueryId identifying the Credential in the response.
     /// </summary>
     [JsonProperty(IdJsonKey)]
     [JsonConverter(typeof(CredentialQueryIdJsonConverter))]
     public CredentialQueryId Id { get; set; } = null!;
-
+    
     /// <summary>
     ///     Represents a collection, where each value contains a collection of identifiers for elements in claims that
     ///     specifies which combinations of claims for the credential are requested.
@@ -97,10 +103,17 @@ public class CredentialQuery
                 .OnSuccess(ClaimSetFun.ValidateMany)
                 .ToOption();
 
+        var requireCryptographicHolderBinding =
+            json.GetByKey(RequireCryptographicHolderBindingJsonKey)
+                .Match(
+                    jToken => jToken.ToObject<bool>(),
+                    _ => true);
+        
         return ValidationFun.Valid(Create)
             .Apply(id)
             .Apply(format)
             .Apply(meta)
+            .Apply(requireCryptographicHolderBinding)
             .Apply(claims)
             .Apply(claimSets);
     }
@@ -109,12 +122,14 @@ public class CredentialQuery
         CredentialQueryId id,
         string format,
         CredentialMetaQuery meta,
+        bool requireCryptographicHolderBinding,
         Option<IEnumerable<ClaimQuery>> claims,
         Option<IEnumerable<ClaimSet>> claimSets) => new()
     {
         Id = id,
         Format = format,
         Meta = meta,
+        RequireCryptographicHolderBinding = requireCryptographicHolderBinding,
         Claims = claims.ToNullable()?.ToArray(),
         ClaimSets = claimSets.ToNullable()?.ToArray()
     };
@@ -131,6 +146,8 @@ public static class CredentialQueryConstants
     public const string IdJsonKey = "id";
 
     public const string MetaJsonKey = "meta";
+    
+    public const string RequireCryptographicHolderBindingJsonKey = "require_cryptographic_holder_binding";
 }
 
 public static class CredentialQueryFun
@@ -164,6 +181,11 @@ public static class CredentialQueryFun
             .Where(credential => requestedTypes.Contains(credential.GetCredentialTypeAsString()))
             .ToArray();
         
+        // Filter credentials by cryptographic holder binding requirement (if specified)
+        var credentialsWhereBindingMatches = credentialQuery.RequireCryptographicHolderBinding
+            ? credentialsWhereTypeMatches.Where(credential => credential.SupportsKeyBinding()).ToArray()
+            : credentialsWhereTypeMatches;
+        
         // Get the claims and claim sets to be disclosed
         var claims = credentialQuery.Claims ?? [];
         var claimSets = credentialQuery.ClaimSets ?? [];
@@ -172,7 +194,7 @@ public static class CredentialQueryFun
         // Try to find and return a credentials that fulfill the claims
         foreach (var disclosures in toDisclose)
         {
-            var matches = credentialsWhereTypeMatches
+            var matches = credentialsWhereBindingMatches
                 .Where(disclosures.AreFulfilledBy)
                 .ToArray();
 
@@ -197,13 +219,13 @@ public static class CredentialQueryFun
             return Option<PresentationCandidate>.None;
 
         // If there are no claims asked, all credentials with the right type are valid
-        var allCandidates = credentialsWhereTypeMatches
+        var allCandidates = credentialsWhereBindingMatches
             .GroupBy(credential => credential.GetCredentialSetId())
             .Select(group => new CredentialSetCandidate(group.Key, group))
             .Where(candidate => candidate.Credentials.Any())
             .ToArray();
 
-        return credentialsWhereTypeMatches.Any()
+        return credentialsWhereBindingMatches.Any()
             ? new PresentationCandidate(credentialQuery.Id.AsString(), allCandidates, Option<List<ClaimQuery>>.None)
             : Option<PresentationCandidate>.None;
     }

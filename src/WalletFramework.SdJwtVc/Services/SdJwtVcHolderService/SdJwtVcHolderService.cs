@@ -3,6 +3,7 @@ using Hyperledger.Aries.Agents;
 using Hyperledger.Aries.Storage;
 using LanguageExt;
 using WalletFramework.Core.Credentials;
+using WalletFramework.Core.Cryptography.Models;
 using WalletFramework.SdJwtLib.Models;
 using WalletFramework.SdJwtLib.Roles;
 using WalletFramework.SdJwtVc.Models.Records;
@@ -42,12 +43,12 @@ public class SdJwtVcHolderService(
         var presentationFormat =
             holder.CreatePresentationFormat(credential.EncodedIssuerSignedJwt, disclosures.ToArray());
 
-        if (!string.IsNullOrEmpty(credential.KeyId)
+        if (credential.KeyId.IsSome
             && !string.IsNullOrEmpty(nonce)
             && !string.IsNullOrEmpty(audience))
         {
             var keybindingJwt = await signer.GenerateKbProofOfPossessionAsync(
-                credential.KeyId,
+                (KeyId)credential.KeyId,
                 audience,
                 nonce,
                 "kb+jwt",

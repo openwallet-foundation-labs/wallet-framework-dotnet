@@ -344,7 +344,7 @@ public class Oid4VciClientService : IOid4VciClientService
                                     
                                     var record = mdoc.Decoded.ToRecord(
                                         displays,
-                                        response.KeyId,
+                                        response.KeyId.UnwrapOrThrow(),
                                         credentialSet.CredentialSetId,
                                         creds.Count > 1);
                                     
@@ -483,7 +483,7 @@ public class Oid4VciClientService : IOid4VciClientService
                                         
                                         var record = mdoc.Decoded.ToRecord(
                                             displays,
-                                            response.KeyId,
+                                            response.KeyId.UnwrapOrThrow(),
                                             credentialSet.CredentialSetId,
                                             creds.Count > 1);
                                         
@@ -648,7 +648,7 @@ public class Oid4VciClientService : IOid4VciClientService
                                     
                                     var record = mdoc.Decoded.ToRecord(
                                         displays,
-                                        response.KeyId,
+                                        response.KeyId.UnwrapOrThrow(),
                                         credentialSet.CredentialSetId,
                                         creds.Count > 1);
 
