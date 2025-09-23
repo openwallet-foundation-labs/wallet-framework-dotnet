@@ -71,8 +71,7 @@ internal static class TransactionDataFun
                     }
 
                     // Add the UC5 transaction data to the candidate
-                    var updated = found.candidate.AddUc5TransactionData(inputDescriptorTxData.TransactionData);
-                    updatedCandidates[(found.setIdx, found.candIdx)] = updated;
+                    updatedCandidates[(found.setIdx, found.candIdx)] = updatedCandidates[(found.setIdx, found.candIdx)].AddUc5TransactionData(inputDescriptorTxData.TransactionData);
                 }
 
                 // Reconstruct sets with updated candidates
@@ -135,8 +134,7 @@ internal static class TransactionDataFun
                     }
 
                     // Update the candidate with the transaction data
-                    var updated = found.candidate.AddTransactionDatas([txData]);
-                    updatedCandidates[(found.setIdx, found.candIdx)] = updated;
+                    updatedCandidates[(found.setIdx, found.candIdx)] = updatedCandidates[(found.setIdx, found.candIdx)].AddTransactionDatas([txData]);
                 }
 
                 // Reconstruct sets with updated candidates
