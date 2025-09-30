@@ -39,7 +39,7 @@ public record RpAuthResult
         );
     }
 
-    public static RpAuthResult GetWithLevelUnknown() => new(RpTrustLevel.Unknown, Option<AccessCertificate>.None);
+    public static RpAuthResult GetWithLevelUnknown() => new(RpTrustLevel.Unknown, Option<AccessCertificate>.None); 
 }
 
 public static class RpAuthResultFun
