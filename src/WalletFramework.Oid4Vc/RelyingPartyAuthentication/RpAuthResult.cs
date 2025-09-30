@@ -48,7 +48,7 @@ public static class RpAuthResultFun
         AccessCertificateValidationResult accessCertificateValidationResult,
         OverAskingValidationResult overAskingValidationResult)
     {
-        if (accessCertificateValidationResult.IsValid is false)
+        if (!accessCertificateValidationResult.IsValid)
         {
             return RpTrustLevel.AccessCertificateValidationFailed;
         }
