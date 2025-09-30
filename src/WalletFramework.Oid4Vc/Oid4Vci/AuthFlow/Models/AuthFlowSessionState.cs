@@ -21,7 +21,6 @@ public struct AuthFlowSessionState
     ///     Returns the value of the state identifier.
     /// </summary>
     /// <param name="authFlowSessionState"></param>
-    /// <returns></returns>
     public static implicit operator string(AuthFlowSessionState authFlowSessionState) => authFlowSessionState.Value;
         
     public static Validation<AuthFlowSessionState> ValidAuthFlowSessionState(string authFlowSessionState)

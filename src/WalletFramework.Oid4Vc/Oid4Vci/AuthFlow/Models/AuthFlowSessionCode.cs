@@ -19,7 +19,6 @@ public struct AuthFlowSessionCode
     ///     Returns the value of the code associated with an issuance session.
     /// </summary>
     /// <param name="authFlowSessionCode"></param>
-    /// <returns></returns>
     public static implicit operator string(AuthFlowSessionCode authFlowSessionCode) => authFlowSessionCode.Value;
         
     public static Validation<AuthFlowSessionCode> ValidAuthFlowSessionCode(string authFlowSessionCode)
