@@ -407,7 +407,7 @@ public class Oid4VciClientService : IOid4VciClientService
             GrantType = AuthorizationCodeGrantTypeIdentifier,
             RedirectUri = session.AuthorizationData.ClientOptions.RedirectUri,
             CodeVerifier = session.AuthorizationCodeParameters.Verifier,
-            Code = issuanceSession.Code,
+            Code = issuanceSession.AuthFlowSessionCode,
             Scope = string.Join(" ", scopes),
             ClientId = session.AuthorizationData.ClientOptions.ClientId
         };
@@ -536,7 +536,7 @@ public class Oid4VciClientService : IOid4VciClientService
             GrantType = AuthorizationCodeGrantTypeIdentifier,
             RedirectUri = session.AuthorizationData.ClientOptions.RedirectUri,
             CodeVerifier = session.AuthorizationCodeParameters.Verifier,
-            Code = issuanceSession.Code,
+            Code = issuanceSession.AuthFlowSessionCode,
             Scope = string.Join(" ", scopes),
             ClientId = session.AuthorizationData.ClientOptions.ClientId
         };

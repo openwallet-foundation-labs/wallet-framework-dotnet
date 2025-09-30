@@ -16,9 +16,10 @@ public record IssuanceSession
     /// <summary>
     ///  Gets the actual authorization code that is received from the authorization server upon successful authorization.
     /// </summary>
-    public string Code { get; }
+    public AuthFlowSessionCode AuthFlowSessionCode { get; }
         
-    private IssuanceSession(AuthFlowSessionState authFlowSessionState, string code) => (AuthFlowSessionState, Code) = (authFlowSessionState, code);
+    private IssuanceSession(AuthFlowSessionState authFlowSessionState, AuthFlowSessionCode authFlowSessionCode) => 
+        (AuthFlowSessionState, AuthFlowSessionCode) = (authFlowSessionState, authFlowSessionCode);
         
     /// <summary>
     ///    Creates a new instance of <see cref="IssuanceSession"/> from the given <see cref="Uri"/>.
@@ -26,19 +27,18 @@ public record IssuanceSession
     /// <param name="uri"></param>
     /// <returns></returns>
     /// <exception cref="InvalidOperationException"></exception>
-    public static IssuanceSession FromUri(Uri uri)
+    public static Validation<IssuanceSession> FromUri(Uri uri)
     {
         var queryParams = ParseQueryString(uri.Query);
         
         var code = queryParams.Get("code");
-        if (string.IsNullOrWhiteSpace(code))
-        {
-            throw new InvalidOperationException("Query parameter 'code' is missing");
-        }
+        var authFlowSessionCodeValidation = AuthFlowSessionCode.ValidAuthFlowSessionCode(code);
         
         var sessionStateParam = queryParams.Get("state");
-        var authFlowSessionState = AuthFlowSessionState.ValidAuthFlowSessionState(sessionStateParam).Fallback(AuthFlowSessionState.CreateAuthFlowSessionState());
+        var authFlowSessionStateValidation = AuthFlowSessionState.ValidAuthFlowSessionState(sessionStateParam);
 
-        return new IssuanceSession(authFlowSessionState, code);
+        return from authFlowSessionCode in authFlowSessionCodeValidation 
+            from authFlowSessionState in authFlowSessionStateValidation
+            select new IssuanceSession(authFlowSessionState, authFlowSessionCode);
     }
 }
