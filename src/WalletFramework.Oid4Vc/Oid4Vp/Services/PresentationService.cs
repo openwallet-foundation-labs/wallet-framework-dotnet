@@ -1,5 +1,4 @@
 using LanguageExt;
-using Microsoft.IdentityModel.Tokens;
 using OneOf;
 using WalletFramework.Core.Credentials.Abstractions;
 using WalletFramework.Core.Functional;
@@ -13,6 +12,7 @@ using WalletFramework.Oid4Vc.Oid4Vci.CredConfiguration.Models;
 using WalletFramework.Oid4Vc.Oid4Vp.AuthResponse.Encryption.Abstractions;
 using WalletFramework.Oid4Vc.Oid4Vp.DcApi.Models;
 using WalletFramework.Oid4Vc.Oid4Vp.Dcql.CredentialQueries;
+using WalletFramework.Oid4Vc.Oid4Vp.Jwk;
 using WalletFramework.Oid4Vc.Oid4Vp.Models;
 using WalletFramework.Oid4Vc.Oid4Vp.PresentationExchange.Models;
 using WalletFramework.Oid4Vc.Oid4Vp.TransactionDatas;
@@ -158,36 +158,34 @@ public class PresentationService : IPresentationService
                     switch (authorizationRequest.ResponseMode)
                     {
                         case AuthorizationRequest.DcApi:
-                            var unencryptedVpDcApiHandover = OpenId4VpDcApiHandover.FromAuthorizationRequest(
-                                authorizationRequest,
+                            var handoverInfo = new OpenId4VpDcApiHandoverInfo(
                                 origin.UnwrapOrThrow(),
-                                Option<JsonWebKey>.None);
-                            
-                            sessionTranscript = unencryptedVpDcApiHandover.ToSessionTranscript();
+                                authorizationRequest.Nonce,
+                                Option<byte[]>.None
+                            );
+
+                            var handover = new OpenId4VpDcApiHandover(handoverInfo);
+                            sessionTranscript = handover.ToSessionTranscript();
+                            mdocNonce = handover.MdocGeneratedNonce;
                             break;
                         case AuthorizationRequest.DcApiJwt:
-                            var encryptedVpDcApiHandover = OpenId4VpDcApiHandover.FromAuthorizationRequest(
-                                authorizationRequest,
+                            var verifierPubKey = await _verifierKeyService.GetPublicKey(authorizationRequest);
+
+                            var dcApiHandoverInfo = new OpenId4VpDcApiHandoverInfo(
                                 origin.UnwrapOrThrow(),
-                                await _verifierKeyService.GetPublicKey(authorizationRequest));
-                            
-                            sessionTranscript = encryptedVpDcApiHandover.ToSessionTranscript();
-                            mdocNonce = encryptedVpDcApiHandover.MdocGeneratedNonce;
+                                authorizationRequest.Nonce,
+                                JwkFun.GetThumbprint(verifierPubKey)
+                            );
+
+                            var dcApiHandover = new OpenId4VpDcApiHandover(dcApiHandoverInfo);
+                            mdocNonce = dcApiHandover.MdocGeneratedNonce;
+                            sessionTranscript = dcApiHandover.ToSessionTranscript();
                             break;
                         case AuthorizationRequest.DirectPost:
-                            var unencryptedVpHandovers = OpenId4VpHandover.FromAuthorizationRequest(
-                                authorizationRequest,
-                                Option<JsonWebKey>.None);
-                            
-                            sessionTranscript = unencryptedVpHandovers.ToSessionTranscript();
-                            break;
                         case AuthorizationRequest.DirectPostJwt:
-                            var encryptedVpHandovers = OpenId4VpHandover.FromAuthorizationRequest(
-                                authorizationRequest,
-                                await _verifierKeyService.GetPublicKey(authorizationRequest));
-                            
-                            sessionTranscript = encryptedVpHandovers.ToSessionTranscript();
-                            mdocNonce = encryptedVpHandovers.MdocGeneratedNonce;
+                            var vpHandover = authorizationRequest.ToVpHandover();
+                            mdocNonce = vpHandover.MdocGeneratedNonce;
+                            sessionTranscript = vpHandover.ToSessionTranscript();
                             break;
                         default:
                             throw new ArgumentOutOfRangeException(nameof(authorizationRequest.ResponseMode));

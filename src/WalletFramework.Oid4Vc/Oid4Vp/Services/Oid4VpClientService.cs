@@ -75,7 +75,6 @@ public class Oid4VpClientService : IOid4VpClientService
         IOid4VpHaipClient oid4VpHaipClient,
         IOid4VpRecordService oid4VpRecordService,
         IPresentationService presentationService,
-        IVerifierKeyService verifierKeyService,
         ISdJwtVcHolderService sdJwtVcHolderService)
     {
         _agentProvider = agentProvider;
@@ -90,7 +89,6 @@ public class Oid4VpClientService : IOid4VpClientService
         _oid4VpHaipClient = oid4VpHaipClient;
         _oid4VpRecordService = oid4VpRecordService;
         _presentationService = presentationService;
-        _verifierKeyService = verifierKeyService;
         _sdJwtVcHolderService = sdJwtVcHolderService;
     }
 
@@ -106,7 +104,6 @@ public class Oid4VpClientService : IOid4VpClientService
     private readonly IOid4VpHaipClient _oid4VpHaipClient;
     private readonly IOid4VpRecordService _oid4VpRecordService;
     private readonly IPresentationService _presentationService;
-    private readonly IVerifierKeyService _verifierKeyService;
     private readonly ISdJwtVcHolderService _sdJwtVcHolderService;
 
     public async Task<Option<Uri>> AbortAuthorizationRequest(AuthorizationRequestCancellation cancellation)
@@ -224,7 +221,7 @@ public class Oid4VpClientService : IOid4VpClientService
 
             switch (presentation.PresentedCredential)
             {
-                case SdJwtRecord sdJwtRecord: 
+                case SdJwtRecord sdJwtRecord:
                     var issuanceSdJwtDoc = sdJwtRecord.ToSdJwtDoc();
                     var sdJwtDoc = new SdJwtDoc(presentation.PresentationMap.Presentation);
 
@@ -242,7 +239,7 @@ public class Oid4VpClientService : IOid4VpClientService
                             key = claim.Key,
                             value = new PresentedClaim { Value = claim.Value }
                         };
-                    
+
                     result = new PresentedCredentialSet
                     {
                         SdJwtCredentialType = Vct.ValidVct(sdJwtRecord.Vct).UnwrapOrThrow(),
@@ -411,14 +408,7 @@ public class Oid4VpClientService : IOid4VpClientService
 
                     var mdoc = mdocRecord.Mdoc.SelectivelyDisclose(toDisclose);
 
-                    var responseEncryptionKey = authorizationRequest.ResponseMode == AuthorizationRequest.DirectPostJwt
-                        ? await _verifierKeyService.GetPublicKey(authorizationRequest)
-                        : Option<JsonWebKey>.None;
-                    
-                    var handover = OpenId4VpHandover.FromAuthorizationRequest(
-                        authorizationRequest,
-                        responseEncryptionKey);
-                    
+                    var handover = authorizationRequest.ToVpHandover();
                     mdocNonce = handover.MdocGeneratedNonce;
                     var sessionTranscript = handover.ToSessionTranscript();
 
