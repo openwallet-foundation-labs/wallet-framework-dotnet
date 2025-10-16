@@ -1,0 +1,11 @@
+<Project>
+  <Target Name="WarnOnLegacyReferences" BeforeTargets="Build">
+    <ItemGroup>
+      <_LegacyRefs Include="@(ProjectReference)"
+                   Condition="$([System.Text.RegularExpressions.Regex]::IsMatch('%(ProjectReference.Identity)', '(?i)[/\\\\]legacy[/\\\\]'))" />
+    </ItemGroup>
+    <Warning Condition="'@(_LegacyRefs)' != ''"
+             Text="Project '$(MSBuildProjectName)' references legacy projects: @(_LegacyRefs). These are deprecated." />
+  </Target>
+</Project>
+

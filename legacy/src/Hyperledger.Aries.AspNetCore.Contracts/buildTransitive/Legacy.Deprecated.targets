@@ -1,0 +1,8 @@
+<Project>
+  <Target Name="WarnLegacyPackage" BeforeTargets="Build">
+    <Warning Text="Package $(MSBuildProjectName) is deprecated and will be removed. Migrate to OID4VC/SD-JWT/MDOC." />
+  </Target>
+</Project>
+
+
+
