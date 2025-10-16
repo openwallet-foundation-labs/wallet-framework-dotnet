@@ -4,7 +4,7 @@ namespace WalletFramework.Oid4Vc.CredentialSet;
 
 public interface ICredentialSetService
 {
-    Task<CredentialSetRecord> RefreshCredentialSetState(CredentialSetRecord credentialSetRecord);
+    Task<CredentialDataSet> RefreshCredentialSetState(CredentialDataSet credentialDataSet);
     
     Task RefreshCredentialSetStates();
 }

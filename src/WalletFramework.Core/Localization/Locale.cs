@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using System.Globalization;
 using LanguageExt;
 using Newtonsoft.Json;
@@ -14,6 +15,8 @@ namespace WalletFramework.Core.Localization;
 ///     ("en-US"). These are based on RFC 4646: https://www.rfc-editor.org/rfc/rfc4646.html.
 ///     <remarks>Locales are case-sensitive.</remarks>
 /// </summary>
+[JsonConverter(typeof(LocalJsonConverter))]
+[TypeConverter(typeof(LocaleTypeConverter))]
 public readonly record struct Locale
 {
     private CultureInfo Value { get; }

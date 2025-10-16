@@ -1,5 +1,5 @@
 using LanguageExt;
-using WalletFramework.MdocVc;
+using WalletFramework.MdocVc.Display;
 using WalletFramework.Oid4Vc.Oid4Vci.CredConfiguration.Models.Mdoc;
 
 namespace WalletFramework.Oid4Vc.Oid4Vci.Implementations;
