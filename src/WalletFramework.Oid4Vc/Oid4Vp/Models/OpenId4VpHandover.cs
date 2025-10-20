@@ -7,17 +7,16 @@ using WalletFramework.MdocLib.Device;
 using WalletFramework.MdocLib.Security;
 using WalletFramework.MdocLib.Security.Abstractions;
 using WalletFramework.Oid4Vc.Oid4Vp.Jwk;
-using WalletFramework.Oid4Vc.Oid4Vp.Models;
 using static WalletFramework.Oid4Vc.Oid4Vp.Models.Nonce;
 
-namespace WalletFramework.Oid4Vc.Oid4Vp.DcApi.Models;
+namespace WalletFramework.Oid4Vc.Oid4Vp.Models;
 
 /// <summary>
-///     Represents OpenID4VPDCAPIHandover according to the OpenID4VP specification.
+///     Represents OpenID4VPHandover according to the OpenID4VP specification.
 ///     Contains a fixed identifier and the SHA-256 hash of OpenID4VPDCAPIHandoverInfo
-///     Structure: ["OpenID4VPDCAPIHandover", OpenID4VPDCAPIHandoverInfoHash]
+///     Structure: ["OpenID4VPHandover", OpenID4VPHandoverInfoHash]
 /// </summary>
-public record OpenId4VpDcApiHandover(OpenId4VpDcApiHandoverInfo HandoverInfo) : IHandover
+public record OpenId4VpHandover(OpenId4VpHandoverInfo HandoverInfo) : IHandover
 {
     /// <summary>
     ///     Mdoc generated nonce created during handover initialization
@@ -31,15 +30,15 @@ public record OpenId4VpDcApiHandover(OpenId4VpDcApiHandoverInfo HandoverInfo) : 
     public CBORObject ToCbor()
     {
         var result = CBORObject.NewArray();
-
-        result.Add(HandoverConstants.DcApiHandoverTypeIdentifier);
+        
+        result.Add(HandoverConstants.BasicHandoverTypeIdentifier);
         result.Add(HandoverInfo.ToHash().AsBytes);
         
         return result;
     }
     
     /// <summary>
-    /// Encodes the handover as CBOR bytes
+    ///     Encodes the handover as CBOR bytes
     /// </summary>
     /// <returns>CBOR-encoded bytes of the handover</returns>
     public byte[] ToCborBytes() => ToCbor().EncodeToBytes();
@@ -53,16 +52,19 @@ public record OpenId4VpDcApiHandover(OpenId4VpDcApiHandoverInfo HandoverInfo) : 
         );
     }
 
-    public static OpenId4VpDcApiHandover FromAuthorizationRequest(AuthorizationRequest request, Origin origin, Option<JsonWebKey> verifierPublicKey)
+    public static OpenId4VpHandover FromAuthorizationRequest(AuthorizationRequest request, Option<JsonWebKey> verifierPublicKey)
     {
         var encryptionKey = verifierPublicKey.OnSome(JwkFun.GetThumbprint);
         
-        var handoverInfo = new OpenId4VpDcApiHandoverInfo(
-            origin,
+        var handoverInfo = new OpenId4VpHandoverInfo(
+            request.ClientIdScheme != null
+                ? $"{request.ClientIdScheme.AsString()}:{request.ClientId}"
+                : request.ClientId!,
             request.Nonce,
+            request.ResponseUri,
             encryptionKey
             );
-
-        return new OpenId4VpDcApiHandover(handoverInfo);
+        
+        return new OpenId4VpHandover(handoverInfo);
     }
 } 
