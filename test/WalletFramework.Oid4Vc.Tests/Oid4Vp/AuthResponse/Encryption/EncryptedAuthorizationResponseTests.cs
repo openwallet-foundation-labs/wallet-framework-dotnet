@@ -21,7 +21,7 @@ public class EncryptedAuthorizationResponseTests
             Option<string[]>.Some(["A256GCM"]),
             mdocNonce);
     
-        sut.Jwe.Length().Should().Be(AuthResponseEncryptionSamples.ValidMdocJwe.Length);
+        sut.Jwe.Length.Should().Be(AuthResponseEncryptionSamples.ValidMdocJwe.Length);
     }
 
     [Fact]

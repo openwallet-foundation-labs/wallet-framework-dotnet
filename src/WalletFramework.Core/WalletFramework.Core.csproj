@@ -3,6 +3,7 @@
         <TargetFramework>net8.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
+        <IsPackable>false</IsPackable>
     </PropertyGroup>
     <ItemGroup>
         <PackageReference Include="jose-jwt" Version="5.0.0"/>
