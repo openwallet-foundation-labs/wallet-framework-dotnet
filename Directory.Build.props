@@ -21,7 +21,7 @@
         <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
     </PropertyGroup>
     <PropertyGroup>
-        <TargetFramework>netstandard2.1</TargetFramework>
+        <TargetFramework>net8.0</TargetFramework>
     </PropertyGroup>
     <!--Versions of packages used across the repository-->
     <PropertyGroup Label="Package Versions">
@@ -41,8 +41,6 @@
         <FluentValidationAspNetCoreVersion>9.2.0</FluentValidationAspNetCoreVersion>
         <FluentValidationVersion>9.2.0</FluentValidationVersion>
         <FlurlVersion>2.8.2</FlurlVersion>
-        <WalletFrameworkIndySdkVersion>2.0.1</WalletFrameworkIndySdkVersion>
-        <HyperledgerIndyVdrVersion>0.4.2-alpha</HyperledgerIndyVdrVersion>
         <MediatrExtensionsMicrosoftDependencyInjectionVersion>8.0.1</MediatrExtensionsMicrosoftDependencyInjectionVersion>
         <MediatrVersion>8.0.2</MediatrVersion>
         <MicroElementsSwashbuckleFluentValidationVersion>4.0.0</MicroElementsSwashbuckleFluentValidationVersion>
