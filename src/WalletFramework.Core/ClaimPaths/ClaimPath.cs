@@ -1,3 +1,4 @@
+using LanguageExt;
 using WalletFramework.Core.ClaimPaths.Errors;
 using WalletFramework.Core.Functional;
 using WalletFramework.Core.Path;
@@ -31,18 +32,60 @@ public readonly struct ClaimPath
             from path in FromComponents(components)
             select path;
     }
+
+    public static JArray ToArray(ClaimPath claimPath)
+    {
+        var array = new JArray();
+        foreach (var component in claimPath.GetPathComponents())
+        {
+            component.Match(
+                key =>
+                {
+                    array.Add(new JValue(key)); 
+                    return Unit.Default;
+                },
+                index =>
+                {
+                    array.Add(new JValue(index)); 
+                    return Unit.Default;
+                },
+                selectAll =>
+                {
+                    array.Add(JValue.CreateNull()); 
+                    return Unit.Default;
+                }
+            );
+        }
+        return array;
+    } 
 }
 
 public static class ClaimPathFun
 {
     public static JsonPath ToJsonPath(this ClaimPath claimPath)
     {
-        var jsonPath = "$." + string.Join('.', claimPath.GetPathComponents().Select(x =>
+        var jsonPath = "$";
+
+        foreach (var component in claimPath.GetPathComponents())
         {
-            if (x.IsKey) return x.AsKey();
-            if (x.IsIndex) return x.AsIndex()?.ToString();
-            return null;
-        }).Where(x => x is not null));
+            component.Match(
+                key =>
+                {
+                    jsonPath += $".{key}";
+                    return Unit.Default;
+                },
+                integer =>
+                {
+                    jsonPath += $"[{integer}]";
+                    return Unit.Default;
+                },
+                selectAll =>
+                {
+                    jsonPath += "[*]";
+                    return Unit.Default;
+                });
+        }
+        
         return JsonPath.ValidJsonPath(jsonPath).UnwrapOrThrow();
     }
 }

@@ -340,10 +340,7 @@ public class Oid4VciClientService : IOid4VciClientService
                                 },
                                 async mdoc =>
                                 {
-                                    var displays = MdocFun.CreateMdocDisplays(configurationPair.Value.AsT1);
-                                    
                                     var record = mdoc.Decoded.ToRecord(
-                                        displays,
                                         response.KeyId.UnwrapOrThrow(),
                                         credentialSet.CredentialSetId,
                                         creds.Count > 1);
@@ -479,10 +476,7 @@ public class Oid4VciClientService : IOid4VciClientService
                                     },
                                     async mdoc =>
                                     {
-                                        var displays = MdocFun.CreateMdocDisplays(configuration.Value.AsT1);
-                                        
                                         var record = mdoc.Decoded.ToRecord(
-                                            displays,
                                             response.KeyId.UnwrapOrThrow(),
                                             credentialSet.CredentialSetId,
                                             creds.Count > 1);
@@ -644,10 +638,7 @@ public class Oid4VciClientService : IOid4VciClientService
                                 },
                                 mdoc =>
                                 {
-                                    var displays = MdocFun.CreateMdocDisplays(configuration.Value.AsT1);
-                                    
                                     var record = mdoc.Decoded.ToRecord(
-                                        displays,
                                         response.KeyId.UnwrapOrThrow(),
                                         credentialSet.CredentialSetId,
                                         creds.Count > 1);

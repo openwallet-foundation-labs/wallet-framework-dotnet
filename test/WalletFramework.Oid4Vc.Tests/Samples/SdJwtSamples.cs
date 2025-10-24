@@ -14,7 +14,6 @@ public static class SdJwtSamples
         
         var record = new SdJwtRecord(
             encodedSdJwt,
-            new Dictionary<string, ClaimMetadata>(),
             [],
             keyId,
             CredentialSetId.CreateCredentialSetId()
@@ -30,7 +29,6 @@ public static class SdJwtSamples
         
         var record = new SdJwtRecord(
             encoded,
-            new Dictionary<string, ClaimMetadata>(),
             [],
             keyId,
             CredentialSetId.CreateCredentialSetId()
@@ -46,7 +44,6 @@ public static class SdJwtSamples
 
         var record = new SdJwtRecord(
             encodedSdJwt,
-            new Dictionary<string, ClaimMetadata>(),
             [],
             keyId,
             CredentialSetId.CreateCredentialSetId()

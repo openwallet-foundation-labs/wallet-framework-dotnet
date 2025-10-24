@@ -14,7 +14,7 @@ public class IssuerMetadataTests
     public void Can_Decode_Draft14_From_Json()
     {
         // Arrange
-        var sample = IssuerMetadataSample.EncodedAsJsonDraft14AndLower;
+        var sample = IssuerMetadataSample.EncodedAsJson;
     
         // Act
         ValidIssuerMetadata(sample).Match(
@@ -48,14 +48,14 @@ public class IssuerMetadataTests
 
         var sut = issuerMetadata.EncodeToJson();
 
-        sut.Should().BeEquivalentTo(IssuerMetadataSample.EncodedAsJsonDraft14AndLower);
+        sut.Should().BeEquivalentTo(IssuerMetadataSample.EncodedAsJson);
     }
 
     [Fact]
     public void Can_Decode_And_Encode_From_Json_Draft14()
     {
         // Arrange
-        var sample = IssuerMetadataSample.EncodedAsJsonDraft14AndLower;
+        var sample = IssuerMetadataSample.EncodedAsJson;
 
         // Act
         ValidIssuerMetadata(sample).Match(
@@ -64,24 +64,6 @@ public class IssuerMetadataTests
             {
                 var sut = issuerMetadata.EncodeToJson();
                 sut.Should().BeEquivalentTo(sample);
-            },
-            _ => Assert.Fail("IssuerMetadata must be valid"));
-    }
-    
-    [Fact]
-    public void Can_Decode_And_Encode_ClaimMetadata_From_Json_Draft15()
-    {
-        // Arrange
-        var sampleDraft15 = IssuerMetadataSample.EncodedAsJsonDraft15;
-        
-        // Act
-        ValidIssuerMetadata(sampleDraft15).Match(
-            // Assert
-            issuerMetadata =>
-            {
-                ValidIssuerMetadata(issuerMetadata.EncodeToJson()).UnwrapOrThrow().CredentialConfigurationsSupported[IssuerMetadataSample.SdJwtConfigurationId].AsT0.Claims
-                    .Should()
-                    .BeEquivalentTo(issuerMetadata.CredentialConfigurationsSupported[IssuerMetadataSample.SdJwtConfigurationId].AsT0.Claims);
             },
             _ => Assert.Fail("IssuerMetadata must be valid"));
     }

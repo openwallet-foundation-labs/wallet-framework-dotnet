@@ -11,7 +11,6 @@ using WalletFramework.Core.Functional;
 using WalletFramework.Core.StatusList;
 using WalletFramework.SdJwtLib.Models;
 using WalletFramework.SdJwtVc.Models.Credential;
-using WalletFramework.SdJwtVc.Models.Credential.Attributes;
 using static WalletFramework.Core.Cryptography.Models.KeyId;
 
 namespace WalletFramework.SdJwtVc.Models.Records;
@@ -23,11 +22,6 @@ namespace WalletFramework.SdJwtVc.Models.Records;
 public sealed class SdJwtRecord : RecordBase, ICredential
 {
     public const int CurrentVersion = 3;
-    
-    /// <summary>
-    ///     Gets or sets the attributes that should be displayed.
-    /// </summary>
-    public Dictionary<string, ClaimMetadata>? DisplayedAttributes { get; set; }
 
     /// <summary>
     ///     Gets or sets the attributes that should be displayed.
@@ -150,7 +144,6 @@ public sealed class SdJwtRecord : RecordBase, ICredential
     /// <summary>
     ///     Constructor for Serialization.
     /// </summary>
-    /// <param name="displayedAttributes">The attributes that should be displayed.</param>
     /// <param name="claims">The claims made.</param>
     /// <param name="disclosures">The disclosures.</param>
     /// <param name="display">The display of the credential.</param>
@@ -166,7 +159,6 @@ public sealed class SdJwtRecord : RecordBase, ICredential
     /// <param name="isOneTimeUse">Indicator whether the credential should be sued only once.</param>
     [JsonConstructor]
     public SdJwtRecord(
-        Dictionary<string, ClaimMetadata>? displayedAttributes,
         Dictionary<string, string> claims,
         ImmutableArray<string> disclosures,
         List<SdJwtDisplay> display,
@@ -185,7 +177,6 @@ public sealed class SdJwtRecord : RecordBase, ICredential
         Disclosures = disclosures;
            
         Display = display;
-        DisplayedAttributes = displayedAttributes;
             
         EncodedIssuerSignedJwt = encodedIssuerSignedJwt;
 
@@ -202,7 +193,6 @@ public sealed class SdJwtRecord : RecordBase, ICredential
     
     public SdJwtRecord(
         string serializedSdJwtWithDisclosures,
-        Dictionary<string, ClaimMetadata>? displayedAttributes,
         List<SdJwtDisplay> display,
         Option<KeyId> keyId,
         CredentialSetId credentialSetId,
@@ -220,7 +210,6 @@ public sealed class SdJwtRecord : RecordBase, ICredential
         Disclosures = sdJwtDoc.Disclosures.Select(x => x.Serialize()).ToImmutableArray();
         Claims = sdJwtDoc.GetAllSubjectClaims();
         Display = display;
-        DisplayedAttributes = displayedAttributes;
         StatusListEntry = (sdJwtDoc.UnsecuredPayload.SelectToken("status")?.SelectToken("status_list")?.ToObject<StatusListEntry>() 
                            ?? sdJwtDoc.UnsecuredPayload.SelectToken("status")?.ToObject<StatusListEntry>()) is not null
             ? sdJwtDoc.UnsecuredPayload.SelectToken("status")?.SelectToken("status_list")?.ToObject<StatusListEntry>() 
@@ -251,7 +240,6 @@ public sealed class SdJwtRecord : RecordBase, ICredential
     
     public SdJwtRecord(
         SdJwtDoc sdJwtDoc,
-        Dictionary<string, ClaimMetadata>? displayedAttributes,
         List<SdJwtDisplay> display,
         Option<KeyId> keyId,
         CredentialSetId credentialSetId,
@@ -268,7 +256,6 @@ public sealed class SdJwtRecord : RecordBase, ICredential
         Disclosures = sdJwtDoc.Disclosures.Select(disclosure => disclosure.Serialize()).ToImmutableArray();
         Claims = sdJwtDoc.GetAllSubjectClaims();
         Display = display;
-        DisplayedAttributes = displayedAttributes;
         StatusListEntry = (sdJwtDoc.UnsecuredPayload.SelectToken("status")?.SelectToken("status_list")?.ToObject<StatusListEntry>() 
                            ?? sdJwtDoc.UnsecuredPayload.SelectToken("status")?.ToObject<StatusListEntry>()) is not null
             ? sdJwtDoc.UnsecuredPayload.SelectToken("status")?.SelectToken("status_list")?.ToObject<StatusListEntry>() 

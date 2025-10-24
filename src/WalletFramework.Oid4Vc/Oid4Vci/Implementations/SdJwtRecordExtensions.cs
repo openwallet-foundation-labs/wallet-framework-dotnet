@@ -19,10 +19,8 @@ public static class SdJwtRecordExtensions
         CredentialSetId credentialSetId,
         bool isOneTimeUse)
     {
-        var claims = configuration.ExtractClaimMetadata();
-        
         var display = 
-            from displays in configuration.CredentialConfiguration.Display
+            from displays in configuration.CredentialConfiguration.CredentialMetadata.Bind(m => m.Display)
             select displays.Select(credentialDisplay =>
             {
                 var backgroundColor = credentialDisplay.BackgroundColor.ToNullable() ?? Color.White;
@@ -44,7 +42,6 @@ public static class SdJwtRecordExtensions
         
         var record = new SdJwtRecord(
             sdJwtDoc,
-            claims,
             display.Fallback([]),
             keyId, 
             credentialSetId,

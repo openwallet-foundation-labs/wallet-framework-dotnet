@@ -30,8 +30,6 @@ public sealed class MdocRecord : RecordBase, ICredential
     public DocType DocType => Mdoc.DocType;
     
     public Mdoc Mdoc { get; }
-
-    public Option<List<MdocDisplay>> Displays { get; }
     
     public KeyId KeyId { get; }
     
@@ -54,8 +52,7 @@ public sealed class MdocRecord : RecordBase, ICredential
     public override string TypeName => "WF.MdocRecord";
 
     public MdocRecord(
-        Mdoc mdoc, 
-        Option<List<MdocDisplay>> displays, 
+        Mdoc mdoc,
         KeyId keyId, 
         string credentialSetId, 
         CredentialState credentialState, 
@@ -64,7 +61,6 @@ public sealed class MdocRecord : RecordBase, ICredential
     {
         CredentialId = CredentialId.CreateCredentialId();
         Mdoc = mdoc;
-        Displays = displays;
         KeyId = keyId;
         CredentialSetId = credentialSetId;
         CredentialState = credentialState;
@@ -110,7 +106,6 @@ public class MdocRecordJsonConverter : JsonConverter<MdocRecord>
 
 public static class MdocRecordFun
 {
-    private const string MdocDisplaysJsonKey = "displays";
     private const string MdocJsonKey = "mdoc";
     private const string KeyIdJsonKey = "keyId";
     private const string CredentialSetIdJsonKey = "credentialSetId";
@@ -130,12 +125,6 @@ public static class MdocRecordFun
         var mdoc = Mdoc
             .ValidMdoc(mdocStr)
             .UnwrapOrThrow(new InvalidOperationException($"The MdocRecord with ID: {id} is corrupt"));
-        
-        var displays =
-            from jToken in json.GetByKey(MdocDisplaysJsonKey).ToOption()
-            from jArray in jToken.ToJArray().ToOption()
-            from mdocDisplays in MdocDisplayFun.DecodeFromJson(jArray)
-            select mdocDisplays;
 
         var keyId = KeyId
             .ValidKeyId(json[KeyIdJsonKey]!.ToString())
@@ -155,7 +144,7 @@ public static class MdocRecordFun
             Some: value => value.ToObject<bool>(),
             None: () => false);
         
-        var result = new MdocRecord(mdoc, displays, keyId, credentialSetId, credentialState, expiresAt, oneTimeUse)
+        var result = new MdocRecord(mdoc, keyId, credentialSetId, credentialState, expiresAt, oneTimeUse)
         {
             Id = id,
             RecordVersion = recordVersion
@@ -177,21 +166,10 @@ public static class MdocRecordFun
         };
         
         record.ExpiresAt.IfSome(expires => result.Add(ExpiresAtJsonKey, expires));
-
-        record.Displays.IfSome(displays =>
-        {
-            var displaysJson = new JArray();
-            foreach (var display in displays)
-            {
-                displaysJson.Add(display.EncodeToJson());
-            }
-
-            result.Add(MdocDisplaysJsonKey, displaysJson);
-        });
         
         return result;
     }
 
-    public static MdocRecord ToRecord(this Mdoc mdoc, Option<List<MdocDisplay>> displays, KeyId keyId, CredentialSetId credentialSetId, bool isOneTimeUse) => 
-        new(mdoc, displays, keyId, credentialSetId, CredentialState.Active, Option<DateTime>.None, isOneTimeUse);
+    public static MdocRecord ToRecord(this Mdoc mdoc, KeyId keyId, CredentialSetId credentialSetId, bool isOneTimeUse) => 
+        new(mdoc, keyId, credentialSetId, CredentialState.Active, Option<DateTime>.None, isOneTimeUse);
 }

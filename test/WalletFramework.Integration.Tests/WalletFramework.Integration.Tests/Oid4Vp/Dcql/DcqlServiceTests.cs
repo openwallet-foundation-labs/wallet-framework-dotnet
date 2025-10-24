@@ -241,7 +241,6 @@ public class DcqlServiceTests
 
         var record = new SdJwtRecord(
             issuedSdJwt.IssuanceFormat,
-            new Dictionary<string, ClaimMetadata>(),
             new List<SdJwtDisplay>(), 
             keyId,
             credentialSetId);

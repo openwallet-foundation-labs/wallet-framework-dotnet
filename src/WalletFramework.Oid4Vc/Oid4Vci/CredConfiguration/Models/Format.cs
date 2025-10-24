@@ -26,7 +26,7 @@ public readonly struct Format
             ? new Format(str)
             : new FormatNotSupportedError(str).ToInvalid<Format>();
     });
-
+    
     private static List<string> SupportedFormats =>
     [
         Constants.SdJwtVcFormat,

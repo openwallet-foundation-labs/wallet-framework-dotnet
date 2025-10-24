@@ -18,7 +18,6 @@ public static class MdocSamples
     public static MdocRecord MdocRecord =>
         new(
             Mdoc,
-            Option<List<MdocDisplay>>.None,
             KeyId.CreateKeyId(),
             CredentialSetId.CreateCredentialSetId(),
             CredentialState.Active,
