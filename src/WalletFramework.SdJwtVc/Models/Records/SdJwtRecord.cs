@@ -24,11 +24,6 @@ public sealed class SdJwtRecord : RecordBase, ICredential
     public const int CurrentVersion = 3;
 
     /// <summary>
-    ///     Gets or sets the attributes that should be displayed.
-    /// </summary>
-    public List<string>? AttributeOrder { get; set; }
-
-    /// <summary>
     ///     Gets or sets the flattened structure of the claims in the credential.
     ///     The key is a JSON path to the claim value in the decoded SdJwtVc.
     /// </summary>
