@@ -4,7 +4,7 @@ using WalletFramework.Core.Functional;
 
 namespace WalletFramework.MdocLib.Elements;
 
-public readonly struct ElementIdentifier
+public readonly record struct ElementIdentifier
 {
     public string Value { get; }
 

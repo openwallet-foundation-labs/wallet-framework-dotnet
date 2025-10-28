@@ -7,4 +7,3 @@
 | Christopher Hempel | [@CHempel-esatus](https://github.com/CHempel-esatus) | CHempel_esatus#6640 |
 | Kevin Dinh         | [@Dindexx](https://github.com/Dindexx)               |                     |
 | Johannes Türk      | [@JoTiTu](https://github.com/JoTiTu)                |                     |
-| Ken Kosmowski      | [@kenkosmowski](https://github.com/kenkosmowski)                |                     |
