@@ -10,6 +10,8 @@ namespace WalletFramework.MdocVc.Persistence;
 public sealed record MdocCredentialRecord : RecordBase
 {
     public string DocType { get; init; }
+    
+    public string CredentialSetId { get; init; }
 
     public string Serialized { get; init; }
 
@@ -25,6 +27,7 @@ public sealed record MdocCredentialRecord : RecordBase
     {
         DocType = mdoc.Mdoc.DocType.AsString();
         Serialized = MdocCredentialSerializer.Serialize(mdoc);
+        CredentialSetId = mdoc.CredentialSetId.AsString();
     }
 
     public MdocCredential ToDomainModel()
