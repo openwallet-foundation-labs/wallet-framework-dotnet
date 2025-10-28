@@ -402,6 +402,8 @@ public class Oid4VciClientService(
         
         //TODO: Make sure that it does not always request all available credConfigurations
         var credentialSets = new List<CredentialDataSet>();
+        var records = new List<ICredential>();
+        var setId = CredentialSetId.CreateCredentialSetId();
         foreach (var configuration in configurations)
         {
             var validResponses = await credentialRequestService.RequestCredentials(
@@ -414,7 +416,6 @@ public class Oid4VciClientService(
             
             var result =
                 from responses in validResponses
-                let setId = CredentialSetId.CreateCredentialSetId()
                 select
                     from response in responses
                     let cNonce = response.CNonce
@@ -442,8 +443,13 @@ public class Oid4VciClientService(
                                             Token = dPop.Token with { CNonce = cNonce.ToNullable() }
                                         }));
                                 });
+
+                            if (configurations.Count == 1)
+                            {
+                                records = [];
+                                setId = CredentialSetId.CreateCredentialSetId();
+                            }
                             
-                            var records = new List<ICredential>();
                             foreach (var credential in creds)
                             {
                                 await credential.Value.Match(
@@ -472,17 +478,29 @@ public class Oid4VciClientService(
                                         records.Add(mdocCredential);
                                     });   
                             }
-                            var dataSet = CredentialDataSet.FromCredentials(
-                                records,
-                                session.AuthorizationData.IssuerMetadata.CredentialIssuer.ToString());
-                            credentialSets.Add(dataSet);
+                            
+                            if (configurations.Count == 1)
+                            {
+                                var dataSet = CredentialDataSet.FromCredentials(
+                                    records,
+                                    session.AuthorizationData.IssuerMetadata.CredentialIssuer.ToString()); 
+                                credentialSets.Add(dataSet);
+                            }
                         },
                         // ReSharper disable once UnusedParameter.Local
                         transactionId => throw new NotImplementedException());
 
             await result.OnSuccess(async tasks => await Task.WhenAll(tasks));
         }
-
+        
+        if (configurations.Count > 1)
+        {
+            var dataSet = CredentialDataSet.FromCredentials(
+                records,
+                session.AuthorizationData.IssuerMetadata.CredentialIssuer.ToString()); 
+            credentialSets.Add(dataSet);
+        }
+        
         await credentialDataSetRepository.AddMany(credentialSets);
         
         await authFlowSessionRepository.Delete(session.AuthFlowSessionState);
