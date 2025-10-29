@@ -11,7 +11,7 @@ namespace WalletFramework.Oid4Vc.Tests.Oid4Vci.Issuer;
 public class IssuerMetadataTests
 {
     [Fact]
-    public void Can_Decode_Draft14_From_Json()
+    public void Can_Decode_From_Json()
     {
         // Arrange
         var sample = IssuerMetadataSample.EncodedAsJson;
