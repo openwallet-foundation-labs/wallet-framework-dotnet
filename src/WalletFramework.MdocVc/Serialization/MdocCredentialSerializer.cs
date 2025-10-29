@@ -4,7 +4,6 @@ using WalletFramework.Core.Json;
 using WalletFramework.Core.Credentials;
 using WalletFramework.Core.Cryptography.Models;
 using WalletFramework.MdocLib;
-using WalletFramework.MdocVc.Display.Serialization;
 using static WalletFramework.MdocVc.Serialization.MdocCredentialSerializationConstants;
 
 namespace WalletFramework.MdocVc.Serialization;

@@ -61,7 +61,7 @@ public static class ClaimMetadataJsonExtensions
     {
         var result = new JObject();
 
-        result.Add(PathJsonKey, ClaimPath.ToArray(display.Path));
+        result.Add(PathJsonKey, ClaimPath.ToJArray(display.Path));
         
         display.Display.IfSome(claimDisplays =>
         {

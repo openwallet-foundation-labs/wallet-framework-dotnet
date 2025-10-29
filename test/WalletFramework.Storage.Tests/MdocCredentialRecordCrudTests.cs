@@ -7,7 +7,6 @@ using WalletFramework.Core.Cryptography.Models;
 using WalletFramework.Core.Functional;
 using WalletFramework.MdocLib;
 using WalletFramework.MdocVc;
-using WalletFramework.MdocVc.Display;
 using WalletFramework.MdocVc.Persistence;
 using WalletFramework.Storage.Database;
 using WalletFramework.TestSamples;

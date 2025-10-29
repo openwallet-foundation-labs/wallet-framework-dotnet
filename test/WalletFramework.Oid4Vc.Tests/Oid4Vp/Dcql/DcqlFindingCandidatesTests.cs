@@ -5,7 +5,6 @@ using WalletFramework.Core.Cryptography.Models;
 using WalletFramework.Core.Functional;
 using WalletFramework.MdocLib;
 using WalletFramework.MdocVc;
-using WalletFramework.MdocVc.Display;
 using WalletFramework.Oid4Vc.Oid4Vp.Models;
 using WalletFramework.Oid4Vc.Tests.Oid4Vp.Dcql.Samples;
 using WalletFramework.Oid4Vc.Tests.Samples;

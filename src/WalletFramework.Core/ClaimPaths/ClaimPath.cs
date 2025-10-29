@@ -1,3 +1,4 @@
+using System.Text;
 using LanguageExt;
 using WalletFramework.Core.ClaimPaths.Errors;
 using WalletFramework.Core.Functional;
@@ -33,7 +34,7 @@ public readonly struct ClaimPath
             select path;
     }
 
-    public static JArray ToArray(ClaimPath claimPath)
+    public static JArray ToJArray(ClaimPath claimPath)
     {
         var array = new JArray();
         foreach (var component in claimPath.GetPathComponents())
@@ -49,7 +50,7 @@ public readonly struct ClaimPath
                     array.Add(new JValue(index)); 
                     return Unit.Default;
                 },
-                selectAll =>
+                _ =>
                 {
                     array.Add(JValue.CreateNull()); 
                     return Unit.Default;
@@ -64,28 +65,29 @@ public static class ClaimPathFun
 {
     public static JsonPath ToJsonPath(this ClaimPath claimPath)
     {
-        var jsonPath = "$";
+        var jsonPath = new StringBuilder();
+        jsonPath.Append('$');
 
         foreach (var component in claimPath.GetPathComponents())
         {
             component.Match(
                 key =>
                 {
-                    jsonPath += $".{key}";
+                    jsonPath.Append($".{key}");
                     return Unit.Default;
                 },
                 integer =>
                 {
-                    jsonPath += $"[{integer}]";
+                    jsonPath.Append($"[{integer}]");
                     return Unit.Default;
                 },
-                selectAll =>
+                _ =>
                 {
-                    jsonPath += "[*]";
+                    jsonPath.Append("[*]");
                     return Unit.Default;
                 });
         }
         
-        return JsonPath.ValidJsonPath(jsonPath).UnwrapOrThrow();
+        return JsonPath.ValidJsonPath(jsonPath.ToString()).UnwrapOrThrow();
     }
 }

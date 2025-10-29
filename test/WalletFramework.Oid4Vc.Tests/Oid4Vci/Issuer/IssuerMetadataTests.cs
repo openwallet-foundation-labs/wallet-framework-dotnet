@@ -44,7 +44,7 @@ public class IssuerMetadataTests
     [Fact]
     public void Can_Encode_To_Json()
     {
-        var issuerMetadata = IssuerMetadataSample.DecodedDraft14AndLower;
+        var issuerMetadata = IssuerMetadataSample.Decoded;
 
         var sut = issuerMetadata.EncodeToJson();
 
@@ -52,7 +52,7 @@ public class IssuerMetadataTests
     }
 
     [Fact]
-    public void Can_Decode_And_Encode_From_Json_Draft14()
+    public void Can_Decode_And_Encode_From_Json()
     {
         // Arrange
         var sample = IssuerMetadataSample.EncodedAsJson;

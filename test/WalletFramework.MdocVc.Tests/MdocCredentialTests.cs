@@ -7,7 +7,6 @@ using WalletFramework.Core.Cryptography.Models;
 using FluentAssertions;
 using Newtonsoft.Json.Linq;
 using LanguageExt;
-using WalletFramework.MdocVc.Display;
 using WalletFramework.MdocVc.Persistence;
 using Xunit;
 

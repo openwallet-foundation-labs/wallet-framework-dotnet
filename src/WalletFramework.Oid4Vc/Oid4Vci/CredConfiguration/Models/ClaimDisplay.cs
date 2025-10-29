@@ -10,9 +10,9 @@ namespace WalletFramework.Oid4Vc.Oid4Vci.CredConfiguration.Models;
 
 public record ClaimDisplay
 {
-    public Option<string> Name { get; set; }
+    public Option<string> Name { get; }
 
-    public Option<Locale> Locale { get; set; }
+    public Option<Locale> Locale { get; }
     
     private ClaimDisplay(Option<string> name, Option<Locale> locale)
     {
