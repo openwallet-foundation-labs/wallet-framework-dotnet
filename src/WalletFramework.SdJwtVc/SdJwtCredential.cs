@@ -9,8 +9,6 @@ using WalletFramework.Core.Functional;
 using WalletFramework.Core.StatusList;
 using WalletFramework.SdJwtLib.Models;
 using WalletFramework.SdJwtVc.Models;
-using WalletFramework.SdJwtVc.Models.Credential;
-using WalletFramework.SdJwtVc.Models.Credential.Attributes;
 
 namespace WalletFramework.SdJwtVc;
 
@@ -37,13 +35,6 @@ public record SdJwtCredential : ICredential
 
     public Option<DateTime> NotBefore { get; init; } = Option<DateTime>.None;
 
-    public Option<Dictionary<string, ClaimMetadata>> DisplayedAttributes { get; } =
-        Option<Dictionary<string, ClaimMetadata>>.None;
-
-    public Option<List<SdJwtDisplay>> Displays { get; init; } = Option<List<SdJwtDisplay>>.None;
-
-    public Option<List<string>> AttributeOrder { get; } = Option<List<string>>.None;
-
     public Option<StatusListEntry> StatusListEntry { get; init; } = Option<StatusListEntry>.None;
     public string EncodedIssuerSignedJwt { get; init; } = string.Empty;
 
@@ -59,7 +50,6 @@ public record SdJwtCredential : ICredential
         SdJwtDoc sdJwtDoc,
         CredentialId credentialId,
         CredentialSetId credentialSetId,
-        Option<List<SdJwtDisplay>> displays,
         Option<KeyId> keyId,
         CredentialState credentialState,
         bool oneTimeUse,
@@ -69,7 +59,6 @@ public record SdJwtCredential : ICredential
         SdJwtDoc = sdJwtDoc;
         CredentialId = credentialId;
         CredentialSetId = credentialSetId;
-        Displays = displays;
         var vctValue = sdJwtDoc.UnsecuredPayload.SelectToken("vct")?.Value<string>()
                        ?? throw new ArgumentNullException(nameof(Vct), "vct claim is missing or null");
         Vct = Vct.ValidVct(vctValue).UnwrapOrThrow();

@@ -4,7 +4,6 @@ using WalletFramework.Core.Json;
 using WalletFramework.Core.Credentials;
 using WalletFramework.Core.Cryptography.Models;
 using WalletFramework.MdocLib;
-using WalletFramework.MdocVc.Display.Serialization;
 using static WalletFramework.MdocVc.Serialization.MdocCredentialSerializationConstants;
 
 namespace WalletFramework.MdocVc.Serialization;
@@ -37,12 +36,6 @@ public static class MdocCredentialSerializer
 
         credential.ExpiresAt.IfSome(expires => result.Add(ExpiresAtJsonKey, expires));
 
-        credential.Displays.IfSome(displays =>
-        {
-            var array = new JArray(displays.Select(MdocDisplaySerializer.Serialize));
-            result.Add(DisplaysJsonKey, array);
-        });
-
         return result;
     }
 
@@ -73,17 +66,10 @@ public static class MdocCredentialSerializer
             from ex in json.GetByKey(ExpiresAtJsonKey).ToOption()
             select ex.ToObject<DateTime>();
 
-        var displays =
-            from token in json.GetByKey(DisplaysJsonKey).ToOption()
-            from array in token.ToJArray().ToOption()
-            from list in array.TraverseAll(t => MdocDisplaySerializer.Deserialize(t.ToString()).ToOption())
-            select list.ToList();
-
         return new MdocCredential(
             mdoc,
             credentialId,
             credentialSetId,
-            displays,
             keyId,
             credentialState,
             oneTimeUse,

@@ -1,5 +1,6 @@
 using LanguageExt;
 using Newtonsoft.Json.Linq;
+using WalletFramework.Core.ClaimPaths;
 using WalletFramework.Core.Functional;
 using WalletFramework.Core.Json;
 using static WalletFramework.Core.Functional.ValidationFun;
@@ -9,8 +10,8 @@ using static WalletFramework.Oid4Vc.Oid4Vci.CredConfiguration.Models.Cryptograph
 using static WalletFramework.Oid4Vc.Oid4Vci.CredConfiguration.Models.CryptograhicSigningAlgValue;
 using static WalletFramework.Oid4Vc.Oid4Vci.CredConfiguration.Models.ProofTypeId;
 using static WalletFramework.Oid4Vc.Oid4Vci.CredConfiguration.Models.ProofTypeMetadata;
-using static WalletFramework.Oid4Vc.Oid4Vci.CredConfiguration.Models.CredentialDisplay;
 using static WalletFramework.Oid4Vc.Oid4Vci.CredConfiguration.Models.CredentialConfigurationFun;
+using static WalletFramework.Oid4Vc.Oid4Vci.CredConfiguration.Models.CredentialMetadata;
 
 namespace WalletFramework.Oid4Vc.Oid4Vci.CredConfiguration.Models;
 
@@ -49,7 +50,7 @@ public record CredentialConfiguration
     /// <summary>
     ///     Gets a list of display properties of the supported credential for different languages.
     /// </summary>
-    public Option<List<CredentialDisplay>> Display { get; }
+    public Option<CredentialMetadata> CredentialMetadata { get; }
 
     private CredentialConfiguration(
         Format format,
@@ -57,14 +58,14 @@ public record CredentialConfiguration
         Option<List<CryptographicBindingMethod>> cryptographicBindingMethodsSupported,
         Option<List<CryptograhicSigningAlgValue>> credentialSigningAlgValuesSupported,
         Option<Dictionary<ProofTypeId, ProofTypeMetadata>> proofTypesSupported,
-        Option<List<CredentialDisplay>> display)
+        Option<CredentialMetadata> credentialMetadata)
     {
         Format = format;
         Scope = scope;
         CryptographicBindingMethodsSupported = cryptographicBindingMethodsSupported;
         CredentialSigningAlgValuesSupported = credentialSigningAlgValuesSupported;
         ProofTypesSupported = proofTypesSupported;
-        Display = display;
+        CredentialMetadata = credentialMetadata;
     }
     
     private static CredentialConfiguration Create(
@@ -73,15 +74,15 @@ public record CredentialConfiguration
         Option<List<CryptographicBindingMethod>> cryptographicBindingMethodsSupported,
         Option<List<CryptograhicSigningAlgValue>> credentialSigningAlgValuesSupported,
         Option<Dictionary<ProofTypeId, ProofTypeMetadata>> proofTypesSupported,
-        Option<List<CredentialDisplay>> display) => new(
+        Option<CredentialMetadata> credentialMetadata) => new(
         format,
         scope,
         cryptographicBindingMethodsSupported,
         credentialSigningAlgValuesSupported,
         proofTypesSupported,
-        display);
+        credentialMetadata);
 
-    public static Validation<CredentialConfiguration> ValidCredentialConfiguration(JToken credentialMetadata)
+    public static Validation<CredentialConfiguration> ValidCredentialConfiguration(JToken credentialMetadata, Func<JToken, Validation<ClaimPath>> claimPathValidation)
     {
         var validBindingMethods = new Func<JToken, Validation<List<CryptographicBindingMethod>>>(bindingMethods => 
             from array in bindingMethods.ToJArray()
@@ -96,11 +97,8 @@ public record CredentialConfiguration
         var validProofTypes = new Func<JToken, Validation<Dictionary<ProofTypeId, ProofTypeMetadata>>>(proofTypes => proofTypes
             .ToJObject()
             .OnSuccess(jObject => jObject.ToValidDictionaryAny(ValidProofTypeId, ValidProofTypeMetadata)));
-        
-        var optionalCredentialDisplays = new Func<JToken, Option<List<CredentialDisplay>>>(credentialDisplays => 
-            from array in credentialDisplays.ToJArray().ToOption()
-            from displays in array.TraverseAny(OptionalCredentialDisplay)
-            select displays.ToList());
+
+        var optionalCredentialMetadata = new Func<JToken, Option<CredentialMetadata>>(token => OptionalCredentialMetadata(token, claimPathValidation));
         
         return Valid(Create)
             .Apply(credentialMetadata.GetByKey(FormatJsonKey).OnSuccess(ValidFormat))
@@ -108,7 +106,7 @@ public record CredentialConfiguration
             .Apply(credentialMetadata.GetByKey(CryptographicBindingMethodsSupportedJsonKey).OnSuccess(validBindingMethods).ToOption())
             .Apply(credentialMetadata.GetByKey(CredentialSigningAlgValuesSupportedJsonKey).OnSuccess(validSigningAlgValues).ToOption())
             .Apply(credentialMetadata.GetByKey(ProofTypesSupportedJsonKey).OnSuccess(validProofTypes).ToOption())
-            .Apply(credentialMetadata.GetByKey(DisplayJsonKey).ToOption().OnSome(optionalCredentialDisplays));
+            .Apply(credentialMetadata.GetByKey(CredentialMetadataJsonKey).ToOption().OnSome(optionalCredentialMetadata));
     }
 }
 
@@ -119,7 +117,7 @@ public static class CredentialConfigurationFun
     public const string CryptographicBindingMethodsSupportedJsonKey = "cryptographic_binding_methods_supported";
     public const string CredentialSigningAlgValuesSupportedJsonKey = "credential_signing_alg_values_supported";
     public const string ProofTypesSupportedJsonKey = "proof_types_supported";
-    public const string DisplayJsonKey = "display";
+    public const string CredentialMetadataJsonKey = "credential_metadata";
     
     public static JObject EncodeToJson(this CredentialConfiguration config)
     {
@@ -159,14 +157,9 @@ public static class CredentialConfigurationFun
             result.Add(ProofTypesSupportedJsonKey, proofTypes);
         });
         
-        config.Display.IfSome(displays =>
+        config.CredentialMetadata.IfSome(metadata =>
         {
-            var displayArray = new JArray();
-            foreach (var display in displays)
-            {
-                displayArray.Add(display.EncodeToJson());
-            }
-            result.Add(DisplayJsonKey, displayArray);
+            result.Add(CredentialMetadataJsonKey, metadata.EncodeToJson());
         });
         
         return result;

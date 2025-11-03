@@ -10,6 +10,7 @@ public sealed record SdJwtCredentialRecordConfiguration : IRecordConfiguration<S
     {
         var entity = modelBuilder.Entity<SdJwtCredentialRecord>();
         entity.HasIndex(r => r.Vct);
+        entity.HasIndex(r => r.CredentialSetId);
 
         return Unit.Default;
     }

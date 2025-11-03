@@ -7,7 +7,6 @@ using WalletFramework.Core.Cryptography.Models;
 using WalletFramework.Core.Functional;
 using WalletFramework.MdocLib;
 using WalletFramework.MdocVc;
-using WalletFramework.MdocVc.Display;
 using WalletFramework.MdocVc.Persistence;
 using WalletFramework.Storage.Database;
 using WalletFramework.TestSamples;
@@ -36,7 +35,6 @@ public class MdocCredentialRecordCrudTests : IDisposable
         var mdoc = Mdoc.ValidMdoc(encodedMdoc).UnwrapOrThrow();
 
         var mdocCredential = mdoc.ToMdocCredential(
-            Option<List<MdocDisplay>>.None,
             KeyId.CreateKeyId(),
             CredentialSetId.CreateCredentialSetId(),
             CredentialState.Active,
@@ -79,7 +77,6 @@ public class MdocCredentialRecordCrudTests : IDisposable
         var keyId = KeyId.CreateKeyId();
 
         var initial = mdoc.ToMdocCredential(
-            Option<List<MdocDisplay>>.None,
             keyId,
             credentialSetId,
             CredentialState.Active,
@@ -91,7 +88,6 @@ public class MdocCredentialRecordCrudTests : IDisposable
 
         // Act
         var updated = mdoc.ToMdocCredential(
-            Option<List<MdocDisplay>>.None,
             keyId,
             credentialSetId,
             CredentialState.Revoked,
@@ -133,7 +129,6 @@ public class MdocCredentialRecordCrudTests : IDisposable
         var keyId = KeyId.CreateKeyId();
 
         var mdocCredential = mdoc.ToMdocCredential(
-            Option<List<MdocDisplay>>.None,
             keyId,
             credentialSetId,
             CredentialState.Active,
@@ -169,7 +164,6 @@ public class MdocCredentialRecordCrudTests : IDisposable
         var keyId = KeyId.CreateKeyId();
 
         var mdocCredential = mdoc.ToMdocCredential(
-            Option<List<MdocDisplay>>.None,
             keyId,
             credentialSetId,
             CredentialState.Active,
@@ -205,8 +199,8 @@ public class MdocCredentialRecordCrudTests : IDisposable
         var csid = CredentialSetId.CreateCredentialSetId();
         var kid = KeyId.CreateKeyId();
 
-        var cred1 = mdoc.ToMdocCredential(Option<List<MdocDisplay>>.None, kid, csid, CredentialState.Active, false, Option<DateTime>.None, id1);
-        var cred2 = mdoc.ToMdocCredential(Option<List<MdocDisplay>>.None, kid, csid, CredentialState.Active, false, Option<DateTime>.None, id2);
+        var cred1 = mdoc.ToMdocCredential(kid, csid, CredentialState.Active, false, Option<DateTime>.None, id1);
+        var cred2 = mdoc.ToMdocCredential(kid, csid, CredentialState.Active, false, Option<DateTime>.None, id2);
 
         await repository.Add(cred1);
         await repository.Add(cred2);
@@ -241,8 +235,8 @@ public class MdocCredentialRecordCrudTests : IDisposable
         var csid = CredentialSetId.CreateCredentialSetId();
         var kid = KeyId.CreateKeyId();
 
-        var cred1 = mdoc.ToMdocCredential(Option<List<MdocDisplay>>.None, kid, csid, CredentialState.Active, false, Option<DateTime>.None, CredentialId.CreateCredentialId());
-        var cred2 = mdoc.ToMdocCredential(Option<List<MdocDisplay>>.None, kid, csid, CredentialState.Active, false, Option<DateTime>.None, CredentialId.CreateCredentialId());
+        var cred1 = mdoc.ToMdocCredential(kid, csid, CredentialState.Active, false, Option<DateTime>.None, CredentialId.CreateCredentialId());
+        var cred2 = mdoc.ToMdocCredential(kid, csid, CredentialState.Active, false, Option<DateTime>.None, CredentialId.CreateCredentialId());
 
         await repository.Add(cred1);
         await repository.Add(cred2);
@@ -277,7 +271,7 @@ public class MdocCredentialRecordCrudTests : IDisposable
         var csid = CredentialSetId.CreateCredentialSetId();
         var kid = KeyId.CreateKeyId();
 
-        var cred1 = mdoc.ToMdocCredential(Option<List<MdocDisplay>>.None, kid, csid, CredentialState.Active, false, Option<DateTime>.None, CredentialId.CreateCredentialId());
+        var cred1 = mdoc.ToMdocCredential(kid, csid, CredentialState.Active, false, Option<DateTime>.None, CredentialId.CreateCredentialId());
 
         await repository.Add(cred1);
 

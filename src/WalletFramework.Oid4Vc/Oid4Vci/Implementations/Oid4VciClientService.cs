@@ -308,7 +308,6 @@ public class Oid4VciClientService(
                                 async sdJwt =>
                                 {
                                     var record = sdJwt.Decoded.ToCredential(
-                                        configurationPair.Value.AsT0,
                                         response.KeyId,
                                         setId,
                                         creds.Count > 1);
@@ -318,13 +317,10 @@ public class Oid4VciClientService(
                                 },
                                 async mdoc =>
                                 {
-                                    var displays = MdocFun.CreateMdocDisplays(configurationPair.Value.AsT1);
-                                    
                                     var mdocCredential = new MdocCredential(
                                         mdoc.Decoded,
                                         CredentialId.CreateCredentialId(), 
                                         setId,
-                                        displays,
                                         response.KeyId.UnwrapOrThrow(),
                                         CredentialState.Active,
                                         creds.Count > 1,
@@ -406,6 +402,8 @@ public class Oid4VciClientService(
         
         //TODO: Make sure that it does not always request all available credConfigurations
         var credentialSets = new List<CredentialDataSet>();
+        var records = new List<ICredential>();
+        var setId = CredentialSetId.CreateCredentialSetId();
         foreach (var configuration in configurations)
         {
             var validResponses = await credentialRequestService.RequestCredentials(
@@ -418,7 +416,6 @@ public class Oid4VciClientService(
             
             var result =
                 from responses in validResponses
-                let setId = CredentialSetId.CreateCredentialSetId()
                 select
                     from response in responses
                     let cNonce = response.CNonce
@@ -446,15 +443,19 @@ public class Oid4VciClientService(
                                             Token = dPop.Token with { CNonce = cNonce.ToNullable() }
                                         }));
                                 });
+
+                            if (configurations.Count == 1)
+                            {
+                                records = [];
+                                setId = CredentialSetId.CreateCredentialSetId();
+                            }
                             
-                            var records = new List<ICredential>();
                             foreach (var credential in creds)
                             {
                                 await credential.Value.Match(
                                     async sdJwt =>
                                     {
                                         var record = sdJwt.Decoded.ToCredential(
-                                            configuration.Value.AsT0,
                                             response.KeyId,
                                             setId,
                                             creds.Count > 1);
@@ -464,13 +465,10 @@ public class Oid4VciClientService(
                                     },
                                     async mdoc =>
                                     {
-                                        var displays = MdocFun.CreateMdocDisplays(configuration.Value.AsT1);
-                                        
                                         var mdocCredential = new MdocCredential(
                                             mdoc.Decoded,
                                             CredentialId.CreateCredentialId(),
                                             setId,
-                                            displays,
                                             response.KeyId.UnwrapOrThrow(),
                                             CredentialState.Active,
                                             creds.Count > 1,
@@ -480,17 +478,29 @@ public class Oid4VciClientService(
                                         records.Add(mdocCredential);
                                     });   
                             }
-                            var dataSet = CredentialDataSet.FromCredentials(
-                                records,
-                                session.AuthorizationData.IssuerMetadata.CredentialIssuer.ToString());
-                            credentialSets.Add(dataSet);
+                            
+                            if (configurations.Count == 1)
+                            {
+                                var dataSet = CredentialDataSet.FromCredentials(
+                                    records,
+                                    session.AuthorizationData.IssuerMetadata.CredentialIssuer.ToString()); 
+                                credentialSets.Add(dataSet);
+                            }
                         },
                         // ReSharper disable once UnusedParameter.Local
                         transactionId => throw new NotImplementedException());
 
             await result.OnSuccess(async tasks => await Task.WhenAll(tasks));
         }
-
+        
+        if (configurations.Count > 1)
+        {
+            var dataSet = CredentialDataSet.FromCredentials(
+                records,
+                session.AuthorizationData.IssuerMetadata.CredentialIssuer.ToString()); 
+            credentialSets.Add(dataSet);
+        }
+        
         await credentialDataSetRepository.AddMany(credentialSets);
         
         await authFlowSessionRepository.Delete(session.AuthFlowSessionState);
@@ -613,7 +623,6 @@ public class Oid4VciClientService(
                                 sdJwt =>
                                 {
                                     var record = sdJwt.Decoded.ToCredential(
-                                        configuration.Value.AsT0,
                                         response.KeyId,
                                         setId,
                                         creds.Count > 1);
@@ -622,13 +631,10 @@ public class Oid4VciClientService(
                                 },
                                 mdoc =>
                                 {
-                                    var displays = MdocFun.CreateMdocDisplays(configuration.Value.AsT1);
-                                    
                                     var mdocCredential = new MdocCredential(
                                         mdoc.Decoded,
                                         CredentialId.CreateCredentialId(),
                                         setId,
-                                        displays,
                                         response.KeyId.UnwrapOrThrow(),
                                         CredentialState.Active,
                                         creds.Count > 1,

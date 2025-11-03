@@ -13,6 +13,8 @@ public readonly record struct CredentialSetId
     }
 
     public string AsString() => Value;
+    
+    public Guid AsGuid() => Guid.Parse(Value);
 
     public override string ToString() => Value;
 

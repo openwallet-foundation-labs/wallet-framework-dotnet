@@ -17,8 +17,6 @@ using WalletFramework.Oid4Vc.Oid4Vp.Models;
 using WalletFramework.Oid4Vc.Tests.Samples;
 using WalletFramework.SdJwtVc;
 using WalletFramework.SdJwtLib.Roles.Implementation;
-using WalletFramework.SdJwtVc.Models.Credential;
-using WalletFramework.SdJwtVc.Models.Credential.Attributes;
 using WalletFramework.SdJwtVc.Persistence;
 using WalletFramework.Storage;
 
@@ -243,7 +241,6 @@ public class DcqlServiceTests
             issuedSdJwt,
             CredentialId.CreateCredentialId(),
             credentialSetId,
-            Option<List<SdJwtDisplay>>.None,
             keyId,
             CredentialState.Active,
             false,
