@@ -3,7 +3,6 @@ using WalletFramework.Core.Credentials;
 using WalletFramework.Core.Cryptography.Models;
 using WalletFramework.SdJwtLib.Models;
 using WalletFramework.SdJwtVc;
-using WalletFramework.SdJwtVc.Models.Credential;
 
 namespace WalletFramework.Oid4Vc.Tests.Samples;
 
@@ -17,7 +16,6 @@ public static class SdJwtSamples
             sdJwtDoc,
             CredentialId.CreateCredentialId(),
             CredentialSetId.CreateCredentialSetId(),
-            Option<List<SdJwtDisplay>>.None,
             KeyId.CreateKeyId(),
             CredentialState.Active,
             false,
@@ -34,7 +32,6 @@ public static class SdJwtSamples
             sdJwtDoc,
             CredentialId.CreateCredentialId(),
             CredentialSetId.CreateCredentialSetId(),
-            Option<List<SdJwtDisplay>>.None,
             KeyId.CreateKeyId(),
             CredentialState.Active,
             false,
@@ -51,7 +48,6 @@ public static class SdJwtSamples
             sdJwtDoc,
             CredentialId.CreateCredentialId(),
             CredentialSetId.CreateCredentialSetId(),
-            Option<List<SdJwtDisplay>>.None,
             KeyId.CreateKeyId(),
             CredentialState.Active,
             false,

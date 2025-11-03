@@ -21,10 +21,13 @@ public class ClaimPathTests
     }
     
     [Theory]
-    [InlineData(new[] {"name"}, "$.name")]
-    [InlineData(new[] {"address"}, "$.address")]
-    [InlineData(new[] {"address", "street_address"}, "$.address.street_address")]
-    [InlineData(new[] {"degree", null}, "$.degree")]
+    [InlineData(new object[] {"name"}, "$.name")]
+    [InlineData(new object[] {"address"}, "$.address")]
+    [InlineData(new object[] {"address", "street_address"}, "$.address.street_address")]
+    [InlineData(new object?[] {"degree", null}, "$.degree[*]")]
+    [InlineData(new object?[] {"degree", null, "type"}, "$.degree[*].type")]
+    [InlineData(new object[] {"degree", 1}, "$.degree[1]")]
+    [InlineData(new object[] {"degree", 1, "type"}, "$.degree[1].type")]
     public void Can_Convert_ClaimPath_To_JsonPath(object[] path, string expectedResult)
     {
         var jArray = new JArray(path);

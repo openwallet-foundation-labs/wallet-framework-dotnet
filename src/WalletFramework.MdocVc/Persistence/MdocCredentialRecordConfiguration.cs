@@ -10,6 +10,7 @@ public sealed record MdocCredentialRecordConfiguration : IRecordConfiguration<Md
     {
         var entity = modelBuilder.Entity<MdocCredentialRecord>();
         entity.HasIndex(r => r.DocType);
+        entity.HasIndex(r => r.CredentialSetId);
 
         return Unit.Default;
     }

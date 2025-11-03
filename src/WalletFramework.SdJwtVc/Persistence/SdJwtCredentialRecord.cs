@@ -3,7 +3,6 @@ using Newtonsoft.Json;
 using WalletFramework.Core.Credentials;
 using WalletFramework.Core.Functional;
 using WalletFramework.SdJwtLib.Models;
-using WalletFramework.SdJwtVc.Models.Credential;
 using WalletFramework.Storage.Records;
 
 namespace WalletFramework.SdJwtVc.Persistence;
@@ -23,8 +22,6 @@ public record SdJwtCredentialRecord : RecordBase
     public DateTime? ExpiresAt { get; init; }
 
     public string Vct { get; init; }
-
-    public string? DisplaysJson { get; init; }
 
     public string? ClaimsJson { get; init; }
 
@@ -48,9 +45,6 @@ public record SdJwtCredentialRecord : RecordBase
         ExpiresAt = credential.ExpiresAt.MatchUnsafe(
             x => x,
             () => (DateTime?)null);
-        DisplaysJson = credential.Displays.MatchUnsafe(
-            JsonConvert.SerializeObject,
-            () => null);
         ClaimsJson = JsonConvert.SerializeObject(credential.Claims);
         DisclosuresJson = JsonConvert.SerializeObject(credential.Disclosures);
     }
@@ -63,13 +57,9 @@ public record SdJwtCredentialRecord : RecordBase
         var state = Enum.Parse<CredentialState>(CredentialState);
         var expires = ExpiresAt is null ? Option<DateTime>.None : Option<DateTime>.Some(ExpiresAt.Value);
 
-        var displaysOption = string.IsNullOrWhiteSpace(DisplaysJson)
-            ? Option<List<SdJwtDisplay>>.None
-            : JsonConvert.DeserializeObject<List<SdJwtDisplay>>(DisplaysJson!);
-
         var disclosures = string.IsNullOrWhiteSpace(DisclosuresJson)
             ? []
-            : JsonConvert.DeserializeObject<List<string>>(DisclosuresJson!) ?? new List<string>();
+            : JsonConvert.DeserializeObject<List<string>>(DisclosuresJson!) ?? [];
 
         var serializedSdJwtWithDisclosures = EncodedIssuerSignedJwt
                                              + (disclosures.Count > 0 ? "~" + string.Join("~", disclosures) + "~" : "~");
@@ -80,7 +70,6 @@ public record SdJwtCredentialRecord : RecordBase
             sdJwtDoc,
             credentialId,
             setId,
-            displaysOption,
             keyId,
             state,
             OneTimeUse,

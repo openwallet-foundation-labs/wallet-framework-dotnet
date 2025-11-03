@@ -6,7 +6,6 @@ using WalletFramework.Core.Cryptography.Models;
 using WalletFramework.SdJwtLib.Models;
 using WalletFramework.SdJwtVc;
 using WalletFramework.Storage.Database;
-using WalletFramework.SdJwtVc.Models.Credential;
 using WalletFramework.SdJwtVc.Persistence;
 
 namespace WalletFramework.Storage.Tests;
@@ -40,7 +39,6 @@ public class SdJwtCredentialRecordCrudTests : IDisposable
             sdJwtDoc,
             credentialId,
             credentialSetId,
-            Option<List<SdJwtDisplay>>.None,
             keyId,
             CredentialState.Active,
             false,
@@ -84,7 +82,6 @@ public class SdJwtCredentialRecordCrudTests : IDisposable
             sdJwtDoc,
             credentialId,
             credentialSetId,
-            Option<List<SdJwtDisplay>>.None,
             keyId,
             CredentialState.Active,
             false,
