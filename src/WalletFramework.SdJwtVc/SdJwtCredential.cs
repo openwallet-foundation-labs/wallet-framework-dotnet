@@ -22,8 +22,7 @@ public record SdJwtCredential : ICredential
 
     public CredentialSetId CredentialSetId { get; init; }
 
-    public CredentialState CredentialState { get; init; }
-        = CredentialState.Active;
+    public CredentialState CredentialState { get; init; } = CredentialState.Active;
 
     public Dictionary<string, string> Claims { get; init; } = new();
 
@@ -37,7 +36,7 @@ public record SdJwtCredential : ICredential
 
     public Option<DateTime> NotBefore { get; init; } = Option<DateTime>.None;
 
-    public Option<Dictionary<string, ClaimMetadata>> DisplayedAttributes { get; } =
+    public Option<Dictionary<string, ClaimMetadata>> DisplayedAttributes { get; } = 
         Option<Dictionary<string, ClaimMetadata>>.None;
 
     public Option<List<SdJwtDisplay>> Displays { get; init; } = Option<List<SdJwtDisplay>>.None;
@@ -83,7 +82,7 @@ public record SdJwtCredential : ICredential
 
         Format = token.Header.Typ;
 
-        Disclosures = sdJwtDoc.Disclosures.Select(x => x.Serialize()).ToImmutableArray();
+        Disclosures = [..sdJwtDoc.Disclosures.Select(x => x.Serialize())];
         Claims = GetAllSubjectClaims(sdJwtDoc);
 
         var status = sdJwtDoc.UnsecuredPayload.SelectToken("status")?.SelectToken("status_list")

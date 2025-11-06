@@ -81,13 +81,22 @@ public sealed record CredentialDataSetRecord : RecordBase
             : DocType.ValidDoctype(new JValue(MDocCredentialType!)).ToOption();
 
         var attributes = JsonConvert.DeserializeObject<Dictionary<string, string>>(AttributesJson)
-                         ?? new Dictionary<string, string>();
+                         ?? [];
 
         var state = Enum.Parse<CredentialState>(State);
 
-        var statusList = string.IsNullOrWhiteSpace(StatusListJson)
-            ? Option<StatusListEntry>.None
-            : StatusListEntry.FromJObject(JObject.Parse(StatusListJson!)).ToOption();
+        Option<StatusListEntry> statusList;
+        if (string.IsNullOrWhiteSpace(StatusListJson))
+        {
+            statusList = Option<StatusListEntry>.None;
+        }
+        else
+        {
+            var statusListObject = JObject.Parse(StatusListJson!);
+            var normalizedStatusListObject = new JObject(
+                statusListObject.Properties().Select(prop => new JProperty(prop.Name.ToLowerInvariant(), prop.Value)));
+            statusList = StatusListEntry.FromJObject(normalizedStatusListObject).ToOption();
+        }
 
         return new CredentialDataSet(
             setId,
