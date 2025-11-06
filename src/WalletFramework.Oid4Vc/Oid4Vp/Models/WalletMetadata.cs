@@ -26,12 +26,12 @@ public record WalletMetadata
         {
             SdJwtVcFormat = new SdJwtFormat
             {
-                IssuerSignedJwtAlgValues = ["ES256", "ES384", "ES512", "RS256"],
+                IssuerSignedJwtAlgValues = ["ES256"],
                 KeyBindingJwtAlgValues = ["ES256"]
             },
             SdJwtDcFormat = new SdJwtFormat
             {
-                IssuerSignedJwtAlgValues = ["ES256", "ES384", "ES512", "RS256"],
+                IssuerSignedJwtAlgValues = ["ES256"],
                 KeyBindingJwtAlgValues = ["ES256"]
             },
             MDocFormat = new MDocFormat
