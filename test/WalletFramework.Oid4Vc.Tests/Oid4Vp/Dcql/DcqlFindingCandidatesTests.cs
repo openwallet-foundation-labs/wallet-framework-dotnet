@@ -5,7 +5,6 @@ using WalletFramework.Core.Cryptography.Models;
 using WalletFramework.Core.Functional;
 using WalletFramework.MdocLib;
 using WalletFramework.MdocVc;
-using WalletFramework.MdocVc.Display;
 using WalletFramework.Oid4Vc.Oid4Vp.Models;
 using WalletFramework.Oid4Vc.Tests.Oid4Vp.Dcql.Samples;
 using WalletFramework.Oid4Vc.Tests.Samples;
@@ -312,7 +311,7 @@ public class DcqlFindingCandidatesTests
         var credentialState = CredentialState.Active;
         var oneTimeUse = false;
 
-        var mdocCredential = new MdocCredential(mdoc, credentialId, credentialSetId, Option<List<MdocDisplay>>.None, keyId, credentialState, oneTimeUse, Option<DateTime>.None);
+        var mdocCredential = new MdocCredential(mdoc, credentialId, credentialSetId, keyId, credentialState, oneTimeUse, Option<DateTime>.None);
         
         return mdocCredential;
     }

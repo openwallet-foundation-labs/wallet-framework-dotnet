@@ -5,8 +5,6 @@ using WalletFramework.Core.Cryptography.Models;
 using WalletFramework.SdJwtLib.Models;
 using WalletFramework.SdJwtLib.Roles;
 using WalletFramework.SdJwtLib.Roles.Implementation;
-using WalletFramework.SdJwtVc.Models.Credential;
-using WalletFramework.SdJwtVc.Models.Credential.Attributes;
 using WalletFramework.SdJwtVc.Services.SdJwtVcHolderService;
 
 namespace WalletFramework.SdJwtVc.Tests;
@@ -38,7 +36,6 @@ public class SdJwtVcHolderServiceTests
             sdJwtDoc,
             credentialId,
             credentialSetId,
-            Option<List<SdJwtDisplay>>.None,
             keyId,
             CredentialState.Active,
             false,

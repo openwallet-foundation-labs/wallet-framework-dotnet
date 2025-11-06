@@ -18,7 +18,6 @@ using WalletFramework.Oid4Vc.Tests.Extensions;
 using WalletFramework.Oid4Vc.Tests.Samples;
 using WalletFramework.SdJwtLib.Roles.Implementation;
 using WalletFramework.SdJwtVc;
-using WalletFramework.SdJwtVc.Models.Credential;
 using WalletFramework.SdJwtVc.Persistence;
 using WalletFramework.Storage;
 
@@ -341,7 +340,6 @@ public class PexServiceTests
             issuedSdJwt,
             CredentialId.CreateCredentialId(),
             credentialSetId,
-            Option<List<SdJwtDisplay>>.None,
             keyId,
             CredentialState.Active,
             false,
