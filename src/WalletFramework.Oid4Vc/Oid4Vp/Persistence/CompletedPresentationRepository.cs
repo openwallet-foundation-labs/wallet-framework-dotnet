@@ -10,15 +10,13 @@ public class CompletedPresentationRepository(IRepository<CompletedPresentationRe
 {
     public async Task<Unit> Add(CompletedPresentation domainModel)
     {
-        var toStore = domainModel with { LastTimeUsed = DateTimeOffset.UtcNow };
-        await repository.Add(new CompletedPresentationRecord(toStore));
+        await repository.Add(new CompletedPresentationRecord(domainModel));
         return Unit.Default;
     }
 
     public async Task<Unit> AddMany(IEnumerable<CompletedPresentation> domainModels)
     {
-        var now = DateTimeOffset.UtcNow;
-        var records = domainModels.Select(d => new CompletedPresentationRecord(d with { LastTimeUsed = now }));
+        var records = domainModels.Select(d => new CompletedPresentationRecord(d));
         await repository.AddMany(records);
         return Unit.Default;
     }
@@ -92,8 +90,7 @@ public class CompletedPresentationRepository(IRepository<CompletedPresentationRe
             },
             None: async () =>
             {
-                var toStore = domainModel with { LastTimeUsed = DateTimeOffset.UtcNow };
-                await repository.Add(new CompletedPresentationRecord(toStore));
+                await repository.Add(new CompletedPresentationRecord(domainModel));
             });
 
         return Unit.Default;

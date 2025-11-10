@@ -10,9 +10,13 @@ public class SdJwtCredentialRepository(IRepository<SdJwtCredentialRecord> reposi
 {
     public async Task<Unit> Add(SdJwtCredential domainModel)
     {
-        var record = new SdJwtCredentialRecord(domainModel);
-        await repository.Add(record);
-        return Unit.Default;
+        return await (await GetById(domainModel.CredentialId)).Match(
+            async _ => await Update(domainModel),
+            async () =>
+            {
+                var record = new SdJwtCredentialRecord(domainModel);
+                return await repository.Add(record);
+            });
     }
 
     public async Task<Unit> AddMany(IEnumerable<SdJwtCredential> domainModels)

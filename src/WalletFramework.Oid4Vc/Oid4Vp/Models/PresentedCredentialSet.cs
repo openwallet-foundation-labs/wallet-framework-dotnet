@@ -29,9 +29,13 @@ public static class PresentedCredentialSetExtensions
     
     public static JObject EncodeToJson(this PresentedCredentialSet presentedCredentialSet)
     {
-        var result = new JObject();
-        
-        result.Add(CredentialSetIdJsonKey, presentedCredentialSet.CredentialSetId.ToString());
+        var result = new JObject
+        {
+            {
+                CredentialSetIdJsonKey,
+                presentedCredentialSet.CredentialSetId.ToString()
+            }
+        };
 
         presentedCredentialSet.SdJwtCredentialType.IfSome(sdJwtType =>
             result.Add(SdJwtCredentialTypeJsonKey, sdJwtType.ToString()));

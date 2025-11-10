@@ -4,5 +4,5 @@ namespace WalletFramework.Storage.Database;
 
 public interface IDatabaseCreator
 {
-    Task<Unit> CreateDatabase(CancellationToken cancellationToken = default);
+    Task<Unit> EnsureDatabaseCreated(CancellationToken cancellationToken = default);
 }
