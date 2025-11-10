@@ -32,7 +32,7 @@ jobs:
 
       - name: Calculate RC Number
         id: rc_counter
-        if: env.IS_RELEASE_BRANCH == 'true'
+        if: env.IS_PULL_REQUEST == 'true'
         env:
             GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
             WORKFLOW_NAME: ${{ github.workflow }}
