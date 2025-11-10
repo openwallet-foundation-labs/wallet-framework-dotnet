@@ -21,7 +21,7 @@ env:
   IS_RELEASE_BRANCH: ${{ startsWith(github.ref, 'refs/heads/release/') }}
   IS_MAIN_BRANCH: ${{ github.ref == 'refs/heads/main' }}
 
-jobs:
+jobs: 
   build:
     runs-on: ubuntu-22.04
 
