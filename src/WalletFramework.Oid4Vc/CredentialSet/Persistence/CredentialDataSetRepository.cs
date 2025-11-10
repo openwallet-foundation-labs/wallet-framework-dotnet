@@ -11,9 +11,13 @@ public class CredentialDataSetRepository(IRepository<CredentialDataSetRecord> re
 {
     public virtual async Task<Unit> Add(CredentialDataSet domainModel)
     {
-        var record = new CredentialDataSetRecord(domainModel);
-        await repository.Add(record);
-        return Unit.Default;
+        return await (await GetById(domainModel.CredentialSetId)).Match(
+            async credential => await Update(domainModel),
+            async () =>
+            {
+                var record = new CredentialDataSetRecord(domainModel);
+                return await repository.Add(record);
+            });
     }
 
     public virtual async Task<Unit> AddMany(IEnumerable<CredentialDataSet> domainModels)

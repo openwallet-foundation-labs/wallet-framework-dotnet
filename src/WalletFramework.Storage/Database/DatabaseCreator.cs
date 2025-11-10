@@ -1,13 +1,12 @@
 using LanguageExt;
 using Microsoft.EntityFrameworkCore;
 using WalletFramework.Storage.Database.Exceptions;
-using WalletFramework.Storage.Providers;
 
 namespace WalletFramework.Storage.Database;
 
 public sealed class DatabaseCreator(IDbContextFactory<WalletDbContext> dbContextFactory) : IDatabaseCreator
 {
-    public async Task<Unit> CreateDatabase(CancellationToken cancellationToken = default)
+    public async Task<Unit> EnsureDatabaseCreated(CancellationToken cancellationToken = default)
     {
         await using var db = await dbContextFactory.CreateDbContextAsync(cancellationToken);
 

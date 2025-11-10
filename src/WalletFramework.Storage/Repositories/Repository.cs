@@ -82,8 +82,14 @@ public sealed class Repository<TRecord>(IDbContextFactory<WalletDbContext> dbCon
     public async Task<Unit> Update(TRecord record)
     {
         await using var context = await dbContextFactory.CreateDbContextAsync();
+        
+        var oldRecord = await context.Set<TRecord>().AsNoTracking().SingleAsync(e => e.RecordId == record.RecordId);
 
-        record = record with { UpdatedAt = DateTimeOffset.Now };
+        record = record with
+        {
+            CreatedAt = oldRecord.CreatedAt,
+            UpdatedAt = DateTimeOffset.Now
+        };
         
         context.Set<TRecord>().Update(record);
         await context.SaveChangesAsync();
