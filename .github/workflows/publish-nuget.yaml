@@ -62,9 +62,9 @@ jobs:
             SUFFIX="-dev.$PR_NUMBER"
           elif $IS_PULL_REQUEST; then
             # PR builds (no publish)
-            PR_NUMBER=${{ github.event.pull_request.number }}
+            PR_NUMBER=${{ github.event.pull_request.number }}.
             COMMIT_COUNT=$(git rev-list --count HEAD)
-            SUFFIX="-pr.$PR_NUMBER.$COMMIT_COUNT"
+            SUFFIX="-pr.$PR_NUMBER.$COMMIT_COUNT.${{ steps.rc_counter.outputs.RC_NUMBER }}"
           fi
           echo "APP_VERSION=$VERSION$SUFFIX" >> $GITHUB_ENV
 
