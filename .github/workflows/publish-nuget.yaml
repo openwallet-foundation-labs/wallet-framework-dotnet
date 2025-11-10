@@ -1,71 +1,97 @@
-name: Maui CI
+name: WalletFramework CI
 
 on:
-    push:
-        branches:
-            - main
-    pull_request:
-        branches:
-            - main
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+      - develop
+  pull_request:
+    branches:
+      - main
+      - develop
+      - 'release/**'
 
 env:
-    BUILD_CONFIG: 'Release'
-    SOLUTION: 'src/WalletFramework.sln'
-    IS_PULL_REQUEST: ${{ github.event_name == 'pull_request' }}
-    IS_MAIN_BRANCH: ${{ github.ref == 'refs/heads/main' }}
+  BUILD_CONFIG: 'Release'
+  SOLUTION: 'src/WalletFramework.sln'
+  IS_PULL_REQUEST: ${{ github.event_name == 'pull_request' }}
+  IS_DEVELOP_BRANCH: ${{ github.ref == 'refs/heads/develop' }}
+  IS_RELEASE_BRANCH: ${{ startsWith(github.ref, 'refs/heads/release/') }}
+  IS_MAIN_BRANCH: ${{ github.ref == 'refs/heads/main' }}
 
 jobs:
-    build:
-        
-        runs-on: ubuntu-22.04
-        
-        steps:
-            - uses: actions/checkout@v2
-              with:
-                  fetch-depth: 0
-        
-            - name: Set Version
-              run: |
-                sudo apt-get update && sudo apt-get install -y libxml2-utils
-                VERSION=$(xmllint --xpath "string(/Project/PropertyGroup/Version)" Directory.Build.props)
-                if $IS_MAIN_BRANCH; then
-                  COMMIT_COUNT=$(git log --oneline | wc -l)
-                  SUFFIX="-rc.$COMMIT_COUNT"
-                elif $IS_PULL_REQUEST; then
-                  COMMIT_COUNT=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" "https://api.github.com/repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/commits?per_page=100" | jq length)
-                  SUFFIX="-pr.${{ github.event.pull_request.number }}.$COMMIT_COUNT"
-                fi
-                echo "APP_VERSION=$VERSION$SUFFIX" >> $GITHUB_ENV
+  build:
+    runs-on: ubuntu-22.04
 
-            - name: Setup .NET
-              uses: actions/setup-dotnet@v3
-              with:
-                  global-json-file: global.json
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
 
-#            - name: Install libindy library
-#              run: |
-#                sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys CE7709D068DB5E88
-#                sudo add-apt-repository "deb https://repo.sovrin.org/sdk/deb bionic stable"
-#                sudo apt-get update \
-#                  apt-get install -y libindy
-                  
-            - name: Restore dependencies
-              run: dotnet restore $SOLUTION
-                    
-            - name: Build
-              run: dotnet build $SOLUTION --configuration $BUILD_CONFIG -p:Version=$APP_VERSION
+      - name: Calculate RC Number
+        id: rc_counter
+        if: env.IS_RELEASE_BRANCH == 'true'
+        env:
+            GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+            WORKFLOW_NAME: ${{ github.workflow }}
+            BRANCH_NAME: ${{ github.ref_name }}
+        shell: bash
+        run: |
+            WORKFLOW_ID=$(gh workflow list --json name,id -q ".[] | select(.name == \"$WORKFLOW_NAME\") | .id")
+            RUN_COUNT=$(gh run list --workflow $WORKFLOW_ID --branch $BRANCH_NAME --json status -q ".[] | select(.status != \"in_progress\" and .status != \"queued\") | length")
+            RC_NUMBER=$((RUN_COUNT + 1))
+            
+            echo "Found $RUN_COUNT previous completed runs on this branch."
+            echo "This will be RC number: $RC_NUMBER"
+            echo "RC_NUMBER=$RC_NUMBER" >> $GITHUB_OUTPUT
+            
+      - name: Set Version
+        run: |
+          sudo apt-get update && sudo apt-get install -y libxml2-utils jq
+          VERSION=$(xmllint --xpath "string(/Project/PropertyGroup/Version)" Directory.Build.props)
+          SUFFIX=""
+          if $IS_MAIN_BRANCH; then
+            SUFFIX=""
+          elif $IS_RELEASE_BRANCH; then
+            # Pre-release from release/* branches
+            SUFFIX="-rc.${{ steps.rc_counter.outputs.RC_NUMBER }}"
+          elif $IS_DEVELOP_BRANCH; then
+            PR_NUMBER=${{ github.event.pull_request.number }}
+            SUFFIX="-dev.$PR_NUMBER"
+          elif $IS_PULL_REQUEST; then
+            # PR builds (no publish)
+            PR_NUMBER=${{ github.event.pull_request.number }}
+            COMMIT_COUNT=$(git rev-list --count HEAD)
+            SUFFIX="-pr.$PR_NUMBER.$COMMIT_COUNT"
+          fi
+          echo "APP_VERSION=$VERSION$SUFFIX" >> $GITHUB_ENV
 
-            - name: Run tests
-              run: |
-                dotnet test test/WalletFramework.Core.Tests --configuration $BUILD_CONFIG --no-restore --no-build
-                dotnet test test/WalletFramework.MdocLib.Tests --configuration $BUILD_CONFIG --no-restore --no-build
-                dotnet test test/WalletFramework.MdocVc.Tests --configuration $BUILD_CONFIG --no-restore --no-build
-                dotnet test test/WalletFramework.Oid4Vc.Tests --configuration $BUILD_CONFIG --no-restore --no-build
-                dotnet test test/WalletFramework.SdJwtVc.Tests --configuration $BUILD_CONFIG --no-restore --no-build
-                dotnet test test/WalletFramework.SdJwtLib.Tests --configuration $BUILD_CONFIG --no-restore --no-build
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
 
-            - name: Pack WalletFramework
-              run: dotnet pack $SOLUTION --configuration $BUILD_CONFIG -p:Version=$APP_VERSION --no-build --output .
+      - name: Restore dependencies
+        run: dotnet restore $SOLUTION
 
-            - name: Publish
-              run: nuget push **\*.nupkg -Source 'https://api.nuget.org/v3/index.json' -ApiKey ${{secrets.NUGET_API_KEY}}
+      - name: Build
+        run: dotnet build $SOLUTION --configuration $BUILD_CONFIG -p:Version=$APP_VERSION
+
+      - name: Run tests
+        run: |
+          dotnet test test/WalletFramework.Core.Tests --configuration $BUILD_CONFIG --no-restore --no-build
+          dotnet test test/WalletFramework.MdocLib.Tests --configuration $BUILD_CONFIG --no-restore --no-build
+          dotnet test test/WalletFramework.MdocVc.Tests --configuration $BUILD_CONFIG --no-restore --no-build
+          dotnet test test/WalletFramework.Oid4Vc.Tests --configuration $BUILD_CONFIG --no-restore --no-build
+          dotnet test test/WalletFramework.SdJwtVc.Tests --configuration $BUILD_CONFIG --no-restore --no-build
+          dotnet test test/WalletFramework.SdJwtLib.Tests --configuration $BUILD_CONFIG --no-restore --no-build
+
+      - name: Pack WalletFramework
+        run: dotnet pack $SOLUTION --configuration $BUILD_CONFIG -p:Version=$APP_VERSION --no-build --output .
+
+      - name: Publish to NuGet (main and release branches only)
+        if: env.IS_PULL_REQUEST == 'false' && (env.IS_MAIN_BRANCH == 'true' || env.IS_RELEASE_BRANCH == 'true')
+        run: |
+            echo 'BUILD NUGET'
+#        run: dotnet nuget push "**/*.nupkg" --source 'https://api.nuget.org/v3/index.json' --api-key ${{ secrets.NUGET_API_KEY }} --skip-duplicate
