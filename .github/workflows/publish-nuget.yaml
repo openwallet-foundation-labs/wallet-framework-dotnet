@@ -42,7 +42,7 @@ jobs:
           elif $IS_PULL_REQUEST; then
             WORKFLOW_ID=$(gh workflow list --json name,id -q ".[] | select(.name == \"${{ github.workflow }}\") | .id")
             echo "workflowID is $WORKFLOW_ID"
-            RUN_COUNT=$(gh run list --workflow "$WORKFLOW_ID" --branch "${{ github.ref_name }}" --json status -q "[.[] | select(.status != \"in_progress\" and .status != \"queued\")] | length")
+            RUN_COUNT=$(gh run list --workflow "$WORKFLOW_ID" --branch "${{ github.head_ref }}" --json status -q "[.[] | select(.status != \"in_progress\" and .status != \"queued\")] | length")
             echo "run count is $RUN_COUNT"
             RC_NUMBER=$((RUN_COUNT + 1))
             echo "RC_NUMBER=$RC_NUMBER" >> $GITHUB_OUTPUT
