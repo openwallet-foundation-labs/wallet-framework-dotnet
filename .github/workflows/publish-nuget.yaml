@@ -29,42 +29,31 @@ jobs:
       - uses: actions/checkout@v2
         with:
           fetch-depth: 0
-
-      - name: Calculate RC Number
-        id: rc_counter
-        if: env.IS_PULL_REQUEST == 'true'
-        env:
-            GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-            WORKFLOW_NAME: ${{ github.workflow }}
-            BRANCH_NAME: ${{ github.ref_name }}
-        shell: bash
-        run: |
-            WORKFLOW_ID=$(gh workflow list --json name,id -q ".[] | select(.name == \"$WORKFLOW_NAME\") | .id")
-            RUN_COUNT=$(gh run list --workflow $WORKFLOW_ID --branch $BRANCH_NAME --json status -q ".[] | select(.status != \"in_progress\" and .status != \"queued\") | length")
-            RC_NUMBER=$((RUN_COUNT + 1))
-            
-            echo "Found $RUN_COUNT previous completed runs on this branch."
-            echo "This will be RC number: $RC_NUMBER"
-            echo "RC_NUMBER=$RC_NUMBER" >> $GITHUB_OUTPUT
             
       - name: Set Version
+        env:
+            GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           sudo apt-get update && sudo apt-get install -y libxml2-utils jq
           VERSION=$(xmllint --xpath "string(/Project/PropertyGroup/Version)" Directory.Build.props)
           SUFFIX=""
           if $IS_MAIN_BRANCH; then
             SUFFIX=""
-          elif $IS_RELEASE_BRANCH; then
-            # Pre-release from release/* branches
-            SUFFIX="-rc.${{ steps.rc_counter.outputs.RC_NUMBER }}"
+          elif $IS_PULL_REQUEST; then
+            WORKFLOW_ID=$(gh workflow list --json name,id -q ".[] | select(.name == \"${{ github.workflow }}\") | .id")
+            echo "workflowID is $WORKFLOW_ID"
+            RUN_COUNT=$(gh run list --workflow "$WORKFLOW_ID" --branch "${{ github.ref_name }}" --json status -q ".[] | select(.status != \"in_progress\" and .status != \"queued\") | length")
+            echo "run count is $RUN_COUNT"
+            RC_NUMBER=$((RUN_COUNT + 1))
+            echo "RC_NUMBER=$RC_NUMBER" >> $GITHUB_OUTPUT
+            SUFFIX="-rc.$RC_NUMBER"
           elif $IS_DEVELOP_BRANCH; then
             PR_NUMBER=${{ github.event.pull_request.number }}
             SUFFIX="-dev.$PR_NUMBER"
-          elif $IS_PULL_REQUEST; then
-            # PR builds (no publish)
-            PR_NUMBER=${{ github.event.pull_request.number }}.
-            COMMIT_COUNT=$(git rev-list --count HEAD)
-            SUFFIX="-pr.$PR_NUMBER.$COMMIT_COUNT.${{ steps.rc_counter.outputs.RC_NUMBER }}"
+#          elif $IS_PULL_REQUEST; then
+#            PR_NUMBER=${{ github.event.pull_request.number }}
+#            COMMIT_COUNT=$(git rev-list --count HEAD)
+#            SUFFIX="-pr.$PR_NUMBER.$COMMIT_COUNT.${{ steps.rc_counter.outputs.RC_NUMBER }}"
           fi
           echo "APP_VERSION=$VERSION$SUFFIX" >> $GITHUB_ENV
 
