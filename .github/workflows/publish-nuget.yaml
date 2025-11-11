@@ -11,7 +11,6 @@ on:
       - main
       - develop
       - 'release/**'
-      - v3.0.0
 
 env:
   BUILD_CONFIG: 'Release'
@@ -39,10 +38,10 @@ jobs:
           SUFFIX=""
           if $IS_MAIN_BRANCH; then
             SUFFIX=""
-          elif $IS_PULL_REQUEST; then
+          elif $IS_RELEASE_BRANCH; then
             WORKFLOW_ID=$(gh workflow list --json name,id -q ".[] | select(.name == \"${{ github.workflow }}\") | .id")
             echo "workflowID is $WORKFLOW_ID"
-            RUN_COUNT=$(gh run list --workflow "$WORKFLOW_ID" --branch "${{ github.head_ref }}" --json status -q "[.[] | select(.status != \"in_progress\" and .status != \"queued\")] | length")
+            RUN_COUNT=$(gh run list --workflow "$WORKFLOW_ID" --branch "${{ github.ref_name }}" --json status -q "[.[] | select(.status != \"in_progress\" and .status != \"queued\")] | length")
             echo "run count is $RUN_COUNT"
             RC_NUMBER=$((RUN_COUNT + 1))
             echo "RC_NUMBER=$RC_NUMBER" >> $GITHUB_OUTPUT
@@ -50,6 +49,10 @@ jobs:
           elif $IS_DEVELOP_BRANCH; then
             PR_NUMBER=${{ github.event.pull_request.number }}
             SUFFIX="-dev.$PR_NUMBER"
+          elif $IS_PULL_REQUEST; then
+            PR_NUMBER=${{ github.event.pull_request.number }}
+            COMMIT_COUNT=$(git rev-list --count HEAD)
+            SUFFIX="-pr.$PR_NUMBER.$COMMIT_COUNT"
           fi
             echo "APP_VERSION=$VERSION$SUFFIX" >> $GITHUB_ENV
 
@@ -80,4 +83,4 @@ jobs:
         if: env.IS_PULL_REQUEST == 'false' && (env.IS_MAIN_BRANCH == 'true' || env.IS_RELEASE_BRANCH == 'true')
         run: |
             echo 'BUILD NUGET'
-#        run: dotnet nuget push "**/*.nupkg" --source 'https://api.nuget.org/v3/index.json' --api-key ${{ secrets.NUGET_API_KEY }} --skip-duplicate
+#        run: dotnet nuget push "**/*.nupkg" --source 'https://api.nuget.org/v3/index.json' --api-key ${{ secrets.NUGET_API_KEY }}

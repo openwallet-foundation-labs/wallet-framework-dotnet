@@ -81,6 +81,7 @@ We publish two types of releases:
     ```bash
     git commit -S --signoff -m "Bump version to X.Y.0"
     ```
+    * The GitHub Actions pipeline must be triggered manually in order to build and publish a release candidate
 4.  **Merge into `main` when the release is ready:**
     * Open a PR to merge `release/X.Y.0` into `main`.
     * Get a final review and merge it. **Use a merge commit, not squash.**
@@ -108,7 +109,7 @@ We publish two types of releases:
     git push origin --delete release/X.Y.0
     ```
 8.  **Publish:**
-    * The GitHub Actions pipeline, automatically trigger on merges towards release and main; builds the release assets, and publishes the official package to NuGet.
+    * The GitHub Actions pipeline automatically publishes the official package to NuGet for release branches (`release/X.Y.Z`) and the `main` branch.
     * Go to the GitHub "Releases" page and create a new release from the tag, pasting the changelog notes for this version into the description.
 
 ### Hotfix Release (PATCH)
