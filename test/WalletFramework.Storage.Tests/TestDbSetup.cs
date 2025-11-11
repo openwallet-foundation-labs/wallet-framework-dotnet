@@ -81,7 +81,7 @@ public static class TestDbSetup
 
         await using var scope = serviceProvider.CreateAsyncScope();
         var databaseCreator = scope.ServiceProvider.GetRequiredService<IDatabaseCreator>();
-        await databaseCreator.CreateDatabase();
+        await databaseCreator.EnsureDatabaseCreated();
 
         return (serviceProvider, dbPath);
     }

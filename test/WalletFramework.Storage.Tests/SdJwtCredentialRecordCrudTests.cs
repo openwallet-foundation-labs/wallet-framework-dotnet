@@ -22,7 +22,7 @@ public class SdJwtCredentialRecordCrudTests : IDisposable
     public async Task Can_Store_And_Retrieve_SdJwtCredentialRecord()
     {
         var databaseCreator = _serviceProvider.GetRequiredService<IDatabaseCreator>();
-        await databaseCreator.CreateDatabase();
+        await databaseCreator.EnsureDatabaseCreated();
 
         var repository = _serviceProvider
             .GetRequiredService<IDomainRepository<SdJwtCredential, SdJwtCredentialRecord, CredentialId>>();
@@ -66,7 +66,7 @@ public class SdJwtCredentialRecordCrudTests : IDisposable
     public async Task Can_Delete_SdJwtCredentialRecord_By_Domain()
     {
         var databaseCreator = _serviceProvider.GetRequiredService<IDatabaseCreator>();
-        await databaseCreator.CreateDatabase();
+        await databaseCreator.EnsureDatabaseCreated();
 
         var repository = _serviceProvider
             .GetRequiredService<IDomainRepository<SdJwtCredential, SdJwtCredentialRecord, CredentialId>>();

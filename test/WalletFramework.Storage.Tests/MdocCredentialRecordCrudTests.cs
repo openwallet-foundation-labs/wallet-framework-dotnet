@@ -26,7 +26,7 @@ public class MdocCredentialRecordCrudTests : IDisposable
     {
         // Arrange
         var databaseCreator = _serviceProvider.GetRequiredService<IDatabaseCreator>();
-        await databaseCreator.CreateDatabase();
+        await databaseCreator.EnsureDatabaseCreated();
 
         var repository = _serviceProvider.GetRequiredService<IDomainRepository<MdocCredential, MdocCredentialRecord, CredentialId>>();
 
@@ -65,7 +65,7 @@ public class MdocCredentialRecordCrudTests : IDisposable
     {
         // Arrange
         var databaseCreator = _serviceProvider.GetRequiredService<IDatabaseCreator>();
-        await databaseCreator.CreateDatabase();
+        await databaseCreator.EnsureDatabaseCreated();
 
         var repository = _serviceProvider.GetRequiredService<IDomainRepository<MdocCredential, MdocCredentialRecord, CredentialId>>();
 
@@ -117,7 +117,7 @@ public class MdocCredentialRecordCrudTests : IDisposable
     {
         // Arrange
         var databaseCreator = _serviceProvider.GetRequiredService<IDatabaseCreator>();
-        await databaseCreator.CreateDatabase();
+        await databaseCreator.EnsureDatabaseCreated();
 
         var repository = _serviceProvider.GetRequiredService<IDomainRepository<MdocCredential, MdocCredentialRecord, CredentialId>>();
 
@@ -152,7 +152,7 @@ public class MdocCredentialRecordCrudTests : IDisposable
     {
         // Arrange
         var databaseCreator = _serviceProvider.GetRequiredService<IDatabaseCreator>();
-        await databaseCreator.CreateDatabase();
+        await databaseCreator.EnsureDatabaseCreated();
 
         var repository = _serviceProvider.GetRequiredService<IDomainRepository<MdocCredential, MdocCredentialRecord, CredentialId>>();
 
@@ -186,7 +186,7 @@ public class MdocCredentialRecordCrudTests : IDisposable
     {
         // Arrange
         var databaseCreator = _serviceProvider.GetRequiredService<IDatabaseCreator>();
-        await databaseCreator.CreateDatabase();
+        await databaseCreator.EnsureDatabaseCreated();
 
         var repository = _serviceProvider.GetRequiredService<IDomainRepository<MdocCredential, MdocCredentialRecord, CredentialId>>();
 
@@ -225,7 +225,7 @@ public class MdocCredentialRecordCrudTests : IDisposable
     {
         // Arrange
         var databaseCreator = _serviceProvider.GetRequiredService<IDatabaseCreator>();
-        await databaseCreator.CreateDatabase();
+        await databaseCreator.EnsureDatabaseCreated();
 
         var repository = _serviceProvider.GetRequiredService<IDomainRepository<MdocCredential, MdocCredentialRecord, CredentialId>>();
 
@@ -261,7 +261,7 @@ public class MdocCredentialRecordCrudTests : IDisposable
     {
         // Arrange
         var databaseCreator = _serviceProvider.GetRequiredService<IDatabaseCreator>();
-        await databaseCreator.CreateDatabase();
+        await databaseCreator.EnsureDatabaseCreated();
 
         var repository = _serviceProvider.GetRequiredService<IDomainRepository<MdocCredential, MdocCredentialRecord, CredentialId>>();
 

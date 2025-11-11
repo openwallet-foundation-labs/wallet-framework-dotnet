@@ -22,7 +22,7 @@ public class CompletedPresentationRecordCrudTests : IDisposable
     public async Task Can_Store_And_Retrieve_CompletedPresentationRecord()
     {
         var databaseCreator = _serviceProvider.GetRequiredService<IDatabaseCreator>();
-        await databaseCreator.CreateDatabase();
+        await databaseCreator.EnsureDatabaseCreated();
 
         var repository = _serviceProvider
             .GetRequiredService<IDomainRepository<CompletedPresentation, CompletedPresentationRecord, string>>();
@@ -47,7 +47,7 @@ public class CompletedPresentationRecordCrudTests : IDisposable
     public async Task Can_Update_CompletedPresentationRecord()
     {
         var databaseCreator = _serviceProvider.GetRequiredService<IDatabaseCreator>();
-        await databaseCreator.CreateDatabase();
+        await databaseCreator.EnsureDatabaseCreated();
 
         var repository = _serviceProvider
             .GetRequiredService<IDomainRepository<CompletedPresentation, CompletedPresentationRecord, string>>();
@@ -76,7 +76,7 @@ public class CompletedPresentationRecordCrudTests : IDisposable
     public async Task Can_Delete_CompletedPresentationRecord_By_Id()
     {
         var databaseCreator = _serviceProvider.GetRequiredService<IDatabaseCreator>();
-        await databaseCreator.CreateDatabase();
+        await databaseCreator.EnsureDatabaseCreated();
 
         var repository = _serviceProvider
             .GetRequiredService<IDomainRepository<CompletedPresentation, CompletedPresentationRecord, string>>();
@@ -94,7 +94,7 @@ public class CompletedPresentationRecordCrudTests : IDisposable
     public async Task Can_Delete_CompletedPresentationRecord_By_Domain()
     {
         var databaseCreator = _serviceProvider.GetRequiredService<IDatabaseCreator>();
-        await databaseCreator.CreateDatabase();
+        await databaseCreator.EnsureDatabaseCreated();
 
         var repository = _serviceProvider
             .GetRequiredService<IDomainRepository<CompletedPresentation, CompletedPresentationRecord, string>>();
@@ -112,7 +112,7 @@ public class CompletedPresentationRecordCrudTests : IDisposable
     public async Task Can_ListAll_CompletedPresentationRecords()
     {
         var databaseCreator = _serviceProvider.GetRequiredService<IDatabaseCreator>();
-        await databaseCreator.CreateDatabase();
+        await databaseCreator.EnsureDatabaseCreated();
 
         var repository = _serviceProvider
             .GetRequiredService<IDomainRepository<CompletedPresentation, CompletedPresentationRecord, string>>();
@@ -139,7 +139,7 @@ public class CompletedPresentationRecordCrudTests : IDisposable
     public async Task Can_Find_CompletedPresentationRecords_By_ClientId()
     {
         var databaseCreator = _serviceProvider.GetRequiredService<IDatabaseCreator>();
-        await databaseCreator.CreateDatabase();
+        await databaseCreator.EnsureDatabaseCreated();
 
         var repository = _serviceProvider
             .GetRequiredService<IDomainRepository<CompletedPresentation, CompletedPresentationRecord, string>>();
@@ -170,7 +170,7 @@ public class CompletedPresentationRecordCrudTests : IDisposable
     public async Task RecordConfiguration_Enforces_Unique_PresentationId()
     {
         var databaseCreator = _serviceProvider.GetRequiredService<IDatabaseCreator>();
-        await databaseCreator.CreateDatabase();
+        await databaseCreator.EnsureDatabaseCreated();
 
         var repository = _serviceProvider
             .GetRequiredService<IDomainRepository<CompletedPresentation, CompletedPresentationRecord, string>>();

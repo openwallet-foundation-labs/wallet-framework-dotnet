@@ -22,7 +22,7 @@ public class CredentialDataSetRecordCrudTests : IDisposable
     public async Task Can_Store_And_Retrieve_CredentialSetRecord2()
     {
         var databaseCreator = _serviceProvider.GetRequiredService<IDatabaseCreator>();
-        await databaseCreator.CreateDatabase();
+        await databaseCreator.EnsureDatabaseCreated();
 
         var repository = _serviceProvider
             .GetRequiredService<IDomainRepository<CredentialDataSet, CredentialDataSetRecord, CredentialSetId>>();
@@ -61,7 +61,7 @@ public class CredentialDataSetRecordCrudTests : IDisposable
     public async Task Can_Delete_CredentialDataSetRecord_By_Domain()
     {
         var databaseCreator = _serviceProvider.GetRequiredService<IDatabaseCreator>();
-        await databaseCreator.CreateDatabase();
+        await databaseCreator.EnsureDatabaseCreated();
 
         var repository = _serviceProvider
             .GetRequiredService<IDomainRepository<CredentialDataSet, CredentialDataSetRecord, CredentialSetId>>();

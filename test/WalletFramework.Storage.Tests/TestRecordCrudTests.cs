@@ -25,7 +25,7 @@ public class TestRecordCrudTests : IDisposable
     {
         // Arrange
         var databaseCreator = _serviceProvider.GetRequiredService<IDatabaseCreator>();
-        await databaseCreator.CreateDatabase();
+        await databaseCreator.EnsureDatabaseCreated();
 
         var repository = _serviceProvider.GetRequiredService<IRepository<TestRecord>>();
         var testRecord = TestRecord.Create("Test Name", "Test Description", 42, true);
@@ -57,7 +57,7 @@ public class TestRecordCrudTests : IDisposable
     {
         // Arrange
         var databaseCreator = _serviceProvider.GetRequiredService<IDatabaseCreator>();
-        await databaseCreator.CreateDatabase();
+        await databaseCreator.EnsureDatabaseCreated();
 
         var repository = _serviceProvider.GetRequiredService<IRepository<TestRecord>>();
 
@@ -87,7 +87,7 @@ public class TestRecordCrudTests : IDisposable
     {
         // Arrange
         var databaseCreator = _serviceProvider.GetRequiredService<IDatabaseCreator>();
-        await databaseCreator.CreateDatabase();
+        await databaseCreator.EnsureDatabaseCreated();
 
         var repository = _serviceProvider.GetRequiredService<IRepository<TestRecord>>();
         var nonExistentId = Guid.NewGuid();
@@ -104,7 +104,7 @@ public class TestRecordCrudTests : IDisposable
     {
         // Arrange
         var databaseCreator = _serviceProvider.GetRequiredService<IDatabaseCreator>();
-        await databaseCreator.CreateDatabase();
+        await databaseCreator.EnsureDatabaseCreated();
 
         var repository = _serviceProvider.GetRequiredService<IRepository<TestRecord>>();
         var testRecord = TestRecord.Create("Test Name", "Test Description", 42, true);
@@ -125,7 +125,7 @@ public class TestRecordCrudTests : IDisposable
     {
         // Arrange
         var databaseCreator = _serviceProvider.GetRequiredService<IDatabaseCreator>();
-        await databaseCreator.CreateDatabase();
+        await databaseCreator.EnsureDatabaseCreated();
 
         var repository = _serviceProvider.GetRequiredService<IRepository<TestRecord>>();
 
@@ -152,7 +152,7 @@ public class TestRecordCrudTests : IDisposable
     {
         // Arrange
         var databaseCreator = _serviceProvider.GetRequiredService<IDatabaseCreator>();
-        await databaseCreator.CreateDatabase();
+        await databaseCreator.EnsureDatabaseCreated();
 
         var repository = _serviceProvider.GetRequiredService<IRepository<TestRecord>>();
 
@@ -188,7 +188,7 @@ public class TestRecordCrudTests : IDisposable
     {
         // Arrange
         var databaseCreator = _serviceProvider.GetRequiredService<IDatabaseCreator>();
-        await databaseCreator.CreateDatabase();
+        await databaseCreator.EnsureDatabaseCreated();
 
         var repository = _serviceProvider.GetRequiredService<IRepository<TestRecord>>();
         var testRecord = TestRecord.Create("To Be Deleted", "Description", 999, true);
@@ -211,7 +211,7 @@ public class TestRecordCrudTests : IDisposable
     {
         // Arrange
         var databaseCreator = _serviceProvider.GetRequiredService<IDatabaseCreator>();
-        await databaseCreator.CreateDatabase();
+        await databaseCreator.EnsureDatabaseCreated();
 
         var repository = _serviceProvider.GetRequiredService<IRepository<TestRecord>>();
         var testRecord = TestRecord.Create("To Be Deleted By Id", "Description", 888, false);
@@ -234,7 +234,7 @@ public class TestRecordCrudTests : IDisposable
     {
         // Arrange
         var databaseCreator = _serviceProvider.GetRequiredService<IDatabaseCreator>();
-        await databaseCreator.CreateDatabase();
+        await databaseCreator.EnsureDatabaseCreated();
 
         var repository = _serviceProvider.GetRequiredService<IRepository<TestRecord>>();
         var nonExistentId = Guid.NewGuid();
@@ -249,7 +249,7 @@ public class TestRecordCrudTests : IDisposable
     {
         // Arrange
         var databaseCreator = _serviceProvider.GetRequiredService<IDatabaseCreator>();
-        await databaseCreator.CreateDatabase();
+        await databaseCreator.EnsureDatabaseCreated();
 
         var repository = _serviceProvider.GetRequiredService<IRepository<TestRecord>>();
         var originalRecord = TestRecord.Create("Original Name", "Original Description", 100, false);
@@ -276,7 +276,7 @@ public class TestRecordCrudTests : IDisposable
     {
         // Arrange
         var databaseCreator = _serviceProvider.GetRequiredService<IDatabaseCreator>();
-        await databaseCreator.CreateDatabase();
+        await databaseCreator.EnsureDatabaseCreated();
 
         var repository = _serviceProvider.GetRequiredService<IRepository<TestRecord>>();
         var testRecord = TestRecord.Create("Test", "Description", 1, true);
@@ -304,7 +304,7 @@ public class TestRecordCrudTests : IDisposable
     {
         // Arrange
         var databaseCreator = _serviceProvider.GetRequiredService<IDatabaseCreator>();
-        await databaseCreator.CreateDatabase();
+        await databaseCreator.EnsureDatabaseCreated();
 
         var repository = _serviceProvider.GetRequiredService<IRepository<TestRecord>>();
         var testRecord = TestRecord.Create("Test", "Description", 1, true);
@@ -328,7 +328,7 @@ public class TestRecordCrudTests : IDisposable
     {
         // Arrange
         var databaseCreator = _serviceProvider.GetRequiredService<IDatabaseCreator>();
-        await databaseCreator.CreateDatabase();
+        await databaseCreator.EnsureDatabaseCreated();
 
         var repository = _serviceProvider.GetRequiredService<IRepository<TestRecord>>();
         var testRecord = TestRecord.Create("Test", "Description", 1, true);
@@ -353,7 +353,7 @@ public class TestRecordCrudTests : IDisposable
     {
         // Arrange
         var databaseCreator = _serviceProvider.GetRequiredService<IDatabaseCreator>();
-        await databaseCreator.CreateDatabase();
+        await databaseCreator.EnsureDatabaseCreated();
 
         var repository = _serviceProvider.GetRequiredService<IRepository<TestRecord>>();
         var testRecord = TestRecord.Create("Test", "Description", 1, true);
@@ -383,7 +383,7 @@ public class TestRecordCrudTests : IDisposable
     {
         // Arrange
         var databaseCreator = _serviceProvider.GetRequiredService<IDatabaseCreator>();
-        await databaseCreator.CreateDatabase();
+        await databaseCreator.EnsureDatabaseCreated();
 
         var repository = _serviceProvider.GetRequiredService<IRepository<TestRecord>>();
         var testRecord = TestRecord.Create("Test", "Description", 1, true);
@@ -415,7 +415,7 @@ public class TestRecordCrudTests : IDisposable
     {
         // Arrange
         var databaseCreator = _serviceProvider.GetRequiredService<IDatabaseCreator>();
-        await databaseCreator.CreateDatabase();
+        await databaseCreator.EnsureDatabaseCreated();
 
         var repository = _serviceProvider.GetRequiredService<IRepository<TestRecord>>();
         var testRecord = TestRecord.Create("Test", "Description", 1, true);

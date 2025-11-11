@@ -25,7 +25,7 @@ public class AuthFlowSessionRecordCrudTests : IDisposable
     public async Task Can_Delete_AuthFlowSessionRecord()
     {
         var databaseCreator = _serviceProvider.GetRequiredService<IDatabaseCreator>();
-        await databaseCreator.CreateDatabase();
+        await databaseCreator.EnsureDatabaseCreated();
 
         var repository = _serviceProvider
             .GetRequiredService<IDomainRepository<AuthFlowSession, AuthFlowSessionRecord, AuthFlowSessionState>>();
@@ -42,7 +42,7 @@ public class AuthFlowSessionRecordCrudTests : IDisposable
     public async Task Can_Store_And_Retrieve_AuthFlowSessionRecord()
     {
         var databaseCreator = _serviceProvider.GetRequiredService<IDatabaseCreator>();
-        await databaseCreator.CreateDatabase();
+        await databaseCreator.EnsureDatabaseCreated();
 
         var repository = _serviceProvider
             .GetRequiredService<IDomainRepository<AuthFlowSession, AuthFlowSessionRecord, AuthFlowSessionState>>();
@@ -60,7 +60,7 @@ public class AuthFlowSessionRecordCrudTests : IDisposable
     public async Task Can_Update_AuthFlowSessionRecord()
     {
         var databaseCreator = _serviceProvider.GetRequiredService<IDatabaseCreator>();
-        await databaseCreator.CreateDatabase();
+        await databaseCreator.EnsureDatabaseCreated();
 
         var repository = _serviceProvider
             .GetRequiredService<IDomainRepository<AuthFlowSession, AuthFlowSessionRecord, AuthFlowSessionState>>();
