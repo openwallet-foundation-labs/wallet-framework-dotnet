@@ -31,7 +31,7 @@ jobs:
 
       - name: Set Version
         env:
-            GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           sudo apt-get update && sudo apt-get install -y libxml2-utils jq
           VERSION=$(xmllint --xpath "string(/Project/PropertyGroup/Version)" Directory.Build.props)
@@ -54,16 +54,21 @@ jobs:
             COMMIT_COUNT=$(git rev-list --count HEAD)
             SUFFIX="-pr.$PR_NUMBER.$COMMIT_COUNT"
           fi
-            echo "APP_VERSION=$VERSION$SUFFIX" >> $GITHUB_ENV
+          echo "APP_VERSION=$VERSION$SUFFIX" >> $GITHUB_ENV
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
           global-json-file: global.json
 
+      - name: Install NuGet CLI
+        run: |
+          dotnet tool install -g NuGet.CommandLine --version 6.8.0
+          export PATH="$PATH:$HOME/.dotnet/tools"
+                  
       - name: Restore dependencies
         run: dotnet restore $SOLUTION
-
+                    
       - name: Build
         run: dotnet build $SOLUTION --configuration $BUILD_CONFIG -p:Version=$APP_VERSION
 
@@ -77,10 +82,12 @@ jobs:
           dotnet test test/WalletFramework.SdJwtLib.Tests --configuration $BUILD_CONFIG --no-restore --no-build
 
       - name: Pack WalletFramework
-        run: dotnet pack $SOLUTION --configuration $BUILD_CONFIG -p:Version=$APP_VERSION --no-build --output .
-
-      - name: Publish to NuGet (main and release branches only)
-        if: env.IS_PULL_REQUEST == 'false' && (env.IS_MAIN_BRANCH == 'true' || env.IS_RELEASE_BRANCH == 'true')
         run: |
-            echo 'BUILD NUGET'
-#        run: dotnet nuget push "**/*.nupkg" --source 'https://api.nuget.org/v3/index.json' --api-key ${{ secrets.NUGET_API_KEY }}
+          export PATH="$PATH:$HOME/.dotnet/tools"
+          nuget pack WalletFramework.Main.nuspec -Version $APP_VERSION -Properties "version=$APP_VERSION" -OutputDirectory .
+
+#      - name: Publish to NuGet (main and release branches only)
+#        if: env.IS_PULL_REQUEST == 'false' && (env.IS_MAIN_BRANCH == 'true' || env.IS_RELEASE_BRANCH == 'true')
+#        run: |
+#          echo 'PUBLISH NUGET'
+#          dotnet nuget push "**/*.nupkg" --source 'https://api.nuget.org/v3/index.json' --api-key ${{ secrets.NUGET_API_KEY }}

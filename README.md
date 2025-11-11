@@ -8,6 +8,7 @@ The framework was initiated as Aries Framework .NET in the Hyperledger Foundatio
 
 - [Wallet Framework for .NET](#wallet-framework-for-net)
   - [Roadmap](#roadmap)
+  - [How to get started](#how-to-get-started)
   - [Protocols](#protocols)
   - [OpenID for Verifiable Credentials (OID4VC)](#openid-for-verifiable-credentials-oid4vc)
   - [Credential Formats](#credential-formats)
@@ -19,6 +20,11 @@ The framework was initiated as Aries Framework .NET in the Hyperledger Foundatio
 - SD-JWT VC Support
 - mdoc Support
 
+## How to get started
+
+> **Work In Progress**: This section is under active development.
+
+To get started with Wallet Framework for .NET, you can download the `WalletFramework.Main` NuGet package, which provides a comprehensive set of components for building digital identity wallets.
 
 ## Protocols
 
@@ -45,6 +51,7 @@ The framework was initiated as Aries Framework .NET in the Hyperledger Foundatio
 | ----------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- | ------------------ |
 | SD-JWT-based Verifiable Credentials | [SD-JWT VC](https://datatracker.ietf.org/doc/html/draft-ietf-oauth-sd-jwt-vc-00)                                                          | :construction:     |
 | mdoc (ISO/IEC 18013-5)              | [mdoc](https://www.iso.org/standard/69084.html)                                                                                           | :construction:     |
+
 
 
 ## Contributing
