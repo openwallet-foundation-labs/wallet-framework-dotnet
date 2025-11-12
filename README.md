@@ -47,12 +47,9 @@ The framework was initiated as Aries Framework .NET in the Hyperledger Foundatio
 | mdoc (ISO/IEC 18013-5)              | [mdoc](https://www.iso.org/standard/69084.html)                                                                                           | :construction:     |
 
 
-## Releases / Versioning
-This Repository includes a github actions pipeline which builds and releases the wallet framework whenever a Pull Request is submitted or a merge to the main branch happens.
-When the build and release process is triggered by a pull request the build version has a "pr" suffix.
-If it is triggered by a merge towards the main branch the build version has a "rc" suffix. (e.g. 2.0.0-pr.x.x or 2.0.0-rc.x)
+## Contributing
 
-The build is accessible through the Open Wallet Foundation nuget feed.
+We are actively developing this framework and welcome contributions from the community. Please read our [CONTRIBUTING](./CONTRIBUTING.md) document to understand our branching strategy, versioning strategy and release workflows before submitting a pull request.
 
 ## License
 
