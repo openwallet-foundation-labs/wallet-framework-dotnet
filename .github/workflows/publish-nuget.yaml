@@ -83,4 +83,5 @@ jobs:
         if: env.IS_PULL_REQUEST == 'false' && (env.IS_MAIN_BRANCH == 'true' || env.IS_RELEASE_BRANCH == 'true')
         run: |
             echo 'BUILD NUGET'
+#        TODO: Add the nuget push after the pipeline functionality is fully tested.
 #        run: dotnet nuget push "**/*.nupkg" --source 'https://api.nuget.org/v3/index.json' --api-key ${{ secrets.NUGET_API_KEY }}
