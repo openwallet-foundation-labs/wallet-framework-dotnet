@@ -17,7 +17,7 @@ public record DcApiRequestItem
     /// <summary>
     ///     Gets the data. Contains the actual DcApiRequest.
     /// </summary>
-    public AuthorizationRequest Data { get; }
+    public AuthorizationRequest Data { get; init; }
 
     /// <summary>
     ///     Gets the protocol. Specifies the protocol used for this request.
