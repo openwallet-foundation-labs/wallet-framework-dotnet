@@ -24,17 +24,19 @@ public record DcApiRequestItem
     /// </summary>
     public string Protocol { get; }
     
-    public Option<Origin> Origin { get; init; } = Option<Origin>.None;
+    public Option<Origin> Origin { get; } = Option<Origin>.None;
 
     private DcApiRequestItem(
         AuthorizationRequest data,
-        string protocol)
+        string protocol,
+        Option<Origin> origin)
     {
         Data = data;
         Protocol = protocol;
+        Origin = origin;
     }
 
-    public static Validation<DcApiRequestItem> ValidDcApiRequestItem(JObject requestItemJson)
+    public static Validation<DcApiRequestItem> ValidDcApiRequestItem(JObject requestItemJson, Option<Origin> origin)
     {
         var protocolValidation = requestItemJson
             .GetByKey("protocol")
@@ -53,17 +55,19 @@ public record DcApiRequestItem
             .OnSuccess(jObject =>
             {
                 var protocol = protocolValidation.Fallback(DcApiConstants.UnsignedProtocol);
-                return ProcessAuthRequest(jObject, protocol);
+                return ProcessAuthRequest(jObject, protocol, origin);
             });
 
         return Valid(Create)
             .Apply(dataValidation)
-            .Apply(protocolValidation);
+            .Apply(protocolValidation)
+            .Apply(origin);
     }
 
     private static DcApiRequestItem Create(
         AuthorizationRequest data,
-        string protocol) => new(data, protocol);
+        string protocol,
+        Option<Origin> origin) => new(data, protocol, origin);
 
     private static Validation<AuthorizationRequest> LiftRequest(
         Validation<AuthorizationRequestCancellation, AuthorizationRequest> validation)
@@ -78,7 +82,10 @@ public record DcApiRequestItem
         );
     }
 
-    private static Validation<AuthorizationRequest> ProcessAuthRequest(JObject jObject, string protocol)
+    private static Validation<AuthorizationRequest> ProcessAuthRequest(
+        JObject jObject,
+        string protocol,
+        Option<Origin> origin)
     {
         switch (protocol)
         {
@@ -90,6 +97,7 @@ public record DcApiRequestItem
                 var jToken = jObject.GetByKey("request").UnwrapOrThrow();
                 var result =
                     from requestObject in RequestObject.FromStr(jToken.ToString(), Option<string>.None)
+                    from _ in requestObject.ValidateOrigin(origin)
                     select requestObject.ToAuthorizationRequest();
                 return LiftRequest(result);
             default:

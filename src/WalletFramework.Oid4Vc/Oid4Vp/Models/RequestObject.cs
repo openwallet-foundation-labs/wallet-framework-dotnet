@@ -1,12 +1,16 @@
+using System.Collections;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using LanguageExt;
+using Newtonsoft.Json.Linq;
 using Org.BouncyCastle.X509;
 using WalletFramework.Core.Functional;
 using WalletFramework.Core.X509;
+using WalletFramework.Oid4Vc.Oid4Vp.DcApi.Models;
 using WalletFramework.Oid4Vc.Oid4Vp.Errors;
 using WalletFramework.Oid4Vc.Oid4Vp.Extensions;
+using static WalletFramework.Core.Functional.ValidationFun;
 using X509Certificate = Org.BouncyCastle.X509.X509Certificate;
 using static WalletFramework.Oid4Vc.Oid4Vp.Models.AuthorizationRequest;
 using static Newtonsoft.Json.Linq.JArray;
@@ -24,12 +28,12 @@ public readonly struct RequestObject
     /// <summary>
     ///     The client ID scheme used to obtain and validate metadata of the verifier.
     /// </summary>
-    public ClientIdScheme ClientIdScheme => AuthorizationRequest.ClientIdScheme;
+    public ClientIdScheme ClientIdScheme => AuthorizationRequest.ClientIdScheme!;
 
     /// <summary>
     ///     The client ID of the verifier.
     /// </summary>
-    public string ClientId => AuthorizationRequest.ClientId;
+    public string ClientId => AuthorizationRequest.ClientId!;
 
     private AuthorizationRequest AuthorizationRequest { get; init; }
 
@@ -66,19 +70,20 @@ public readonly struct RequestObject
             return new AuthorizationRequestCancellation(Option<Uri>.None, [error]);
         }
 
-        walletNonce.IfSome(nonce => 
+        walletNonce.IfSome(nonce =>
         {
             if (jwt.Payload.TryGetValue("wallet_nonce", out var nonceValue))
             {
                 if (nonceValue.ToString() != nonce)
-                    throw new InvalidOperationException("wallet_nonce in request object does not match the provided wallet_nonce");
+                    throw new InvalidOperationException(
+                        "wallet_nonce in request object does not match the provided wallet_nonce");
             }
             else
             {
                 throw new InvalidOperationException("wallet_nonce is required but not present in the Request Object");
             }
         });
-        
+
         var json = jwt.Payload.SerializeToJson();
 
         return
@@ -90,7 +95,7 @@ public readonly struct RequestObject
     ///     Gets the authorization request from the request object.
     /// </summary>
     public AuthorizationRequest ToAuthorizationRequest() => AuthorizationRequest;
-    
+
     internal RequestObject WithX509()
     {
         var encodedCertificate = this.GetLeafCertificate().GetEncoded();
@@ -118,7 +123,7 @@ public readonly struct RequestObject
             AuthorizationRequest = authRequest
         };
     }
-    
+
     internal RequestObject WithClientMetadata(Option<ClientMetadata> clientMetadata)
     {
         var authRequest = AuthorizationRequest with
@@ -138,6 +143,13 @@ public readonly struct RequestObject
 /// </summary>
 public static class RequestObjectExtensions
 {
+    public static RequestObject ValidateClientIdPrefix(this RequestObject requestObject) =>
+        requestObject.ClientIdScheme.Value == ClientIdScheme.ClientIdSchemeValue.RedirectUri
+        && requestObject.ToAuthorizationRequest().ResponseUri != requestObject.ClientId
+            ? throw new InvalidOperationException(
+                "When client_id_prefix is 'redirect_uri', the response_uri must match the client_id")
+            : requestObject;
+
     /// <summary>
     ///     Validates the JWT signature.
     /// </summary>
@@ -182,22 +194,15 @@ public static class RequestObjectExtensions
         else
             throw new InvalidOperationException("Validation of trust chain failed");
     }
-    
-    public static RequestObject ValidateClientIdPrefix(this RequestObject requestObject) => 
-        requestObject.ClientIdScheme.Value == ClientIdScheme.ClientIdSchemeValue.RedirectUri 
-        && requestObject.ToAuthorizationRequest().ResponseUri != requestObject.ClientId
-        ? throw new InvalidOperationException("When client_id_prefix is 'redirect_uri', the response_uri must match the client_id")
-        : requestObject;
-    
+
     internal static List<X509Certificate> GetCertificates(this RequestObject requestObject)
     {
         var x5C = ((JwtSecurityToken)requestObject).Header.X5c;
-        var result = Parse(x5C).Select(
-            certAsJToken =>
-            {
-                var certBytes = FromBase64String(certAsJToken.ToString());
-                return new X509CertificateParser().ReadCertificate(certBytes);
-            }).ToList();
+        var result = Parse(x5C).Select(certAsJToken =>
+        {
+            var certBytes = FromBase64String(certAsJToken.ToString());
+            return new X509CertificateParser().ReadCertificate(certBytes);
+        }).ToList();
 
         if (result.Count == 0)
         {
@@ -210,6 +215,35 @@ public static class RequestObjectExtensions
     internal static X509Certificate GetLeafCertificate(this RequestObject requestObject) =>
         GetCertificates(requestObject).First();
 
+    internal static Validation<AuthorizationRequestCancellation, RequestObject> ValidateOrigin(this RequestObject requestObject, Option<Origin> origin)
+    {
+        var authRequest = requestObject.ToAuthorizationRequest();
+        var responseUriOption = authRequest.GetResponseUriMaybe();
+        
+        return origin.Match(
+            value =>
+            {
+                var expectedOrigins = authRequest.ExpectedOrigins;
+                if (expectedOrigins?.Contains(value) ?? false)
+                {
+                    return Prelude.Success<AuthorizationRequestCancellation, RequestObject>(requestObject);
+                }
+                else
+                {
+                    var expectedOriginsList = string.Join(", ", expectedOrigins?.Select(o => o.Value) ?? []);
+                    var error = new OriginMismatchError(
+                        $"Origin {value} is not present in expected origins: [{expectedOriginsList}]");
+                    return new AuthorizationRequestCancellation(responseUriOption, [error]);
+                }
+            },
+            () =>
+            {
+                var error = new OriginMismatchError("Origin is required but not provided");
+                return new AuthorizationRequestCancellation(responseUriOption, [error]);
+            }
+        );
+    }
+
     private static IEnumerable<string> GetSanDnsNames(X509Certificate2 certificate)
     {
         const string sanOid = "2.5.29.17";
@@ -217,13 +251,13 @@ public static class RequestObjectExtensions
 
         foreach (var extension in certificate.Extensions)
         {
-            if (extension.Oid.Value != sanOid)
+            if (extension.Oid!.Value != sanOid)
                 continue;
 
-            var sanExtension = (AsnEncodedData)extension;
+            AsnEncodedData sanExtension = extension;
             var sanData = sanExtension.Format(true);
 
-            foreach (var line in sanData.Split(new[] { "\r\n", "\n", "," }, StringSplitOptions.RemoveEmptyEntries))
+            foreach (var line in sanData.Split(["\r\n", "\n", ","], StringSplitOptions.RemoveEmptyEntries))
             {
                 sanNames.Add(line.Split(':', '=').Last().Trim());
             }
