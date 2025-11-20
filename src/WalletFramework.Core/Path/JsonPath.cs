@@ -2,7 +2,7 @@ using WalletFramework.Core.Functional;
 
 namespace WalletFramework.Core.Path;
 
-public readonly struct JsonPath
+public readonly record struct JsonPath
 {
     private JsonPath(string path) => Value = path;
     

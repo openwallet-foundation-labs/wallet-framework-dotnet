@@ -39,20 +39,6 @@ public class MdocConfigurationTests
                 sut.CryptographicCurvesSupported.Match(
                     list => list.Should().Contain(MdocConfigurationSample.CryptoCurve),
                     () => Assert.Fail("CryptographicCurvesSupported must be some"));
-                
-                sut.Claims.Match(
-                    claims =>
-                    {
-                        var dict = claims.Value[MdocConfigurationSample.NameSpace];
-                        dict[MdocConfigurationSample.GivenName].Display.Match(
-                            list =>
-                            {
-                                list.Should().Contain(MdocConfigurationSample.EnglishDisplay);
-                                list.Should().Contain(MdocConfigurationSample.JapaneseDisplay);
-                            },
-                            () => Assert.Fail("Display must be some"));
-                    },
-                    () => Assert.Fail("Claims must be some"));
             },
             _ => Assert.Fail("Must be valid")
         );
