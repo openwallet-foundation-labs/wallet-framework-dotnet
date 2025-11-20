@@ -1,4 +1,5 @@
 using FluentAssertions;
+using LanguageExt;
 using WalletFramework.Core.Functional;
 using WalletFramework.Oid4Vc.Oid4Vp.DcApi;
 using WalletFramework.Oid4Vc.Oid4Vp.DcApi.Models;
@@ -15,7 +16,7 @@ public class DcApiRequestBatchTests
         var validJson = DcApiSamples.ValidDcApiUnsignedRequestBatchJson;
     
         // Act
-        var result = DcApiRequestBatch.From(validJson);
+        var result = DcApiRequestBatch.From(validJson, Option<Origin>.None);
     
         // Assert
         result.Match(
@@ -54,9 +55,10 @@ public class DcApiRequestBatchTests
     {
         // Arrange
         var validJson = DcApiSamples.ValidDcApiSignedRequestBatchJson;
-    
+        Origin origin = "https://demo.certification.openid.net";
+        
         // Act
-        var result = DcApiRequestBatch.From(validJson);
+        var result = DcApiRequestBatch.From(validJson, origin);
         
         // Assert
         result.Match(
@@ -95,7 +97,7 @@ public class DcApiRequestBatchTests
     {
         // Arrange
         var validJson = DcApiSamples.ValidDcApiUnsignedRequestBatchJson;
-        var result = DcApiRequestBatch.From(validJson);
+        var result = DcApiRequestBatch.From(validJson, Option<Origin>.None);
         
         // Act & Assert
         result.Match(
@@ -118,7 +120,7 @@ public class DcApiRequestBatchTests
     {
         // Arrange
         var modifiedJson = DcApiSamples.ValidDcApiUnsignedRequestBatchJson.Replace($"\"protocol\":\"{DcApiConstants.UnsignedProtocol}\"", "\"protocol\":\"non_existing_protocol\"");
-        var result = DcApiRequestBatch.From(modifiedJson);
+        var result = DcApiRequestBatch.From(modifiedJson, Option<Origin>.None);
         
         // Act & Assert
         result.Match(

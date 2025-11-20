@@ -1,5 +1,7 @@
 using LanguageExt;
 using Newtonsoft.Json.Linq;
+using WalletFramework.Core.ClaimPaths;
+using WalletFramework.Core.ClaimPaths.Errors;
 using WalletFramework.Core.Functional;
 using WalletFramework.Core.Json;
 using WalletFramework.MdocLib;
@@ -22,8 +24,6 @@ public record MdocConfiguration
     public Option<List<CryptographicSuite>> CryptographicSuitesSupported { get; }
     
     public Option<List<CryptographicCurve>> CryptographicCurvesSupported { get; }
-    
-    public Option<ClaimsMetadata> Claims { get; }
 
     public Format Format => CredentialConfiguration.Format;
 
@@ -32,15 +32,13 @@ public record MdocConfiguration
         DocType docType,
         Option<Policy> policy,
         Option<List<CryptographicSuite>> cryptographicSuitesSupported,
-        Option<List<CryptographicCurve>> cryptographicCurvesSupported,
-        Option<ClaimsMetadata> claims)
+        Option<List<CryptographicCurve>> cryptographicCurvesSupported)
     {
         CredentialConfiguration = credentialConfiguration;
         DocType = docType;
         Policy = policy;
         CryptographicSuitesSupported = cryptographicSuitesSupported;
         CryptographicCurvesSupported = cryptographicCurvesSupported;
-        Claims = claims;
     }
 
     private static MdocConfiguration Create(
@@ -48,13 +46,28 @@ public record MdocConfiguration
         DocType docType,
         Option<Policy> policy,
         Option<List<CryptographicSuite>> cryptographicSuitesSupported,
-        Option<List<CryptographicCurve>> cryptographicCurvesSupported,
-        Option<ClaimsMetadata> claims) =>
-        new(credentialConfiguration, docType, policy, cryptographicSuitesSupported, cryptographicCurvesSupported, claims);
+        Option<List<CryptographicCurve>> cryptographicCurvesSupported) =>
+        new(credentialConfiguration, docType, policy, cryptographicSuitesSupported, cryptographicCurvesSupported);
     
     public static Validation<MdocConfiguration> ValidMdocConfiguration(JObject config)
     {
-        var credentialConfiguration = CredentialConfiguration.ValidCredentialConfiguration(config);
+        var mDocClaimPathValidation = new Func<JToken, Validation<ClaimPath>>(token =>
+        {
+            var mDocClaimPath =
+                from jArray in token.ToJArray()
+                from claimPath in ClaimPath.FromJArray(jArray)
+                let pathComponents = claimPath.GetPathComponents()
+                from _ in pathComponents.Count > 2
+                          && pathComponents[0].IsKey
+                          && pathComponents[1].IsKey
+                    ? ValidationFun.Valid(Unit.Default)
+                    : new UnknownComponentError()
+                select claimPath;
+
+            return mDocClaimPath;
+        });
+        
+        var credentialConfiguration = CredentialConfiguration.ValidCredentialConfiguration(config, mDocClaimPathValidation);
         
         var docType = config.GetByKey(DocTypeJsonKey).OnSuccess(ValidDoctype);
         var policy = config.GetByKey(PolicyJsonKey).OnSuccess(ValidPolicy).ToOption();
@@ -73,19 +86,12 @@ public record MdocConfiguration
             .OnSuccess(curves => curves.ToList())
             .ToOption();
 
-        var claims = config
-            .GetByKey(ClaimsJsonKey)
-            .OnSuccess(token => token.ToJObject())
-            .OnSuccess(ClaimsMetadata.ValidClaimsMetadata)
-            .ToOption();
-
         return ValidationFun.Valid(Create)
             .Apply(credentialConfiguration)
             .Apply(docType)
             .Apply(policy)
             .Apply(cryptographicSuitesSupported)
-            .Apply(cryptographicCurvesSupported)
-            .Apply(claims);
+            .Apply(cryptographicCurvesSupported);
     }
 }
 
@@ -95,19 +101,18 @@ public static class MdocConfigurationFun
     public const string PolicyJsonKey = "policy";
     public const string CryptographicSuitesSupportedJsonKey = "cryptographic_suites_supported";
     public const string CryptographicCurvesSupportedJsonKey = "cryptographic_curves_supported";
-    public const string ClaimsJsonKey = "claims";
 
-    public static JObject EncodeToJson(this MdocConfiguration mdocConfig)
+    public static JObject EncodeToJson(this MdocConfiguration mDocConfig)
     {
-        var configJson = mdocConfig.CredentialConfiguration.EncodeToJson();
+        var configJson = mDocConfig.CredentialConfiguration.EncodeToJson();
 
-        configJson.Add(DocTypeJsonKey, mdocConfig.DocType.ToString());
+        configJson.Add(DocTypeJsonKey, mDocConfig.DocType.ToString());
 
-        mdocConfig.Policy.IfSome(policy => 
+        mDocConfig.Policy.IfSome(policy => 
             configJson.Add(PolicyJsonKey, policy.EncodeToJson())
         );
         
-        mdocConfig.CryptographicSuitesSupported.IfSome(suites =>
+        mDocConfig.CryptographicSuitesSupported.IfSome(suites =>
         {
             var suitesJson = new JArray();
             foreach (var suite in suites)
@@ -117,7 +122,7 @@ public static class MdocConfigurationFun
             configJson.Add(CryptographicSuitesSupportedJsonKey, suitesJson);
         });
         
-        mdocConfig.CryptographicCurvesSupported.IfSome(curves =>
+        mDocConfig.CryptographicCurvesSupported.IfSome(curves =>
         {
             var curvesJson = new JArray();
             foreach (var curve in curves)
@@ -126,10 +131,6 @@ public static class MdocConfigurationFun
             }
             configJson.Add(CryptographicCurvesSupportedJsonKey, curvesJson);
         });
-        
-        mdocConfig.Claims.IfSome(claims =>
-            configJson.Add(ClaimsJsonKey, claims.EncodeToJson())
-        );
 
         return configJson;
     }

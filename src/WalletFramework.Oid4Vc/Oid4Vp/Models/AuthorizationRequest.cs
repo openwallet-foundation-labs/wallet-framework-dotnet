@@ -5,6 +5,7 @@ using Newtonsoft.Json.Linq;
 using OneOf;
 using WalletFramework.Core.Functional;
 using WalletFramework.Core.Json;
+using WalletFramework.Oid4Vc.Oid4Vp.DcApi.Models;
 using WalletFramework.Oid4Vc.Oid4Vp.Dcql.Models;
 using WalletFramework.Oid4Vc.Oid4Vp.Errors;
 using WalletFramework.Oid4Vc.Oid4Vp.PresentationExchange.Models;
@@ -101,6 +102,10 @@ public record AuthorizationRequest
     [JsonProperty("verifier_attestations")]
     [JsonConverter(typeof(VerifierAttestationsConverter))]
     public VerifierAttestation[]? VerifierAttestations { get; }
+    
+    [JsonProperty("expected_origins")]
+    [JsonConverter(typeof(ExpectedOriginsConverter))]
+    public Origin[]? ExpectedOrigins { get; }
 
     /// <summary>
     ///     The X509 certificate of the verifier, this property is only set when ClientIDScheme is X509SanDNS.
@@ -134,7 +139,8 @@ public record AuthorizationRequest
         string? clientMetadataUri,
         string? scope,
         string? state,
-        VerifierAttestation[] verifierAttestations)
+        VerifierAttestation[] verifierAttestations,
+        Origin[]? expectedOrigins)
     {
         if (clientId is not null)
         {
@@ -161,6 +167,7 @@ public record AuthorizationRequest
         Scope = scope;
         State = state;
         VerifierAttestations = verifierAttestations;
+        ExpectedOrigins = expectedOrigins;
     }
 
     /// <summary>

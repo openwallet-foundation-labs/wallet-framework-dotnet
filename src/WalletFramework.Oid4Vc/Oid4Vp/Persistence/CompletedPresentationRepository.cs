@@ -1,0 +1,98 @@
+using LanguageExt;
+using Newtonsoft.Json;
+using WalletFramework.Storage;
+using WalletFramework.Storage.Repositories;
+
+namespace WalletFramework.Oid4Vc.Oid4Vp.Persistence;
+
+public class CompletedPresentationRepository(IRepository<CompletedPresentationRecord> repository)
+    : IDomainRepository<CompletedPresentation, CompletedPresentationRecord, string>
+{
+    public async Task<Unit> Add(CompletedPresentation domainModel)
+    {
+        await repository.Add(new CompletedPresentationRecord(domainModel));
+        return Unit.Default;
+    }
+
+    public async Task<Unit> AddMany(IEnumerable<CompletedPresentation> domainModels)
+    {
+        var records = domainModels.Select(d => new CompletedPresentationRecord(d));
+        await repository.AddMany(records);
+        return Unit.Default;
+    }
+
+    public async Task<Unit> Delete(string id)
+    {
+        var recs = await repository.Find(r => r.PresentationId == id);
+        await recs.Match(
+            Some: async list =>
+            {
+                foreach (var record in list)
+                {
+                    await repository.Remove(record);
+                }
+            },
+            None: () => Task.CompletedTask);
+
+        return Unit.Default;
+    }
+
+    public async Task<Unit> Delete(CompletedPresentation domainModel)
+    {
+        var recs = await repository.Find(r => r.PresentationId == domainModel.PresentationId);
+        await recs.Match(
+            Some: async list =>
+            {
+                foreach (var record in list)
+                {
+                    await repository.Remove(record);
+                }
+            },
+            None: () => Task.CompletedTask);
+
+        return Unit.Default;
+    }
+
+    public async Task<Option<List<CompletedPresentation>>> Find(ISearchConfig<CompletedPresentationRecord> config)
+    {
+        var records = await repository.Find(config.ToPredicate());
+        return from recs in records
+               let domains = recs.Select(r => r.ToDomainModel())
+               select domains.ToList();
+    }
+
+    public async Task<Option<CompletedPresentation>> GetById(string id)
+    {
+        var records = await repository.Find(r => r.PresentationId == id);
+        return from recs in records
+               let record = recs.FirstOrDefault()
+               select record?.ToDomainModel();
+    }
+
+    public async Task<Option<List<CompletedPresentation>>> ListAll()
+    {
+        var records = await repository.ListAll();
+        return from recs in records
+               let domains = recs.Select(r => r.ToDomainModel())
+               select domains.ToList();
+    }
+
+    public async Task<Unit> Update(CompletedPresentation domainModel)
+    {
+        var existingOpt = await repository.Find(r => r.ClientId == domainModel.ClientId);
+
+        await existingOpt.Match(
+            Some: async list =>
+            {
+                var existing = list[0];
+                var updated = existing with { Serialized = domainModel.Serialize() };
+                await repository.Update(updated);
+            },
+            None: async () =>
+            {
+                await repository.Add(new CompletedPresentationRecord(domainModel));
+            });
+
+        return Unit.Default;
+    }
+}

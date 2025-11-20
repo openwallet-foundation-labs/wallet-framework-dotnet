@@ -9,6 +9,8 @@ public readonly struct KeyId
 
     private KeyId(string value) => Value = value;
 
+    public string AsString() => Value;
+
     public override string ToString() => Value;
 
     public static implicit operator string(KeyId keyId) => keyId.Value;
