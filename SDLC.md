@@ -114,12 +114,16 @@ We publish two types of releases:
 
 ### Hotfix Release (PATCH)
 
-1.  **Create Hotfix Branch from `main`:**
+1.  **Ensure `main` is up-to-date:**
+    ```bash
+    git fetch origin
+    ```
+2.  **Create Hotfix Branch from `main`:**
     * Make sure that main is up-to-date
     ```bash
     git checkout -b hotfix/X.Y.1 main
     ```
-2.  **Fix the Bug:**
+3.  **Fix the Bug:**
     * Make the necessary code changes.
     * Update the `CHANGELOG.md` under a new `[Unreleased]` section (or a temporary `[X.Y.1]` section).
     * Bump the version number (`<Version>`) in the [Directory.Build.props](Directory.Build.props) file.
@@ -127,19 +131,19 @@ We publish two types of releases:
     ```bash
     git commit -S --signoff -m "Hotfix: <Describe the HotFix>. Bump version to X.Y.1"
     ```
-3.  **Merge into `main`:**
+4.  **Merge into `main`:**
     * Open a PR and get a final review before merging the hotfix.
     * Make sure that the commit is properly signed.
     ```bash
     git checkout main
     git merge --no-ff -S --signoff hotfix/X.Y.1
     ```
-4.  **Tag the Release:**
+5.  **Tag the Release:**
     ```bash
     git tag -s vX.Y.1 -m "Hotfix X.Y.1"
     git push origin main --tags
     ```
-5.  **Merge back into `develop`:**
+6.  **Merge back into `develop`:**
     * This is critical to ensure the hotfix is not lost in the next release.
     * Make sure that the commit is properly signed.
     ```bash
@@ -147,12 +151,12 @@ We publish two types of releases:
     git merge --no-ff -S --signoff hotfix/X.Y.1
     git push origin develop
     ```
-6.  **Delete the Hotfix Branch:**
+7.  **Delete the Hotfix Branch:**
     ```bash
     git branch -d hotfix/X.Y.1
     git push origin --delete hotfix/X.Y.1
     ```
-7.  **Publish:** The merge towards main will trigger the release pipeline, and a GitHub Release should be created with the hotfix changelog.
+8.  **Publish:** The merge towards main will trigger the release pipeline, and a GitHub Release should be created with the hotfix changelog.
 ---
 
 ## Continuous Integration (CI) & Quality
