@@ -47,8 +47,8 @@ jobs:
             echo "RC_NUMBER=$RC_NUMBER" >> $GITHUB_OUTPUT
             SUFFIX="-rc.$RC_NUMBER"
           elif $IS_DEVELOP_BRANCH; then
-            PR_NUMBER=${{ github.event.pull_request.number }}
-            SUFFIX="-dev.$PR_NUMBER"
+            RUN_NUMBER=${{ github.run_number }}
+            SUFFIX="-dev.$RUN_NUMBER"
           elif $IS_PULL_REQUEST; then
             PR_NUMBER=${{ github.event.pull_request.number }}
             COMMIT_COUNT=$(git rev-list --count HEAD)
@@ -80,7 +80,7 @@ jobs:
         run: dotnet pack $SOLUTION --configuration $BUILD_CONFIG -p:Version=$APP_VERSION --no-build --output .
 
       - name: Publish to NuGet (main and release branches only)
-        if: env.IS_PULL_REQUEST == 'false' && (env.IS_MAIN_BRANCH == 'true' || env.IS_RELEASE_BRANCH == 'true')
+        if: env.IS_PULL_REQUEST == 'false' && (env.IS_MAIN_BRANCH == 'true' || env.IS_RELEASE_BRANCH == 'true' || env.IS_DEVELOP_BRANCH == 'true')
         run: |
             echo 'BUILD NUGET'
 #        TODO: Add the nuget push after the pipeline functionality is fully tested.
