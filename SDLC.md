@@ -92,7 +92,7 @@ We publish two types of releases:
     ```
 5.  **Tag the Release:**
     ```bash
-    git tag -a vX.Y.0 -m "Release X.Y.0"
+    git tag -s vX.Y.0 -m "Release X.Y.0"
     git push origin main --tags
     ```
 6.  **Merge back into `develop`:**
@@ -136,7 +136,7 @@ We publish two types of releases:
     ```
 4.  **Tag the Release:**
     ```bash
-    git tag -a vX.Y.1 -m "Hotfix X.Y.1"
+    git tag -s vX.Y.1 -m "Hotfix X.Y.1"
     git push origin main --tags
     ```
 5.  **Merge back into `develop`:**
