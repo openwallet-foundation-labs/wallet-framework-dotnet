@@ -75,11 +75,12 @@ jobs:
           dotnet test test/WalletFramework.Oid4Vc.Tests --configuration $BUILD_CONFIG --no-restore --no-build
           dotnet test test/WalletFramework.SdJwtVc.Tests --configuration $BUILD_CONFIG --no-restore --no-build
           dotnet test test/WalletFramework.SdJwtLib.Tests --configuration $BUILD_CONFIG --no-restore --no-build
+          dotnet test test/WalletFramework.Storage.Tests --configuration $BUILD_CONFIG --no-restore --no-build
 
       - name: Pack WalletFramework
         run: dotnet pack $SOLUTION --configuration $BUILD_CONFIG -p:Version=$APP_VERSION --no-build --output .
 
-      - name: Publish to NuGet (main and release branches only)
+      - name: Publish to NuGet
         if: env.IS_PULL_REQUEST == 'false' && (env.IS_MAIN_BRANCH == 'true' || env.IS_RELEASE_BRANCH == 'true' || env.IS_DEVELOP_BRANCH == 'true')
         run: |
             echo 'BUILD NUGET'
