@@ -52,8 +52,7 @@ public class DcqlService(
         AuthorizationRequest authorizationRequest,
         PresentationMap[] presentationMaps)
     {
-        var dcqlVpToken = DcqlVpTokenFun.FromPresentationMaps(presentationMaps);
-        var vpToken = new VpToken(dcqlVpToken);
+        var vpToken = VpToken.FromPresentationMaps(presentationMaps);
         
         return new AuthorizationResponse
         {

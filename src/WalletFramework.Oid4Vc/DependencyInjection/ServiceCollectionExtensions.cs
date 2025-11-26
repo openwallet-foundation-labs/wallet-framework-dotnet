@@ -55,7 +55,6 @@ public static class ServiceCollectionExtensions
         builder.AddSingleton<IAesGcmEncryption, AesGcmEncryption>();
         builder.AddSingleton<IAuthorizationRequestService, AuthorizationRequestService>();
         builder.AddSingleton<IAuthorizationResponseEncryptionService, AuthorizationResponseEncryptionService>();
-        builder.AddSingleton<ICandidateQueryService, CandidateQueryService>();
         builder.AddSingleton<IClientAttestationService, ClientAttestationService>();
         builder.AddSingleton<ICoseSign1Signer, CoseSign1Signer>();
         builder.AddSingleton<ICredentialNonceService, CredentialNonceService>();
