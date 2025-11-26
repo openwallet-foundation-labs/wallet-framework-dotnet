@@ -21,7 +21,7 @@
         <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
     </PropertyGroup>
     <PropertyGroup>
-        <TargetFramework>net8.0</TargetFramework>
+        <TargetFramework>net10.0</TargetFramework>
     </PropertyGroup>
     <!--Versions of packages used across the repository-->
     <PropertyGroup Label="Package Versions">
