@@ -18,10 +18,7 @@ public class TransactionDataTests
         var sdJwtRecord = SdJwtSamples.GetIdCardCredential();
         
         var credentials = new List<ICredential> { sdJwtRecord };
-        var candidateQueryResult = authRequest.Requirements.Match(
-            dcql => dcql.ProcessWith(credentials),
-            _ => throw new NotSupportedException("Only DCQL flow supported in this test")
-        );
+        var candidateQueryResult = authRequest.DcqlQuery.ProcessWith(credentials);
 
         var presentationRequest = new PresentationRequest(authRequest, candidateQueryResult);
         var transactionDatas = authRequest.TransactionData.IfNone([]);
@@ -59,10 +56,7 @@ public class TransactionDataTests
         var idCard2Credential = SdJwtSamples.GetIdCard2Credential();
 
         var credentials = new List<ICredential> { idCardCredential, idCard2Credential };
-        var candidateQueryResult = authRequest.Requirements.Match(
-            dcql => dcql.ProcessWith(credentials),
-            _ => throw new NotSupportedException("Only DCQL flow supported in this test")
-        );
+        var candidateQueryResult = authRequest.DcqlQuery.ProcessWith(credentials);
 
         var presentationRequest = new PresentationRequest(authRequest, candidateQueryResult);
         var transactionDatas = authRequest.TransactionData.IfNone([]);
@@ -103,10 +97,7 @@ public class TransactionDataTests
         var idCardCredential1 = SdJwtSamples.GetIdCardCredential();
         var idCardCredential2 = SdJwtSamples.GetIdCard2Credential();
         var credentials = new List<ICredential> { idCardCredential1, idCardCredential2 };
-        var candidateQueryResult = authRequest.Requirements.Match(
-            dcql => dcql.ProcessWith(credentials),
-            _ => throw new NotSupportedException("Only DCQL flow supported in this test")
-        );
+        var candidateQueryResult = authRequest.DcqlQuery.ProcessWith(credentials);
 
         var presentationRequest = new PresentationRequest(authRequest, candidateQueryResult);
         var transactionDatas = authRequest.TransactionData.IfNone([]);
@@ -146,10 +137,7 @@ public class TransactionDataTests
         var idCardCredential1Clone = SdJwtSamples.GetIdCardCredential();
         var idCardCredential2 = SdJwtSamples.GetIdCard2Credential();
         var credentials = new List<ICredential> { idCardCredential1, idCardCredential1Clone, idCardCredential2 };
-        var candidateQueryResult = authRequest.Requirements.Match(
-            dcql => dcql.ProcessWith(credentials),
-            _ => throw new NotSupportedException("Only DCQL flow supported in this test")
-        );
+        var candidateQueryResult = authRequest.DcqlQuery.ProcessWith(credentials);
 
         var presentationRequest = new PresentationRequest(authRequest, candidateQueryResult);
         var transactionDatas = authRequest.TransactionData.IfNone([]);

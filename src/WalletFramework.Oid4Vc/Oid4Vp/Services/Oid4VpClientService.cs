@@ -5,7 +5,6 @@ using LanguageExt;
 using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json.Linq;
-using OneOf;
 using WalletFramework.Core.Credentials;
 using WalletFramework.Core.Credentials.Abstractions;
 using WalletFramework.Core.Functional;
@@ -27,13 +26,10 @@ using WalletFramework.Oid4Vc.Oid4Vci.CredConfiguration.Models;
 using WalletFramework.Oid4Vc.Oid4Vci.Extensions;
 using WalletFramework.Oid4Vc.Oid4Vp.AuthResponse.Encryption;
 using WalletFramework.Oid4Vc.Oid4Vp.AuthResponse.Encryption.Abstractions;
-using WalletFramework.Oid4Vc.Oid4Vp.Dcql.CredentialQueries;
 using WalletFramework.Oid4Vc.Oid4Vp.Errors;
 using WalletFramework.Oid4Vc.Oid4Vp.Models;
 using WalletFramework.Oid4Vc.Oid4Vp.Persistence;
-using WalletFramework.Oid4Vc.Oid4Vp.PresentationExchange.Models;
 using WalletFramework.Oid4Vc.Oid4Vp.TransactionDatas;
-using WalletFramework.Oid4Vc.Qes.Authorization;
 using WalletFramework.SdJwtLib.Models;
 using WalletFramework.SdJwtVc;
 using WalletFramework.SdJwtVc.Models;
@@ -278,9 +274,7 @@ public class Oid4VpClientService : IOid4VpClientService
             authorizationRequest.ClientId!,
             presentedCredentials.ToList(),
             authorizationRequest.ClientMetadata,
-            authorizationRequest.Requirements.Match(
-                _ => Option<string>.None,
-                presentationDefinition => presentationDefinition.Name),
+            Option<string>.None,
             DateTime.UtcNow);
 
         await _presentationRepository.Add(oidPresentationRecord);
@@ -315,22 +309,12 @@ public class Oid4VpClientService : IOid4VpClientService
         var presentations = new List<(PresentationMap PresentationMap, ICredential PresentedCredential)>();
         foreach (var credential in credentials)
         {
-            var credentialRequirement =
-                authorizationRequest.Requirements.Match<OneOf<CredentialQuery, InputDescriptor>>(
-                    dcqlQuery =>
-                        dcqlQuery.CredentialQueries.Single(credentialQuery =>
-                            credentialQuery.Id == credential.Identifier),
-                    presentationDefinition =>
-                        presentationDefinition.InputDescriptors.Single(inputDescriptor =>
-                            inputDescriptor.Id == credential.Identifier));
+            var credentialQuery = authorizationRequest.DcqlQuery.CredentialQueries.Single(
+                query => query.Id == credential.Identifier);
 
-            var credentialRequirementId = credentialRequirement.Match(
-                credentialQuery => credentialQuery.Id,
-                inputDescriptor => inputDescriptor.Id);
+            var credentialRequirementId = credentialQuery.Id;
 
-            var claims = credentialRequirement.Match(
-                credentialQuery => credential.GetClaimsToDiscloseAsStrs(credentialQuery),
-                inputDescriptor => inputDescriptor.GetRequestedAttributes());
+            var claims = credential.GetClaimsToDiscloseAsStrs(credentialQuery);
 
             Format format;
             ICredential presentedCredential;
@@ -567,9 +551,7 @@ public class Oid4VpClientService : IOid4VpClientService
             authorizationRequest.ClientId!,
             presentedCredentials.ToList(),
             authorizationRequest.ClientMetadata,
-            authorizationRequest.Requirements.Match(
-                _ => Option<string>.None,
-                presentationDefinition => presentationDefinition.Name),
+            Option<string>.None,
             DateTime.UtcNow);
 
         await _presentationRepository.Add(oidPresentationRecord);
@@ -602,34 +584,13 @@ public class Oid4VpClientService : IOid4VpClientService
             
             var vpTxDataOption = presentationCandidates.AuthorizationRequest.TransactionData;
 
-            var uc5TxDataOption = presentationCandidates
-                .AuthorizationRequest
-                .Requirements.Match(
-                    _ => Option<IEnumerable<InputDescriptorTransactionData>>.None,
-                    presentationDefinition => presentationDefinition.InputDescriptors.TraverseAny(descriptor =>
-                    {
-                        return
-                            from list in descriptor.TransactionData
-                            select new InputDescriptorTransactionData(descriptor.Id, list);
-                    })
-                );
-
-            switch (vpTxDataOption.IsSome, uc5TxDataOption.IsSome)
+            if (vpTxDataOption.IsSome)
             {
-                case (true, false):
-                case (true, true):
-                {
-                    var vpTxData = vpTxDataOption.UnwrapOrThrow();
-                    return TransactionDataFun.ProcessVpTransactionData(presentationCandidates, vpTxData);
-                }
-                case (false, true):
-                {
-                    var uc5TxData = uc5TxDataOption.UnwrapOrThrow();
-                    return TransactionDataFun.ProcessUc5TransactionData(presentationCandidates, uc5TxData);
-                }
-                default:
-                    return presentationCandidates;
+                var vpTxData = vpTxDataOption.UnwrapOrThrow();
+                return TransactionDataFun.ProcessVpTransactionData(presentationCandidates, vpTxData);
             }
+            
+            return presentationCandidates;
         });
 
         return (await result.Traverse(candidates => candidates)).Flatten();
