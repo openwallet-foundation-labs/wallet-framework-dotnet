@@ -338,7 +338,6 @@ public class Oid4VpClientService : IOid4VpClientService
                         sdJwt,
                         claims.ToArray(),
                         Option<IEnumerable<string>>.None,
-                        Option<IEnumerable<string>>.None,
                         Option<string>.None,
                         authorizationRequest.ClientId,
                         authorizationRequest.Nonce);

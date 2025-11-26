@@ -47,7 +47,6 @@ public class SdJwtVcHolderServiceTests
             sdJwtCredential,
             claimsToDisclose,
             Option<IEnumerable<string>>.None, 
-            Option<IEnumerable<string>>.None,
             Option<string>.None);
 
         // Assert

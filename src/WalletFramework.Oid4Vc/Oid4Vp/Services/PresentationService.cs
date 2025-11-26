@@ -67,10 +67,6 @@ public class PresentationService : IPresentationService
 
             var claims = credential.GetClaimsToDiscloseAsStrs(credentialQuery);
 
-            var txDataBase64UrlStringsOption = credential
-                .Uc5TransactionData
-                .OnSome(list => list.Select(data => data.Encoded.AsString));
-
             var txDataHashesOption = credential
                 .TransactionData
                 .OnSome(list =>
@@ -110,7 +106,6 @@ public class PresentationService : IPresentationService
                     presentation = await _sdJwtVcHolderService.CreatePresentation(
                         sdJwt,
                         [.. claims],
-                        txDataBase64UrlStringsOption,
                         txDataHashesAsHexOption,
                         txDataHashesAlgOption,
                         audience,

@@ -71,7 +71,7 @@ internal static class DcqlFun
 
             if (firstMatchingOption != default)
             {
-                sets.Add(new PresentationCandidateSet(firstMatchingOption.SetCandidates, setQuery.Required));
+                sets.Add(new PresentationCandidateSet(firstMatchingOption.SetCandidates));
                 satisfiedCredentialSets.Add(setQuery);
                 
                 // Mark credential IDs from alternative options in this set as alternatives
