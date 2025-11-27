@@ -136,7 +136,6 @@ public class CredentialRequestService : ICredentialRequestService
             "openid4vci-proof+jwt",
             null,
             clientOptions.ToNullable()?.ClientId,
-            Option<IEnumerable<string>>.None, 
             Option<IEnumerable<string>>.None,
             Option<string>.None);
     }

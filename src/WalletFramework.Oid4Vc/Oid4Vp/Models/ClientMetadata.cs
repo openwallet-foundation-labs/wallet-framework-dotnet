@@ -1,11 +1,9 @@
 using LanguageExt;
 using Newtonsoft.Json;
-using OneOf;
 using WalletFramework.Core.Functional;
 using WalletFramework.Oid4Vc.Oid4Vp.Dcql.Models;
 using WalletFramework.Oid4Vc.Oid4Vp.Errors;
 using WalletFramework.Oid4Vc.Oid4Vp.Jwk;
-using WalletFramework.Oid4Vc.Oid4Vp.PresentationExchange.Models;
 
 namespace WalletFramework.Oid4Vc.Oid4Vp.Models;
 
@@ -126,32 +124,27 @@ public record ClientMetadata
 
 public static class ClientMetadataExtensions
 {
-    public static Validation<AuthorizationRequestCancellation, Option<ClientMetadata>> VpFormatsSupportedValidation(this ClientMetadata clientMetadata, OneOf<DcqlQuery, PresentationDefinition> requirements, Option<Uri> responseUri)
+    public static Validation<AuthorizationRequestCancellation, Option<ClientMetadata>> VpFormatsSupportedValidation(this ClientMetadata clientMetadata, DcqlQuery dcqlQuery, Option<Uri> responseUri)
     {
-        return requirements.Match(
-            dcql =>
-            {
-                var walletMetadata = WalletMetadata.CreateDefault();
-                
-                var (sdJwtRequested, mdocRequested) = 
-                    (dcql.CredentialQueries.Any(query => query.Format == Constants.SdJwtDcFormat || query.Format == Constants.SdJwtVcFormat),
-                        dcql.CredentialQueries.Any(query => query.Format == Constants.MdocFormat));
-                
-                return (sdJwtRequested, mdocRequested) switch
-                {
-                    (true, false) => IsSdJwtVpFormatSupported(clientMetadata, walletMetadata) 
-                        ? clientMetadata.AsOption() 
-                        : (Validation<AuthorizationRequestCancellation, Option<ClientMetadata>>) GetVpFormatsNotSupportedCancellation(responseUri),
-                    (false, true) => IsMdocVpFormatSupported(clientMetadata, walletMetadata) 
-                        ? clientMetadata.AsOption() 
-                        : (Validation<AuthorizationRequestCancellation, Option<ClientMetadata>>) GetVpFormatsNotSupportedCancellation(responseUri),
-                    (true, true) => IsSdJwtVpFormatSupported(clientMetadata, walletMetadata) && IsMdocVpFormatSupported(clientMetadata, walletMetadata) 
-                        ? clientMetadata.AsOption() 
-                        : (Validation<AuthorizationRequestCancellation, Option<ClientMetadata>>) GetVpFormatsNotSupportedCancellation(responseUri),
-                    _ => clientMetadata.AsOption()
-                };
-            },
-            _ => clientMetadata.AsOption());
+        var walletMetadata = WalletMetadata.CreateDefault();
+        
+        var (sdJwtRequested, mdocRequested) = 
+            (dcqlQuery.CredentialQueries.Any(query => query.Format == Constants.SdJwtDcFormat || query.Format == Constants.SdJwtVcFormat),
+                dcqlQuery.CredentialQueries.Any(query => query.Format == Constants.MdocFormat));
+        
+        return (sdJwtRequested, mdocRequested) switch
+        {
+            (true, false) => IsSdJwtVpFormatSupported(clientMetadata, walletMetadata) 
+                ? clientMetadata.AsOption() 
+                : (Validation<AuthorizationRequestCancellation, Option<ClientMetadata>>) GetVpFormatsNotSupportedCancellation(responseUri),
+            (false, true) => IsMdocVpFormatSupported(clientMetadata, walletMetadata) 
+                ? clientMetadata.AsOption() 
+                : (Validation<AuthorizationRequestCancellation, Option<ClientMetadata>>) GetVpFormatsNotSupportedCancellation(responseUri),
+            (true, true) => IsSdJwtVpFormatSupported(clientMetadata, walletMetadata) && IsMdocVpFormatSupported(clientMetadata, walletMetadata) 
+                ? clientMetadata.AsOption() 
+                : (Validation<AuthorizationRequestCancellation, Option<ClientMetadata>>) GetVpFormatsNotSupportedCancellation(responseUri),
+            _ => clientMetadata.AsOption()
+        };
     }
     
     private static bool IsMdocVpFormatSupported(ClientMetadata clientMetadata, WalletMetadata walletMetadata)

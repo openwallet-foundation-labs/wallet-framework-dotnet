@@ -7,24 +7,21 @@ public record AuthorizationRequestByValue
 {
     public Uri RequestUri { get; }
 
-    public Option<Uri> PresentationDefinitionUri { get; }
-
-    private AuthorizationRequestByValue(Uri requestUri, Option<Uri> presentationDefinitionUri) => (RequestUri, PresentationDefinitionUri) = (requestUri, presentationDefinitionUri);
+    private AuthorizationRequestByValue(Uri requestUri) => RequestUri = requestUri;
     
     public static Option<AuthorizationRequestByValue> CreateAuthorizationRequestByValue(Uri uri)
     {
         var queryString = HttpUtility.ParseQueryString(uri.Query);
         var clientId = queryString["client_id"];
         var nonce = queryString["nonce"];
-        var presentationDefinition = queryString["presentation_definition"];
-        var presentationDefinitionUri = queryString["presentation_definition_uri"];
+        var dcqlQuery = queryString["dcql_query"];
         var scope = queryString["scope"];
         
         if (string.IsNullOrEmpty(clientId) 
             || string.IsNullOrEmpty(nonce) 
-            || string.IsNullOrEmpty(presentationDefinition) && string.IsNullOrEmpty(presentationDefinitionUri) && string.IsNullOrEmpty(scope)) 
+            || string.IsNullOrEmpty(dcqlQuery) && string.IsNullOrEmpty(scope)) 
             return Option<AuthorizationRequestByValue>.None;
         
-        return new AuthorizationRequestByValue(uri, string.IsNullOrEmpty(presentationDefinitionUri) ? Option<Uri>.None : new Uri(presentationDefinitionUri));
+        return new AuthorizationRequestByValue(uri);
     }
 }

@@ -33,7 +33,6 @@ using WalletFramework.Oid4Vc.Oid4Vp.AuthResponse.Encryption.Abstractions;
 using WalletFramework.Oid4Vc.Oid4Vp.AuthResponse.Encryption.Implementations;
 using WalletFramework.Oid4Vc.Oid4Vp.Dcql.Services;
 using WalletFramework.Oid4Vc.Oid4Vp.Persistence;
-using WalletFramework.Oid4Vc.Oid4Vp.PresentationExchange.Services;
 using WalletFramework.Oid4Vc.Oid4Vp.Services;
 using WalletFramework.Oid4Vc.RelyingPartyAuthentication.Abstractions;
 using WalletFramework.Oid4Vc.RelyingPartyAuthentication.Implementations;
@@ -56,7 +55,6 @@ public static class ServiceCollectionExtensions
         builder.AddSingleton<IAesGcmEncryption, AesGcmEncryption>();
         builder.AddSingleton<IAuthorizationRequestService, AuthorizationRequestService>();
         builder.AddSingleton<IAuthorizationResponseEncryptionService, AuthorizationResponseEncryptionService>();
-        builder.AddSingleton<ICandidateQueryService, CandidateQueryService>();
         builder.AddSingleton<IClientAttestationService, ClientAttestationService>();
         builder.AddSingleton<ICoseSign1Signer, CoseSign1Signer>();
         builder.AddSingleton<ICredentialNonceService, CredentialNonceService>();
@@ -73,7 +71,6 @@ public static class ServiceCollectionExtensions
         builder.AddSingleton<IOid4VciClientService, Oid4VciClientService>();
         builder.AddSingleton<IOid4VpClientService, Oid4VpClientService>();
         builder.AddSingleton<IOid4VpHaipClient, Oid4VpHaipClient>();
-        builder.AddSingleton<IPexService, PexService>();
         builder.AddSingleton<IPresentationService, PresentationService>();
         builder.AddSingleton<IRpAuthService, RpAuthService>();
         builder.AddSingleton<IRpRegistrarService, RpRegistrarService>();

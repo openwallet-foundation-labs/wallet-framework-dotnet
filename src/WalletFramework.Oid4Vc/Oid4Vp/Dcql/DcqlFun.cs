@@ -3,7 +3,6 @@ using WalletFramework.Oid4Vc.Oid4Vp.Dcql.Models;
 using WalletFramework.Oid4Vc.Oid4Vp.Models;
 using WalletFramework.Core.Credentials.Abstractions;
 using WalletFramework.Oid4Vc.Oid4Vp.Dcql.CredentialQueries;
-using WalletFramework.Oid4Vc.Oid4Vp.Query;
 using WalletFramework.Oid4Vc.Oid4Vp.Dcql.CredentialSets;
 
 namespace WalletFramework.Oid4Vc.Oid4Vp.Dcql;
@@ -24,7 +23,7 @@ internal static class DcqlFun
 
         var missing = pairs
             .Where(x => x.Candidate.IsNone)
-            .Select(x => new CredentialRequirement(x.Query))
+            .Select(x => x.Query)
             .ToList();
         
         var setQueriesOption = query.CredentialSetQueries == null || query.CredentialSetQueries.Length == 0
@@ -40,7 +39,7 @@ internal static class DcqlFun
 
                 return new CandidateQueryResult(
                     singleSets,
-                    missing.Count > 0 ? missing : Option<List<CredentialRequirement>>.None
+                    missing.Count > 0 ? missing : Option<List<CredentialQuery>>.None
                 );
             }
         );
@@ -49,7 +48,7 @@ internal static class DcqlFun
     private static CandidateQueryResult BuildPresentationCandidateSets(
         CredentialSetQuery[] credentialSetQueries,
         IReadOnlyList<PresentationCandidate> candidates,
-        List<CredentialRequirement> missing)
+        List<CredentialQuery> missing)
     {
         var sets = new List<PresentationCandidateSet>();
         var alternativeCredentialIds = new List<string>();
@@ -72,7 +71,7 @@ internal static class DcqlFun
 
             if (firstMatchingOption != default)
             {
-                sets.Add(new PresentationCandidateSet(firstMatchingOption.SetCandidates, setQuery.Required));
+                sets.Add(new PresentationCandidateSet(firstMatchingOption.SetCandidates));
                 satisfiedCredentialSets.Add(setQuery);
                 
                 // Mark credential IDs from alternative options in this set as alternatives
@@ -123,12 +122,12 @@ internal static class DcqlFun
         
         // Filter out missing credentials that are ONLY alternatives
         var filteredMissing = missing
-            .Where(requirement => !onlyAlternativeCredentialIds.Contains(requirement.GetIdentifier()))
+            .Where(query => !onlyAlternativeCredentialIds.Contains(query.Id.AsString()))
             .ToList();
         
         return new CandidateQueryResult(
             sets.Count > 0 ? sets : Option<List<PresentationCandidateSet>>.None,
-            filteredMissing.Count > 0 ? filteredMissing : Option<List<CredentialRequirement>>.None
+            filteredMissing.Count > 0 ? filteredMissing : Option<List<CredentialQuery>>.None
         );
     }
 }
