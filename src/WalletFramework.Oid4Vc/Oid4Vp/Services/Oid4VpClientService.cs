@@ -1,29 +1,11 @@
-using System.Net.Mime;
-using System.Security.Cryptography;
-using System.Text;
 using LanguageExt;
 using Microsoft.Extensions.Logging;
-using Microsoft.IdentityModel.Tokens;
-using Newtonsoft.Json.Linq;
 using WalletFramework.Core.Credentials;
-using WalletFramework.Core.Credentials.Abstractions;
 using WalletFramework.Core.Functional;
-using WalletFramework.Core.String;
-using WalletFramework.MdocLib;
-using WalletFramework.MdocLib.Device;
-using WalletFramework.MdocLib.Device.Response;
-using WalletFramework.MdocLib.Elements;
-using WalletFramework.MdocLib.Security;
-using WalletFramework.MdocLib.Security.Cose;
 using WalletFramework.MdocVc;
 using WalletFramework.MdocVc.Persistence;
 using WalletFramework.Oid4Vc.ClientAttestation;
 using WalletFramework.Oid4Vc.Errors;
-using WalletFramework.Oid4Vc.Oid4Vci.AuthFlow;
-using WalletFramework.Oid4Vc.Oid4Vci.AuthFlow.Persistence;
-using WalletFramework.Oid4Vc.Oid4Vci.AuthFlow.Models;
-using WalletFramework.Oid4Vc.Oid4Vci.CredConfiguration.Models;
-using WalletFramework.Oid4Vc.Oid4Vci.Extensions;
 using WalletFramework.Oid4Vc.Oid4Vp.AuthResponse.Encryption;
 using WalletFramework.Oid4Vc.Oid4Vp.AuthResponse.Encryption.Abstractions;
 using WalletFramework.Oid4Vc.Oid4Vp.Dcql.Services;
@@ -35,11 +17,8 @@ using WalletFramework.SdJwtLib.Models;
 using WalletFramework.SdJwtVc;
 using WalletFramework.SdJwtVc.Models;
 using WalletFramework.SdJwtVc.Persistence;
-using WalletFramework.SdJwtVc.Services.SdJwtVcHolderService;
 using WalletFramework.Storage;
 using static Newtonsoft.Json.JsonConvert;
-using static WalletFramework.MdocLib.Security.Cose.ProtectedHeaders;
-using Format = WalletFramework.Oid4Vc.Oid4Vci.CredConfiguration.Models.Format;
 
 namespace WalletFramework.Oid4Vc.Oid4Vp.Services;
 
@@ -49,7 +28,6 @@ public class Oid4VpClientService : IOid4VpClientService
     /// <summary>
     ///     Initializes a new instance of the <see cref="Oid4VpClientService" /> class.
     /// </summary>
-    /// <param name="authFlowSessionStorage">The Auth Flow Session Storage.</param>
     /// <param name="authorizationRequestService">The authorization request service.</param>
     /// <param name="authorizationResponseEncryptionService">The authorization response encryption service.</param>
     /// <param name="dcqlService">The DCQL service.</param>
@@ -61,9 +39,7 @@ public class Oid4VpClientService : IOid4VpClientService
     /// <param name="oid4VpHaipClient">The service responsible for OpenId4VP related operations.</param>
     /// <param name="presentationRepository">The service responsible for OidPresentationRecord related operations.</param>
     /// <param name="presentationService">The authorization response service.</param>
-    /// <param name="sdJwtVcHolderService">The service responsible for SD-JWT related operations.</param>
     public Oid4VpClientService(
-        IDomainRepository<AuthFlowSession, AuthFlowSessionRecord, AuthFlowSessionState> authFlowSessionStorage,
         IAuthorizationRequestService authorizationRequestService,
         IAuthorizationResponseEncryptionService authorizationResponseEncryptionService,
         IDcqlService dcqlService,
@@ -74,11 +50,8 @@ public class Oid4VpClientService : IOid4VpClientService
         IDomainRepository<SdJwtCredential, SdJwtCredentialRecord, CredentialId> sdJwtRepository,
         IDomainRepository<CompletedPresentation, CompletedPresentationRecord, string> presentationRepository, 
         IOid4VpHaipClient oid4VpHaipClient,
-        IPresentationService presentationService,
-        IVerifierKeyService verifierKeyService,
-        ISdJwtVcHolderService sdJwtVcHolderService)
+        IPresentationService presentationService)
     {
-        _authFlowSessionStorage = authFlowSessionStorage;
         _authorizationRequestService = authorizationRequestService;
         _authorizationResponseEncryptionService = authorizationResponseEncryptionService;
         _dcqlService = dcqlService;
@@ -90,11 +63,8 @@ public class Oid4VpClientService : IOid4VpClientService
         _oid4VpHaipClient = oid4VpHaipClient;
         _presentationRepository = presentationRepository;
         _presentationService = presentationService;
-        _verifierKeyService = verifierKeyService;
-        _sdJwtVcHolderService = sdJwtVcHolderService;
     }
 
-    private readonly IDomainRepository<AuthFlowSession, AuthFlowSessionRecord, AuthFlowSessionState> _authFlowSessionStorage;
     private readonly IAuthorizationRequestService _authorizationRequestService;
     private readonly IAuthorizationResponseEncryptionService _authorizationResponseEncryptionService;
     private readonly IDcqlService _dcqlService;
@@ -106,8 +76,6 @@ public class Oid4VpClientService : IOid4VpClientService
     private readonly IDomainRepository<CompletedPresentation, CompletedPresentationRecord, string> _presentationRepository;
     private readonly IOid4VpHaipClient _oid4VpHaipClient;
     private readonly IPresentationService _presentationService;
-    private readonly IVerifierKeyService _verifierKeyService;
-    private readonly ISdJwtVcHolderService _sdJwtVcHolderService;
 
     public async Task<Option<Uri>> AbortAuthorizationRequest(AuthorizationRequestCancellation cancellation)
     {
@@ -286,282 +254,6 @@ public class Oid4VpClientService : IOid4VpClientService
         {
             Uri callback = DeserializeObject<AuthorizationResponseCallback>(redirectUriJson);
             return callback;
-        }
-        catch (Exception e)
-        {
-            _logger.LogWarning(
-                e,
-                "Could not parse Redirect URI received from: {ResponseUri}", authorizationRequest.ResponseUri);
-
-            return null;
-        }
-    }
-
-    //TODO: Refactor this C'' method into current flows (too much duplicate code)
-    public async Task<Option<Uri>> AcceptOnDemandRequest(
-        AuthorizationRequest authorizationRequest,
-        IEnumerable<SelectedCredential> selectedCredentials,
-        IssuanceSession issuanceSession)
-    {
-        var credentials = selectedCredentials.ToList();
-
-        var mdocNonce = Option<Nonce>.None;
-        
-        var presentations = new List<(PresentationMap PresentationMap, ICredential PresentedCredential)>();
-        foreach (var credential in credentials)
-        {
-            var credentialQuery = authorizationRequest.DcqlQuery.CredentialQueries.Single(
-                query => query.Id == credential.Identifier);
-
-            var credentialRequirementId = credentialQuery.Id;
-
-            var claims = credential.GetClaimsToDiscloseAsStrs(credentialQuery);
-
-            Format format;
-            ICredential presentedCredential;
-
-            var session = (await _authFlowSessionStorage.GetById(issuanceSession.AuthFlowSessionState))
-                .UnwrapOrThrow(new InvalidOperationException("Auth flow session not found"));
-
-            var client = _httpClientFactory.CreateClient();
-            client.WithAuthorizationHeader(session.AuthorizationData.OAuthToken.UnwrapOrThrow(new Exception()));
-
-            var sha256 = SHA256.Create();
-
-            var presentation = string.Empty;
-            switch (credential.Credential)
-            {
-                case SdJwtCredential sdJwt:
-                    format = Format.ValidFormat(sdJwt.Format).UnwrapOrThrow();
-
-                    presentation = await _sdJwtVcHolderService.CreatePresentation(
-                        sdJwt,
-                        claims.ToArray(),
-                        Option<IEnumerable<string>>.None,
-                        Option<string>.None,
-                        authorizationRequest.ClientId,
-                        authorizationRequest.Nonce);
-
-                    var kbJwt = presentation[presentation.LastIndexOf('~')..][1..];
-                    var kbJwtWithoutSignature = kbJwt[..kbJwt.LastIndexOf('.')];
-
-                    var kbJwtWithoutSignatureHash = sha256.ComputeHash(kbJwtWithoutSignature.GetUtf8Bytes());
-
-                    var sdJwtContent = new JObject
-                    {
-                        {
-                            "hash_bytes",
-                            Base64UrlEncoder.Encode(kbJwtWithoutSignatureHash)
-                        }
-                    };
-
-                    var sdJwtHttpContent = new StringContent(
-                        sdJwtContent.ToString(),
-                        Encoding.UTF8,
-                        MediaTypeNames.Application.Json);
-
-                    var sdJwtSignatureResponse = await client.PostAsync(
-                        session.AuthorizationData.IssuerMetadata.PresentationSigningEndpoint.UnwrapOrThrow(
-                            new Exception()), sdJwtHttpContent
-                    );
-
-                    if (sdJwtSignatureResponse.IsSuccessStatusCode)
-                    {
-                        var responseContent = await sdJwtSignatureResponse.Content.ReadAsStringAsync();
-                        var signatureBytes = JObject.Parse(responseContent)["signature_bytes"]?.ToString();
-
-                        presentation = $"{presentation[..presentation.LastIndexOf('.')]}.{signatureBytes}";
-                    }
-
-                    presentedCredential = sdJwt;
-                    break;
-                case MdocCredential mdocCredential:
-                    format = FormatFun.CreateMdocFormat();
-
-                    var toDisclose = claims.Select(claim =>
-                        {
-                            // TODO: This is needed because in mdoc the requested attributes look like this: $[Namespace][ElementId]. Refactor this more clean
-                            var keys = claim.Split(new[] { "['", "']" }, StringSplitOptions.RemoveEmptyEntries);
-
-                            var nameSpace = NameSpace.ValidNameSpace(keys[0]).UnwrapOrThrow();
-                            var elementId = ElementIdentifier
-                                .ValidElementIdentifier(keys[1])
-                                .UnwrapOrThrow();
-
-                            return (NameSpace: nameSpace, ElementId: elementId);
-                        })
-                        .GroupBy(nameSpaceAndElementId => nameSpaceAndElementId.NameSpace, tuple => tuple.ElementId)
-                        .ToDictionary(group => group.Key, group => group.ToList());
-
-                    var mdoc = mdocCredential.Mdoc.SelectivelyDisclose(toDisclose);
-
-                    var responseEncryptionKey = authorizationRequest.ResponseMode == AuthorizationRequest.DirectPostJwt
-                        ? await _verifierKeyService.GetPublicKey(authorizationRequest)
-                        : Option<JsonWebKey>.None;
-                    
-                    var handover = OpenId4VpHandover.FromAuthorizationRequest(
-                        authorizationRequest,
-                        responseEncryptionKey);
-                    
-                    mdocNonce = handover.MdocGeneratedNonce;
-                    var sessionTranscript = handover.ToSessionTranscript();
-
-                    var deviceNamespaces =
-                        from keyAuths in mdoc.IssuerSigned.IssuerAuth.Payload.DeviceKeyInfo.KeyAuthorizations
-                        select keyAuths.ToDeviceNameSpaces();
-
-                    var deviceAuthentication = new DeviceAuthentication(
-                        sessionTranscript, mdoc.DocType, deviceNamespaces);
-
-                    var sigStructure = new SigStructure(deviceAuthentication.ToCbor(),
-                        mdoc.IssuerSigned.IssuerAuth.ProtectedHeaders);
-
-                    var sigStructureByteString = sigStructure.ToCbor();
-
-                    var sigStructureHash = sha256.ComputeHash(sigStructureByteString.EncodeToBytes());
-
-                    var mDocPostContent = new JObject
-                    {
-                        { "hash_bytes", Base64UrlEncoder.Encode(sigStructureHash) }
-                    };
-
-                    var mDocHttpContent =
-                        new StringContent
-                        (
-                            mDocPostContent.ToString(),
-                            Encoding.UTF8,
-                            MediaTypeNames.Application.Json
-                        );
-
-                    var mDocSignatureResponse = await client.PostAsync(
-                        session.AuthorizationData.IssuerMetadata.PresentationSigningEndpoint.UnwrapOrThrow(
-                            new Exception()),
-                        mDocHttpContent
-                    );
-
-                    if (mDocSignatureResponse.IsSuccessStatusCode)
-                    {
-                        var responseContent = await mDocSignatureResponse.Content.ReadAsStringAsync();
-                        var signatureBytes = JObject.Parse(responseContent)["signature_bytes"]?.ToString();
-
-                        var coseSignature = new CoseSignature(Base64UrlEncoder.DecodeBytes(signatureBytes));
-
-                        var deviceSigned = new DeviceSignature(BuildProtectedHeaders(), coseSignature)
-                            .ToDeviceSigned(deviceNamespaces);
-
-                        presentation = new Document(new AuthenticatedMdoc(mdoc, deviceSigned)).BuildDeviceResponse()
-                            .EncodeToBase64Url();
-                    }
-
-                    presentedCredential = mdocCredential;
-
-                    break;
-                default:
-                    throw new ArgumentOutOfRangeException(nameof(credential.Credential));
-            }
-
-            presentations.Add((PresentationMap: new PresentationMap(credentialRequirementId, presentation, format), PresentedCredential: presentedCredential));
-        }
-
-        var authorizationResponse = await _oid4VpHaipClient.CreateAuthorizationResponseAsync(
-            authorizationRequest,
-            presentations.Select(tuple => tuple.PresentationMap).ToArray()
-        );
-
-        var content = authorizationRequest.ResponseMode switch
-        {
-            AuthorizationRequest.DirectPost => authorizationResponse.ToFormUrl(),
-            AuthorizationRequest.DirectPostJwt => 
-                (await _authorizationResponseEncryptionService.Encrypt(authorizationResponse, authorizationRequest, mdocNonce)).ToFormUrl(),
-            _ => throw new ArgumentOutOfRangeException(nameof(authorizationRequest.ResponseMode))
-        };
-
-        var message = new HttpRequestMessage
-        {
-            RequestUri = new Uri(authorizationRequest.ResponseUri),
-            Method = HttpMethod.Post,
-            Content = content
-        };
-
-        // TODO: Introduce timeout
-        var httpClient = _httpClientFactory.CreateClient();
-        httpClient.DefaultRequestHeaders.Clear();
-        var responseMessage = await httpClient.SendAsync(message);
-        if (!responseMessage.IsSuccessStatusCode)
-        {
-            var str = await responseMessage.Content.ReadAsStringAsync();
-            throw new InvalidOperationException($"Authorization Response failed with message {str}");
-        }
-
-        var presentedCredentials = presentations.Select(presentation =>
-        {
-            PresentedCredentialSet result;
-
-            switch (presentation.PresentedCredential)
-            {
-                case SdJwtCredential sdJwtRecord:
-                    var issuanceSdJwtDoc = sdJwtRecord.ToSdJwtDoc();
-                    var sdJwtDoc = new SdJwtDoc(presentation.PresentationMap.Presentation);
-
-                    var nonDisclosed =
-                        from disclosure in issuanceSdJwtDoc.Disclosures
-                        let base64Encoded = disclosure.Base64UrlEncoded
-                        where sdJwtDoc.Disclosures.All(itm => itm.Base64UrlEncoded != base64Encoded)
-                        select disclosure;
-
-                    var presentedClaims =
-                        from claim in sdJwtRecord.Claims
-                        where !nonDisclosed.Any(nd => claim.Key.StartsWith(nd.Path ?? string.Empty))
-                        select new
-                        {
-                            key = claim.Key,
-                            value = new PresentedClaim { Value = claim.Value }
-                        };
-
-                    result = new PresentedCredentialSet
-                    {
-                        SdJwtCredentialType = Vct.ValidVct(sdJwtRecord.Vct).UnwrapOrThrow(),
-                        CredentialSetId = CredentialSetId.ValidCredentialSetId(sdJwtRecord.CredentialSetId)
-                            .UnwrapOrThrow(),
-                        PresentedClaims = presentedClaims.ToDictionary(itm => itm.key, itm => itm.value)
-                    };
-                    break;
-                case MdocCredential mdocCredential:
-                    var claims = mdocCredential.Mdoc.IssuerSigned.IssuerNameSpaces.Value.SelectMany(pair => pair.Value);
-
-                    result = new PresentedCredentialSet
-                    {
-                        MdocCredentialType = mdocCredential.Mdoc.DocType,
-                        CredentialSetId = mdocCredential.GetCredentialSetId(),
-                        PresentedClaims = claims.ToDictionary(
-                            item => item.ElementId.ToString(),
-                            item => new PresentedClaim { Value = item.Element.ToString() }
-                        )
-                    };
-                    break;
-                default:
-                    throw new ArgumentOutOfRangeException(nameof(presentation.PresentedCredential));
-            }
-
-            return result;
-        });
-
-        var oidPresentationRecord = new CompletedPresentation(
-            Guid.NewGuid().ToString(),
-            authorizationRequest.ClientId!,
-            presentedCredentials.ToList(),
-            authorizationRequest.ClientMetadata,
-            Option<string>.None,
-            DateTime.UtcNow);
-
-        await _presentationRepository.Add(oidPresentationRecord);
-        
-        var redirectUriJson = await responseMessage.Content.ReadAsStringAsync();
-
-        try
-        {
-            Uri callbackUri = DeserializeObject<AuthorizationResponseCallback>(redirectUriJson);
-            return callbackUri;
         }
         catch (Exception e)
         {
