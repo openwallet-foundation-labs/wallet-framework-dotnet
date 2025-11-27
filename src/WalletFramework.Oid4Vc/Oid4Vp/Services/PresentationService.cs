@@ -1,6 +1,5 @@
 using LanguageExt;
 using Microsoft.IdentityModel.Tokens;
-using OneOf;
 using WalletFramework.Core.Credentials;
 using WalletFramework.Core.Credentials.Abstractions;
 using WalletFramework.Core.Functional;
@@ -13,9 +12,7 @@ using WalletFramework.MdocVc;
 using WalletFramework.Oid4Vc.Oid4Vci.CredConfiguration.Models;
 using WalletFramework.Oid4Vc.Oid4Vp.AuthResponse.Encryption.Abstractions;
 using WalletFramework.Oid4Vc.Oid4Vp.DcApi.Models;
-using WalletFramework.Oid4Vc.Oid4Vp.Dcql.CredentialQueries;
 using WalletFramework.Oid4Vc.Oid4Vp.Models;
-using WalletFramework.Oid4Vc.Oid4Vp.PresentationExchange.Models;
 using WalletFramework.Oid4Vc.Oid4Vp.TransactionDatas;
 using WalletFramework.SdJwtVc;
 using WalletFramework.SdJwtVc.Persistence;
@@ -63,27 +60,12 @@ public class PresentationService : IPresentationService
         var presentations = new List<(PresentationMap PresentationMap, ICredential PresentedCredential)>();
         foreach (var credential in credentials)
         {
-            var credentialRequirement =
-                authorizationRequest.Requirements.Match<OneOf<CredentialQuery, InputDescriptor>>(
-                    dcqlQuery =>
-                        dcqlQuery.CredentialQueries.Single(credentialQuery =>
-                            credentialQuery.Id == credential.Identifier),
-                    presentationDefinition =>
-                        presentationDefinition.InputDescriptors.Single(inputDescriptor =>
-                            inputDescriptor.Id == credential.Identifier));
+            var credentialQuery = authorizationRequest.DcqlQuery.CredentialQueries.Single(
+                query => query.Id == credential.Identifier);
 
-            var credentialRequirementId = credentialRequirement.Match(
-                credentialQuery => credentialQuery.Id,
-                inputDescriptor => inputDescriptor.Id);
+            var credentialRequirementId = credentialQuery.Id;
 
-            var claims = credentialRequirement.Match(
-                credential.GetClaimsToDiscloseAsStrs,
-                inputDescriptor => inputDescriptor.GetRequestedAttributes()
-            );
-
-            var txDataBase64UrlStringsOption = credential
-                .Uc5TransactionData
-                .OnSome(list => list.Select(data => data.Encoded.AsString));
+            var claims = credential.GetClaimsToDiscloseAsStrs(credentialQuery);
 
             var txDataHashesOption = credential
                 .TransactionData
@@ -124,7 +106,6 @@ public class PresentationService : IPresentationService
                     presentation = await _sdJwtVcHolderService.CreatePresentation(
                         sdJwt,
                         [.. claims],
-                        txDataBase64UrlStringsOption,
                         txDataHashesAsHexOption,
                         txDataHashesAlgOption,
                         audience,

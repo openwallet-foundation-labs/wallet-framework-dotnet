@@ -3,7 +3,6 @@ using WalletFramework.Oid4Vc.Oid4Vp.Dcql;
 using WalletFramework.Oid4Vc.Tests.Oid4Vp.Dcql.Samples;
 using WalletFramework.Oid4Vc.Tests.Samples;
 using WalletFramework.Core.Credentials.Abstractions;
-using WalletFramework.Oid4Vc.Oid4Vp.Query;
 
 namespace WalletFramework.Oid4Vc.Tests.Oid4Vp.Dcql.CredentialSets;
 
@@ -35,7 +34,7 @@ public class CredentialDataSetTests
             {
                 list.Count.Should().Be(1);
                 var first = list.First();
-                first.GetIdentifier().Should().Be("idcard3");
+                first.Id.AsString().Should().Be("idcard3");
             },
             () => Assert.Fail("Expected optional credential to be missing")
         );
