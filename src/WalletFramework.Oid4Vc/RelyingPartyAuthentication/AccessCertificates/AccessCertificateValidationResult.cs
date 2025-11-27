@@ -22,16 +22,9 @@ public record AccessCertificateValidationResult
         {
             authorityKeyId = accessCertificate.GetRoot().ToSystemX509Certificate().GetAuthorityKeyId()
                              ?? throw new InvalidOperationException("Could not get root certificate authority key ID");
-        }
-        catch (Exception e)
-        {
-            return new AccessCertificateValidationResult(e);
-        }
 
-        var isTrustChainValid = accessCertificate.TrustChain.IsTrustChainValid();
-        if (isTrustChainValid)
-        {
-            try
+            var isTrustChainValid = accessCertificate.TrustChain.IsTrustChainValid();
+            if (isTrustChainValid)
             {
                 var subjectKeyId =
                     rpRegistrarCertificate.AsX509Certificate().ToSystemX509Certificate().GetSubjectKeyId()
@@ -40,14 +33,14 @@ public record AccessCertificateValidationResult
                 var result = string.Equals(authorityKeyId, subjectKeyId, StringComparison.InvariantCultureIgnoreCase);
                 return new AccessCertificateValidationResult(result);
             }
-            catch (Exception e)
+            else
             {
-                return new AccessCertificateValidationResult(e);
+                return new AccessCertificateValidationResult(false);
             }
         }
-        else
+        catch (Exception e)
         {
-            return new AccessCertificateValidationResult(false);
+            return new AccessCertificateValidationResult(e);
         }
     }
 }

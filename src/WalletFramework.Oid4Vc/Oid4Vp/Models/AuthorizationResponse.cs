@@ -13,6 +13,7 @@ public class AuthorizationResponse
     ///     Gets or sets the VP Token.
     /// </summary>
     [JsonProperty("vp_token")]
+    [JsonConverter(typeof(VpTokenJsonConverter))]
     public VpToken VpToken { get; set; } = null!;
         
     /// <summary>
@@ -28,7 +29,7 @@ public static class AuthorizationResponseFun
     {
         var dict = new Dictionary<string, string>
         {
-            { "vp_token", authorizationResponse.VpToken.AsString() },
+            { "vp_token", authorizationResponse.VpToken.AsJsonString() },
             { "state", authorizationResponse.State ?? string.Empty }
         };
 

@@ -52,7 +52,7 @@ public class DcqlService(
         AuthorizationRequest authorizationRequest,
         PresentationMap[] presentationMaps)
     {
-        var vpToken = VpToken.FromPresentationMaps(presentationMaps);
+        var vpToken = VpTokenFun.FromPresentationMaps(presentationMaps);
         
         return new AuthorizationResponse
         {
