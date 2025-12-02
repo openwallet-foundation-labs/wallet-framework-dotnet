@@ -30,22 +30,6 @@ public interface IOid4VpClientService
         Option<ClientAttestationDetails> clientAttestationDetails);
 
     /// <summary>
-    ///     Prepares and sends an Authorization Response containing a Presentation Submission with on demand credentials (C'')
-    ///     and the VP Token to the Redirect Uri.
-    /// </summary>
-    /// <param name="authorizationRequest"></param>
-    /// <param name="selectedCredentials"></param>
-    /// <param name="issuanceSession"></param>
-    /// <returns>
-    ///     A task representing the asynchronous operation. The task result contains the Callback Url of the Authorization
-    ///     Response if present.
-    /// </returns>
-    Task<Option<Uri>> AcceptOnDemandRequest(
-        AuthorizationRequest authorizationRequest,
-        IEnumerable<SelectedCredential> selectedCredentials,
-        IssuanceSession issuanceSession);
-
-    /// <summary>
     ///     Processes an OpenID4VP Authorization Request Url.
     /// </summary>
     /// <param name="authorizationRequestUri"></param>

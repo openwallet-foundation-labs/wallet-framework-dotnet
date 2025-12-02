@@ -60,20 +60,6 @@ public interface IOid4VciClientService
         Option<ClientAttestationDetails> clientAttestationDetails);
     
     /// <summary>
-    ///     Requests a verifiable credential using the authorization code flow and C''.
-    /// </summary>
-    /// <param name="issuanceSession">Holds authorization session relevant information.</param>
-    /// <param name="authorizationRequest">The AuthorizationRequest that is associated witht the ad-hoc crednetial issuance</param>
-    /// <param name="clientAttestationDetails">The client attestation details</param>
-    /// <returns>
-    /// A list of credentials.
-    /// </returns>
-    Task<Validation<IEnumerable<OnDemandCredentialSet>>> RequestOnDemandCredentialSet(
-        IssuanceSession issuanceSession, 
-        AuthorizationRequest authorizationRequest, 
-        Option<ClientAttestationDetails> clientAttestationDetails);
-    
-    /// <summary>
     ///     Processes a credential offer
     /// </summary>
     /// <param name="credentialOffer">The credential offer uri</param>
