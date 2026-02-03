@@ -8,7 +8,7 @@ using WalletFramework.Core.Functional;
 using WalletFramework.Core.Json;
 using WalletFramework.Core.Uri;
 using WalletFramework.MdocLib.Security;
-using WalletFramework.Oid4Vc.ClientAttestation;
+using WalletFramework.Oid4Vc.ClientAttestations;
 using WalletFramework.Oid4Vc.Oid4Vci.AuthFlow.Models;
 using WalletFramework.Oid4Vc.Oid4Vci.Authorization.DPop.Abstractions;
 using WalletFramework.Oid4Vc.Oid4Vci.Authorization.DPop.Models;
@@ -27,26 +27,13 @@ using WalletFramework.SdJwtVc.Services.SdJwtVcHolderService;
 
 namespace WalletFramework.Oid4Vc.Oid4Vci.CredRequest.Implementations;
 
-public class CredentialRequestService : ICredentialRequestService
+public class CredentialRequestService(
+    HttpClient httpClient,
+    IDPopHttpClient dPopHttpClient,
+    ISdJwtSigner sdJwtSigner,
+    IKeyStore keyStore) : ICredentialRequestService
 {
     private const int MaxBatchSize = 10;
-    
-    public CredentialRequestService(
-        HttpClient httpClient,
-        IDPopHttpClient dPopHttpClient,
-        ISdJwtSigner sdJwtSigner,
-        IKeyStore keyStore)
-    {
-        _dPopHttpClient = dPopHttpClient;
-        _sdJwtSigner = sdJwtSigner;
-        _keyStore = keyStore;
-        _httpClient = httpClient;
-    }
-
-    private readonly HttpClient _httpClient;
-    private readonly IDPopHttpClient _dPopHttpClient;
-    private readonly ISdJwtSigner _sdJwtSigner;
-    private readonly IKeyStore _keyStore;
 
     private async Task<CredentialRequest> CreateCredentialRequest(
         Option<KeyId> keyId,
@@ -129,7 +116,7 @@ public class CredentialRequestService : ICredentialRequestService
         string cNonce,
         Option<ClientOptions> clientOptions)
     {
-        return await _sdJwtSigner.GenerateKbProofOfPossessionAsync(
+        return await sdJwtSigner.GenerateKbProofOfPossessionAsync(
             keyId,
             issuerMetadata.CredentialIssuer.ToString(),
             cNonce,
@@ -165,7 +152,7 @@ public class CredentialRequestService : ICredentialRequestService
                 {
                     await sdJwt.CredentialConfiguration.CryptographicBindingMethodsSupported.IfSomeAsync(async _ =>
                     {
-                        keyId = await _keyStore.GenerateKey(isPermanent: authorizationRequest.IsNone);
+                        keyId = await keyStore.GenerateKey(isPermanent: authorizationRequest.IsNone);
                     });
                     
                     var vciRequest = await CreateCredentialRequest(
@@ -183,7 +170,7 @@ public class CredentialRequestService : ICredentialRequestService
                 },
                 async mdoc =>
                 {
-                    keyId = await _keyStore.GenerateKey(isPermanent: authorizationRequest.IsNone);
+                    keyId = await keyStore.GenerateKey(isPermanent: authorizationRequest.IsNone);
                     
                     var vciRequest = await CreateCredentialRequest(
                         keyId,
@@ -206,7 +193,7 @@ public class CredentialRequestService : ICredentialRequestService
                 "application/json");
 
             var response = await token.Match(
-                async authToken => await _httpClient
+                async authToken => await httpClient
                         .WithAuthorizationHeader(authToken)
                         .PostAsync(issuerMetadata.CredentialEndpoint, content),
                 async dPopToken =>
@@ -217,11 +204,11 @@ public class CredentialRequestService : ICredentialRequestService
                         OAuthToken = dPopToken.Token
                     };
 
-                    var dPopResponse = await _dPopHttpClient.Post(
-                        issuerMetadata.CredentialEndpoint,
+                    var dPopResponse = await dPopHttpClient.Post(
                         config,
-                        Option<CombinedWalletAttestation>.None, 
-                        () => content);
+                        () => content,
+                        Option<ClientAttestation>.None,
+                        issuerMetadata.CredentialEndpoint);
 
                     return dPopResponse.ResponseMessage;
                 });

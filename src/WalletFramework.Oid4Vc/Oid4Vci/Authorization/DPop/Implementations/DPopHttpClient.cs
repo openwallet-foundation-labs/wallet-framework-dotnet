@@ -7,7 +7,7 @@ using Newtonsoft.Json.Linq;
 using WalletFramework.Core.Cryptography.Abstractions;
 using WalletFramework.Core.Cryptography.Models;
 using WalletFramework.Core.Functional;
-using WalletFramework.Oid4Vc.ClientAttestation;
+using WalletFramework.Oid4Vc.ClientAttestations;
 using WalletFramework.Oid4Vc.Oid4Vci.Authorization.DPop.Abstractions;
 using WalletFramework.Oid4Vc.Oid4Vci.Authorization.DPop.Models;
 using WalletFramework.Oid4Vc.Oid4Vci.Exceptions;
@@ -16,34 +16,23 @@ using WalletFramework.SdJwtVc.Services.SdJwtVcHolderService;
 
 namespace WalletFramework.Oid4Vc.Oid4Vci.Authorization.DPop.Implementations;
 
-public class DPopHttpClient : IDPopHttpClient
+public class DPopHttpClient(
+    IHttpClientFactory httpClientFactory,
+    IKeyStore keyStore,
+    ILogger<DPopHttpClient> logger,
+    ISdJwtSigner sdJwtSigner) : IDPopHttpClient
 {
     private const string ErrorCodeKey = "error";
     private const string InvalidGrantError = "invalid_grant";
     private const string UseDPopNonceError = "use_dpop_nonce";
-    
-    public DPopHttpClient(
-        IHttpClientFactory httpClientFactory,
-        IKeyStore keyStore,
-        ISdJwtSigner sdJwtSigner,
-        ILogger<DPopHttpClient> logger)
-    {
-        _keyStore = keyStore;
-        _sdJwtSigner = sdJwtSigner;
-        _httpClient = httpClientFactory.CreateClient();
-        _logger = logger;
-    }
 
-    private readonly IKeyStore _keyStore;
-    private readonly ISdJwtSigner _sdJwtSigner;
-    private readonly ILogger<DPopHttpClient> _logger;
-    private readonly HttpClient _httpClient; 
+    private readonly HttpClient _httpClient = httpClientFactory.CreateClient(); 
 
     public async Task<DPopHttpResponse> Post(
-        Uri requestUri,
         DPopConfig config,
-        Option<CombinedWalletAttestation> combinedWalletAttestation,
-        Func<HttpContent> getContent)
+        Func<HttpContent> getContent,
+        Option<ClientAttestation> clientAttestation,
+        Uri requestUri)
     {
         var dPop = await GenerateDPopHeaderAsync(
             config.KeyId,
@@ -55,7 +44,7 @@ public class DPopHttpClient : IDPopHttpClient
             token => _httpClient.WithDPopHeader(dPop).WithAuthorizationHeader(token),
             () => _httpClient.WithDPopHeader(dPop));
 
-        combinedWalletAttestation.IfSome(attestation => httpClient.AddClientAttestationPopHeader(attestation));
+        clientAttestation.IfSome(attestation => httpClient.AddClientAttestationPopHeader(attestation));
         
         var response = await httpClient.PostAsync(requestUri, getContent());
         
@@ -106,7 +95,7 @@ public class DPopHttpClient : IDPopHttpClient
 
         if (response.StatusCode is System.Net.HttpStatusCode.BadRequest && errorReason == InvalidGrantError)
         {
-            _logger.LogError("Error while sending request: {Content}", content);
+            logger.LogError("Error while sending request: {Content}", content);
             throw new Oid4VciInvalidGrantException(response.StatusCode);
         }
     }
@@ -159,7 +148,7 @@ public class DPopHttpClient : IDPopHttpClient
             { "typ", "dpop+jwt" }
         };
             
-        var publicKey = await _keyStore.GetPublicKey(keyId);
+        var publicKey = await keyStore.GetPublicKey(keyId);
         header["jwk"] = publicKey.ToObj();
 
         string? ath = null;
@@ -179,6 +168,6 @@ public class DPopHttpClient : IDPopHttpClient
             ath
         };
             
-        return await _sdJwtSigner.CreateSignedJwt(header, dPopPayload, keyId);
+        return await sdJwtSigner.CreateSignedJwt(header, dPopPayload, keyId);
     }
 }
