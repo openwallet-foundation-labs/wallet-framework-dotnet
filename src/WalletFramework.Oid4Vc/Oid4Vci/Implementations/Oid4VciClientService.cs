@@ -12,6 +12,8 @@ using WalletFramework.Core.Localization;
 using WalletFramework.Core.String;
 using WalletFramework.MdocVc;
 using WalletFramework.MdocVc.Persistence;
+using WalletFramework.Oid4Vc.ClientAttestations;
+using WalletFramework.Oid4Vc.ClientAttestations.Abstractions;
 using WalletFramework.Oid4Vc.CredentialSet.Models;
 using WalletFramework.Oid4Vc.CredentialSet.Persistence;
 using WalletFramework.Oid4Vc.Oid4Vci.Abstractions;
@@ -49,6 +51,7 @@ namespace WalletFramework.Oid4Vc.Oid4Vci.Implementations;
 /// <param name="credentialNonceService">The credential nonce service.</param>
 /// <param name="tokenService">The token service.</param>
 public class Oid4VciClientService(
+    IClientAttestationService clientAttestationService,
     ICredentialNonceService credentialNonceService,
     ICredentialOfferService credentialOfferService,
     ICredentialRequestService credentialRequestService,
@@ -101,7 +104,6 @@ public class Oid4VciClientService(
             configurationPair,
             issuerMetadata,
             token,
-            Option<ClientOptions>.None,
             Option<AuthorizationRequest>.None,
             Option<int>.None);
 
@@ -217,8 +219,11 @@ public class Oid4VciClientService(
 
         var authServerMetadata = await FetchAuthorizationServerMetadataAsync(issuerMetadata, offer.CredentialOffer);
 
+        var clientAttestation = await clientAttestationService.GetClientAttestation(authServerMetadata);
+        
         var authorizationRequestUri = await CreateAuthRequestUri(
             authServerMetadata,
+            clientAttestation,
             vciAuthorizationRequest);
 
         var authorizationData = new AuthorizationData(
@@ -299,7 +304,6 @@ public class Oid4VciClientService(
                 configuration,
                 session.AuthorizationData.IssuerMetadata,
                 token,
-                session.AuthorizationData.ClientOptions,
                 Option<AuthorizationRequest>.None,
                 session.SpecVersion.ToOption());
 
@@ -519,6 +523,7 @@ public class Oid4VciClientService(
 
     private async Task<Uri> CreateAuthRequestUri(
         AuthorizationServerMetadata authorizationServerMetadata,
+        ClientAttestation clientAttestation,
         VciAuthorizationRequest vciAuthorizationRequest)
     {
         _httpClient.DefaultRequestHeaders.Clear();
@@ -527,6 +532,8 @@ public class Oid4VciClientService(
         {
             return new Uri(authorizationServerMetadata.AuthorizationEndpoint + vciAuthorizationRequest.ToQueryString());
         }
+        
+        _httpClient.AddClientAttestation(clientAttestation);
         
         var response = await _httpClient.PostAsync(
             authorizationServerMetadata.PushedAuthorizationRequestEndpoint,

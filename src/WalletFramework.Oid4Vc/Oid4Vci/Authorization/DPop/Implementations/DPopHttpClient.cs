@@ -44,7 +44,7 @@ public class DPopHttpClient(
             token => _httpClient.WithDPopHeader(dPop).WithAuthorizationHeader(token),
             () => _httpClient.WithDPopHeader(dPop));
 
-        clientAttestation.IfSome(attestation => httpClient.AddClientAttestationPopHeader(attestation));
+        clientAttestation.IfSome(attestation => httpClient.AddClientAttestation(attestation));
         
         var response = await httpClient.PostAsync(requestUri, getContent());
         

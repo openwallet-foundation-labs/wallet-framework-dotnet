@@ -18,7 +18,6 @@ public interface ICredentialRequestService
         KeyValuePair<CredentialConfigurationId, SupportedCredentialConfiguration> configurationPair,
         IssuerMetadata issuerMetadata,
         OneOf<OAuthToken, DPopToken> token,
-        Option<ClientOptions> clientOptions,
         Option<AuthorizationRequest> authorizationRequest,
         Option<int> specVersion);
 }

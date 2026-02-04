@@ -1,5 +1,6 @@
 using LanguageExt;
 using OneOf;
+using WalletFramework.Oid4Vc.ClientAttestations;
 using WalletFramework.Oid4Vc.ClientAttestations.Abstractions;
 using WalletFramework.Oid4Vc.Oid4Vci.Authorization.Abstractions;
 using WalletFramework.Oid4Vc.Oid4Vci.Authorization.DPop.Abstractions;
@@ -53,6 +54,8 @@ internal class TokenService(
         }
         else
         {
+            _httpClient.AddClientAttestation(clientAttestation);
+
             var response = await _httpClient.PostAsync(
                 metadata.TokenEndpoint,
                 tokenRequest.ToFormUrlEncoded());
