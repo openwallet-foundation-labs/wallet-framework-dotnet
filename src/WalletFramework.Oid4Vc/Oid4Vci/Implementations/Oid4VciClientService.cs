@@ -219,11 +219,8 @@ public class Oid4VciClientService(
 
         var authServerMetadata = await FetchAuthorizationServerMetadataAsync(issuerMetadata, offer.CredentialOffer);
 
-        var clientAttestation = await clientAttestationService.GetClientAttestation(authServerMetadata);
-        
         var authorizationRequestUri = await CreateAuthRequestUri(
             authServerMetadata,
-            clientAttestation,
             vciAuthorizationRequest);
 
         var authorizationData = new AuthorizationData(
@@ -523,7 +520,7 @@ public class Oid4VciClientService(
 
     private async Task<Uri> CreateAuthRequestUri(
         AuthorizationServerMetadata authorizationServerMetadata,
-        ClientAttestation clientAttestation,
+        Option<ClientAttestation> clientAttestation,
         VciAuthorizationRequest vciAuthorizationRequest)
     {
         _httpClient.DefaultRequestHeaders.Clear();
@@ -532,8 +529,11 @@ public class Oid4VciClientService(
         {
             return new Uri(authorizationServerMetadata.AuthorizationEndpoint + vciAuthorizationRequest.ToQueryString());
         }
-        
-        _httpClient.AddClientAttestation(clientAttestation);
+
+        if (clientOptions.Value.ClientAttestationEnabled)
+        {
+            _httpClient.AddClientAttestation(clientAttestation.UnwrapOrThrow());
+        }
         
         var response = await _httpClient.PostAsync(
             authorizationServerMetadata.PushedAuthorizationRequestEndpoint,

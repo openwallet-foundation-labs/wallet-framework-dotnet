@@ -1,7 +1,7 @@
 using LanguageExt;
 using OneOf;
+using WalletFramework.Core.Cryptography.Abstractions;
 using WalletFramework.Oid4Vc.ClientAttestations;
-using WalletFramework.Oid4Vc.ClientAttestations.Abstractions;
 using WalletFramework.Oid4Vc.Oid4Vci.Authorization.Abstractions;
 using WalletFramework.Oid4Vc.Oid4Vci.Authorization.DPop.Abstractions;
 using WalletFramework.Oid4Vc.Oid4Vci.Authorization.DPop.Models;
@@ -13,23 +13,26 @@ using static Newtonsoft.Json.JsonConvert;
 namespace WalletFramework.Oid4Vc.Oid4Vci.Authorization.Implementations;
 
 internal class TokenService(
-    IClientAttestationService clientAttestationService,
     ICredentialNonceService credentialNonceService,
     IDPopHttpClient dPopHttpClient,
-    IHttpClientFactory httpClientFactory) : ITokenService
+    IHttpClientFactory httpClientFactory,
+    IKeyStore keyStore) : ITokenService
 {
     private readonly HttpClient _httpClient = httpClientFactory.CreateClient();
 
     public async Task<OneOf<OAuthToken, DPopToken>> RequestToken(
         AuthorizationServerMetadata metadata,
+        Option<ClientAttestation> clientAttestation,
         Option<CredentialNonceEndpoint> credentialNonceEndpoint,
         TokenRequest tokenRequest)
     {
-        var clientAttestation = await clientAttestationService.GetClientAttestation(metadata);
-        
         if (metadata.IsDPoPSupported)
         {
-            var config = new DPopConfig(clientAttestation.WalletAttestation.KeyId, metadata.TokenEndpoint);
+            var keyId = await clientAttestation.Match(
+                Some: attestation => Task.FromResult(attestation.WalletAttestation.KeyId),
+                None: async () => await keyStore.GenerateKey());
+
+            var config = new DPopConfig(keyId, metadata.TokenEndpoint);
 
             var uri = new Uri(metadata.TokenEndpoint);
             
@@ -54,7 +57,7 @@ internal class TokenService(
         }
         else
         {
-            _httpClient.AddClientAttestation(clientAttestation);
+            clientAttestation.IfSome(attestation => _httpClient.AddClientAttestation(attestation));
 
             var response = await _httpClient.PostAsync(
                 metadata.TokenEndpoint,

@@ -9,6 +9,6 @@ public interface IDPopHttpClient
     internal Task<DPopHttpResponse> Post(
         DPopConfig config,
         Func<HttpContent> getContent,
-        Option<ClientAttestation> combinedWalletAttestation,
+        Option<ClientAttestation> clientAttestation,
         Uri requestUri);
 }

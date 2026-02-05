@@ -23,6 +23,11 @@ public record ClientOptions
     /// </summary>
     public string WalletIssuer { get; init; }
 
+    /// <summary>
+    ///     Enables or disables client attestation for auth/token requests.
+    /// </summary>
+    public bool ClientAttestationEnabled { get; init; }
+
 #pragma warning disable CS8618
     /// <summary>
     ///     Parameterless Default Constructor.
@@ -38,8 +43,9 @@ public record ClientOptions
     /// <param name="clientId">Identifier of the client (wallet)</param>
     /// <param name="walletIssuer">Identifier of the wallet issuer</param>
     /// <param name="redirectUri">Redirect URI that the Authorization Server will use after the authorization was successful.</param>
+    /// <param name="clientAttestationEnabled">Enables client attestation for auth/token requests.</param>
     [JsonConstructor]
-    public ClientOptions(string clientId, string walletIssuer, string redirectUri)
+    public ClientOptions(string clientId, string walletIssuer, string redirectUri, bool clientAttestationEnabled = true)
     {
         if (string.IsNullOrWhiteSpace(clientId)
             || string.IsNullOrWhiteSpace(walletIssuer)
@@ -51,5 +57,6 @@ public record ClientOptions
         ClientId = clientId;
         WalletIssuer = walletIssuer;
         RedirectUri = redirectUri;
+        ClientAttestationEnabled = clientAttestationEnabled;
     }
 }
