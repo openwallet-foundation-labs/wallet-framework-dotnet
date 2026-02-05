@@ -538,7 +538,7 @@ public class Oid4VciClientService(
         {
             return new Uri(authorizationServerMetadata.AuthorizationEndpoint + vciAuthorizationRequest.ToQueryString());
         }
-
+        
         if (clientOptions.Value.ClientAttestationEnabled)
         {
             _httpClient.AddClientAttestation(clientAttestation.UnwrapOrThrow());

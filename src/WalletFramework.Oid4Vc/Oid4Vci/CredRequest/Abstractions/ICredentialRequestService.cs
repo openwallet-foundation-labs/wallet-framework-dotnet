@@ -1,7 +1,6 @@
 using LanguageExt;
 using OneOf;
 using WalletFramework.Core.Functional;
-using WalletFramework.Oid4Vc.Oid4Vci.AuthFlow.Models;
 using WalletFramework.Oid4Vc.Oid4Vci.Authorization.DPop.Models;
 using WalletFramework.Oid4Vc.Oid4Vci.Authorization.Models;
 using WalletFramework.Oid4Vc.Oid4Vci.CredConfiguration.Models;

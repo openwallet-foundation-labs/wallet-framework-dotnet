@@ -28,9 +28,7 @@ internal class TokenService(
     {
         if (metadata.IsDPoPSupported)
         {
-            var keyId = await clientAttestation.Match(
-                Some: attestation => Task.FromResult(attestation.WalletAttestation.KeyId),
-                None: async () => await keyStore.GenerateKey());
+            var keyId = await keyStore.GenerateKey();
 
             var config = new DPopConfig(keyId, metadata.TokenEndpoint);
 
