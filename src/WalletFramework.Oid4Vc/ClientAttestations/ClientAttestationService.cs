@@ -42,7 +42,7 @@ public class ClientAttestationService(
         {
             { "aud", audience },
             { "iat", DateTimeOffset.UtcNow.ToUnixTimeSeconds() },
-            { "exp", DateTimeOffset.Now.AddDays(1).ToUnixTimeSeconds() },
+            { "exp", DateTimeOffset.UtcNow.AddDays(1).ToUnixTimeSeconds() },
             { "jti", Guid.NewGuid().ToString() },
             { "iss", issuer }
         };

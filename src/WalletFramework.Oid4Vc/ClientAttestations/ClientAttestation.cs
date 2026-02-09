@@ -21,10 +21,3 @@ public record ClientAttestation
         WalletAttestationPopJwt walletAttestationPopJwt)
         => new(walletAttestation, walletAttestationPopJwt);
 }
-
-public static class ClientAttestationExtensions
-{
-    public static string ToStringRepresentation(this ClientAttestation clientAttestation)
-        => clientAttestation.WalletAttestation.WalletAttestationJwt.EncodedToken + "~" +
-           clientAttestation.WalletAttestationPopJwt;
-}

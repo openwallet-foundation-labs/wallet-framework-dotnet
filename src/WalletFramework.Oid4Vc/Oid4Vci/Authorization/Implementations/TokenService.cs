@@ -28,7 +28,7 @@ internal class TokenService(
     {
         if (metadata.IsDPoPSupported)
         {
-            var keyId = await keyStore.GenerateKey();
+            var keyId = await keyStore.GenerateKey(isPermanent: false);
 
             var config = new DPopConfig(keyId, metadata.TokenEndpoint);
 
@@ -55,7 +55,7 @@ internal class TokenService(
         }
         else
         {
-            clientAttestation.IfSome(attestation => _httpClient.AddClientAttestation(attestation));
+            clientAttestation.IfSome(_httpClient.AddClientAttestation);
 
             var response = await _httpClient.PostAsync(
                 metadata.TokenEndpoint,

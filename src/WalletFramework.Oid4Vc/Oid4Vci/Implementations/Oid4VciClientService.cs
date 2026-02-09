@@ -218,7 +218,7 @@ public class Oid4VciClientService(
             sessionId,
             clientOptions.Value,
             authorizationCodeParameters,
-            authorizationDetails.ToArray(),
+            [.. authorizationDetails],
             scope,
             issuerState.ToNullable(),
             null,
@@ -299,8 +299,12 @@ public class Oid4VciClientService(
             Scope = string.Join(" ", scopes),
             ClientId = session.AuthorizationData.ClientOptions.ClientId
         };
-        
-        var clientAttestation = await clientAttestationService.GetClientAttestation(session.AuthorizationData.AuthorizationServerMetadata);
+
+        var clientAttestation = Option<ClientAttestation>.None;
+        if (clientOptions.Value.ClientAttestationEnabled)
+        {
+            clientAttestation = await clientAttestationService.GetClientAttestation(session.AuthorizationData.AuthorizationServerMetadata);
+        }
 
         var token = await tokenService.RequestToken(
             session.AuthorizationData.AuthorizationServerMetadata,
@@ -470,7 +474,7 @@ public class Oid4VciClientService(
                     () => issuerMetadataAuthServers.Select(uri => CreateAuthorizationServerMetadataUri(uri))
                 );
             },
-            () => new List<Uri> { CreateAuthorizationServerMetadataUri(credentialIssuer) });
+            () => [CreateAuthorizationServerMetadataUri(credentialIssuer)]);
 
 
         var authorizationServerMetadatas = new List<AuthorizationServerMetadata>();

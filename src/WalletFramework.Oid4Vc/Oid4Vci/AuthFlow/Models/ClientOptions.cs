@@ -45,7 +45,7 @@ public record ClientOptions
     /// <param name="redirectUri">Redirect URI that the Authorization Server will use after the authorization was successful.</param>
     /// <param name="clientAttestationEnabled">Enables client attestation for auth/token requests.</param>
     [JsonConstructor]
-    public ClientOptions(string clientId, string walletIssuer, string redirectUri, bool clientAttestationEnabled = true)
+    public ClientOptions(string clientId, string walletIssuer, string redirectUri, bool clientAttestationEnabled)
     {
         if (string.IsNullOrWhiteSpace(clientId)
             || string.IsNullOrWhiteSpace(walletIssuer)
