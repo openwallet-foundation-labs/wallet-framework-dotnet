@@ -6,13 +6,12 @@ using WalletFramework.Oid4Vc.Oid4Vci.AuthFlow.Models;
 using WalletFramework.Oid4Vc.Oid4Vci.Authorization.Models;
 using WalletFramework.Oid4Vc.WalletAttestations;
 using WalletFramework.Oid4Vc.WalletAttestations.Abstractions;
-using WalletFramework.SdJwtVc.Services.SdJwtVcHolderService;
 
 namespace WalletFramework.Oid4Vc.ClientAttestations;
 
 public class ClientAttestationService(
     IOptions<ClientOptions> clientOptions,
-    ISdJwtSigner sdJwtSigner,
+    IAttestationSigner attestationSigner,
     IWalletAttestationService walletAttestationService) : IClientAttestationService
 {
     public async Task<ClientAttestation> GetClientAttestation(AuthorizationServerMetadata authorizationServerMetadata)
@@ -47,6 +46,6 @@ public class ClientAttestationService(
             { "iss", issuer }
         };
 
-        return WalletAttestationPopJwt.Create(await sdJwtSigner.CreateSignedJwt(header, payload, keyId));
+        return WalletAttestationPopJwt.Create(await attestationSigner.CreateSignedJwt(header, payload, keyId));
     }
 }
