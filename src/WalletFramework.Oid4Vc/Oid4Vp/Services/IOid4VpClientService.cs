@@ -1,6 +1,4 @@
 using LanguageExt;
-using WalletFramework.Oid4Vc.ClientAttestation;
-using WalletFramework.Oid4Vc.Oid4Vci.AuthFlow.Models;
 using WalletFramework.Oid4Vc.Oid4Vp.Models;
 
 namespace WalletFramework.Oid4Vc.Oid4Vp.Services;
@@ -22,12 +20,10 @@ public interface IOid4VpClientService
     /// </summary>
     /// <param name="authorizationRequest"></param>
     /// <param name="selectedCredentials"></param>
-    /// <param name="clientAttestationDetails"></param>
     /// <returns></returns>
     Task<Option<Uri>> AcceptAuthorizationRequest(
         AuthorizationRequest authorizationRequest,
-        IEnumerable<SelectedCredential> selectedCredentials,
-        Option<ClientAttestationDetails> clientAttestationDetails);
+        IEnumerable<SelectedCredential> selectedCredentials);
 
     /// <summary>
     ///     Processes an OpenID4VP Authorization Request Url.
