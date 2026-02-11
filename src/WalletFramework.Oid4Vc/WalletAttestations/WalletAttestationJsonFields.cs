@@ -2,6 +2,7 @@ namespace WalletFramework.Oid4Vc.WalletAttestations;
 
 public static class WalletAttestationJsonFields
 {
+    public const string AssertionJwt = "assertion-jwt";
     public const string ConfirmationClaimJwk = "confirmation-claim-jwk";
     public const string Jwk = "jwk";
     public const string WalletAttestationJwt = "wallet-attestation";
