@@ -8,7 +8,8 @@ using WalletFramework.MdocLib.Security.Cose.Abstractions;
 using WalletFramework.MdocLib.Security.Cose.Implementations;
 using WalletFramework.MdocVc;
 using WalletFramework.MdocVc.Persistence;
-using WalletFramework.Oid4Vc.ClientAttestation;
+using WalletFramework.Oid4Vc.ClientAttestations;
+using WalletFramework.Oid4Vc.ClientAttestations.Abstractions;
 using WalletFramework.Oid4Vc.CredentialSet;
 using WalletFramework.Oid4Vc.CredentialSet.Models;
 using WalletFramework.Oid4Vc.CredentialSet.Persistence;
@@ -83,7 +84,7 @@ public static class ServiceCollectionExtensions
         builder.AddScoped<IDomainRepository<SdJwtCredential, SdJwtCredentialRecord, CredentialId>, SdJwtCredentialRepository>();
         builder.AddScoped<IDomainRepository<CredentialDataSet, CredentialDataSetRecord, CredentialSetId>, CredentialDataSetRepository>();
         builder.AddScoped<IDomainRepository<CompletedPresentation, CompletedPresentationRecord, string>, CompletedPresentationRepository>();
-        builder.AddScoped<IDomainRepository<AuthFlowSession, AuthFlowSessionRecord, WalletFramework.Oid4Vc.Oid4Vci.AuthFlow.Models.AuthFlowSessionState>, AuthFlowSessionRepository>();
+        builder.AddScoped<IDomainRepository<AuthFlowSession, AuthFlowSessionRecord, Oid4Vci.AuthFlow.Models.AuthFlowSessionState>, AuthFlowSessionRepository>();
 
         builder.AddSdJwtVcServices();
         

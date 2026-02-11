@@ -4,7 +4,6 @@ using WalletFramework.Core.Credentials;
 using WalletFramework.Core.Functional;
 using WalletFramework.MdocVc;
 using WalletFramework.MdocVc.Persistence;
-using WalletFramework.Oid4Vc.ClientAttestation;
 using WalletFramework.Oid4Vc.Errors;
 using WalletFramework.Oid4Vc.Oid4Vp.AuthResponse.Encryption;
 using WalletFramework.Oid4Vc.Oid4Vp.AuthResponse.Encryption.Abstractions;
@@ -31,7 +30,6 @@ public class Oid4VpClientService : IOid4VpClientService
     /// <param name="authorizationRequestService">The authorization request service.</param>
     /// <param name="authorizationResponseEncryptionService">The authorization response encryption service.</param>
     /// <param name="dcqlService">The DCQL service.</param>
-    /// <param name="clientAttestationService">The client attestation service.</param>
     /// <param name="httpClientFactory">The http client factory to create http clients.</param>
     /// <param name="logger">The ILogger.</param>
     /// <param name="mdocRepository">The service responsible for mdoc storage operations.</param>
@@ -43,19 +41,17 @@ public class Oid4VpClientService : IOid4VpClientService
         IAuthorizationRequestService authorizationRequestService,
         IAuthorizationResponseEncryptionService authorizationResponseEncryptionService,
         IDcqlService dcqlService,
-        IClientAttestationService clientAttestationService,
         IHttpClientFactory httpClientFactory,
         ILogger<Oid4VpClientService> logger,
         IDomainRepository<MdocCredential, MdocCredentialRecord, CredentialId> mdocRepository,
         IDomainRepository<SdJwtCredential, SdJwtCredentialRecord, CredentialId> sdJwtRepository,
-        IDomainRepository<CompletedPresentation, CompletedPresentationRecord, string> presentationRepository, 
+        IDomainRepository<CompletedPresentation, CompletedPresentationRecord, string> presentationRepository,
         IOid4VpHaipClient oid4VpHaipClient,
         IPresentationService presentationService)
     {
         _authorizationRequestService = authorizationRequestService;
         _authorizationResponseEncryptionService = authorizationResponseEncryptionService;
         _dcqlService = dcqlService;
-        _clientAttestationService = clientAttestationService;
         _httpClientFactory = httpClientFactory;
         _logger = logger;
         _mdocRepository = mdocRepository;
@@ -68,42 +64,40 @@ public class Oid4VpClientService : IOid4VpClientService
     private readonly IAuthorizationRequestService _authorizationRequestService;
     private readonly IAuthorizationResponseEncryptionService _authorizationResponseEncryptionService;
     private readonly IDcqlService _dcqlService;
-    private readonly IClientAttestationService _clientAttestationService;
-    private readonly IHttpClientFactory _httpClientFactory;
-    private readonly ILogger<Oid4VpClientService> _logger;
+    private readonly IDomainRepository<CompletedPresentation, CompletedPresentationRecord, string> _presentationRepository;
     private readonly IDomainRepository<MdocCredential, MdocCredentialRecord, CredentialId> _mdocRepository;
     private readonly IDomainRepository<SdJwtCredential, SdJwtCredentialRecord, CredentialId> _sdJwtRepository;
-    private readonly IDomainRepository<CompletedPresentation, CompletedPresentationRecord, string> _presentationRepository;
+    private readonly IHttpClientFactory _httpClientFactory;
+    private readonly ILogger<Oid4VpClientService> _logger;
     private readonly IOid4VpHaipClient _oid4VpHaipClient;
     private readonly IPresentationService _presentationService;
 
     public async Task<Option<Uri>> AbortAuthorizationRequest(AuthorizationRequestCancellation cancellation)
     {
-        var callbackTaskOption = cancellation.ResponseUri.OnSome(
-            async uri =>
+        var callbackTaskOption = cancellation.ResponseUri.OnSome(async uri =>
+        {
+            var error = cancellation.Errors[0];
+
+            var message = new HttpRequestMessage(HttpMethod.Post, uri)
             {
-                var error = cancellation.Errors.First();
+                Content = error.ToResponse().ToFormUrlContent()
+            };
 
-                var message = new HttpRequestMessage(HttpMethod.Post, uri)
-                {
-                    Content = error.ToResponse().ToFormUrlContent()
-                };
+            var httpClient = _httpClientFactory.CreateClient();
+            httpClient.DefaultRequestHeaders.Clear();
 
-                var httpClient = _httpClientFactory.CreateClient();
-                httpClient.DefaultRequestHeaders.Clear();
+            using var cancellationSource = new CancellationTokenSource(TimeSpan.FromSeconds(3));
+            var responseMessage = await httpClient.SendAsync(message, cancellationSource.Token);
+            if (!responseMessage.IsSuccessStatusCode)
+            {
+                var str = await responseMessage.Content.ReadAsStringAsync(cancellationSource.Token);
+                throw new InvalidOperationException($"Authorization Error Response failed with message {str}");
+            }
 
-                using var cancellationSource = new CancellationTokenSource(TimeSpan.FromSeconds(3));
-                var responseMessage = await httpClient.SendAsync(message, cancellationSource.Token);
-                if (!responseMessage.IsSuccessStatusCode)
-                {
-                    var str = await responseMessage.Content.ReadAsStringAsync();
-                    throw new InvalidOperationException($"Authorization Error Response failed with message {str}");
-                }
-
-                var redirectUriJson = await responseMessage.Content.ReadAsStringAsync();
-                var callback = DeserializeObject<AuthorizationResponseCallback>(redirectUriJson);
-                return callback?.ToUri() ?? Option<Uri>.None;
-            });
+            var redirectUriJson = await responseMessage.Content.ReadAsStringAsync(cancellationSource.Token);
+            var callback = DeserializeObject<AuthorizationResponseCallback>(redirectUriJson);
+            return callback?.ToUri() ?? Option<Uri>.None;
+        });
 
         var callbackUriOption = await callbackTaskOption.Traverse(uri => uri);
         return callbackUriOption.Flatten();
@@ -111,13 +105,12 @@ public class Oid4VpClientService : IOid4VpClientService
 
     public async Task<Option<Uri>> AcceptAuthorizationRequest(
         AuthorizationRequest authorizationRequest,
-        IEnumerable<SelectedCredential> selectedCredentials,
-        Option<ClientAttestationDetails> clientAttestationDetails)
+        IEnumerable<SelectedCredential> selectedCredentials)
     {
         var credentials = selectedCredentials.ToList();
 
         var (presentations, mdocNonce) = await _presentationService.CreatePresentations(
-            authorizationRequest, 
+            authorizationRequest,
             credentials);
 
         var authorizationResponse = await _oid4VpHaipClient.CreateAuthorizationResponseAsync(
@@ -128,8 +121,9 @@ public class Oid4VpClientService : IOid4VpClientService
         var content = authorizationRequest.ResponseMode switch
         {
             AuthorizationRequest.DirectPost => authorizationResponse.ToFormUrl(),
-            AuthorizationRequest.DirectPostJwt => 
-                (await _authorizationResponseEncryptionService.Encrypt(authorizationResponse, authorizationRequest, mdocNonce)).ToFormUrl(),
+            AuthorizationRequest.DirectPostJwt =>
+                (await _authorizationResponseEncryptionService.Encrypt(authorizationResponse, authorizationRequest,
+                    mdocNonce)).ToFormUrl(),
             _ => throw new ArgumentOutOfRangeException(nameof(authorizationRequest.ResponseMode))
         };
 
@@ -143,12 +137,6 @@ public class Oid4VpClientService : IOid4VpClientService
         // TODO: Introduce timeout
         var httpClient = _httpClientFactory.CreateClient();
         httpClient.DefaultRequestHeaders.Clear();
-        
-        await clientAttestationDetails.IfSomeAsync(async details =>
-        {
-            var combinedWalletAttestation = await _clientAttestationService.GetCombinedWalletAttestationAsync(details, authorizationRequest);
-            httpClient.AddClientAttestationPopHeader(combinedWalletAttestation);
-        });
 
         // ToDo: when to delete these records?
         foreach (var credential in credentials)
@@ -209,7 +197,7 @@ public class Oid4VpClientService : IOid4VpClientService
                             key = claim.Key,
                             value = new PresentedClaim { Value = claim.Value }
                         };
-                    
+
                     result = new PresentedCredentialSet
                     {
                         SdJwtCredentialType = Vct.ValidVct(sdJwtRecord.Vct).UnwrapOrThrow(),
@@ -273,7 +261,7 @@ public class Oid4VpClientService : IOid4VpClientService
         {
             var queryResult = await _dcqlService.Query(authRequest.DcqlQuery);
             var presentationCandidates = new PresentationRequest(authRequest, queryResult);
-            
+
             var vpTxDataOption = presentationCandidates.AuthorizationRequest.TransactionData;
 
             if (vpTxDataOption.IsSome)
@@ -281,7 +269,7 @@ public class Oid4VpClientService : IOid4VpClientService
                 var vpTxData = vpTxDataOption.UnwrapOrThrow();
                 return TransactionDataFun.ProcessVpTransactionData(presentationCandidates, vpTxData);
             }
-            
+
             return presentationCandidates;
         });
 
