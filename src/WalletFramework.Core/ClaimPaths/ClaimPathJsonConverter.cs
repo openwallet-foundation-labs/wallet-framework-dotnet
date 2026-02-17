@@ -24,8 +24,12 @@ public class ClaimPathJsonConverter : JsonConverter<ClaimPath>
 
     public override ClaimPath ReadJson(JsonReader reader, Type objectType, ClaimPath existingValue, bool hasExistingValue, JsonSerializer serializer)
     {
-        var array = JArray.Load(reader);
-        var validation = ClaimPath.FromJArray(array);
+        var token = JToken.Load(reader);
+        var validation = token.Type switch
+        {
+            JTokenType.Array => ClaimPath.FromJArray((JArray)token),
+            _ => throw new JsonSerializationException($"Expected claim path array, but got {token.Type}.")
+        };
         return validation.UnwrapOrThrow();
     }
 } 
