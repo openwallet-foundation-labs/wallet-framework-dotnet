@@ -1,4 +1,4 @@
-using WalletFramework.Core.Functional;
+using LanguageExt;
 
 namespace WalletFramework.Oid4Vc.WalletAttestations.Abstractions;
 
@@ -10,5 +10,5 @@ public interface IWalletAttestationService
     /// <returns>
     ///     The wallet attestation.
     /// </returns>
-    Task<Validation<WalletAttestation>> RequestWalletAttestation();
+    Task<Option<WalletAttestation>> RequestWalletAttestation();
 }
