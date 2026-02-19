@@ -158,7 +158,7 @@ public class Oid4VpClientService : IOid4VpClientService
                     await credentialSetMdocRecords.Match(
                         async mDocRecords =>
                         {
-                            if (mDocRecords.Count() > 1)
+                            if (mDocRecords.Count > 1)
                                 await _mdocRepository.Delete(mDocRecord.GetId());
                         },
                         () => Task.CompletedTask);
