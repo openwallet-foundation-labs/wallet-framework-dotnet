@@ -56,6 +56,25 @@ public class ClaimPathTests
         var expected = ClaimPath.FromJArray(new JArray("address", "street_address")).UnwrapOrThrow();
         Assert.Equal(expected.GetPathComponents(), claimPath.GetPathComponents());
     }
+    
+    [Fact]
+    public void ClaimPathJsonConverter_Can_ReadJson_With_Null_Component_As_SelectAll()
+    {
+        // Arrange
+        var json = "[\"degrees\",null,\"type\"]";
+        var settings = new JsonSerializerSettings { Converters = { new ClaimPathJsonConverter() } };
+
+        // Act
+        var claimPath = JsonConvert.DeserializeObject<ClaimPath>(json, settings);
+
+        // Assert
+        Assert.Equal("$.degrees[*].type", claimPath.ToJsonPath().ToString());
+        Assert.True(claimPath.GetPathComponents()[1]
+            .Match(
+                _ => false,
+                _ => false,
+                _ => true));
+    }
 
     [Fact]
     public void ClaimPathJsonConverter_Can_WriteJson()

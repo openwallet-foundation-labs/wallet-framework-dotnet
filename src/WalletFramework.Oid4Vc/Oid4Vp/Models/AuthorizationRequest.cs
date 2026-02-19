@@ -2,6 +2,7 @@ using System.Security.Cryptography.X509Certificates;
 using LanguageExt;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using WalletFramework.Core.ClaimPaths;
 using WalletFramework.Core.Functional;
 using WalletFramework.Core.Json;
 using WalletFramework.Oid4Vc.Oid4Vp.DcApi.Models;
@@ -192,9 +193,14 @@ public record AuthorizationRequest
         JObject authRequestJObject)
     {
         var responseUriOption = AuthorizationRequestExtensions.GetResponseUriMaybe(authRequestJObject);
+
+        var serializer = JsonSerializer.CreateDefault(new JsonSerializerSettings
+        {
+            Converters = { new ClaimPathJsonConverter() }
+        });
             
         var authRequestValidation = 
-            authRequestJObject.ToObject<AuthorizationRequest>()
+            authRequestJObject.ToObject<AuthorizationRequest>(serializer)
             ?? new InvalidRequestError("Could not parse the Authorization Request")
                 .ToInvalid<AuthorizationRequest>();
         

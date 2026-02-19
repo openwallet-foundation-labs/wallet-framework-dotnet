@@ -50,11 +50,11 @@ public static class SdJwtConfigurationSample
                     ["locale"] = "en-US"
                 }
             },
-            ["claims"] = new JArray()
+            ["claims"] = new JArray
             {
                 new JObject
                 {
-                    ["path"] = new JArray(){"given_name"},
+                    ["path"] = new JArray {"given_name"},
                     ["display"] = new JArray
                     {
                         new JObject
@@ -71,7 +71,7 @@ public static class SdJwtConfigurationSample
                 },
                 new JObject
                 {
-                    ["path"] = new JArray(){"family_name"},
+                    ["path"] = new JArray {"family_name"},
                     ["display"] = new JArray
                     {
                         new JObject
@@ -88,7 +88,7 @@ public static class SdJwtConfigurationSample
                 },
                 new JObject
                 {
-                    ["path"] = new JArray(){"email"},
+                    ["path"] = new JArray {"email"},
                     ["display"] = new JArray
                     {
                         new JObject
@@ -105,7 +105,7 @@ public static class SdJwtConfigurationSample
                 },
                 new JObject
                 {
-                    ["path"] = new JArray(){"address" },
+                    ["path"] = new JArray {"address" },
                     ["display"] = new JArray
                     {
                         new JObject
@@ -122,7 +122,7 @@ public static class SdJwtConfigurationSample
                 },
                 new JObject
                 {
-                    ["path"] = new JArray(){"address", "street"},
+                    ["path"] = new JArray {"address", "street"},
                     ["display"] = new JArray
                     {
                         new JObject
@@ -139,7 +139,7 @@ public static class SdJwtConfigurationSample
                 },
                 new JObject
                 {
-                    ["path"] = new JArray(){"address", "zip"},
+                    ["path"] = new JArray {"address", "zip"},
                     ["display"] = new JArray
                     {
                         new JObject
@@ -156,7 +156,7 @@ public static class SdJwtConfigurationSample
                 },
                 new JObject
                 {
-                    ["path"] = new JArray(){"address", "zip", "building"},
+                    ["path"] = new JArray {"address", "zip", "building"},
                     ["display"] = new JArray
                     {
                         new JObject
@@ -173,7 +173,7 @@ public static class SdJwtConfigurationSample
                 },
                 new JObject
                 {
-                    ["path"] = new JArray(){"degrees"},
+                    ["path"] = new JArray {"degrees"},
                     ["display"] = new JArray
                     {
                         new JObject
@@ -190,7 +190,7 @@ public static class SdJwtConfigurationSample
                 },
                 new JObject
                 {
-                    ["path"] = new JArray(){"degrees", JValue.CreateNull(), "type"},
+                    ["path"] = new JArray {"degrees", JValue.CreateNull(), "type"},
                     ["display"] = new JArray
                     {
                         new JObject
