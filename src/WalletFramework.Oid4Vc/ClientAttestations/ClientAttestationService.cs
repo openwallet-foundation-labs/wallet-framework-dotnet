@@ -1,6 +1,6 @@
+using LanguageExt;
 using Microsoft.Extensions.Options;
 using WalletFramework.Core.Cryptography.Models;
-using WalletFramework.Core.Functional;
 using WalletFramework.Oid4Vc.ClientAttestations.Abstractions;
 using WalletFramework.Oid4Vc.Oid4Vci.AuthFlow.Models;
 using WalletFramework.Oid4Vc.Oid4Vci.Authorization.Models;
@@ -14,16 +14,21 @@ public class ClientAttestationService(
     IAttestationSigner attestationSigner,
     IWalletAttestationService walletAttestationService) : IClientAttestationService
 {
-    public async Task<ClientAttestation> GetClientAttestation(AuthorizationServerMetadata authorizationServerMetadata)
+    public async Task<Option<ClientAttestation>> GetClientAttestation(AuthorizationServerMetadata authorizationServerMetadata)
     {
-        var walletAttestation = (await walletAttestationService.RequestWalletAttestation()).UnwrapOrThrow();
-        
-        var walletAttestationPopJwt = await GeneratePoPJwt(
-            walletAttestation.KeyId,
-            authorizationServerMetadata.Issuer,
-            clientOptions.Value.ClientId);
+        var walletAttestation = await walletAttestationService.RequestWalletAttestation();
 
-        return ClientAttestation.Create(walletAttestation, walletAttestationPopJwt);
+        return await walletAttestation.MatchAsync<WalletAttestation, Option<ClientAttestation>>(
+            async attestation =>
+            {
+                var walletAttestationPopJwt = await GeneratePoPJwt(
+                    attestation.KeyId,
+                    authorizationServerMetadata.Issuer,
+                    clientOptions.Value.ClientId);
+
+                return ClientAttestation.Create(attestation, walletAttestationPopJwt);
+            },
+            () => Task.FromResult(Option<ClientAttestation>.None));
     }
 
     private async Task<WalletAttestationPopJwt> GeneratePoPJwt(

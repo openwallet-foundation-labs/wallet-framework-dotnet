@@ -90,11 +90,7 @@ public class Oid4VciClientService(
         var authorizationServerMetadata =
             await FetchAuthorizationServerMetadataAsync(issuerMetadata, credentialOfferMetadata.CredentialOffer);
 
-        var clientAttestation = Option<ClientAttestation>.None;
-        if (clientOptions.Value.ClientAttestationEnabled)
-        {
-            clientAttestation = await clientAttestationService.GetClientAttestation(authorizationServerMetadata);
-        }
+        var clientAttestation = await clientAttestationService.GetClientAttestation(authorizationServerMetadata);
 
         var token = await tokenService.RequestToken(
             authorizationServerMetadata,
@@ -226,11 +222,7 @@ public class Oid4VciClientService(
 
         var authServerMetadata = await FetchAuthorizationServerMetadataAsync(issuerMetadata, offer.CredentialOffer);
         
-        var clientAttestation = Option<ClientAttestation>.None;
-        if (clientOptions.Value.ClientAttestationEnabled)
-        {
-            clientAttestation = await clientAttestationService.GetClientAttestation(authServerMetadata);
-        }
+        var clientAttestation = await clientAttestationService.GetClientAttestation(authServerMetadata);
 
         var authorizationRequestUri = await CreateAuthRequestUri(
             authServerMetadata,
@@ -299,12 +291,8 @@ public class Oid4VciClientService(
             Scope = string.Join(" ", scopes),
             ClientId = session.AuthorizationData.ClientOptions.ClientId
         };
-
-        var clientAttestation = Option<ClientAttestation>.None;
-        if (clientOptions.Value.ClientAttestationEnabled)
-        {
-            clientAttestation = await clientAttestationService.GetClientAttestation(session.AuthorizationData.AuthorizationServerMetadata);
-        }
+            
+        var clientAttestation = await clientAttestationService.GetClientAttestation(session.AuthorizationData.AuthorizationServerMetadata);
 
         var token = await tokenService.RequestToken(
             session.AuthorizationData.AuthorizationServerMetadata,
@@ -551,10 +539,7 @@ public class Oid4VciClientService(
             return new Uri(authorizationServerMetadata.AuthorizationEndpoint + vciAuthorizationRequest.ToQueryString());
         }
         
-        if (clientOptions.Value.ClientAttestationEnabled)
-        {
-            _httpClient.AddClientAttestation(clientAttestation.UnwrapOrThrow());
-        }
+        clientAttestation.IfSome(attestation => _httpClient.AddClientAttestation(attestation));
         
         var response = await _httpClient.PostAsync(
             authorizationServerMetadata.PushedAuthorizationRequestEndpoint,

@@ -83,7 +83,7 @@ public class AuthFlowSessionRecordCrudTests : IDisposable
 
     private static AuthFlowSession CreateSampleSession()
     {
-        var clientOptions = new ClientOptions("client", "issuer", "https://redirect", false);
+        var clientOptions = new ClientOptions("client", "issuer", "https://redirect");
 
         var sdJwtConfig = new JObject
         {
