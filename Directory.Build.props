@@ -9,7 +9,7 @@
         <Product>Wallet Framework for .NET</Product>
         <RepositoryUrl>https://github.com/openwallet-foundation-labs/wallet-framework-dotnet.git</RepositoryUrl>
         <RepositoryType>git</RepositoryType>
-        <Version>2.0.0</Version>
+        <Version>3.0.0</Version>
     </PropertyGroup>
     <!-- Common compile parameters -->
     <PropertyGroup>
