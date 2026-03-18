@@ -9,6 +9,7 @@ public static class ServiceCollectionExtensions
 {
     /// <summary>
     /// Creates a storage builder resolving the SQLite provider from DI so callers don't need to construct it.
+    /// Storage must be initialized once after the service provider has been built and before repositories are used.
     /// </summary>
     /// <param name="services">The service collection.</param>
     /// <param name="connectionString">The SQLite connection string.</param>
@@ -32,8 +33,8 @@ public static class ServiceCollectionExtensions
             sqliteProvider.Configure(options, connectionString);
         });
 
-        services.AddScoped<DatabaseCreator>();
-        services.AddScoped<IDatabaseCreator>(sp => sp.GetRequiredService<DatabaseCreator>());
+        services.AddSingleton<DatabaseCreator>();
+        services.AddSingleton<IDatabaseCreator>(sp => sp.GetRequiredService<DatabaseCreator>());
 
         services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
 

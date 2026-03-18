@@ -70,19 +70,4 @@ public static class TestDbSetup
         var serviceProvider = services.BuildServiceProvider();
         return (serviceProvider, dbPath);
     }
-
-    /// <summary>
-    ///     Creates a service provider for simple one-off test scenarios
-    /// </summary>
-    /// <returns>A tuple containing the service provider and database path</returns>
-    public static async Task<(ServiceProvider ServiceProvider, string DbPath)> CreateServiceProviderForSimpleTest()
-    {
-        var (serviceProvider, dbPath) = CreateServiceProvider();
-
-        await using var scope = serviceProvider.CreateAsyncScope();
-        var databaseCreator = scope.ServiceProvider.GetRequiredService<IDatabaseCreator>();
-        await databaseCreator.EnsureDatabaseCreated();
-
-        return (serviceProvider, dbPath);
-    }
 }
