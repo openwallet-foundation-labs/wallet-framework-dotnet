@@ -12,8 +12,8 @@ public sealed class RecordsBuilder(IServiceCollection services) : IRecordsBuilde
         where TRecord : RecordBase
         where TConfiguration : class, IRecordConfiguration<TRecord>
     {
-        services.AddScoped<IRecordConfiguration<TRecord>, TConfiguration>();
-        services.AddScoped<IRecordConfiguration>(sp => sp.GetRequiredService<IRecordConfiguration<TRecord>>());
+        services.AddSingleton<IRecordConfiguration<TRecord>, TConfiguration>();
+        services.AddSingleton<IRecordConfiguration>(sp => sp.GetRequiredService<IRecordConfiguration<TRecord>>());
         return this;
     }
 
@@ -21,8 +21,8 @@ public sealed class RecordsBuilder(IServiceCollection services) : IRecordsBuilde
     public IRecordsBuilder AddRecord<TRecord>(IRecordConfiguration<TRecord> configuration)
         where TRecord : RecordBase
     {
-        services.AddScoped(_ => configuration);
-        services.AddScoped<IRecordConfiguration>(sp => sp.GetRequiredService<IRecordConfiguration<TRecord>>());
+        services.AddSingleton(_ => configuration);
+        services.AddSingleton<IRecordConfiguration>(sp => sp.GetRequiredService<IRecordConfiguration<TRecord>>());
         return this;
     }
 }

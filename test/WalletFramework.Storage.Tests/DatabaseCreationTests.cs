@@ -1,6 +1,7 @@
 using System.Collections.Concurrent;
 using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
+using WalletFramework.Storage;
 using WalletFramework.Storage.Database;
 using WalletFramework.Storage.Repositories;
 using WalletFramework.Storage.Tests.TestModels;
@@ -18,6 +19,7 @@ public sealed class DatabaseCreationTests : IDisposable
         _scope = _serviceProvider.CreateScope();
         _databaseCreator = _scope.ServiceProvider.GetRequiredService<IDatabaseCreator>();
         _repository = _scope.ServiceProvider.GetRequiredService<IRepository<TestRecord>>();
+        _storageSession = _scope.ServiceProvider.GetRequiredService<IStorageSession>();
     }
 
     private readonly ServiceProvider _serviceProvider;
@@ -25,6 +27,7 @@ public sealed class DatabaseCreationTests : IDisposable
     private readonly IServiceScope _scope;
     private readonly IDatabaseCreator _databaseCreator;
     private readonly IRepository<TestRecord> _repository;
+    private readonly IStorageSession _storageSession;
 
     [Fact]
     public async Task Can_Create_Database()
@@ -156,5 +159,6 @@ public sealed class DatabaseCreationTests : IDisposable
     private async Task StoreRecord(TestRecord record)
     {
         await _repository.Add(record);
+        await _storageSession.Commit();
     }
 }

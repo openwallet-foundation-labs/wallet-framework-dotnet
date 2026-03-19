@@ -32,10 +32,11 @@ public class Oid4VpClientService : IOid4VpClientService
     /// <param name="dcqlService">The DCQL service.</param>
     /// <param name="httpClientFactory">The http client factory to create http clients.</param>
     /// <param name="logger">The ILogger.</param>
-    /// <param name="mdocRepository">The service responsible for mdoc storage operations.</param>
-    /// <param name="sdJwtRepository">The service responsible for SD-JWT storage operations.</param>
+    /// <param name="mdocCredentialStore">The service responsible for mdoc storage operations.</param>
+    /// <param name="sdJwtCredentialStore">The service responsible for SD-JWT storage operations.</param>
     /// <param name="oid4VpHaipClient">The service responsible for OpenId4VP related operations.</param>
-    /// <param name="presentationRepository">The service responsible for OidPresentationRecord related operations.</param>
+    /// <param name="completedPresentationStore">The service responsible for completed presentation storage operations.</param>
+    /// <param name="storageSession">The storage session coordinating persistence commits.</param>
     /// <param name="presentationService">The authorization response service.</param>
     public Oid4VpClientService(
         IAuthorizationRequestService authorizationRequestService,
@@ -43,9 +44,10 @@ public class Oid4VpClientService : IOid4VpClientService
         IDcqlService dcqlService,
         IHttpClientFactory httpClientFactory,
         ILogger<Oid4VpClientService> logger,
-        IDomainRepository<MdocCredential, MdocCredentialRecord, CredentialId> mdocRepository,
-        IDomainRepository<SdJwtCredential, SdJwtCredentialRecord, CredentialId> sdJwtRepository,
-        IDomainRepository<CompletedPresentation, CompletedPresentationRecord, string> presentationRepository,
+        IMdocCredentialStore mdocCredentialStore,
+        ISdJwtCredentialStore sdJwtCredentialStore,
+        ICompletedPresentationStore completedPresentationStore,
+        IStorageSession storageSession,
         IOid4VpHaipClient oid4VpHaipClient,
         IPresentationService presentationService)
     {
@@ -54,23 +56,25 @@ public class Oid4VpClientService : IOid4VpClientService
         _dcqlService = dcqlService;
         _httpClientFactory = httpClientFactory;
         _logger = logger;
-        _mdocRepository = mdocRepository;
-        _sdJwtRepository = sdJwtRepository;
+        _mdocCredentialStore = mdocCredentialStore;
+        _sdJwtCredentialStore = sdJwtCredentialStore;
         _oid4VpHaipClient = oid4VpHaipClient;
-        _presentationRepository = presentationRepository;
+        _completedPresentationStore = completedPresentationStore;
         _presentationService = presentationService;
+        _storageSession = storageSession;
     }
 
     private readonly IAuthorizationRequestService _authorizationRequestService;
     private readonly IAuthorizationResponseEncryptionService _authorizationResponseEncryptionService;
     private readonly IDcqlService _dcqlService;
-    private readonly IDomainRepository<CompletedPresentation, CompletedPresentationRecord, string> _presentationRepository;
-    private readonly IDomainRepository<MdocCredential, MdocCredentialRecord, CredentialId> _mdocRepository;
-    private readonly IDomainRepository<SdJwtCredential, SdJwtCredentialRecord, CredentialId> _sdJwtRepository;
+    private readonly ICompletedPresentationStore _completedPresentationStore;
+    private readonly IMdocCredentialStore _mdocCredentialStore;
+    private readonly ISdJwtCredentialStore _sdJwtCredentialStore;
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly ILogger<Oid4VpClientService> _logger;
     private readonly IOid4VpHaipClient _oid4VpHaipClient;
     private readonly IPresentationService _presentationService;
+    private readonly IStorageSession _storageSession;
 
     public async Task<Option<Uri>> AbortAuthorizationRequest(AuthorizationRequestCancellation cancellation)
     {
@@ -137,31 +141,21 @@ public class Oid4VpClientService : IOid4VpClientService
         // TODO: Introduce timeout
         var httpClient = _httpClientFactory.CreateClient();
         httpClient.DefaultRequestHeaders.Clear();
+        var remainingSdJwtCredentialCount = (await _sdJwtCredentialStore.List()).Count;
+        var remainingMdocCredentialCount = (await _mdocCredentialStore.List()).Count;
 
         // ToDo: when to delete these records?
         foreach (var credential in credentials)
         {
             switch (credential.Credential)
             {
-                case SdJwtCredential { OneTimeUse: true } sdJwtRecord:
-                    var credentialSetSdJwtRecords = await _sdJwtRepository.ListAll();
-                    await credentialSetSdJwtRecords.Match(
-                        async sdJwtRecords =>
-                        {
-                            if (sdJwtRecords.Count() > 1)
-                                await _sdJwtRepository.Delete(sdJwtRecord.GetId());
-                        },
-                        () => Task.CompletedTask);
+                case SdJwtCredential { OneTimeUse: true } sdJwtRecord when remainingSdJwtCredentialCount > 1:
+                    await _sdJwtCredentialStore.Delete(sdJwtRecord.GetId());
+                    remainingSdJwtCredentialCount--;
                     break;
-                case MdocCredential { OneTimeUse: true } mDocRecord:
-                    var credentialSetMdocRecords = await _mdocRepository.ListAll();
-                    await credentialSetMdocRecords.Match(
-                        async mDocRecords =>
-                        {
-                            if (mDocRecords.Count > 1)
-                                await _mdocRepository.Delete(mDocRecord.GetId());
-                        },
-                        () => Task.CompletedTask);
+                case MdocCredential { OneTimeUse: true } mDocRecord when remainingMdocCredentialCount > 1:
+                    await _mdocCredentialStore.Delete(mDocRecord.GetId());
+                    remainingMdocCredentialCount--;
                     break;
             }
         }
@@ -234,7 +228,8 @@ public class Oid4VpClientService : IOid4VpClientService
             Option<string>.None,
             DateTime.UtcNow);
 
-        await _presentationRepository.Add(oidPresentationRecord);
+        await _completedPresentationStore.Add(oidPresentationRecord);
+        await _storageSession.Commit();
 
         var redirectUriJson = await responseMessage.Content.ReadAsStringAsync();
 

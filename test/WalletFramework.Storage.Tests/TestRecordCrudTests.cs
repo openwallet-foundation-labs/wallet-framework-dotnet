@@ -3,6 +3,7 @@ using LanguageExt;
 using Microsoft.Extensions.DependencyInjection;
 using System.Text.Json;
 using WalletFramework.Core.Functional;
+using WalletFramework.Storage;
 using WalletFramework.Storage.Database;
 using WalletFramework.Storage.Repositories;
 using WalletFramework.Storage.Tests.TestModels;
@@ -24,14 +25,18 @@ public class TestRecordCrudTests : IDisposable
     public async Task Add_Should_Successfully_Create_Record()
     {
         // Arrange
-        var databaseCreator = _serviceProvider.GetRequiredService<IDatabaseCreator>();
+        using var scope = _serviceProvider.CreateScope();
+        var serviceProvider = scope.ServiceProvider;
+        var databaseCreator = serviceProvider.GetRequiredService<IDatabaseCreator>();
         await databaseCreator.EnsureDatabaseCreated();
 
-        var repository = _serviceProvider.GetRequiredService<IRepository<TestRecord>>();
+        var repository = serviceProvider.GetRequiredService<IRepository<TestRecord>>();
+        var storageSession = serviceProvider.GetRequiredService<IStorageSession>();
         var testRecord = TestRecord.Create("Test Name", "Test Description", 42, true);
 
         // Act
         var result = await repository.Add(testRecord);
+        await storageSession.Commit();
 
         // Assert
         result.Should().Be(Unit.Default);
@@ -56,10 +61,13 @@ public class TestRecordCrudTests : IDisposable
     public async Task Find_Should_Return_Matching_Records()
     {
         // Arrange
-        var databaseCreator = _serviceProvider.GetRequiredService<IDatabaseCreator>();
+        using var scope = _serviceProvider.CreateScope();
+        var serviceProvider = scope.ServiceProvider;
+        var databaseCreator = serviceProvider.GetRequiredService<IDatabaseCreator>();
         await databaseCreator.EnsureDatabaseCreated();
 
-        var repository = _serviceProvider.GetRequiredService<IRepository<TestRecord>>();
+        var repository = serviceProvider.GetRequiredService<IRepository<TestRecord>>();
+        var storageSession = serviceProvider.GetRequiredService<IStorageSession>();
 
         var record1 = TestRecord.Create("Active Record", "Description 1", 10, true);
         var record2 = TestRecord.Create("Inactive Record", "Description 2", 20, false);
@@ -68,6 +76,7 @@ public class TestRecordCrudTests : IDisposable
         await repository.Add(record1);
         await repository.Add(record2);
         await repository.Add(record3);
+        await storageSession.Commit();
 
         // Act
         var activeRecords = (await repository.Find(r => r.IsActive)).UnwrapOrThrow();
@@ -86,10 +95,12 @@ public class TestRecordCrudTests : IDisposable
     public async Task GetById_Should_Return_None_When_Record_Does_Not_Exist()
     {
         // Arrange
-        var databaseCreator = _serviceProvider.GetRequiredService<IDatabaseCreator>();
+        using var scope = _serviceProvider.CreateScope();
+        var serviceProvider = scope.ServiceProvider;
+        var databaseCreator = serviceProvider.GetRequiredService<IDatabaseCreator>();
         await databaseCreator.EnsureDatabaseCreated();
 
-        var repository = _serviceProvider.GetRequiredService<IRepository<TestRecord>>();
+        var repository = serviceProvider.GetRequiredService<IRepository<TestRecord>>();
         var nonExistentId = Guid.NewGuid();
 
         // Act
@@ -103,12 +114,16 @@ public class TestRecordCrudTests : IDisposable
     public async Task GetById_Should_Return_Record_When_Exists()
     {
         // Arrange
-        var databaseCreator = _serviceProvider.GetRequiredService<IDatabaseCreator>();
+        using var scope = _serviceProvider.CreateScope();
+        var serviceProvider = scope.ServiceProvider;
+        var databaseCreator = serviceProvider.GetRequiredService<IDatabaseCreator>();
         await databaseCreator.EnsureDatabaseCreated();
 
-        var repository = _serviceProvider.GetRequiredService<IRepository<TestRecord>>();
+        var repository = serviceProvider.GetRequiredService<IRepository<TestRecord>>();
+        var storageSession = serviceProvider.GetRequiredService<IStorageSession>();
         var testRecord = TestRecord.Create("Test Name", "Test Description", 42, true);
         await repository.Add(testRecord);
+        await storageSession.Commit();
 
         // Act
         var result = await repository.GetById(testRecord.RecordId);
@@ -124,10 +139,13 @@ public class TestRecordCrudTests : IDisposable
     public async Task ListAll_Should_Return_All_Records()
     {
         // Arrange
-        var databaseCreator = _serviceProvider.GetRequiredService<IDatabaseCreator>();
+        using var scope = _serviceProvider.CreateScope();
+        var serviceProvider = scope.ServiceProvider;
+        var databaseCreator = serviceProvider.GetRequiredService<IDatabaseCreator>();
         await databaseCreator.EnsureDatabaseCreated();
 
-        var repository = _serviceProvider.GetRequiredService<IRepository<TestRecord>>();
+        var repository = serviceProvider.GetRequiredService<IRepository<TestRecord>>();
+        var storageSession = serviceProvider.GetRequiredService<IStorageSession>();
 
         var record1 = TestRecord.Create("Record 1", "Description 1", 10, true);
         var record2 = TestRecord.Create("Record 2", "Description 2", 20, false);
@@ -136,6 +154,7 @@ public class TestRecordCrudTests : IDisposable
         await repository.Add(record1);
         await repository.Add(record2);
         await repository.Add(record3);
+        await storageSession.Commit();
 
         // Act
         var allRecords = (await repository.ListAll()).UnwrapOrThrow();
@@ -151,10 +170,13 @@ public class TestRecordCrudTests : IDisposable
     public async Task Multiple_Operations_Should_Work_Together()
     {
         // Arrange
-        var databaseCreator = _serviceProvider.GetRequiredService<IDatabaseCreator>();
+        using var scope = _serviceProvider.CreateScope();
+        var serviceProvider = scope.ServiceProvider;
+        var databaseCreator = serviceProvider.GetRequiredService<IDatabaseCreator>();
         await databaseCreator.EnsureDatabaseCreated();
 
-        var repository = _serviceProvider.GetRequiredService<IRepository<TestRecord>>();
+        var repository = serviceProvider.GetRequiredService<IRepository<TestRecord>>();
+        var storageSession = serviceProvider.GetRequiredService<IStorageSession>();
 
         // Act & Assert - Create multiple records
         var record1 = TestRecord.Create("Record 1", "First record", 1, true);
@@ -164,6 +186,7 @@ public class TestRecordCrudTests : IDisposable
         await repository.Add(record1);
         await repository.Add(record2);
         await repository.Add(record3);
+        await storageSession.Commit();
 
         var allRecords = (await repository.ListAll()).UnwrapOrThrow();
         allRecords.Should().HaveCount(3);
@@ -171,12 +194,14 @@ public class TestRecordCrudTests : IDisposable
         // Update one record
         var updatedRecord2 = record2.Update(isActive: true, value: 22);
         await repository.Update(updatedRecord2);
+        await storageSession.Commit();
 
         var activeRecords = (await repository.Find(r => r.IsActive)).UnwrapOrThrow();
         activeRecords.Should().HaveCount(3); // All should be active now
 
         // Delete one record
         await repository.RemoveById(record1.RecordId);
+        await storageSession.Commit();
 
         var remainingRecords = (await repository.ListAll()).UnwrapOrThrow();
         remainingRecords.Should().HaveCount(2);
@@ -187,12 +212,16 @@ public class TestRecordCrudTests : IDisposable
     public async Task Remove_Should_Delete_Record()
     {
         // Arrange
-        var databaseCreator = _serviceProvider.GetRequiredService<IDatabaseCreator>();
+        using var scope = _serviceProvider.CreateScope();
+        var serviceProvider = scope.ServiceProvider;
+        var databaseCreator = serviceProvider.GetRequiredService<IDatabaseCreator>();
         await databaseCreator.EnsureDatabaseCreated();
 
-        var repository = _serviceProvider.GetRequiredService<IRepository<TestRecord>>();
+        var repository = serviceProvider.GetRequiredService<IRepository<TestRecord>>();
+        var storageSession = serviceProvider.GetRequiredService<IStorageSession>();
         var testRecord = TestRecord.Create("To Be Deleted", "Description", 999, true);
         await repository.Add(testRecord);
+        await storageSession.Commit();
 
         // Verify record exists before deletion
         var beforeDeletion = await repository.GetById(testRecord.RecordId);
@@ -200,6 +229,7 @@ public class TestRecordCrudTests : IDisposable
 
         // Act
         await repository.Remove(testRecord);
+        await storageSession.Commit();
 
         // Assert
         var afterDeletion = await repository.GetById(testRecord.RecordId);
@@ -210,12 +240,16 @@ public class TestRecordCrudTests : IDisposable
     public async Task RemoveById_Should_Delete_Record_By_Id()
     {
         // Arrange
-        var databaseCreator = _serviceProvider.GetRequiredService<IDatabaseCreator>();
+        using var scope = _serviceProvider.CreateScope();
+        var serviceProvider = scope.ServiceProvider;
+        var databaseCreator = serviceProvider.GetRequiredService<IDatabaseCreator>();
         await databaseCreator.EnsureDatabaseCreated();
 
-        var repository = _serviceProvider.GetRequiredService<IRepository<TestRecord>>();
+        var repository = serviceProvider.GetRequiredService<IRepository<TestRecord>>();
+        var storageSession = serviceProvider.GetRequiredService<IStorageSession>();
         var testRecord = TestRecord.Create("To Be Deleted By Id", "Description", 888, false);
         await repository.Add(testRecord);
+        await storageSession.Commit();
 
         // Verify record exists before deletion
         var beforeDeletion = await repository.GetById(testRecord.RecordId);
@@ -223,6 +257,7 @@ public class TestRecordCrudTests : IDisposable
 
         // Act
         await repository.RemoveById(testRecord.RecordId);
+        await storageSession.Commit();
 
         // Assert
         var afterDeletion = await repository.GetById(testRecord.RecordId);
@@ -233,10 +268,12 @@ public class TestRecordCrudTests : IDisposable
     public async Task RemoveById_Should_Handle_Non_Existent_Id_Gracefully()
     {
         // Arrange
-        var databaseCreator = _serviceProvider.GetRequiredService<IDatabaseCreator>();
+        using var scope = _serviceProvider.CreateScope();
+        var serviceProvider = scope.ServiceProvider;
+        var databaseCreator = serviceProvider.GetRequiredService<IDatabaseCreator>();
         await databaseCreator.EnsureDatabaseCreated();
 
-        var repository = _serviceProvider.GetRequiredService<IRepository<TestRecord>>();
+        var repository = serviceProvider.GetRequiredService<IRepository<TestRecord>>();
         var nonExistentId = Guid.NewGuid();
 
         // Act & Assert - Should not throw
@@ -248,16 +285,21 @@ public class TestRecordCrudTests : IDisposable
     public async Task Update_Should_Modify_Existing_Record()
     {
         // Arrange
-        var databaseCreator = _serviceProvider.GetRequiredService<IDatabaseCreator>();
+        using var scope = _serviceProvider.CreateScope();
+        var serviceProvider = scope.ServiceProvider;
+        var databaseCreator = serviceProvider.GetRequiredService<IDatabaseCreator>();
         await databaseCreator.EnsureDatabaseCreated();
 
-        var repository = _serviceProvider.GetRequiredService<IRepository<TestRecord>>();
+        var repository = serviceProvider.GetRequiredService<IRepository<TestRecord>>();
+        var storageSession = serviceProvider.GetRequiredService<IStorageSession>();
         var originalRecord = TestRecord.Create("Original Name", "Original Description", 100, false);
         await repository.Add(originalRecord);
+        await storageSession.Commit();
 
         // Act
         var updatedRecord = originalRecord.Update(name: "Updated Name", value: 200, isActive: true);
         await repository.Update(updatedRecord);
+        await storageSession.Commit();
 
         // Assert
         var retrieved = await repository.GetById(originalRecord.RecordId);
@@ -275,10 +317,13 @@ public class TestRecordCrudTests : IDisposable
     public async Task Can_Store_And_Retrieve_Tags()
     {
         // Arrange
-        var databaseCreator = _serviceProvider.GetRequiredService<IDatabaseCreator>();
+        using var scope = _serviceProvider.CreateScope();
+        var serviceProvider = scope.ServiceProvider;
+        var databaseCreator = serviceProvider.GetRequiredService<IDatabaseCreator>();
         await databaseCreator.EnsureDatabaseCreated();
 
-        var repository = _serviceProvider.GetRequiredService<IRepository<TestRecord>>();
+        var repository = serviceProvider.GetRequiredService<IRepository<TestRecord>>();
+        var storageSession = serviceProvider.GetRequiredService<IStorageSession>();
         var testRecord = TestRecord.Create("Test", "Description", 1, true);
 
         // Act - Set tags
@@ -286,6 +331,7 @@ public class TestRecordCrudTests : IDisposable
         testRecord.SetTag("Priority", "High", s => s);
 
         await repository.Add(testRecord);
+        await storageSession.Commit();
 
         // Assert - Retrieve and verify tags
         var retrieved = await repository.GetById(testRecord.RecordId);
@@ -303,10 +349,13 @@ public class TestRecordCrudTests : IDisposable
     public async Task Can_Update_Tag()
     {
         // Arrange
-        var databaseCreator = _serviceProvider.GetRequiredService<IDatabaseCreator>();
+        using var scope = _serviceProvider.CreateScope();
+        var serviceProvider = scope.ServiceProvider;
+        var databaseCreator = serviceProvider.GetRequiredService<IDatabaseCreator>();
         await databaseCreator.EnsureDatabaseCreated();
 
-        var repository = _serviceProvider.GetRequiredService<IRepository<TestRecord>>();
+        var repository = serviceProvider.GetRequiredService<IRepository<TestRecord>>();
+        var storageSession = serviceProvider.GetRequiredService<IStorageSession>();
         var testRecord = TestRecord.Create("Test", "Description", 1, true);
 
         // Act - Set initial value then update
@@ -314,6 +363,7 @@ public class TestRecordCrudTests : IDisposable
         testRecord.SetTag("Status", "Updated", s => s);
 
         await repository.Add(testRecord);
+        await storageSession.Commit();
 
         // Assert - Should have updated value
         var retrieved = await repository.GetById(testRecord.RecordId);
@@ -327,14 +377,18 @@ public class TestRecordCrudTests : IDisposable
     public async Task Can_Not_Get_Non_Existent_Tag()
     {
         // Arrange
-        var databaseCreator = _serviceProvider.GetRequiredService<IDatabaseCreator>();
+        using var scope = _serviceProvider.CreateScope();
+        var serviceProvider = scope.ServiceProvider;
+        var databaseCreator = serviceProvider.GetRequiredService<IDatabaseCreator>();
         await databaseCreator.EnsureDatabaseCreated();
 
-        var repository = _serviceProvider.GetRequiredService<IRepository<TestRecord>>();
+        var repository = serviceProvider.GetRequiredService<IRepository<TestRecord>>();
+        var storageSession = serviceProvider.GetRequiredService<IStorageSession>();
         var testRecord = TestRecord.Create("Test", "Description", 1, true);
         testRecord.SetTag("ExistingTag", "value", s => s);
 
         await repository.Add(testRecord);
+        await storageSession.Commit();
 
         // Act & Assert - Should return null when accessing non-existent tag
         var retrieved = await repository.GetById(testRecord.RecordId);
@@ -352,16 +406,20 @@ public class TestRecordCrudTests : IDisposable
     public async Task Can_Remove_Tag()
     {
         // Arrange
-        var databaseCreator = _serviceProvider.GetRequiredService<IDatabaseCreator>();
+        using var scope = _serviceProvider.CreateScope();
+        var serviceProvider = scope.ServiceProvider;
+        var databaseCreator = serviceProvider.GetRequiredService<IDatabaseCreator>();
         await databaseCreator.EnsureDatabaseCreated();
 
-        var repository = _serviceProvider.GetRequiredService<IRepository<TestRecord>>();
+        var repository = serviceProvider.GetRequiredService<IRepository<TestRecord>>();
+        var storageSession = serviceProvider.GetRequiredService<IStorageSession>();
         var testRecord = TestRecord.Create("Test", "Description", 1, true);
 
         // Set a tag
         testRecord.SetTag("TestTag", "testValue", s => s);
 
         await repository.Add(testRecord);
+        await storageSession.Commit();
 
         // Act - Remove the tag
         var retrieved = await repository.GetById(testRecord.RecordId);
@@ -369,6 +427,7 @@ public class TestRecordCrudTests : IDisposable
         record.RemoveTag("TestTag");
 
         await repository.Update(record);
+        await storageSession.Commit();
 
         // Assert - Tag should be removed
         var updatedRecord = await repository.GetById(testRecord.RecordId);
@@ -382,10 +441,13 @@ public class TestRecordCrudTests : IDisposable
     public async Task Can_Store_And_Retrieve_Complex_Object_With_Serialization()
     {
         // Arrange
-        var databaseCreator = _serviceProvider.GetRequiredService<IDatabaseCreator>();
+        using var scope = _serviceProvider.CreateScope();
+        var serviceProvider = scope.ServiceProvider;
+        var databaseCreator = serviceProvider.GetRequiredService<IDatabaseCreator>();
         await databaseCreator.EnsureDatabaseCreated();
 
-        var repository = _serviceProvider.GetRequiredService<IRepository<TestRecord>>();
+        var repository = serviceProvider.GetRequiredService<IRepository<TestRecord>>();
+        var storageSession = serviceProvider.GetRequiredService<IStorageSession>();
         var testRecord = TestRecord.Create("Test", "Description", 1, true);
 
         // Define serialization/deserialization functions
@@ -398,6 +460,7 @@ public class TestRecordCrudTests : IDisposable
         testRecord.SetTag("LastUpdated", testDate, serializeFunc);
 
         await repository.Add(testRecord);
+        await storageSession.Commit();
 
         // Assert - Retrieve and verify with deserialization
         var retrieved = await repository.GetById(testRecord.RecordId);
@@ -414,10 +477,13 @@ public class TestRecordCrudTests : IDisposable
     public async Task Can_Store_And_Retrieve_Object_With_JSON_Serialization()
     {
         // Arrange
-        var databaseCreator = _serviceProvider.GetRequiredService<IDatabaseCreator>();
+        using var scope = _serviceProvider.CreateScope();
+        var serviceProvider = scope.ServiceProvider;
+        var databaseCreator = serviceProvider.GetRequiredService<IDatabaseCreator>();
         await databaseCreator.EnsureDatabaseCreated();
 
-        var repository = _serviceProvider.GetRequiredService<IRepository<TestRecord>>();
+        var repository = serviceProvider.GetRequiredService<IRepository<TestRecord>>();
+        var storageSession = serviceProvider.GetRequiredService<IStorageSession>();
         var testRecord = TestRecord.Create("Test", "Description", 1, true);
 
         // Define JSON serialization/deserialization functions
@@ -435,6 +501,7 @@ public class TestRecordCrudTests : IDisposable
         testRecord.SetTag("Inventory", testData, serializeFunc);
 
         await repository.Add(testRecord);
+        await storageSession.Commit();
 
         // Assert - Retrieve and verify with JSON deserialization
         var retrieved = await repository.GetById(testRecord.RecordId);

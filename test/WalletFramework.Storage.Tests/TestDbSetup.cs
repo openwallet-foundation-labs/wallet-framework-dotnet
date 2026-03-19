@@ -61,13 +61,17 @@ public static class TestDbSetup
                 builder.AddRecord<AuthFlowSessionRecord, AuthFlowSessionRecordConfiguration>();
             });
 
-        services.AddScoped<IDomainRepository<MdocCredential, MdocCredentialRecord, CredentialId>, MdocCredentialRepository>();
-        services.AddScoped<IDomainRepository<SdJwtCredential, SdJwtCredentialRecord, CredentialId>, SdJwtCredentialRepository>();
-        services.AddScoped<IDomainRepository<CredentialDataSet, CredentialDataSetRecord, CredentialSetId>, CredentialDataSetRepository>();
-        services.AddScoped<IDomainRepository<CompletedPresentation, CompletedPresentationRecord, string>, CompletedPresentationRepository>();
-        services.AddScoped<IDomainRepository<AuthFlowSession, AuthFlowSessionRecord, AuthFlowSessionState>, AuthFlowSessionRepository>();
+        services.AddScoped<IMdocCredentialStore, MdocCredentialRepository>();
+        services.AddScoped<ISdJwtCredentialStore, SdJwtCredentialStore>();
+        services.AddScoped<ICredentialDataSetStore, CredentialDataSetRepository>();
+        services.AddScoped<ICompletedPresentationStore, CompletedPresentationRepository>();
+        services.AddScoped<IAuthFlowSessionStore, AuthFlowSessionRepository>();
 
-        var serviceProvider = services.BuildServiceProvider();
+        var serviceProvider = services.BuildServiceProvider(new ServiceProviderOptions
+        {
+            ValidateOnBuild = true,
+            ValidateScopes = true
+        });
         return (serviceProvider, dbPath);
     }
 }

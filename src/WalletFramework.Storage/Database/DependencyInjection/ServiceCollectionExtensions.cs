@@ -37,6 +37,7 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IDatabaseCreator>(sp => sp.GetRequiredService<DatabaseCreator>());
 
         services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
+        services.AddScoped<IStorageSession, StorageSession>();
 
         return services;
     }
