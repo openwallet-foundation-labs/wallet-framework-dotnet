@@ -1,0 +1,3 @@
+namespace WalletFramework.WalletAttestations.Issuance;
+
+public record WalletAttestationIssuanceResponse;

@@ -1,6 +1,6 @@
 using WalletFramework.Core.Functional;
 
-namespace WalletFramework.Oid4Vc.Oid4Vci.Errors;
+namespace WalletFramework.Core.Localization.Errors;
 
 public record LocaleError : Error
 {
