@@ -61,28 +61,17 @@ public static class TestDbSetup
                 builder.AddRecord<AuthFlowSessionRecord, AuthFlowSessionRecordConfiguration>();
             });
 
-        services.AddScoped<IDomainRepository<MdocCredential, MdocCredentialRecord, CredentialId>, MdocCredentialRepository>();
-        services.AddScoped<IDomainRepository<SdJwtCredential, SdJwtCredentialRecord, CredentialId>, SdJwtCredentialRepository>();
-        services.AddScoped<IDomainRepository<CredentialDataSet, CredentialDataSetRecord, CredentialSetId>, CredentialDataSetRepository>();
-        services.AddScoped<IDomainRepository<CompletedPresentation, CompletedPresentationRecord, string>, CompletedPresentationRepository>();
-        services.AddScoped<IDomainRepository<AuthFlowSession, AuthFlowSessionRecord, AuthFlowSessionState>, AuthFlowSessionRepository>();
+        services.AddScoped<IMdocCredentialStore, MdocCredentialRepository>();
+        services.AddScoped<ISdJwtCredentialStore, SdJwtCredentialStore>();
+        services.AddScoped<ICredentialDataSetStore, CredentialDataSetRepository>();
+        services.AddScoped<ICompletedPresentationStore, CompletedPresentationRepository>();
+        services.AddScoped<IAuthFlowSessionStore, AuthFlowSessionRepository>();
 
-        var serviceProvider = services.BuildServiceProvider();
-        return (serviceProvider, dbPath);
-    }
-
-    /// <summary>
-    ///     Creates a service provider for simple one-off test scenarios
-    /// </summary>
-    /// <returns>A tuple containing the service provider and database path</returns>
-    public static async Task<(ServiceProvider ServiceProvider, string DbPath)> CreateServiceProviderForSimpleTest()
-    {
-        var (serviceProvider, dbPath) = CreateServiceProvider();
-
-        await using var scope = serviceProvider.CreateAsyncScope();
-        var databaseCreator = scope.ServiceProvider.GetRequiredService<IDatabaseCreator>();
-        await databaseCreator.EnsureDatabaseCreated();
-
+        var serviceProvider = services.BuildServiceProvider(new ServiceProviderOptions
+        {
+            ValidateOnBuild = true,
+            ValidateScopes = true
+        });
         return (serviceProvider, dbPath);
     }
 }

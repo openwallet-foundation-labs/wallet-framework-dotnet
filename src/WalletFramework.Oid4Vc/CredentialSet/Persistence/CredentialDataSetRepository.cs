@@ -1,69 +1,57 @@
 using LanguageExt;
 using WalletFramework.Core.Credentials;
 using WalletFramework.Oid4Vc.CredentialSet.Models;
-using WalletFramework.Storage;
 using WalletFramework.Storage.Repositories;
 
 namespace WalletFramework.Oid4Vc.CredentialSet.Persistence;
 
 public class CredentialDataSetRepository(IRepository<CredentialDataSetRecord> repository)
-    : IDomainRepository<CredentialDataSet, CredentialDataSetRecord, CredentialSetId>
+    : ICredentialDataSetStore
 {
-    public virtual async Task<Unit> Add(CredentialDataSet domainModel)
+    public async Task<Unit> AddMany(IEnumerable<CredentialDataSet> credentialDataSets)
     {
-        return await (await GetById(domainModel.CredentialSetId)).Match(
-            async credential => await Update(domainModel),
-            async () =>
-            {
-                var record = new CredentialDataSetRecord(domainModel);
-                return await repository.Add(record);
-            });
-    }
-
-    public virtual async Task<Unit> AddMany(IEnumerable<CredentialDataSet> domainModels)
-    {
-        var records = domainModels.Select(domain => new CredentialDataSetRecord(domain));
+        var records = credentialDataSets.Select(dataSet => new CredentialDataSetRecord(dataSet));
         await repository.AddMany(records);
         return Unit.Default;
     }
 
-    public virtual async Task<Unit> Delete(CredentialSetId id)
+    public async Task<Unit> Delete(CredentialSetId id)
     {
         var guid = Guid.Parse(id.AsString());
         await repository.RemoveById(guid);
         return Unit.Default;
     }
 
-    public virtual async Task<Option<List<CredentialDataSet>>> Find(ISearchConfig<CredentialDataSetRecord> config)
-    {
-        var records = await repository.Find(config.ToPredicate());
-        return from rs in records select rs.Select(r => r.ToDomainModel()).ToList();
-    }
-
-    public virtual async Task<Option<CredentialDataSet>> GetById(CredentialSetId id)
+    public async Task<Option<CredentialDataSet>> Get(CredentialSetId id)
     {
         var guid = Guid.Parse(id.AsString());
         var record = await repository.GetById(guid);
-        return record.Map(r => r.ToDomainModel());
+        return record.Map(item => item.ToDomainModel());
     }
 
-    public virtual async Task<Option<List<CredentialDataSet>>> ListAll()
+    public async Task<IReadOnlyList<CredentialDataSet>> List()
     {
         var records = await repository.ListAll();
-        return from rs in records select rs.Select(r => r.ToDomainModel()).ToList();
+        return records.Match<IReadOnlyList<CredentialDataSet>>(
+            dataSetRecords => dataSetRecords.Select(record => record.ToDomainModel()).ToList(),
+            () => []);
     }
 
-    public virtual async Task<Unit> Update(CredentialDataSet domainModel)
+    public async Task<Unit> Save(CredentialDataSet credentialDataSet)
     {
-        var record = new CredentialDataSetRecord(domainModel);
+        return await (await Get(credentialDataSet.CredentialSetId)).Match(
+            async _ => await UpdateStoredRecord(credentialDataSet),
+            async () =>
+            {
+                var record = new CredentialDataSetRecord(credentialDataSet);
+                return await repository.Add(record);
+            });
+    }
+
+    private async Task<Unit> UpdateStoredRecord(CredentialDataSet credentialDataSet)
+    {
+        var record = new CredentialDataSetRecord(credentialDataSet);
         await repository.Update(record);
-        return Unit.Default;
-    }
-
-    public virtual async Task<Unit> Delete(CredentialDataSet domainModel)
-    {
-        var record = new CredentialDataSetRecord(domainModel);
-        await repository.Remove(record);
         return Unit.Default;
     }
 }

@@ -15,9 +15,7 @@ using WalletFramework.Oid4Vc.Oid4Vp.DcApi.Models;
 using WalletFramework.Oid4Vc.Oid4Vp.Models;
 using WalletFramework.Oid4Vc.Oid4Vp.TransactionDatas;
 using WalletFramework.SdJwtVc;
-using WalletFramework.SdJwtVc.Persistence;
 using WalletFramework.SdJwtVc.Services.SdJwtVcHolderService;
-using WalletFramework.Storage;
 
 namespace WalletFramework.Oid4Vc.Oid4Vp.Services;
 
@@ -30,23 +28,19 @@ public class PresentationService : IPresentationService
     /// <param name="sdJwtVcHolderService">The service responsible for SD-JWT related operations.</param>
     /// <param name="mdocAuthenticationService">The mdoc authentication service.</param>
     /// <param name="verifierKeyService">The verifier key service.</param>
-    /// <param name="sdJwtRepository">The service responsible for SD-JWT storage operations.</param>
     public PresentationService(
         ISdJwtVcHolderService sdJwtVcHolderService,
         IMdocAuthenticationService mdocAuthenticationService,
-        IVerifierKeyService verifierKeyService,
-        IDomainRepository<SdJwtCredential, SdJwtCredentialRecord, CredentialId> sdJwtRepository)
+        IVerifierKeyService verifierKeyService)
     {
         _sdJwtVcHolderService = sdJwtVcHolderService;
         _mdocAuthenticationService = mdocAuthenticationService;
         _verifierKeyService = verifierKeyService;
-        _sdJwtRepository = sdJwtRepository;
     }
 
     private readonly ISdJwtVcHolderService _sdJwtVcHolderService;
     private readonly IMdocAuthenticationService _mdocAuthenticationService;
     private readonly IVerifierKeyService _verifierKeyService;
-    private readonly IDomainRepository<SdJwtCredential, SdJwtCredentialRecord, CredentialId> _sdJwtRepository;
 
     /// <inheritdoc />
     public async Task<(List<(PresentationMap PresentationMap, ICredential PresentedCredential)> Presentations, Option<Nonce> MdocNonce)> CreatePresentations(

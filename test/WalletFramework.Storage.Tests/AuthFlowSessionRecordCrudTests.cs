@@ -10,6 +10,7 @@ using WalletFramework.Oid4Vc.Oid4Vci.Authorization.Models;
 using WalletFramework.Oid4Vc.Oid4Vci.CredOffer.Models;
 using WalletFramework.Oid4Vc.Oid4Vci.Issuer.Models;
 using WalletFramework.Storage.Database;
+using WalletFramework.Storage;
 
 namespace WalletFramework.Storage.Tests;
 
@@ -24,33 +25,41 @@ public class AuthFlowSessionRecordCrudTests : IDisposable
     [Fact]
     public async Task Can_Delete_AuthFlowSessionRecord()
     {
-        var databaseCreator = _serviceProvider.GetRequiredService<IDatabaseCreator>();
+        using var scope = _serviceProvider.CreateScope();
+        var serviceProvider = scope.ServiceProvider;
+        var databaseCreator = serviceProvider.GetRequiredService<IDatabaseCreator>();
+        var storageSession = serviceProvider.GetRequiredService<IStorageSession>();
         await databaseCreator.EnsureDatabaseCreated();
 
-        var repository = _serviceProvider
-            .GetRequiredService<IDomainRepository<AuthFlowSession, AuthFlowSessionRecord, AuthFlowSessionState>>();
+        var store = serviceProvider.GetRequiredService<IAuthFlowSessionStore>();
 
         var session = CreateSampleSession();
-        await repository.Add(session);
+        await store.Save(session);
+        await storageSession.Commit();
 
-        await repository.Delete(session.AuthFlowSessionState);
-        var fetched = await repository.GetById(session.AuthFlowSessionState);
+        await store.Delete(session.AuthFlowSessionState);
+        await storageSession.Commit();
+
+        var fetched = await store.Get(session.AuthFlowSessionState);
         fetched.IsNone.Should().BeTrue();
     }
 
     [Fact]
     public async Task Can_Store_And_Retrieve_AuthFlowSessionRecord()
     {
-        var databaseCreator = _serviceProvider.GetRequiredService<IDatabaseCreator>();
+        using var scope = _serviceProvider.CreateScope();
+        var serviceProvider = scope.ServiceProvider;
+        var databaseCreator = serviceProvider.GetRequiredService<IDatabaseCreator>();
+        var storageSession = serviceProvider.GetRequiredService<IStorageSession>();
         await databaseCreator.EnsureDatabaseCreated();
 
-        var repository = _serviceProvider
-            .GetRequiredService<IDomainRepository<AuthFlowSession, AuthFlowSessionRecord, AuthFlowSessionState>>();
+        var store = serviceProvider.GetRequiredService<IAuthFlowSessionStore>();
 
         var session = CreateSampleSession();
-        await repository.Add(session);
+        await store.Save(session);
+        await storageSession.Commit();
 
-        var fetched = await repository.GetById(session.AuthFlowSessionState);
+        var fetched = await store.Get(session.AuthFlowSessionState);
         fetched.Match(
             found => { found.AuthFlowSessionState.ToString().Should().Be(session.AuthFlowSessionState.ToString()); },
             () => throw new InvalidOperationException("Record should exist"));
@@ -59,19 +68,23 @@ public class AuthFlowSessionRecordCrudTests : IDisposable
     [Fact]
     public async Task Can_Update_AuthFlowSessionRecord()
     {
-        var databaseCreator = _serviceProvider.GetRequiredService<IDatabaseCreator>();
+        using var scope = _serviceProvider.CreateScope();
+        var serviceProvider = scope.ServiceProvider;
+        var databaseCreator = serviceProvider.GetRequiredService<IDatabaseCreator>();
+        var storageSession = serviceProvider.GetRequiredService<IStorageSession>();
         await databaseCreator.EnsureDatabaseCreated();
 
-        var repository = _serviceProvider
-            .GetRequiredService<IDomainRepository<AuthFlowSession, AuthFlowSessionRecord, AuthFlowSessionState>>();
+        var store = serviceProvider.GetRequiredService<IAuthFlowSessionStore>();
 
         var session = CreateSampleSession();
-        await repository.Add(session);
+        await store.Save(session);
+        await storageSession.Commit();
 
         var updated = session with { SpecVersion = Prelude.Some(42) };
-        await repository.Update(updated);
+        await store.Save(updated);
+        await storageSession.Commit();
 
-        var fetched = await repository.GetById(updated.AuthFlowSessionState);
+        var fetched = await store.Get(updated.AuthFlowSessionState);
         fetched.IsSome.Should().BeTrue();
     }
 

@@ -7,6 +7,7 @@ using WalletFramework.SdJwtLib.Models;
 using WalletFramework.SdJwtVc;
 using WalletFramework.Storage.Database;
 using WalletFramework.SdJwtVc.Persistence;
+using WalletFramework.Storage;
 
 namespace WalletFramework.Storage.Tests;
 
@@ -21,11 +22,13 @@ public class SdJwtCredentialRecordCrudTests : IDisposable
     [Fact]
     public async Task Can_Store_And_Retrieve_SdJwtCredentialRecord()
     {
-        var databaseCreator = _serviceProvider.GetRequiredService<IDatabaseCreator>();
+        using var scope = _serviceProvider.CreateScope();
+        var serviceProvider = scope.ServiceProvider;
+        var databaseCreator = serviceProvider.GetRequiredService<IDatabaseCreator>();
+        var storageSession = serviceProvider.GetRequiredService<IStorageSession>();
         await databaseCreator.EnsureDatabaseCreated();
 
-        var repository = _serviceProvider
-            .GetRequiredService<IDomainRepository<SdJwtCredential, SdJwtCredentialRecord, CredentialId>>();
+        var store = serviceProvider.GetRequiredService<ISdJwtCredentialStore>();
 
         var credentialId = CredentialId.CreateCredentialId();
         var credentialSetId = CredentialSetId.CreateCredentialSetId();
@@ -44,9 +47,10 @@ public class SdJwtCredentialRecordCrudTests : IDisposable
             false,
             Option<DateTime>.None);
 
-        await repository.Add(sdjwt);
+        await store.Save(sdjwt);
+        await storageSession.Commit();
 
-        var fetched = await repository.GetById(credentialId);
+        var fetched = await store.Get(credentialId);
 
         fetched.Match(
             found =>
@@ -63,13 +67,15 @@ public class SdJwtCredentialRecordCrudTests : IDisposable
     }
 
     [Fact]
-    public async Task Can_Delete_SdJwtCredentialRecord_By_Domain()
+    public async Task Can_Delete_SdJwtCredentialRecord()
     {
-        var databaseCreator = _serviceProvider.GetRequiredService<IDatabaseCreator>();
+        using var scope = _serviceProvider.CreateScope();
+        var serviceProvider = scope.ServiceProvider;
+        var databaseCreator = serviceProvider.GetRequiredService<IDatabaseCreator>();
+        var storageSession = serviceProvider.GetRequiredService<IStorageSession>();
         await databaseCreator.EnsureDatabaseCreated();
 
-        var repository = _serviceProvider
-            .GetRequiredService<IDomainRepository<SdJwtCredential, SdJwtCredentialRecord, CredentialId>>();
+        var store = serviceProvider.GetRequiredService<ISdJwtCredentialStore>();
 
         var credentialId = CredentialId.CreateCredentialId();
         var credentialSetId = CredentialSetId.CreateCredentialSetId();
@@ -87,11 +93,13 @@ public class SdJwtCredentialRecordCrudTests : IDisposable
             false,
             Option<DateTime>.None);
 
-        await repository.Add(sdjwt);
+        await store.Save(sdjwt);
+        await storageSession.Commit();
 
-        await repository.Delete(sdjwt);
+        await store.Delete(credentialId);
+        await storageSession.Commit();
 
-        var fetched = await repository.GetById(credentialId);
+        var fetched = await store.Get(credentialId);
         fetched.IsNone.Should().BeTrue();
     }
 

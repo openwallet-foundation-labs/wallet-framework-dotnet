@@ -40,12 +40,12 @@ namespace WalletFramework.Oid4Vc.Oid4Vci.Implementations;
 /// <summary>
 ///     Initializes a new instance of the <see cref="Oid4VciClientService" /> class.
 /// </summary>
-/// <param name="authFlowSessionRepository">The authorization flow session storage service.</param>
+/// <param name="authFlowSessionStore">The authorization flow session storage service.</param>
 /// <param name="credentialOfferService">The credential offer service.</param>
 /// <param name="credentialRequestService">The credential request service.</param>
-/// <param name="credentialDataSetRepository">The repository for storing credential data sets.</param>
-/// <param name="sdJwtCredentialRepository">The repository for storing SD-JWT credentials.</param>
-/// <param name="mdocCredentialRepository">The repository for storing mDOC credentials.</param>
+/// <param name="credentialDataSetStore">The store for credential data sets.</param>
+/// <param name="sdJwtCredentialStore">The store for SD-JWT credentials.</param>
+/// <param name="mdocCredentialStore">The store for mDOC credentials.</param>
 /// <param name="httpClientFactory">The factory to create HTTP client instances.</param>
 /// <param name="issuerMetadataService">The issuer metadata service.</param>
 /// <param name="credentialNonceService">The credential nonce service.</param>
@@ -55,14 +55,15 @@ public class Oid4VciClientService(
     ICredentialNonceService credentialNonceService,
     ICredentialOfferService credentialOfferService,
     ICredentialRequestService credentialRequestService,
-    IDomainRepository<AuthFlowSession, AuthFlowSessionRecord, AuthFlowSessionState> authFlowSessionRepository,
-    IDomainRepository<CredentialDataSet, CredentialDataSetRecord, CredentialSetId> credentialDataSetRepository,
-    IDomainRepository<MdocCredential, MdocCredentialRecord, CredentialId> mdocCredentialRepository,
-    IDomainRepository<SdJwtCredential, SdJwtCredentialRecord, CredentialId> sdJwtCredentialRepository,
+    IAuthFlowSessionStore authFlowSessionStore,
+    ICredentialDataSetStore credentialDataSetStore,
+    IMdocCredentialStore mdocCredentialStore,
+    ISdJwtCredentialStore sdJwtCredentialStore,
     IHttpClientFactory httpClientFactory,
     IIssuerMetadataService issuerMetadataService,
     IOptions<ClientOptions> clientOptions,
-    ITokenService tokenService) : IOid4VciClientService
+    ITokenService tokenService,
+    IStorageSession storageSession) : IOid4VciClientService
 {
     private const string AuthorizationCodeGrantTypeIdentifier = "authorization_code";
     private const string PreAuthorizedCodeGrantTypeIdentifier = "urn:ietf:params:oauth:grant-type:pre-authorized_code";
@@ -131,7 +132,7 @@ public class Oid4VciClientService(
                                         setId,
                                         creds.Count > 1);
 
-                                    await sdJwtCredentialRepository.Add(record);
+                                    await sdJwtCredentialStore.Save(record);
                                     records.Add(record);
                                 },
                                 async mdoc =>
@@ -145,7 +146,7 @@ public class Oid4VciClientService(
                                         creds.Count > 1,
                                         Option<DateTime>.None);
 
-                                    await mdocCredentialRepository.Add(mdocCredential);
+                                        await mdocCredentialStore.Add(mdocCredential);
                                     records.Add(mdocCredential);
                                 });
                         }
@@ -159,9 +160,17 @@ public class Oid4VciClientService(
                     // ReSharper disable once UnusedParameter.Local
                     transactionId => throw new NotImplementedException());
 
-        await result.OnSuccess(async tasks => await Task.WhenAll(tasks));
+        await result.OnSuccess(
+            async tasks =>
+            {
+                foreach (var task in tasks)
+                {
+                    await task;
+                }
+            });
 
-        await credentialDataSetRepository.AddMany(credentialSets);
+        await credentialDataSetStore.AddMany(credentialSets);
+        await storageSession.Commit();
 
         return credentialSets;
     }
@@ -242,7 +251,8 @@ public class Oid4VciClientService(
             authorizationCodeParameters,
             Option<int>.None);
 
-        await authFlowSessionRepository.Add(session);
+        await authFlowSessionStore.Save(session);
+        await storageSession.Commit();
 
         return authorizationRequestUri;
     }
@@ -264,7 +274,7 @@ public class Oid4VciClientService(
     /// <inheritdoc />
     public async Task<Validation<IEnumerable<CredentialDataSet>>> RequestCredentialSet(IssuanceSession issuanceSession)
     {
-        var session = (await authFlowSessionRepository.GetById(issuanceSession.AuthFlowSessionState))
+        var session = (await authFlowSessionStore.Get(issuanceSession.AuthFlowSessionState))
             .UnwrapOrThrow(new InvalidOperationException("Auth flow session not found"));
 
         var relevantConfigurations = session
@@ -360,7 +370,7 @@ public class Oid4VciClientService(
                                             setId,
                                             creds.Count > 1);
 
-                                        await sdJwtCredentialRepository.Add(record);
+                                        await sdJwtCredentialStore.Save(record);
                                         records.Add(record);
                                     },
                                     async mdoc =>
@@ -374,7 +384,7 @@ public class Oid4VciClientService(
                                             creds.Count > 1,
                                             Option<DateTime>.None);
 
-                                        await mdocCredentialRepository.Add(mdocCredential);
+                                        await mdocCredentialStore.Add(mdocCredential);
                                         records.Add(mdocCredential);
                                     });
                             }
@@ -390,7 +400,14 @@ public class Oid4VciClientService(
                         // ReSharper disable once UnusedParameter.Local
                         transactionId => throw new NotImplementedException());
 
-            await result.OnSuccess(async tasks => await Task.WhenAll(tasks));
+            await result.OnSuccess(
+                async tasks =>
+                {
+                    foreach (var task in tasks)
+                    {
+                        await task;
+                    }
+                });
         }
 
         if (configurations.Count > 1)
@@ -401,9 +418,10 @@ public class Oid4VciClientService(
             credentialSets.Add(dataSet);
         }
 
-        await credentialDataSetRepository.AddMany(credentialSets);
+        await credentialDataSetStore.AddMany(credentialSets);
 
-        await authFlowSessionRepository.Delete(session.AuthFlowSessionState);
+        await authFlowSessionStore.Delete(session.AuthFlowSessionState);
+        await storageSession.Commit();
 
         return credentialSets;
     }
