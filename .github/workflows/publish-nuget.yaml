@@ -72,7 +72,8 @@ jobs:
           dotnet test test/WalletFramework.Core.Tests --configuration $BUILD_CONFIG --no-restore --no-build
           dotnet test test/WalletFramework.MdocLib.Tests --configuration $BUILD_CONFIG --no-restore --no-build
           dotnet test test/WalletFramework.MdocVc.Tests --configuration $BUILD_CONFIG --no-restore --no-build
-          dotnet test test/WalletFramework.Oid4Vc.Tests --configuration $BUILD_CONFIG --no-restore --no-build
+          dotnet test test/WalletFramework.Oid4Vci.Tests --configuration $BUILD_CONFIG --no-restore --no-build
+          dotnet test test/WalletFramework.Oid4Vp.Tests --configuration $BUILD_CONFIG --no-restore --no-build
           dotnet test test/WalletFramework.SdJwtVc.Tests --configuration $BUILD_CONFIG --no-restore --no-build
           dotnet test test/WalletFramework.SdJwtLib.Tests --configuration $BUILD_CONFIG --no-restore --no-build
           dotnet test test/WalletFramework.Storage.Tests --configuration $BUILD_CONFIG --no-restore --no-build
