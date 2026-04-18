@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### [Unreleased]
 
+### [3.0.1] - 2026.02.27
+
+- Fix Database concurrency issues
+
 ### [3.0.0] - 2026.02.27
 
 #### Added
@@ -14,9 +18,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Support for OID4VC Stack
 - Support SQLite database
 
-
 #### Deprecated
 
 - Hyperledger Aries Stack
-
-
