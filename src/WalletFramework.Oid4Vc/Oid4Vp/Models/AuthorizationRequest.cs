@@ -2,14 +2,13 @@ using System.Security.Cryptography.X509Certificates;
 using LanguageExt;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using OneOf;
+using WalletFramework.Core.ClaimPaths;
 using WalletFramework.Core.Functional;
 using WalletFramework.Core.Json;
+using WalletFramework.Oid4Vc.Oid4Vp.DcApi.Models;
 using WalletFramework.Oid4Vc.Oid4Vp.Dcql.Models;
 using WalletFramework.Oid4Vc.Oid4Vp.Errors;
-using WalletFramework.Oid4Vc.Oid4Vp.PresentationExchange.Models;
 using WalletFramework.Oid4Vc.Oid4Vp.TransactionDatas;
-using WalletFramework.Oid4Vc.Qes.Authorization;
 using WalletFramework.Oid4Vc.RelyingPartyAuthentication;
 using static WalletFramework.Oid4Vc.Oid4Vp.Models.ClientIdScheme;
 
@@ -46,18 +45,12 @@ public record AuthorizationRequest
     [JsonIgnore]
     public Option<List<TransactionData>> TransactionData { get; private init; } = 
         Option<List<TransactionData>>.None;
-
-    /// <summary>
-    ///     Gets the presentation definition. Contains the claims that the Verifier wants to receive.
-    /// </summary>
-    [JsonProperty("presentation_definition")]
-    public PresentationDefinition PresentationDefinition { get; init; }
     
     /// <summary>
     ///     Gets the DCQL query. Contains the claims that the Verifier wants to receive.
     /// </summary>
     [JsonProperty("dcql_query")]
-    public DcqlQuery? DcqlQuery { get; }
+    public DcqlQuery DcqlQuery { get; }
 
     /// <summary>
     ///     Gets the client id. The Identifier of the Verifier.
@@ -101,6 +94,10 @@ public record AuthorizationRequest
     [JsonProperty("verifier_attestations")]
     [JsonConverter(typeof(VerifierAttestationsConverter))]
     public VerifierAttestation[]? VerifierAttestations { get; }
+    
+    [JsonProperty("expected_origins")]
+    [JsonConverter(typeof(ExpectedOriginsConverter))]
+    public Origin[]? ExpectedOrigins { get; }
 
     /// <summary>
     ///     The X509 certificate of the verifier, this property is only set when ClientIDScheme is X509SanDNS.
@@ -117,14 +114,9 @@ public record AuthorizationRequest
     [JsonIgnore] 
     public RpAuthResult RpAuthResult { get; init; } = RpAuthResult.GetWithLevelUnknown();
 
-    [JsonIgnore]
-    public OneOf<DcqlQuery, PresentationDefinition> Requirements =>
-        DcqlQuery is not null ? DcqlQuery : PresentationDefinition!;
-
     [JsonConstructor]
     private AuthorizationRequest(
         ClientIdScheme? clientIdScheme,
-        PresentationDefinition presentationDefinition,
         DcqlQuery dcqlQuery,
         string? clientId,
         string nonce,
@@ -134,7 +126,8 @@ public record AuthorizationRequest
         string? clientMetadataUri,
         string? scope,
         string? state,
-        VerifierAttestation[] verifierAttestations)
+        VerifierAttestation[] verifierAttestations,
+        Origin[]? expectedOrigins)
     {
         if (clientId is not null)
         {
@@ -154,13 +147,13 @@ public record AuthorizationRequest
         ClientMetadata = clientMetadata;
         ClientMetadataUri = clientMetadataUri;
         Nonce = nonce;
-        PresentationDefinition = presentationDefinition;
         DcqlQuery = dcqlQuery;
         ResponseUri = responseUri;
         ResponseMode = responseMode;
         Scope = scope;
         State = state;
         VerifierAttestations = verifierAttestations;
+        ExpectedOrigins = expectedOrigins;
     }
 
     /// <summary>
@@ -200,9 +193,14 @@ public record AuthorizationRequest
         JObject authRequestJObject)
     {
         var responseUriOption = AuthorizationRequestExtensions.GetResponseUriMaybe(authRequestJObject);
+
+        var serializer = JsonSerializer.CreateDefault(new JsonSerializerSettings
+        {
+            Converters = { new ClaimPathJsonConverter() }
+        });
             
         var authRequestValidation = 
-            authRequestJObject.ToObject<AuthorizationRequest>()
+            authRequestJObject.ToObject<AuthorizationRequest>(serializer)
             ?? new InvalidRequestError("Could not parse the Authorization Request")
                 .ToInvalid<AuthorizationRequest>();
         
@@ -211,69 +209,19 @@ public record AuthorizationRequest
             from jArray in jToken.ToJArray()
             select jArray;
 
-        var uc5TxDataFoundValidation =
-            from presentationDefinitionToken in authRequestJObject.GetByKey("presentation_definition")
-            from inputDescriptorsToken in presentationDefinitionToken.GetByKey("input_descriptors")
-            from txDataArrays in inputDescriptorsToken.TraverseAny(descriptor =>
-            {
-                return
-                    from txDataToken in descriptor.GetByKey("transaction_data")
-                    from txDataArray in txDataToken.ToJArray()
-                    select (descriptor, txDataArray);
-            })
-            select txDataArrays;
-
-        switch (transactionDataPropertyFoundValidation.IsSuccess, uc5TxDataFoundValidation.IsSuccess)
+        if (transactionDataPropertyFoundValidation.IsSuccess)
         {
-            case (true, false):
-            case (true, true):
-            {
-                var txDataJArray = transactionDataPropertyFoundValidation.UnwrapOrThrow();
+            var txDataJArray = transactionDataPropertyFoundValidation.UnwrapOrThrow();
 
-                var validation = authRequestValidation;
-                authRequestValidation = 
-                    from transactionDataArray in TransactionDataArray.FromJArray(txDataJArray)
-                    from transactionDataEnum in transactionDataArray.Decode()
-                    from authRequest in validation
-                    select authRequest with
-                    {
-                        TransactionData = transactionDataEnum.ToList()
-                    };
-                break;
-            }
-            case (false, true):
-            {
-                var uc5TxDataJArray = uc5TxDataFoundValidation.UnwrapOrThrow();
-
-                var txDataValidation = uc5TxDataJArray.TraverseAll(tuple =>
+            var validation = authRequestValidation;
+            authRequestValidation = 
+                from transactionDataArray in TransactionDataArray.FromJArray(txDataJArray)
+                from transactionDataEnum in transactionDataArray.Decode()
+                from authRequest in validation
+                select authRequest with
                 {
-                    var inputDescriptor = tuple.descriptor.ToObject<InputDescriptor>();
-                    var txDataArray = tuple.txDataArray;
-
-                    var inputDescriptorValidation =
-                        from transactionDataArray in Uc5QesTransactionData.FromJArray(txDataArray)
-                        let list = transactionDataArray.ToList()
-                        select inputDescriptor with
-                        {
-                            TransactionData = list
-                        };
-
-                    return inputDescriptorValidation;
-                });
-
-                authRequestValidation =
-                    from authRequest in authRequestValidation
-                    from inputDescriptors in txDataValidation
-                    select authRequest with
-                    {
-                        PresentationDefinition = authRequest.PresentationDefinition with
-                        {
-                            InputDescriptors = inputDescriptors.ToArray()
-                        }
-                    };
-
-                break;
-            }
+                    TransactionData = transactionDataEnum.ToList()
+                };
         }
         
         return authRequestValidation.ToLangExtValidation(responseUriOption);

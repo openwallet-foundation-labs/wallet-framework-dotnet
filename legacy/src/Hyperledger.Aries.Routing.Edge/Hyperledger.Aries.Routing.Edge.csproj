@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <PackageId>WalletFramework.Routing.Edge</PackageId>
+        <DocumentationFile>bin\$(Configuration)\$(TargetFramework)\Hyperledger.Aries.Routing.Edge.xml</DocumentationFile>
+        <IsPackable>false</IsPackable>
+        <TargetFramework>netstandard2.1</TargetFramework>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\Hyperledger.Aries.Routing\Hyperledger.Aries.Routing.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <Compile Update="EdgeClientService.Backup.cs">
+            <DependentUpon>EdgeClientService.cs</DependentUpon>
+        </Compile>
+    </ItemGroup>
+</Project>

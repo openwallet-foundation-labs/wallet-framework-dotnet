@@ -4,11 +4,18 @@ namespace WalletFramework.Core.Cryptography.Abstractions;
 
 /// <summary>
 ///     Represents a store for managing keys.
-///     This interface is intended to be implemented outside of the framework on the device side,
+///     This interface is intended to be implemented outside the framework on the device side,
 ///     allowing flexibility in key generation or retrieval mechanisms.
 /// </summary>
 public interface IKeyStore
 {
+    /// <summary>
+    ///     Asynchronously deletes the key associated with the provided key ID.
+    /// </summary>
+    /// <param name="keyId">The identifier of the key that should be deleted</param>
+    /// <returns>A <see cref="Task" /> representing the asynchronous operation.</returns>
+    Task DeleteKey(KeyId keyId);
+
     /// <summary>
     ///     Asynchronously generates a key for the specified algorithm and returns the key identifier.
     /// </summary>
@@ -18,7 +25,7 @@ public interface IKeyStore
     Task<KeyId> GenerateKey(string alg = "ES256", bool isPermanent = true);
 
     /// <summary>
-    ///     Gets the public key of the pair 
+    ///     Gets the public key of the pair
     /// </summary>
     /// <param name="keyId">The identifier of the key pair.</param>
     /// <returns>
@@ -33,11 +40,4 @@ public interface IKeyStore
     /// <param name="payload">The payload to sign.</param>
     /// <returns>A <see cref="Task{TResult}" /> representing the signed payload as a byte array.</returns>
     Task<RawSignature> Sign(KeyId keyId, byte[] payload);
-        
-    /// <summary>
-    ///     Asynchronously deletes the key associated with the provided key ID.
-    /// </summary>
-    /// <param name="keyId">The identifier of the key that should be deleted</param>
-    /// <returns>A <see cref="Task" /> representing the asynchronous operation.</returns>
-    Task DeleteKey(KeyId keyId);
 }

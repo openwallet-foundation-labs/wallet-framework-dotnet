@@ -1,3 +1,4 @@
+using LanguageExt;
 using Newtonsoft.Json.Linq;
 using WalletFramework.Core.Functional;
 using WalletFramework.Core.Functional.Errors;
@@ -24,7 +25,7 @@ public record DcApiRequestBatch
 
     private static DcApiRequestBatch Create(DcApiRequestItem[] requests) => new(requests);
 
-    public static Validation<DcApiRequestBatch> From(string requestBatchJson)
+    public static Validation<DcApiRequestBatch> From(string requestBatchJson, Option<Origin> origin)
     {
         if (string.IsNullOrWhiteSpace(requestBatchJson))
         {
@@ -41,10 +42,10 @@ public record DcApiRequestBatch
             return new InvalidJsonError(requestBatchJson, e).ToInvalid<DcApiRequestBatch>();
         }
         
-        return From(jObject);
+        return From(jObject, origin);
     }
 
-    public static Validation<DcApiRequestBatch> From(JObject requestBatchJson)
+    public static Validation<DcApiRequestBatch> From(JObject requestBatchJson,  Option<Origin> origin)
     {
         var requestsValidation =
             from jToken in requestBatchJson.GetByKey("requests")
@@ -53,7 +54,7 @@ public record DcApiRequestBatch
             {
                 return
                     from jObject in token.ToJObject()
-                    from item in DcApiRequestItem.ValidDcApiRequestItem(jObject)
+                    from item in DcApiRequestItem.ValidDcApiRequestItem(jObject, origin)
                     select item;
             })
             select items.ToArray();

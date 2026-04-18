@@ -291,21 +291,105 @@ public static class ValidationFun
         from inner in outer
         select inner;
 
+    /// <summary>
+    ///     Unsafely unwraps the value from a <see cref="Validation{T}"/> or throws the provided <paramref name="e"/>.
+    /// </summary>
+    /// <param name="validation">The validation to unwrap.</param>
+    /// <param name="e">The exception to throw when the validation is invalid.</param>
+    /// <typeparam name="T">The successful value type.</typeparam>
+    /// <remarks>
+    ///     This is an unpure escape hatch intended for boundaries where exceptions are preferred.
+    ///     If you need a richer error message, prefer the overload without the exception parameter which aggregates validation errors.
+    /// </remarks>
     public static T UnwrapOrThrow<T>(this Validation<T> validation, Exception e) =>
         validation.Match(
             t => t,
             _ => throw e);
 
+    /// <summary>
+    ///     Unsafely unwraps the value from a <see cref="Validation{T}"/> or throws an <see cref="InvalidOperationException"/>
+    ///     that includes aggregated validation error messages and inner exceptions (if present).
+    /// </summary>
+    /// <param name="validation">The validation to unwrap.</param>
+    /// <typeparam name="T">The successful value type.</typeparam>
+    /// <exception cref="InvalidOperationException">
+    ///     Thrown when the validation is invalid. The exception message contains a summary of all validation errors and the
+    ///     inner exception is an <see cref="AggregateException"/> if any underlying exceptions were provided by the errors.
+    /// </exception>
+    /// <remarks>
+    ///     This is an unpure escape hatch intended for boundaries where exceptions are preferred. For external input
+    ///     purification, continue using <see cref="Validation{T}"/>.
+    /// </remarks>
     public static T UnwrapOrThrow<T>(this Validation<T> validation) =>
-        validation.UnwrapOrThrow(new InvalidOperationException($"Value of Type `{typeof(T)}` is corrupt"));
+        validation.Match(
+            t => t,
+            errors => throw CreateInvalidOperationWithErrors<T>(errors));
     
+    /// <summary>
+    ///     Unsafely unwraps the value from a <see cref="Validation{TError, T}"/> or throws the provided <paramref name="e"/>.
+    /// </summary>
+    /// <param name="validation">The validation to unwrap.</param>
+    /// <param name="e">The exception to throw when the validation is invalid.</param>
+    /// <typeparam name="T">The successful value type.</typeparam>
+    /// <typeparam name="TError">The error type carried by the validation.</typeparam>
+    /// <remarks>
+    ///     This is an unpure escape hatch intended for boundaries where exceptions are preferred.
+    ///     If you need a richer error message, prefer the overload without the exception parameter which aggregates validation errors.
+    /// </remarks>
     public static T UnwrapOrThrow<T, TError>(this Validation<TError, T> validation, Exception e) =>
         validation.Match(
             t => t,
             _ => throw e);
 
-    public static T UnwrapOrThrow<T, TError>(this Validation<TError, T> validation) =>
-        validation.UnwrapOrThrow(new InvalidOperationException($"Value of Type `{typeof(T)}` is corrupt"));
+    /// <summary>
+    ///     Unsafely unwraps the value from a <see cref="Validation{TError, T}"/> or throws an <see cref="InvalidOperationException"/>
+    ///     that includes aggregated validation error messages and inner exceptions (if present).
+    /// </summary>
+    /// <param name="validation">The validation to unwrap.</param>
+    /// <typeparam name="T">The successful value type.</typeparam>
+    /// <typeparam name="TError">The error type carried by the validation.</typeparam>
+    /// <exception cref="InvalidOperationException">
+    ///     Thrown when the validation is invalid. The exception message contains a summary of all validation errors and the
+    ///     inner exception is an <see cref="AggregateException"/> if any underlying exceptions were provided by the errors.
+    /// </exception>
+    /// <remarks>
+    ///     This is an unpure escape hatch intended for boundaries where exceptions are preferred. For external input
+    ///     purification, continue using <see cref="Validation{T}"/>.
+    /// </remarks>
+    public static T UnwrapOrThrow<T, TError>(this Validation<TError, T> validation)
+        where TError : Error =>
+        validation.Match<T>(
+            t => t,
+            errors => throw CreateInvalidOperationWithErrors<T>(errors.Map(err => (Error)err)));
+
+    private static InvalidOperationException CreateInvalidOperationWithErrors<T>(Seq<Error> errors)
+    {
+        var baseMessage = $"Validation failed for `{typeof(T)}`";
+        var errorSummary = string.Join(", ", errors.Map(e => e.Message).ToArray());
+        var message = string.IsNullOrWhiteSpace(errorSummary)
+            ? baseMessage
+            : $"{baseMessage}: {errorSummary}";
+
+        var inner = CreateAggregateInnerException(errors);
+        return inner.Match(
+            inner => new InvalidOperationException(message, inner),
+            () => new InvalidOperationException(message));
+    }
+
+    private static Option<Exception> CreateAggregateInnerException(Seq<Error> errors)
+    {
+        var innerExceptions = new List<Exception>();
+        foreach (var err in errors)
+        {
+            err.Exception.Match(x => innerExceptions.Add(x), () => { });
+        }
+
+        if (innerExceptions.Count == 0)
+            return Option<Exception>.None;
+        if (innerExceptions.Count == 1)
+            return innerExceptions[0];
+        return new AggregateException(innerExceptions);
+    }
 
     public static Validator<T> AggregateValidators<T>(this IEnumerable<Validator<T>> validators) => t =>
     {

@@ -22,9 +22,9 @@ public class DcqlParsingTests
             .Should()
             .Be("https://credentials.example.com/identity_credential");
 
-        dcqlQuery.CredentialQueries[0].Claims![0].Path.GetPathComponents().Length().Should().Be(1);
-        dcqlQuery.CredentialQueries[0].Claims![1].Path.GetPathComponents().Length().Should().Be(1);
-        dcqlQuery.CredentialQueries[0].Claims![2].Path.GetPathComponents().Length().Should().Be(2);
+        dcqlQuery.CredentialQueries[0].Claims![0].Path.GetPathComponents().Count.Should().Be(1);
+        dcqlQuery.CredentialQueries[0].Claims![1].Path.GetPathComponents().Count.Should().Be(1);
+        dcqlQuery.CredentialQueries[0].Claims![2].Path.GetPathComponents().Count.Should().Be(2);
 
         dcqlQuery.CredentialSetQueries!.Length.Should().Be(2);
         dcqlQuery.CredentialSetQueries[0].Purpose.Should().Contain(x => x.Name == "Identification");

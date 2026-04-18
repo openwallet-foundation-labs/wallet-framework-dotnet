@@ -1,6 +1,4 @@
 using LanguageExt;
-using WalletFramework.Oid4Vc.ClientAttestation;
-using WalletFramework.Oid4Vc.Oid4Vci.AuthFlow.Models;
 using WalletFramework.Oid4Vc.Oid4Vp.Models;
 
 namespace WalletFramework.Oid4Vc.Oid4Vp.Services;
@@ -22,28 +20,10 @@ public interface IOid4VpClientService
     /// </summary>
     /// <param name="authorizationRequest"></param>
     /// <param name="selectedCredentials"></param>
-    /// <param name="clientAttestationDetails"></param>
     /// <returns></returns>
     Task<Option<Uri>> AcceptAuthorizationRequest(
         AuthorizationRequest authorizationRequest,
-        IEnumerable<SelectedCredential> selectedCredentials,
-        Option<ClientAttestationDetails> clientAttestationDetails);
-
-    /// <summary>
-    ///     Prepares and sends an Authorization Response containing a Presentation Submission with on demand credentials (C'')
-    ///     and the VP Token to the Redirect Uri.
-    /// </summary>
-    /// <param name="authorizationRequest"></param>
-    /// <param name="selectedCredentials"></param>
-    /// <param name="issuanceSession"></param>
-    /// <returns>
-    ///     A task representing the asynchronous operation. The task result contains the Callback Url of the Authorization
-    ///     Response if present.
-    /// </returns>
-    Task<Option<Uri>> AcceptOnDemandRequest(
-        AuthorizationRequest authorizationRequest,
-        IEnumerable<SelectedCredential> selectedCredentials,
-        IssuanceSession issuanceSession);
+        IEnumerable<SelectedCredential> selectedCredentials);
 
     /// <summary>
     ///     Processes an OpenID4VP Authorization Request Url.

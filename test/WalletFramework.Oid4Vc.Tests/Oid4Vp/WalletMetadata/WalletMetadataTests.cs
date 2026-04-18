@@ -13,11 +13,11 @@ public class WalletMetadataTests
         var expectedJson = @"{
             ""vp_formats_supported"": {
                 ""vc+sd-jwt"": {
-                    ""sd-jwt_alg_values"": [""ES256"", ""ES384"", ""ES512"", ""RS256""],
+                    ""sd-jwt_alg_values"": [""ES256""],
                     ""kb-jwt_alg_values"": [""ES256""]
                 },
                 ""dc+sd-jwt"": {
-                    ""sd-jwt_alg_values"": [""ES256"", ""ES384"", ""ES512"", ""RS256""],
+                    ""sd-jwt_alg_values"": [""ES256""],
                     ""kb-jwt_alg_values"": [""ES256""]
                 },
                 ""mso_mdoc"": {

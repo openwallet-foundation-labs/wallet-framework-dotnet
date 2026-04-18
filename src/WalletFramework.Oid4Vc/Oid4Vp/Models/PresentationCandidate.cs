@@ -1,7 +1,6 @@
 using LanguageExt;
 using WalletFramework.Oid4Vc.Oid4Vp.Dcql.Models;
 using WalletFramework.Oid4Vc.Oid4Vp.TransactionDatas;
-using WalletFramework.Oid4Vc.Qes.Authorization;
 
 namespace WalletFramework.Oid4Vc.Oid4Vp.Models;
 
@@ -29,9 +28,6 @@ public record PresentationCandidate
     
     public Option<List<TransactionData>> TransactionData { get; init; } = 
         Option<List<TransactionData>>.None;
-    
-    public Option<List<Uc5QesTransactionData>> Uc5TransactionData { get; init; }
-        = Option<List<Uc5QesTransactionData>>.None;
 
     /// <summary>
     ///     Initializes a new instance of the <see cref="PresentationCandidate" /> class.
@@ -76,20 +72,6 @@ public static class PresentationCandidateFun
         return candidate with
         {
             TransactionData = td.ToList()
-        };
-    }
-    
-    public static PresentationCandidate AddUc5TransactionData(
-        this PresentationCandidate candidate,
-        IEnumerable<Uc5QesTransactionData> transactionData)
-    {
-        var td = candidate.Uc5TransactionData.Match(
-            list => list.Append(transactionData),
-            transactionData.ToList);
-
-        return candidate with
-        {
-            Uc5TransactionData = td.ToList()
         };
     }
 }

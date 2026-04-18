@@ -18,7 +18,7 @@ public sealed record ClaimPathComponent
                 ? new ClaimPathComponent(token.Value<string>()!)
                 : new UnknownComponentError(),
             JTokenType.Integer => new ClaimPathComponent(token.Value<int>()),
-            JTokenType.Null => new ClaimPathComponent(new SelectAllElementsInArrayComponent()),
+            JTokenType.Null or JTokenType.Undefined => new ClaimPathComponent(new SelectAllElementsInArrayComponent()),
             _ => new UnknownComponentError()
         };
 
