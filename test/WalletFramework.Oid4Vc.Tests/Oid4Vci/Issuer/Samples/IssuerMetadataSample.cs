@@ -22,7 +22,7 @@ public static class IssuerMetadataSample
         .ValidCredentialConfigurationId(SdJwtConfigurationSample.Scope.ToString())
         .UnwrapOrThrow(new InvalidOperationException());
     
-    public static JObject EncodedAsJsonDraft14AndLower => new()
+    public static JObject EncodedAsJson => new()
     {
         ["credential_issuer"] = CredentialIssuer.ToStringWithoutTrail(),
         ["credential_endpoint"] = CredentialEndpoint.ToStringWithoutTrail(),
@@ -50,7 +50,7 @@ public static class IssuerMetadataSample
         ["authorization_servers"] = new JArray { "https://test-issuer.com/authorizationserver"  },
         ["credential_configurations_supported"] = new JObject
         {
-            [SdJwtConfigurationId] = SdJwtConfigurationSample.ValidDraft14AndLower,
+            [SdJwtConfigurationId] = SdJwtConfigurationSample.ValidSample,
             [MdocConfigurationId] = MdocConfigurationSample.Valid
         },
         ["batch_credential_issuance"] = new JObject
@@ -59,43 +59,6 @@ public static class IssuerMetadataSample
         }
     };
     
-    public static JObject EncodedAsJsonDraft15 => new()
-    {
-        ["credential_issuer"] = CredentialIssuer.ToStringWithoutTrail(),
-        ["credential_endpoint"] = CredentialEndpoint.ToStringWithoutTrail(),
-        ["display"] = new JArray
-        {
-            new JObject
-            {
-                ["name"] = "Test Company GmbH",
-                ["logo"] = new JObject
-                {
-                    { "uri", "https://test-issuer.com/logo.png" }
-                },
-                ["locale"] = "en-US"
-            },
-            new JObject
-            {
-                ["name"] = "Test Company GmbH",
-                ["logo"] = new JObject
-                {
-                    { "uri", "https://test-issuer.com/logo.png" }
-                },
-                ["locale"] = "de-DE"
-            }
-        },
-        ["authorization_servers"] = new JArray { "https://test-issuer.com/authorizationserver"  },
-        ["credential_configurations_supported"] = new JObject
-        {
-            [SdJwtConfigurationId] = SdJwtConfigurationSample.ValidDraft15,
-            [MdocConfigurationId] = MdocConfigurationSample.Valid
-        },
-        ["batch_credential_issuance"] = new JObject
-        {
-            ["batch_size"] = 5
-        }
-    };
-    
-    public static IssuerMetadata DecodedDraft14AndLower => 
-        IssuerMetadata.ValidIssuerMetadata(EncodedAsJsonDraft14AndLower).UnwrapOrThrow(new InvalidOperationException());
+    public static IssuerMetadata Decoded => 
+        IssuerMetadata.ValidIssuerMetadata(EncodedAsJson).UnwrapOrThrow(new InvalidOperationException());
 }

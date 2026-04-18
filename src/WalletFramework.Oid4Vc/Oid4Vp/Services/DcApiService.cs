@@ -1,9 +1,9 @@
-using LanguageExt;
 using OneOf;
 using WalletFramework.Core.Functional;
 using WalletFramework.Oid4Vc.Oid4Vp.AuthResponse.Encryption;
 using WalletFramework.Oid4Vc.Oid4Vp.AuthResponse.Encryption.Abstractions;
 using WalletFramework.Oid4Vc.Oid4Vp.DcApi.Models;
+using WalletFramework.Oid4Vc.Oid4Vp.Dcql.Services;
 using WalletFramework.Oid4Vc.Oid4Vp.Models;
 using WalletFramework.Oid4Vc.Oid4Vp.TransactionDatas;
 
@@ -15,23 +15,23 @@ public class DcApiService : IDcApiService
     /// <summary>
     ///     Initializes a new instance of the <see cref="DcApiService" /> class.
     /// </summary>
-    /// <param name="candidateQueryService">The candidate query service.</param>
+    /// <param name="dcqlService">The DCQL service.</param>
     /// <param name="presentationService">The presentation service.</param>
     /// <param name="oid4VpHaipClient">The OID4VP HAIP client.</param>
     /// <param name="authorizationResponseEncryptionService">The authorization response encryption service.</param>
     public DcApiService(
-        ICandidateQueryService candidateQueryService,
+        IDcqlService dcqlService,
         IPresentationService presentationService,
         IOid4VpHaipClient oid4VpHaipClient,
         IAuthorizationResponseEncryptionService authorizationResponseEncryptionService)
     {
-        _candidateQueryService = candidateQueryService;
+        _dcqlService = dcqlService;
         _presentationService = presentationService;
         _oid4VpHaipClient = oid4VpHaipClient;
         _authorizationResponseEncryptionService = authorizationResponseEncryptionService;
     }
 
-    private readonly ICandidateQueryService _candidateQueryService;
+    private readonly IDcqlService _dcqlService;
     private readonly IPresentationService _presentationService;
     private readonly IOid4VpHaipClient _oid4VpHaipClient;
     private readonly IAuthorizationResponseEncryptionService _authorizationResponseEncryptionService;
@@ -39,7 +39,7 @@ public class DcApiService : IDcApiService
     /// <inheritdoc />
     public async Task<PresentationRequest> ProcessDcApiRequest(AuthorizationRequest dcApiRequest)
     {
-        var candidateQueryResult = await _candidateQueryService.Query(dcApiRequest);
+        var candidateQueryResult = await _dcqlService.Query(dcApiRequest.DcqlQuery);
         var presentationRequest = new PresentationRequest(dcApiRequest, candidateQueryResult);
         
         var vpTxDataOption = dcApiRequest.TransactionData;
@@ -73,7 +73,7 @@ public class DcApiService : IDcApiService
             AuthorizationRequest.DcApi => authorizationResponse,
             AuthorizationRequest.DcApiJwt => await _authorizationResponseEncryptionService.Encrypt(
                 authorizationResponse, authorizationRequest, mdocNonce),
-            _ => throw new ArgumentOutOfRangeException(nameof(authorizationRequest.ResponseMode))
+            _ => throw new InvalidOperationException($"{nameof(authorizationRequest.ResponseMode)} is not valid at this point")
         };
     }
 } 

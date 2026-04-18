@@ -1,48 +1,50 @@
-using Hyperledger.Aries.Storage;
-using LanguageExt;
 using WalletFramework.Core.Credentials;
 using WalletFramework.Core.StatusList;
 using WalletFramework.Oid4Vc.CredentialSet.Models;
+using WalletFramework.Oid4Vc.CredentialSet.Persistence;
+using WalletFramework.Storage;
 
 namespace WalletFramework.Oid4Vc.CredentialSet;
 
 public class CredentialSetService(
-    ICredentialSetStorage storage,
+    IDomainRepository<CredentialDataSet, CredentialDataSetRecord, CredentialSetId> credentialSetRepository,
     IStatusListService statusListService) : ICredentialSetService
 {
-    public async Task<CredentialSetRecord> RefreshCredentialSetState(CredentialSetRecord credentialSetRecord)
+    public async Task<CredentialDataSet> RefreshCredentialSetState(CredentialDataSet credentialDataSet)
     {
-        var oldState = credentialSetRecord.State;
+        var oldState = credentialDataSet.State;
 
-        if (credentialSetRecord.IsDeleted())
-            return credentialSetRecord;
+        if (credentialDataSet.DeletedAt.IsSome)
+            return credentialDataSet;
 
-        credentialSetRecord.ExpiresAt.IfSome(expiresAt =>
+        credentialDataSet.ExpiresAt.IfSome(expiresAt => 
         {
             if (expiresAt < DateTime.UtcNow)
-                credentialSetRecord.State = CredentialState.Expired;
+            {
+                credentialDataSet = credentialDataSet with { State = CredentialState.Expired };
+            }
         });
 
-        await credentialSetRecord.StatusListEntry.IfSomeAsync(
+        await credentialDataSet.StatusListEntry.IfSomeAsync(
             async statusList =>
             {
                 await statusListService.GetState(statusList).IfSomeAsync(
                     state =>
                     {
                         if (state == CredentialState.Revoked)
-                            credentialSetRecord.State = CredentialState.Revoked;
+                            credentialDataSet = credentialDataSet with { State = CredentialState.Revoked };
                     });
             });
 
-        if (oldState != credentialSetRecord.State)
-            await storage.Update(credentialSetRecord);
+        if (oldState != credentialDataSet.State)
+            await credentialSetRepository.Update(credentialDataSet);
 
-        return credentialSetRecord;
+        return credentialDataSet;
     }
 
     public async Task RefreshCredentialSetStates()
     {
-        var credentialSetRecords = await storage.List(Option<ISearchQuery>.None);
+        var credentialSetRecords = await credentialSetRepository.ListAll();
 
         await credentialSetRecords.IfSomeAsync(
             async records =>

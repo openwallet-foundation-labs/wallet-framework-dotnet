@@ -1,18 +1,19 @@
+using System.Text;
+using LanguageExt;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using WalletFramework.Core.ClaimPaths.Errors;
 using WalletFramework.Core.Functional;
 using WalletFramework.Core.Path;
-using Newtonsoft.Json.Linq;
 
 namespace WalletFramework.Core.ClaimPaths;
 
+[JsonConverter(typeof(ClaimPathJsonConverter))]
 public readonly struct ClaimPath
 {
     private readonly IReadOnlyList<ClaimPathComponent> _components;
 
-    private ClaimPath(IReadOnlyList<ClaimPathComponent> components)
-    {
-        _components = components;
-    }
+    private ClaimPath(IReadOnlyList<ClaimPathComponent> components) => _components = components;
 
     public IReadOnlyList<ClaimPathComponent> GetPathComponents() => _components;
 
@@ -24,12 +25,36 @@ public readonly struct ClaimPath
         return new ClaimPath(list);
     }
 
-    public static Validation<ClaimPath> FromJArray(JArray array)
+    public static Validation<ClaimPath> FromJArray(JArray array) =>
+        from components in array.TraverseAll(ClaimPathComponent.Create)
+        from path in FromComponents(components)
+        select path;
+
+    public static JArray ToJArray(ClaimPath claimPath)
     {
-        return
-            from components in array.TraverseAll(ClaimPathComponent.Create)
-            from path in FromComponents(components)
-            select path;
+        var array = new JArray();
+        foreach (var component in claimPath.GetPathComponents())
+        {
+            component.Match(
+                key =>
+                {
+                    array.Add(new JValue(key));
+                    return Unit.Default;
+                },
+                index =>
+                {
+                    array.Add(new JValue(index));
+                    return Unit.Default;
+                },
+                _ =>
+                {
+                    array.Add(JValue.CreateNull());
+                    return Unit.Default;
+                }
+            );
+        }
+
+        return array;
     }
 }
 
@@ -37,12 +62,29 @@ public static class ClaimPathFun
 {
     public static JsonPath ToJsonPath(this ClaimPath claimPath)
     {
-        var jsonPath = "$." + string.Join('.', claimPath.GetPathComponents().Select(x =>
+        var jsonPath = new StringBuilder();
+        jsonPath.Append('$');
+
+        foreach (var component in claimPath.GetPathComponents())
         {
-            if (x.IsKey) return x.AsKey();
-            if (x.IsIndex) return x.AsIndex()?.ToString();
-            return null;
-        }).Where(x => x is not null));
-        return JsonPath.ValidJsonPath(jsonPath).UnwrapOrThrow();
+            component.Match(
+                key =>
+                {
+                    jsonPath.Append($".{key}");
+                    return Unit.Default;
+                },
+                integer =>
+                {
+                    jsonPath.Append($"[{integer}]");
+                    return Unit.Default;
+                },
+                _ =>
+                {
+                    jsonPath.Append("[*]");
+                    return Unit.Default;
+                });
+        }
+
+        return JsonPath.ValidJsonPath(jsonPath.ToString()).UnwrapOrThrow();
     }
 }

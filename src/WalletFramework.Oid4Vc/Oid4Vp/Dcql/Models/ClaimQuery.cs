@@ -12,8 +12,7 @@ using WalletFramework.Oid4Vc.Oid4Vp.ClaimPaths;
 using WalletFramework.Oid4Vc.Oid4Vp.Dcql.CredentialQueries;
 using WalletFramework.Oid4Vc.RelyingPartyAuthentication.RegistrationCertificate;
 using WalletFramework.SdJwtLib.Models;
-using WalletFramework.SdJwtVc.Models.Records;
-using WalletFramework.SdJwtVc.Services.SdJwtVcHolderService;
+using WalletFramework.SdJwtVc;
 using static WalletFramework.Oid4Vc.Oid4Vp.Dcql.Models.ClaimQueryConstants;
 
 namespace WalletFramework.Oid4Vc.Oid4Vp.Dcql.Models;
@@ -83,7 +82,7 @@ public class ClaimQuery
                     return new StringIsNullOrWhitespaceError<CredentialQuery>();
                 }
 
-                return ValidationFun.Valid(value.Value.ToString());;
+                return ValidationFun.Valid(value.Value.ToString());
             }))
             .OnSuccess(array => array.TraverseAll(x => x))
             .ToOption();
@@ -134,10 +133,10 @@ public class ClaimQuery
         return ValidationFun.Valid(Create)
             .Apply(id)
             .Apply(path)
-            .Apply(values)
+            .Apply(values!)
             .Apply(purpose)
-            .Apply(@namespace)
-            .Apply(claimName);
+            .Apply(@namespace!)
+            .Apply(claimName!);
     }
     
     private static ClaimQuery Create(
@@ -230,9 +229,9 @@ public static class ClaimQueryFun
 
         switch (credential)
         {
-            case SdJwtRecord sdJwt:
-                return claims.AreFulfilledBy(sdJwt.ToSdJwtDoc());
-            case MdocRecord mdoc:
+            case SdJwtCredential sdJwt:
+                return claims.AreFulfilledBy(sdJwt.SdJwtDoc);
+            case MdocCredential mdoc:
                 return claims.AreFulfilledBy(mdoc.Mdoc);
             default:
                 return false;

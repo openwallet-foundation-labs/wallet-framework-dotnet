@@ -1,3 +1,4 @@
+using System.Text;
 using LanguageExt;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -262,4 +263,26 @@ public static class CredentialQueryFun
 
     public static IReadOnlyList<string> GetClaimsToDiscloseAsStrs(this CredentialQuery query) =>
         query.GetClaimsToDisclose().Match(claims => claims.AsStrings(query.Format), () => []);
+
+    public static string FormatForLog(this CredentialQuery query)
+    {
+        var result = query
+            .GetClaimsToDiscloseAsStrs()
+            .Aggregate(
+                new StringBuilder(),
+                (sb, requestedAttribute) =>
+                {
+                    sb.AppendLine(requestedAttribute);
+                    return sb;
+                }
+            );
+
+        return result.ToString();
+    }
+
+    public static IEnumerable<string> GetRequestedAttributes(this CredentialQuery query, Option<List<ClaimQuery>> claimsToDisclose) =>
+        claimsToDisclose.Match(
+            claims => claims.AsStrings(query.Format),
+            query.GetClaimsToDiscloseAsStrs
+        );
 }

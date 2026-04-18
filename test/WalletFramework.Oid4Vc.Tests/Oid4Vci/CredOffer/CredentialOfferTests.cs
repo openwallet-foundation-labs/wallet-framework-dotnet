@@ -23,7 +23,7 @@ public class CredentialOfferTests
 
                 var ids = offer.CredentialConfigurationIds.Select(id => (string)id).ToList();
 
-                ids.Length().Should().Be(2);
+                ids.Count.Should().Be(2);
                 ids.Should().Contain(UniversityDegreeCredential);
                 ids.Should().Contain(OrgIso1801351Mdl);
 

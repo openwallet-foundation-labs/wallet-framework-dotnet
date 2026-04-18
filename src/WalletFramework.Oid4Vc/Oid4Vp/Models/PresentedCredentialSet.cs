@@ -15,28 +15,32 @@ public record PresentedCredentialSet
     
     public Option<Vct> SdJwtCredentialType { get; init; }
     
-    public Option<DocType> MDocCredentialType { get; init; }
+    public Option<DocType> MdocCredentialType { get; init; }
 
     public Dictionary<string, PresentedClaim> PresentedClaims { get; init; } = null!;
 }
 
 public static class PresentedCredentialSetExtensions
 {
-    private const string CredentialSetIdJsonKey = "credential_set_id";
-    private const string SdJwtCredentialTypeJsonKey = "sd_jwt_credential_type";
-    private const string MDocCredentialTypeJsonKey = "mdoc_credential_type";
-    private const string PresentedClaimsJsonKey = "presented_claims";
+    private const string CredentialSetIdJsonKey = "CredentialSetId";
+    private const string SdJwtCredentialTypeJsonKey = "SdJwtCredentialType";
+    private const string MDocCredentialTypeJsonKey = "MdocCredentialType";
+    private const string PresentedClaimsJsonKey = "PresentedClaims";
     
     public static JObject EncodeToJson(this PresentedCredentialSet presentedCredentialSet)
     {
-        var result = new JObject();
-        
-        result.Add(CredentialSetIdJsonKey, presentedCredentialSet.CredentialSetId.ToString());
+        var result = new JObject
+        {
+            {
+                CredentialSetIdJsonKey,
+                presentedCredentialSet.CredentialSetId.ToString()
+            }
+        };
 
         presentedCredentialSet.SdJwtCredentialType.IfSome(sdJwtType =>
             result.Add(SdJwtCredentialTypeJsonKey, sdJwtType.ToString()));
         
-        presentedCredentialSet.MDocCredentialType.IfSome(mDocType =>
+        presentedCredentialSet.MdocCredentialType.IfSome(mDocType =>
             result.Add(MDocCredentialTypeJsonKey, mDocType.ToString()));
         
         var jObjectDictionary = new JObject();
@@ -82,7 +86,7 @@ public static class PresentedCredentialSetExtensions
         {
             CredentialSetId = CredentialSetId .ValidCredentialSetId(credentialSetId).UnwrapOrThrow(),
             SdJwtCredentialType = sdJwtCredentialType,
-            MDocCredentialType = mDocCredentialType,
+            MdocCredentialType = mDocCredentialType,
             PresentedClaims = presentedClaims.ToDictionary(kvp => kvp.ClaimName, kvp => kvp.ClaimValue)
         };
     }

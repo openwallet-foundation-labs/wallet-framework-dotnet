@@ -1,6 +1,5 @@
 using FluentAssertions;
 using LanguageExt;
-using Newtonsoft.Json.Linq;
 using WalletFramework.Core.Functional;
 using WalletFramework.Oid4Vc.Oid4Vp.Models;
 using static WalletFramework.Oid4Vc.Tests.Oid4Vp.AuthRequest.Samples.AuthRequestSamples;

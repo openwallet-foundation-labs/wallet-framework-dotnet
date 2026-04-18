@@ -1,6 +1,7 @@
 using System.Net.Http.Headers;
 using System.Web;
 using LanguageExt;
+using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using WalletFramework.Core.Functional;
@@ -108,15 +109,6 @@ public class AuthorizationRequestService(
                 jObject[key] = value;
             }
         }
-
-        if (jObject.TryGetValue("presentation_definition_uri", out var presentationDefinitionUri))
-        {
-            var httpClient = httpClientFactory.CreateClient();
-            httpClient.DefaultRequestHeaders.Clear();
-            
-            var requestObjectJson = await httpClient.GetStringAsync(presentationDefinitionUri.ToString());
-            jObject["presentation_definition"] = JToken.Parse(requestObjectJson);
-        }
                 
         var jsonString = SerializeObject(jObject);
         
@@ -188,7 +180,7 @@ public class AuthorizationRequestService(
     private async Task<Validation<AuthorizationRequestCancellation, Option<ClientMetadata>>> FetchClientMetadata(AuthorizationRequest authorizationRequest)
     {
         return await authorizationRequest.ClientMetadata.AsOption().Match(
-            clientMetadata => Task.FromResult(clientMetadata.VpFormatsSupportedValidation(authorizationRequest.Requirements, authorizationRequest.GetResponseUriMaybe())),
+            clientMetadata => Task.FromResult(clientMetadata.VpFormatsSupportedValidation(authorizationRequest.DcqlQuery, authorizationRequest.GetResponseUriMaybe())),
             async () =>
             {
                 if (string.IsNullOrWhiteSpace(authorizationRequest.ClientMetadataUri))
@@ -205,7 +197,7 @@ public class AuthorizationRequestService(
                 if (clientMetadata == null)
                     return Option<ClientMetadata>.None;
                     
-                return clientMetadata.VpFormatsSupportedValidation(authorizationRequest.Requirements, authorizationRequest.GetResponseUriMaybe());
+                return clientMetadata.VpFormatsSupportedValidation(authorizationRequest.DcqlQuery, authorizationRequest.GetResponseUriMaybe());
             });
     }
 }

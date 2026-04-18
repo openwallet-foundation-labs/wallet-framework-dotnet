@@ -3,7 +3,7 @@ using WalletFramework.Oid4Vc.RelyingPartyAuthentication.Abstractions;
 
 namespace WalletFramework.Oid4Vc.RelyingPartyAuthentication.Implementations;
 
-public class RpAuthService(Abstractions.IRpRegistrarService irpRegistrarService) : IRpAuthService
+public class RpAuthService(IRpRegistrarService irpRegistrarService) : IRpAuthService
 {
     public async Task<RpAuthResult> Authenticate(RequestObject requestObject)
     {

@@ -51,29 +51,7 @@ public static class MdocConfigurationSample
             ["batch_size"] = BatchSize
         },
         ["cryptographic_suites_supported"] = new JArray { CryptoSuite.ToString() },
-        ["cryptographic_curves_supported"] = new JArray { CryptoCurve.ToString() },
-        ["claims"] = new JObject
-        {
-            [NameSpace] = new JObject
-            {
-                [GivenName] = new JObject
-                {
-                    ["display"] = new JArray
-                    {
-                        new JObject
-                        {
-                            ["name"] = EnglishName.ToString(),
-                            ["locale"] = LocaleSample.English.ToString()
-                        },
-                        new JObject
-                        {
-                            ["name"] = JapaneseName.ToString(),
-                            ["locale"] = LocaleSample.Japanese.ToString()
-                        }
-                    }
-                }
-            }
-        }
+        ["cryptographic_curves_supported"] = new JArray { CryptoCurve.ToString() }
     };
 
     public static NameSpace NameSpace =>
