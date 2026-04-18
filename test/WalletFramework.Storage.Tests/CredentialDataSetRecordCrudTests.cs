@@ -7,6 +7,7 @@ using WalletFramework.Oid4Vc.CredentialSet.Models;
 using WalletFramework.Oid4Vc.CredentialSet.Persistence;
 using WalletFramework.SdJwtVc.Models;
 using WalletFramework.Storage.Database;
+using WalletFramework.Storage;
 
 namespace WalletFramework.Storage.Tests;
 
@@ -21,11 +22,13 @@ public class CredentialDataSetRecordCrudTests : IDisposable
     [Fact]
     public async Task Can_Store_And_Retrieve_CredentialSetRecord2()
     {
-        var databaseCreator = _serviceProvider.GetRequiredService<IDatabaseCreator>();
+        using var scope = _serviceProvider.CreateScope();
+        var serviceProvider = scope.ServiceProvider;
+        var databaseCreator = serviceProvider.GetRequiredService<IDatabaseCreator>();
+        var storageSession = serviceProvider.GetRequiredService<IStorageSession>();
         await databaseCreator.EnsureDatabaseCreated();
 
-        var repository = _serviceProvider
-            .GetRequiredService<IDomainRepository<CredentialDataSet, CredentialDataSetRecord, CredentialSetId>>();
+        var store = serviceProvider.GetRequiredService<ICredentialDataSetStore>();
 
         var setId = CredentialSetId.CreateCredentialSetId();
         var domain = new CredentialDataSet(
@@ -42,9 +45,10 @@ public class CredentialDataSetRecordCrudTests : IDisposable
             Option<DateTime>.None,
             "https://issuer.example.com");
 
-        await repository.Add(domain);
+        await store.Save(domain);
+        await storageSession.Commit();
 
-        var fetched = await repository.GetById(setId);
+        var fetched = await store.Get(setId);
 
         fetched.Match(
             found =>
@@ -58,13 +62,15 @@ public class CredentialDataSetRecordCrudTests : IDisposable
     }
 
     [Fact]
-    public async Task Can_Delete_CredentialDataSetRecord_By_Domain()
+    public async Task Can_Delete_CredentialDataSetRecord()
     {
-        var databaseCreator = _serviceProvider.GetRequiredService<IDatabaseCreator>();
+        using var scope = _serviceProvider.CreateScope();
+        var serviceProvider = scope.ServiceProvider;
+        var databaseCreator = serviceProvider.GetRequiredService<IDatabaseCreator>();
+        var storageSession = serviceProvider.GetRequiredService<IStorageSession>();
         await databaseCreator.EnsureDatabaseCreated();
 
-        var repository = _serviceProvider
-            .GetRequiredService<IDomainRepository<CredentialDataSet, CredentialDataSetRecord, CredentialSetId>>();
+        var store = serviceProvider.GetRequiredService<ICredentialDataSetStore>();
 
         var setId = CredentialSetId.CreateCredentialSetId();
         var domain = new CredentialDataSet(
@@ -81,11 +87,13 @@ public class CredentialDataSetRecordCrudTests : IDisposable
             Option<DateTime>.None,
             "https://issuer.example.com");
 
-        await repository.Add(domain);
+        await store.Save(domain);
+        await storageSession.Commit();
 
-        await repository.Delete(domain);
+        await store.Delete(setId);
+        await storageSession.Commit();
 
-        var fetched = await repository.GetById(setId);
+        var fetched = await store.Get(setId);
         fetched.IsNone.Should().BeTrue();
     }
 

@@ -1,70 +1,58 @@
 using LanguageExt;
 using WalletFramework.Core.Credentials;
-using WalletFramework.Storage;
+using WalletFramework.MdocLib;
 using WalletFramework.Storage.Repositories;
 
 namespace WalletFramework.MdocVc.Persistence;
 
 public class MdocCredentialRepository(IRepository<MdocCredentialRecord> repository)
-    : IDomainRepository<MdocCredential, MdocCredentialRecord, CredentialId>
+    : IMdocCredentialStore
 {
-    public async Task<Unit> Add(MdocCredential domainModel)
+    public async Task<Unit> Add(MdocCredential credential)
     {
-        var record = new MdocCredentialRecord(domainModel);
+        var record = new MdocCredentialRecord(credential);
         await repository.Add(record);
         return Unit.Default;
     }
 
-    public async Task<Unit> AddMany(IEnumerable<MdocCredential> domainModels)
+    public async Task<Option<MdocCredential>> Get(CredentialId id)
     {
-        var records = domainModels.Select(d => new MdocCredentialRecord(d));
-        await repository.AddMany(records);
+        var guid = Guid.Parse(id.AsString());
+        var record = await repository.GetById(guid);
+        return record.Map(item => item.ToDomainModel());
+    }
+
+    public async Task<IReadOnlyList<MdocCredential>> List()
+    {
+        var records = await repository.ListAll();
+        return MapRecords(records);
+    }
+
+    public async Task<IReadOnlyList<MdocCredential>> ListByDocType(DocType docType)
+    {
+        var docTypeValue = docType.AsString();
+        var records = await repository.Find(record => record.DocType == docTypeValue);
+        return MapRecords(records);
+    }
+
+    public async Task<Unit> Update(MdocCredential credential)
+    {
+        var record = new MdocCredentialRecord(credential);
+        await repository.Update(record);
         return Unit.Default;
     }
 
-    public virtual async Task<Unit> Delete(CredentialId id)
+    public async Task<Unit> Delete(CredentialId id)
     {
         var guid = Guid.Parse(id.AsString());
         await repository.RemoveById(guid);
         return Unit.Default;
     }
 
-    public virtual async Task<Unit> Delete(MdocCredential domainModel)
+    private static IReadOnlyList<MdocCredential> MapRecords(Option<IReadOnlyList<MdocCredentialRecord>> records)
     {
-        var record = new MdocCredentialRecord(domainModel);
-        await repository.Remove(record);
-        return Unit.Default;
-    }
-
-    public async Task<Option<List<MdocCredential>>> Find(ISearchConfig<MdocCredentialRecord> config)
-    {
-        var records = await repository.Find(config.ToPredicate());
-        return
-            from credentialRecords in records
-            let credentials = credentialRecords.Select(r => r.ToDomainModel())
-            select credentials.ToList();
-    }
-
-    public async Task<Option<MdocCredential>> GetById(CredentialId id)
-    {
-        var guid = Guid.Parse(id.AsString());
-        var record = await repository.GetById(guid);
-        return record.Map(r => r.ToDomainModel());
-    }
-
-    public async Task<Option<List<MdocCredential>>> ListAll()
-    {
-        var records = await repository.ListAll();
-        return
-            from credentialRecords in records
-            let credentials = credentialRecords.Select(r => r.ToDomainModel())
-            select credentials.ToList();
-    }
-
-    public virtual async Task<Unit> Update(MdocCredential domainModel)
-    {
-        var record = new MdocCredentialRecord(domainModel);
-        await repository.Update(record);
-        return Unit.Default;
+        return records.Match<IReadOnlyList<MdocCredential>>(
+            credentialRecords => credentialRecords.Select(record => record.ToDomainModel()).ToList(),
+            () => []);
     }
 }

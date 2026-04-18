@@ -9,6 +9,7 @@ using WalletFramework.MdocLib;
 using WalletFramework.MdocVc;
 using WalletFramework.MdocVc.Persistence;
 using WalletFramework.Storage.Database;
+using WalletFramework.Storage;
 using WalletFramework.TestSamples;
 
 namespace WalletFramework.Storage.Tests;
@@ -24,16 +25,16 @@ public class MdocCredentialRecordCrudTests : IDisposable
     [Fact]
     public async Task Can_Store_And_Retrieve_MdocCredentialRecord()
     {
-        // Arrange
-        var databaseCreator = _serviceProvider.GetRequiredService<IDatabaseCreator>();
+        using var scope = _serviceProvider.CreateScope();
+        var serviceProvider = scope.ServiceProvider;
+        var databaseCreator = serviceProvider.GetRequiredService<IDatabaseCreator>();
+        var storageSession = serviceProvider.GetRequiredService<IStorageSession>();
         await databaseCreator.EnsureDatabaseCreated();
 
-        var repository = _serviceProvider.GetRequiredService<IDomainRepository<MdocCredential, MdocCredentialRecord, CredentialId>>();
+        var store = serviceProvider.GetRequiredService<IMdocCredentialStore>();
 
         var encodedMdoc = MdocSamples.GetEncodedMdocSample();
-
         var mdoc = Mdoc.ValidMdoc(encodedMdoc).UnwrapOrThrow();
-
         var mdocCredential = mdoc.ToMdocCredential(
             KeyId.CreateKeyId(),
             CredentialSetId.CreateCredentialSetId(),
@@ -42,11 +43,11 @@ public class MdocCredentialRecordCrudTests : IDisposable
             Option<DateTime>.None,
             CredentialId.CreateCredentialId());
 
-        // Act
-        await repository.Add(mdocCredential);
-        var fetched = await repository.GetById(mdocCredential.CredentialId);
+        await store.Add(mdocCredential);
+        await storageSession.Commit();
 
-        // Assert
+        var fetched = await store.Get(mdocCredential.CredentialId);
+
         fetched.Match(
             found =>
             {
@@ -63,11 +64,13 @@ public class MdocCredentialRecordCrudTests : IDisposable
     [Fact]
     public async Task Can_Update_MdocCredentialRecord()
     {
-        // Arrange
-        var databaseCreator = _serviceProvider.GetRequiredService<IDatabaseCreator>();
+        using var scope = _serviceProvider.CreateScope();
+        var serviceProvider = scope.ServiceProvider;
+        var databaseCreator = serviceProvider.GetRequiredService<IDatabaseCreator>();
+        var storageSession = serviceProvider.GetRequiredService<IStorageSession>();
         await databaseCreator.EnsureDatabaseCreated();
 
-        var repository = _serviceProvider.GetRequiredService<IDomainRepository<MdocCredential, MdocCredentialRecord, CredentialId>>();
+        var store = serviceProvider.GetRequiredService<IMdocCredentialStore>();
 
         var encodedMdoc = MdocSamples.GetEncodedMdocSample();
         var mdoc = Mdoc.ValidMdoc(encodedMdoc).UnwrapOrThrow();
@@ -84,9 +87,9 @@ public class MdocCredentialRecordCrudTests : IDisposable
             Option<DateTime>.None,
             credentialId);
 
-        await repository.Add(initial);
+        await store.Add(initial);
+        await storageSession.Commit();
 
-        // Act
         var updated = mdoc.ToMdocCredential(
             keyId,
             credentialSetId,
@@ -95,11 +98,11 @@ public class MdocCredentialRecordCrudTests : IDisposable
             Option<DateTime>.Some(DateTime.UtcNow.AddDays(1)),
             credentialId);
 
-        await repository.Update(updated);
+        await store.Update(updated);
+        await storageSession.Commit();
 
-        var fetched = await repository.GetById(credentialId);
+        var fetched = await store.Get(credentialId);
 
-        // Assert
         fetched.Match(
             found =>
             {
@@ -115,11 +118,13 @@ public class MdocCredentialRecordCrudTests : IDisposable
     [Fact]
     public async Task Can_Delete_MdocCredentialRecord()
     {
-        // Arrange
-        var databaseCreator = _serviceProvider.GetRequiredService<IDatabaseCreator>();
+        using var scope = _serviceProvider.CreateScope();
+        var serviceProvider = scope.ServiceProvider;
+        var databaseCreator = serviceProvider.GetRequiredService<IDatabaseCreator>();
+        var storageSession = serviceProvider.GetRequiredService<IStorageSession>();
         await databaseCreator.EnsureDatabaseCreated();
 
-        var repository = _serviceProvider.GetRequiredService<IDomainRepository<MdocCredential, MdocCredentialRecord, CredentialId>>();
+        var store = serviceProvider.GetRequiredService<IMdocCredentialStore>();
 
         var encodedMdoc = MdocSamples.GetEncodedMdocSample();
         var mdoc = Mdoc.ValidMdoc(encodedMdoc).UnwrapOrThrow();
@@ -136,59 +141,27 @@ public class MdocCredentialRecordCrudTests : IDisposable
             Option<DateTime>.None,
             credentialId);
 
-        await repository.Add(mdocCredential);
+        await store.Add(mdocCredential);
+        await storageSession.Commit();
 
-        // Act
-        // Delete by id
-        await repository.Delete(credentialId);
-        var fetched = await repository.GetById(credentialId);
+        await store.Delete(credentialId);
+        await storageSession.Commit();
 
-        // Assert
-        fetched.IsNone.Should().BeTrue();
-    }
+        var fetched = await store.Get(credentialId);
 
-    [Fact]
-    public async Task Can_Delete_MdocCredentialRecord_By_Domain()
-    {
-        // Arrange
-        var databaseCreator = _serviceProvider.GetRequiredService<IDatabaseCreator>();
-        await databaseCreator.EnsureDatabaseCreated();
-
-        var repository = _serviceProvider.GetRequiredService<IDomainRepository<MdocCredential, MdocCredentialRecord, CredentialId>>();
-
-        var encodedMdoc = MdocSamples.GetEncodedMdocSample();
-        var mdoc = Mdoc.ValidMdoc(encodedMdoc).UnwrapOrThrow();
-
-        var credentialId = CredentialId.CreateCredentialId();
-        var credentialSetId = CredentialSetId.CreateCredentialSetId();
-        var keyId = KeyId.CreateKeyId();
-
-        var mdocCredential = mdoc.ToMdocCredential(
-            keyId,
-            credentialSetId,
-            CredentialState.Active,
-            false,
-            Option<DateTime>.None,
-            credentialId);
-
-        await repository.Add(mdocCredential);
-
-        // Act: delete by domain instance
-        await repository.Delete(mdocCredential);
-        var fetched = await repository.GetById(credentialId);
-
-        // Assert
         fetched.IsNone.Should().BeTrue();
     }
 
     [Fact]
     public async Task Can_ListAll_MdocCredentialRecords()
     {
-        // Arrange
-        var databaseCreator = _serviceProvider.GetRequiredService<IDatabaseCreator>();
+        using var scope = _serviceProvider.CreateScope();
+        var serviceProvider = scope.ServiceProvider;
+        var databaseCreator = serviceProvider.GetRequiredService<IDatabaseCreator>();
+        var storageSession = serviceProvider.GetRequiredService<IStorageSession>();
         await databaseCreator.EnsureDatabaseCreated();
 
-        var repository = _serviceProvider.GetRequiredService<IDomainRepository<MdocCredential, MdocCredentialRecord, CredentialId>>();
+        var store = serviceProvider.GetRequiredService<IMdocCredentialStore>();
 
         var encodedMdoc = MdocSamples.GetEncodedMdocSample();
         var mdoc = Mdoc.ValidMdoc(encodedMdoc).UnwrapOrThrow();
@@ -202,32 +175,27 @@ public class MdocCredentialRecordCrudTests : IDisposable
         var cred1 = mdoc.ToMdocCredential(kid, csid, CredentialState.Active, false, Option<DateTime>.None, id1);
         var cred2 = mdoc.ToMdocCredential(kid, csid, CredentialState.Active, false, Option<DateTime>.None, id2);
 
-        await repository.Add(cred1);
-        await repository.Add(cred2);
+        await store.Add(cred1);
+        await store.Add(cred2);
+        await storageSession.Commit();
 
-        // Act
-        var list = await repository.ListAll();
+        var list = await store.List();
 
-        // Assert
-        list.Match(
-            Some: items =>
-            {
-                items.Count.Should().BeGreaterOrEqualTo(2);
-                items.Any(c => c.CredentialId.Equals(id1)).Should().BeTrue();
-                items.Any(c => c.CredentialId.Equals(id2)).Should().BeTrue();
-            },
-            None: () => throw new InvalidOperationException("List should not be empty")
-        );
+        list.Count.Should().BeGreaterOrEqualTo(2);
+        list.Any(c => c.CredentialId.Equals(id1)).Should().BeTrue();
+        list.Any(c => c.CredentialId.Equals(id2)).Should().BeTrue();
     }
 
     [Fact]
     public async Task Can_Find_MdocCredentialRecords_By_DocType()
     {
-        // Arrange
-        var databaseCreator = _serviceProvider.GetRequiredService<IDatabaseCreator>();
+        using var scope = _serviceProvider.CreateScope();
+        var serviceProvider = scope.ServiceProvider;
+        var databaseCreator = serviceProvider.GetRequiredService<IDatabaseCreator>();
+        var storageSession = serviceProvider.GetRequiredService<IStorageSession>();
         await databaseCreator.EnsureDatabaseCreated();
 
-        var repository = _serviceProvider.GetRequiredService<IDomainRepository<MdocCredential, MdocCredentialRecord, CredentialId>>();
+        var store = serviceProvider.GetRequiredService<IMdocCredentialStore>();
 
         var encodedMdoc = MdocSamples.GetEncodedMdocSample();
         var mdoc = Mdoc.ValidMdoc(encodedMdoc).UnwrapOrThrow();
@@ -238,32 +206,26 @@ public class MdocCredentialRecordCrudTests : IDisposable
         var cred1 = mdoc.ToMdocCredential(kid, csid, CredentialState.Active, false, Option<DateTime>.None, CredentialId.CreateCredentialId());
         var cred2 = mdoc.ToMdocCredential(kid, csid, CredentialState.Active, false, Option<DateTime>.None, CredentialId.CreateCredentialId());
 
-        await repository.Add(cred1);
-        await repository.Add(cred2);
+        await store.Add(cred1);
+        await store.Add(cred2);
+        await storageSession.Commit();
 
-        // Act
-        var cfg = new FindMdocCredentialsWithDocType { DocType = mdoc.DocType };
-        var result = await repository.Find(cfg);
+        var result = await store.ListByDocType(mdoc.DocType);
 
-        // Assert
-        result.Match(
-            Some: items =>
-            {
-                items.Count.Should().Be(2);
-                items.All(i => i.Mdoc.DocType.AsString() == mdoc.DocType.AsString()).Should().BeTrue();
-            },
-            None: () => throw new InvalidOperationException("Result should not be empty")
-        );
+        result.Count.Should().Be(2);
+        result.All(i => i.Mdoc.DocType.AsString() == mdoc.DocType.AsString()).Should().BeTrue();
     }
 
     [Fact]
     public async Task Can_Find_MdocCredentialRecords_By_NonExistent_DocType_Returns_Empty()
     {
-        // Arrange
-        var databaseCreator = _serviceProvider.GetRequiredService<IDatabaseCreator>();
+        using var scope = _serviceProvider.CreateScope();
+        var serviceProvider = scope.ServiceProvider;
+        var databaseCreator = serviceProvider.GetRequiredService<IDatabaseCreator>();
+        var storageSession = serviceProvider.GetRequiredService<IStorageSession>();
         await databaseCreator.EnsureDatabaseCreated();
 
-        var repository = _serviceProvider.GetRequiredService<IDomainRepository<MdocCredential, MdocCredentialRecord, CredentialId>>();
+        var store = serviceProvider.GetRequiredService<IMdocCredentialStore>();
 
         var encodedMdoc = MdocSamples.GetEncodedMdocSample();
         var mdoc = Mdoc.ValidMdoc(encodedMdoc).UnwrapOrThrow();
@@ -273,23 +235,13 @@ public class MdocCredentialRecordCrudTests : IDisposable
 
         var cred1 = mdoc.ToMdocCredential(kid, csid, CredentialState.Active, false, Option<DateTime>.None, CredentialId.CreateCredentialId());
 
-        await repository.Add(cred1);
+        await store.Add(cred1);
+        await storageSession.Commit();
 
-        // Act - search for a non-existent DocType
         var nonExistentDocType = DocType.ValidDoctype(new JValue("non.existent.doctype")).UnwrapOrThrow();
-        var cfg = new FindMdocCredentialsWithDocType { DocType = nonExistentDocType };
-        var result = await repository.Find(cfg);
+        var result = await store.ListByDocType(nonExistentDocType);
 
-        // Assert
-        result.Match(
-            Some: _ =>
-            {
-                Assert.Fail("Result should be empty for non-existent DocType");
-            },
-            None: () =>
-            {
-            }
-        );
+        result.Should().BeEmpty();
     }
 
     public void Dispose()

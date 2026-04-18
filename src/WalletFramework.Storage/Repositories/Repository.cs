@@ -7,28 +7,23 @@ using static LanguageExt.Prelude;
 
 namespace WalletFramework.Storage.Repositories;
 
-public sealed class Repository<TRecord>(IDbContextFactory<WalletDbContext> dbContextFactory) : IRepository<TRecord>
+public sealed class Repository<TRecord>(WalletDbContext context) : IRepository<TRecord>
     where TRecord : RecordBase
 {
     public async Task<Unit> Add(TRecord record)
     {
-        await using var context = await dbContextFactory.CreateDbContextAsync();
         await context.Set<TRecord>().AddAsync(record);
-        await context.SaveChangesAsync();
         return Unit.Default;
     }
 
     public async Task<Unit> AddMany(IEnumerable<TRecord> records)
     {
-        await using var context = await dbContextFactory.CreateDbContextAsync();
         await context.Set<TRecord>().AddRangeAsync(records);
-        await context.SaveChangesAsync();
         return Unit.Default;
     }
 
     public async Task<Option<IReadOnlyList<TRecord>>> Find(Expression<Func<TRecord, bool>> predicate)
     {
-        await using var context = await dbContextFactory.CreateDbContextAsync();
         var results = await context
             .Set<TRecord>()
             .AsNoTracking()
@@ -39,7 +34,6 @@ public sealed class Repository<TRecord>(IDbContextFactory<WalletDbContext> dbCon
 
     public async Task<Option<TRecord>> GetById(Guid id)
     {
-        await using var context = await dbContextFactory.CreateDbContextAsync();
         var entity = await context
             .Set<TRecord>()
             .AsNoTracking()
@@ -49,7 +43,6 @@ public sealed class Repository<TRecord>(IDbContextFactory<WalletDbContext> dbCon
 
     public async Task<Option<IReadOnlyList<TRecord>>> ListAll()
     {
-        await using var context = await dbContextFactory.CreateDbContextAsync();
         var results = await context
             .Set<TRecord>()
             .AsNoTracking()
@@ -57,42 +50,63 @@ public sealed class Repository<TRecord>(IDbContextFactory<WalletDbContext> dbCon
         return results.Count == 0 ? Option<IReadOnlyList<TRecord>>.None : results;
     }
 
-    public async Task<Unit> Remove(TRecord record)
+    public Task<Unit> Remove(TRecord record)
     {
-        await using var context = await dbContextFactory.CreateDbContextAsync();
+        var trackedRecord = context.Set<TRecord>().Local.FirstOrDefault(entity => entity.RecordId == record.RecordId);
+        if (trackedRecord is not null)
+        {
+            context.Set<TRecord>().Remove(trackedRecord);
+            return Task.FromResult(Unit.Default);
+        }
+
         context.Set<TRecord>().Remove(record);
-        await context.SaveChangesAsync();
-        return Unit.Default;
+        return Task.FromResult(Unit.Default);
     }
 
     public async Task<Unit> RemoveById(Guid id)
     {
-        await using var context = await dbContextFactory.CreateDbContextAsync();
-        var entity = await context.Set<TRecord>().FirstOrDefaultAsync(e => e.RecordId == id);
-        if (entity is null)
+        var trackedEntity = context.Set<TRecord>().Local.FirstOrDefault(entity => entity.RecordId == id);
+        if (trackedEntity is not null)
         {
+            context.Set<TRecord>().Remove(trackedEntity);
             return Unit.Default;
         }
 
-        context.Set<TRecord>().Remove(entity);
-        await context.SaveChangesAsync();
+        var entity = await context.Set<TRecord>().FirstOrDefaultAsync(e => e.RecordId == id);
+        if (entity is not null)
+        {
+            context.Set<TRecord>().Remove(entity);
+        }
+
         return Unit.Default;
     }
 
     public async Task<Unit> Update(TRecord record)
     {
-        await using var context = await dbContextFactory.CreateDbContextAsync();
-        
-        var oldRecord = await context.Set<TRecord>().AsNoTracking().SingleAsync(e => e.RecordId == record.RecordId);
+        var trackedRecord = context.Set<TRecord>().Local.FirstOrDefault(entity => entity.RecordId == record.RecordId);
+        var oldRecord = trackedRecord
+                        ?? await context.Set<TRecord>().AsNoTracking().SingleAsync(e => e.RecordId == record.RecordId);
 
         record = record with
         {
             CreatedAt = oldRecord.CreatedAt,
             UpdatedAt = DateTimeOffset.Now
         };
-        
+
+        if (trackedRecord is not null)
+        {
+            var trackedRecordEntry = context.Entry(trackedRecord);
+            var trackedRecordState = trackedRecordEntry.State;
+            trackedRecordEntry.CurrentValues.SetValues(record);
+            if (trackedRecordState != EntityState.Added)
+            {
+                trackedRecordEntry.State = EntityState.Modified;
+            }
+
+            return Unit.Default;
+        }
+
         context.Set<TRecord>().Update(record);
-        await context.SaveChangesAsync();
         return Unit.Default;
     }
 }

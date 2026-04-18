@@ -61,18 +61,18 @@ public static class ServiceCollectionExtensions
         builder.AddSingleton<ICredentialNonceService, CredentialNonceService>();
         builder.AddSingleton<ICredentialOfferService, CredentialOfferService>();
         builder.AddSingleton<ICredentialRequestService, CredentialRequestService>();
-        builder.AddSingleton<ICredentialSetService, CredentialSetService>();
+        builder.AddScoped<ICredentialSetService, CredentialSetService>();
         builder.AddSingleton<IDPopHttpClient, DPopHttpClient>();
-        builder.AddSingleton<IDcApiService, DcApiService>();
-        builder.AddSingleton<IDcqlService, DcqlService>();
+        builder.AddScoped<IDcApiService, DcApiService>();
+        builder.AddScoped<IDcqlService, DcqlService>();
         builder.AddSingleton<IEventAggregator, EventAggregator>();
         builder.AddSingleton<IIssuerMetadataService, IssuerMetadataService>();
         builder.AddSingleton<IMdocAuthenticationService, MdocAuthenticationService>();
-        builder.AddSingleton<IMdocCandidateService, MdocCandidateService>();
-        builder.AddSingleton<IOid4VciClientService, Oid4VciClientService>();
-        builder.AddSingleton<IOid4VpClientService, Oid4VpClientService>();
-        builder.AddSingleton<IOid4VpHaipClient, Oid4VpHaipClient>();
-        builder.AddSingleton<IPresentationService, PresentationService>();
+        builder.AddScoped<IMdocCandidateService, MdocCandidateService>();
+        builder.AddScoped<IOid4VciClientService, Oid4VciClientService>();
+        builder.AddScoped<IOid4VpClientService, Oid4VpClientService>();
+        builder.AddScoped<IOid4VpHaipClient, Oid4VpHaipClient>();
+        builder.AddScoped<IPresentationService, PresentationService>();
         builder.AddSingleton<IRpAuthService, RpAuthService>();
         builder.AddSingleton<IRpRegistrarService, RpRegistrarService>();
         builder.AddSingleton<IStatusListService, StatusListService>();
@@ -80,11 +80,11 @@ public static class ServiceCollectionExtensions
         builder.AddSingleton<IVctMetadataService, VctMetadataService>();
         builder.AddSingleton<IVerifierKeyService, VerifierKeyService>();
         
-        builder.AddScoped<IDomainRepository<MdocCredential, MdocCredentialRecord, CredentialId>, MdocCredentialRepository>();
-        builder.AddScoped<IDomainRepository<SdJwtCredential, SdJwtCredentialRecord, CredentialId>, SdJwtCredentialRepository>();
-        builder.AddScoped<IDomainRepository<CredentialDataSet, CredentialDataSetRecord, CredentialSetId>, CredentialDataSetRepository>();
-        builder.AddScoped<IDomainRepository<CompletedPresentation, CompletedPresentationRecord, string>, CompletedPresentationRepository>();
-        builder.AddScoped<IDomainRepository<AuthFlowSession, AuthFlowSessionRecord, Oid4Vci.AuthFlow.Models.AuthFlowSessionState>, AuthFlowSessionRepository>();
+        builder.AddScoped<IMdocCredentialStore, MdocCredentialRepository>();
+        builder.AddScoped<ISdJwtCredentialStore, SdJwtCredentialStore>();
+        builder.AddScoped<ICredentialDataSetStore, CredentialDataSetRepository>();
+        builder.AddScoped<ICompletedPresentationStore, CompletedPresentationRepository>();
+        builder.AddScoped<IAuthFlowSessionStore, AuthFlowSessionRepository>();
 
         builder.AddSdJwtVcServices();
         
@@ -102,9 +102,9 @@ public static class ServiceCollectionExtensions
         where TService : class, IOid4VciClientService
         where TImplementation : class, TService, IOid4VciClientService
     {
-        builder.AddSingleton<TImplementation>();
-        builder.AddSingleton<IOid4VciClientService>(x => x.GetService<TImplementation>()!);
-        builder.AddSingleton<TService>(x => x.GetService<TImplementation>()!);
+        builder.AddScoped<TImplementation>();
+        builder.AddScoped<IOid4VciClientService>(x => x.GetService<TImplementation>()!);
+        builder.AddScoped<TService>(x => x.GetService<TImplementation>()!);
         return builder;
     }
     
@@ -115,10 +115,10 @@ public static class ServiceCollectionExtensions
     // /// <param name="builder">Builder.</param>
     // /// <typeparam name="TImplementation">The 2nd type parameter.</typeparam>
     public static IServiceCollection AddExtendedCredentialSetStorage<TImplementation>(this IServiceCollection builder)
-        where TImplementation : class, IDomainRepository<CredentialDataSet, CredentialDataSetRecord, CredentialSetId>
+        where TImplementation : class, ICredentialDataSetStore
     {
-        builder.AddSingleton<TImplementation>();
-        builder.AddSingleton<IDomainRepository<CredentialDataSet, CredentialDataSetRecord, CredentialSetId>>(
+        builder.AddScoped<TImplementation>();
+        builder.AddScoped<ICredentialDataSetStore>(
             x => x.GetService<TImplementation>()!);
         return builder;
     }

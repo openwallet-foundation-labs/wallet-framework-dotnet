@@ -18,14 +18,13 @@ using WalletFramework.Oid4Vc.Tests.Samples;
 using WalletFramework.SdJwtVc;
 using WalletFramework.SdJwtLib.Roles.Implementation;
 using WalletFramework.SdJwtVc.Persistence;
-using WalletFramework.Storage;
 
 namespace WalletFramework.Integration.Tests.Oid4Vp.Dcql;
 
 public class DcqlServiceTests
 {
-    private readonly Mock<IDomainRepository<MdocCredential, MdocCredentialRecord, CredentialId>> _mdocStorageMock = new();
-    private readonly Mock<IDomainRepository<SdJwtCredential, SdJwtCredentialRecord, CredentialId>> _sdJwtVcHolderServiceMock = new();
+    private readonly Mock<IMdocCredentialStore> _mdocStorageMock = new();
+    private readonly Mock<ISdJwtCredentialStore> _sdJwtCredentialStoreMock = new();
 
     private static readonly CredentialSetId DriverLicenseCredentialSetId = CredentialSetId.CreateCredentialSetId();
     private static readonly CredentialSetId DriverLicenseCredentialCloneSetId = CredentialSetId.CreateCredentialSetId();
@@ -214,8 +213,12 @@ public class DcqlServiceTests
 
     private IDcqlService CreateDcqlService()
     {
-        _sdJwtVcHolderServiceMock
-            .Setup(x => x.ListAll())
+        _mdocStorageMock
+            .Setup(x => x.List())
+            .ReturnsAsync([]);
+
+        _sdJwtCredentialStoreMock
+            .Setup(x => x.List())
             .ReturnsAsync(() => new List<SdJwtCredential>
             { 
                 _driverCredential,
@@ -227,7 +230,7 @@ public class DcqlServiceTests
                 _batchCredentialTwo
             });
         
-        return new DcqlService(_mdocStorageMock.Object, _sdJwtVcHolderServiceMock.Object);
+        return new DcqlService(_mdocStorageMock.Object, _sdJwtCredentialStoreMock.Object);
     }
         
     private static SdJwtCredential CreateCredential(JObject payload, CredentialSetId credentialSetId)

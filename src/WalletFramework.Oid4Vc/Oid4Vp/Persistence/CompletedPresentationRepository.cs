@@ -1,98 +1,77 @@
 using LanguageExt;
-using Newtonsoft.Json;
-using WalletFramework.Storage;
 using WalletFramework.Storage.Repositories;
 
 namespace WalletFramework.Oid4Vc.Oid4Vp.Persistence;
 
 public class CompletedPresentationRepository(IRepository<CompletedPresentationRecord> repository)
-    : IDomainRepository<CompletedPresentation, CompletedPresentationRecord, string>
+    : ICompletedPresentationStore
 {
-    public async Task<Unit> Add(CompletedPresentation domainModel)
+    public async Task<Unit> Add(CompletedPresentation presentation)
     {
-        await repository.Add(new CompletedPresentationRecord(domainModel));
+        await repository.Add(new CompletedPresentationRecord(presentation));
         return Unit.Default;
     }
 
-    public async Task<Unit> AddMany(IEnumerable<CompletedPresentation> domainModels)
+    public async Task<Option<CompletedPresentation>> Get(string presentationId)
     {
-        var records = domainModels.Select(d => new CompletedPresentationRecord(d));
-        await repository.AddMany(records);
-        return Unit.Default;
-    }
-
-    public async Task<Unit> Delete(string id)
-    {
-        var recs = await repository.Find(r => r.PresentationId == id);
-        await recs.Match(
-            Some: async list =>
-            {
-                foreach (var record in list)
-                {
-                    await repository.Remove(record);
-                }
-            },
-            None: () => Task.CompletedTask);
-
-        return Unit.Default;
-    }
-
-    public async Task<Unit> Delete(CompletedPresentation domainModel)
-    {
-        var recs = await repository.Find(r => r.PresentationId == domainModel.PresentationId);
-        await recs.Match(
-            Some: async list =>
-            {
-                foreach (var record in list)
-                {
-                    await repository.Remove(record);
-                }
-            },
-            None: () => Task.CompletedTask);
-
-        return Unit.Default;
-    }
-
-    public async Task<Option<List<CompletedPresentation>>> Find(ISearchConfig<CompletedPresentationRecord> config)
-    {
-        var records = await repository.Find(config.ToPredicate());
-        return from recs in records
-               let domains = recs.Select(r => r.ToDomainModel())
-               select domains.ToList();
-    }
-
-    public async Task<Option<CompletedPresentation>> GetById(string id)
-    {
-        var records = await repository.Find(r => r.PresentationId == id);
-        return from recs in records
-               let record = recs.FirstOrDefault()
+        var records = await repository.Find(record => record.PresentationId == presentationId);
+        return from matchedRecords in records
+               let record = matchedRecords.FirstOrDefault()
                select record?.ToDomainModel();
     }
 
-    public async Task<Option<List<CompletedPresentation>>> ListAll()
+    public async Task<IReadOnlyList<CompletedPresentation>> List()
     {
         var records = await repository.ListAll();
-        return from recs in records
-               let domains = recs.Select(r => r.ToDomainModel())
-               select domains.ToList();
+        return MapRecords(records);
     }
 
-    public async Task<Unit> Update(CompletedPresentation domainModel)
+    public async Task<IReadOnlyList<CompletedPresentation>> ListByClientId(string clientId)
     {
-        var existingOpt = await repository.Find(r => r.ClientId == domainModel.ClientId);
+        var records = await repository.Find(record => record.ClientId == clientId);
+        return MapRecords(records);
+    }
+
+    public async Task<Unit> Save(CompletedPresentation presentation)
+    {
+        var existingOpt = await repository.Find(record => record.ClientId == presentation.ClientId);
 
         await existingOpt.Match(
             Some: async list =>
             {
                 var existing = list[0];
-                var updated = existing with { Serialized = domainModel.Serialize() };
+                var updated = existing with { Serialized = presentation.Serialize() };
                 await repository.Update(updated);
             },
             None: async () =>
             {
-                await repository.Add(new CompletedPresentationRecord(domainModel));
+                await repository.Add(new CompletedPresentationRecord(presentation));
             });
 
         return Unit.Default;
+    }
+
+    public async Task<Unit> Delete(string presentationId)
+    {
+        var records = await repository.Find(record => record.PresentationId == presentationId);
+        await records.Match(
+            Some: async matchedRecords =>
+            {
+                foreach (var record in matchedRecords)
+                {
+                    await repository.Remove(record);
+                }
+            },
+            None: () => Task.CompletedTask);
+
+        return Unit.Default;
+    }
+
+    private static IReadOnlyList<CompletedPresentation> MapRecords(
+        Option<IReadOnlyList<CompletedPresentationRecord>> records)
+    {
+        return records.Match<IReadOnlyList<CompletedPresentation>>(
+            presentationRecords => presentationRecords.Select(record => record.ToDomainModel()).ToList(),
+            () => []);
     }
 }

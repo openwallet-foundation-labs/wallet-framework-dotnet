@@ -1,4 +1,3 @@
-using System.Linq.Expressions;
 using FluentAssertions;
 using LanguageExt;
 using Microsoft.Extensions.DependencyInjection;
@@ -7,6 +6,7 @@ using WalletFramework.Oid4Vc.Oid4Vp;
 using WalletFramework.Oid4Vc.Oid4Vp.Models;
 using WalletFramework.Oid4Vc.Oid4Vp.Persistence;
 using WalletFramework.Storage.Database;
+using WalletFramework.Storage;
 
 namespace WalletFramework.Storage.Tests;
 
@@ -21,16 +21,20 @@ public class CompletedPresentationRecordCrudTests : IDisposable
     [Fact]
     public async Task Can_Store_And_Retrieve_CompletedPresentationRecord()
     {
-        var databaseCreator = _serviceProvider.GetRequiredService<IDatabaseCreator>();
+        using var scope = _serviceProvider.CreateScope();
+        var serviceProvider = scope.ServiceProvider;
+        var databaseCreator = serviceProvider.GetRequiredService<IDatabaseCreator>();
+        var storageSession = serviceProvider.GetRequiredService<IStorageSession>();
         await databaseCreator.EnsureDatabaseCreated();
 
-        var repository = _serviceProvider
-            .GetRequiredService<IDomainRepository<CompletedPresentation, CompletedPresentationRecord, string>>();
+        var store = serviceProvider.GetRequiredService<ICompletedPresentationStore>();
 
         var presentation = CreateSamplePresentation();
 
-        await repository.Add(presentation);
-        var fetched = await repository.GetById(presentation.PresentationId);
+        await store.Add(presentation);
+        await storageSession.Commit();
+
+        var fetched = await store.Get(presentation.PresentationId);
 
         fetched.Match(
             found =>
@@ -46,19 +50,23 @@ public class CompletedPresentationRecordCrudTests : IDisposable
     [Fact]
     public async Task Can_Update_CompletedPresentationRecord()
     {
-        var databaseCreator = _serviceProvider.GetRequiredService<IDatabaseCreator>();
+        using var scope = _serviceProvider.CreateScope();
+        var serviceProvider = scope.ServiceProvider;
+        var databaseCreator = serviceProvider.GetRequiredService<IDatabaseCreator>();
+        var storageSession = serviceProvider.GetRequiredService<IStorageSession>();
         await databaseCreator.EnsureDatabaseCreated();
 
-        var repository = _serviceProvider
-            .GetRequiredService<IDomainRepository<CompletedPresentation, CompletedPresentationRecord, string>>();
+        var store = serviceProvider.GetRequiredService<ICompletedPresentationStore>();
 
         var presentation = CreateSamplePresentation();
-        await repository.Add(presentation);
+        await store.Add(presentation);
+        await storageSession.Commit();
 
         var updated = presentation with { Name = Prelude.Some("Updated Name") };
-        await repository.Update(updated);
+        await store.Save(updated);
+        await storageSession.Commit();
 
-        var fetched = await repository.GetById(presentation.PresentationId);
+        var fetched = await store.Get(presentation.PresentationId);
 
         fetched.Match(
             found =>
@@ -75,35 +83,22 @@ public class CompletedPresentationRecordCrudTests : IDisposable
     [Fact]
     public async Task Can_Delete_CompletedPresentationRecord_By_Id()
     {
-        var databaseCreator = _serviceProvider.GetRequiredService<IDatabaseCreator>();
+        using var scope = _serviceProvider.CreateScope();
+        var serviceProvider = scope.ServiceProvider;
+        var databaseCreator = serviceProvider.GetRequiredService<IDatabaseCreator>();
+        var storageSession = serviceProvider.GetRequiredService<IStorageSession>();
         await databaseCreator.EnsureDatabaseCreated();
 
-        var repository = _serviceProvider
-            .GetRequiredService<IDomainRepository<CompletedPresentation, CompletedPresentationRecord, string>>();
+        var store = serviceProvider.GetRequiredService<ICompletedPresentationStore>();
 
         var presentation = CreateSamplePresentation();
-        await repository.Add(presentation);
+        await store.Add(presentation);
+        await storageSession.Commit();
 
-        await repository.Delete(presentation.PresentationId);
-        var fetched = await repository.GetById(presentation.PresentationId);
+        await store.Delete(presentation.PresentationId);
+        await storageSession.Commit();
 
-        fetched.IsNone.Should().BeTrue();
-    }
-
-    [Fact]
-    public async Task Can_Delete_CompletedPresentationRecord_By_Domain()
-    {
-        var databaseCreator = _serviceProvider.GetRequiredService<IDatabaseCreator>();
-        await databaseCreator.EnsureDatabaseCreated();
-
-        var repository = _serviceProvider
-            .GetRequiredService<IDomainRepository<CompletedPresentation, CompletedPresentationRecord, string>>();
-
-        var presentation = CreateSamplePresentation();
-        await repository.Add(presentation);
-
-        await repository.Delete(presentation);
-        var fetched = await repository.GetById(presentation.PresentationId);
+        var fetched = await store.Get(presentation.PresentationId);
 
         fetched.IsNone.Should().BeTrue();
     }
@@ -111,76 +106,76 @@ public class CompletedPresentationRecordCrudTests : IDisposable
     [Fact]
     public async Task Can_ListAll_CompletedPresentationRecords()
     {
-        var databaseCreator = _serviceProvider.GetRequiredService<IDatabaseCreator>();
+        using var scope = _serviceProvider.CreateScope();
+        var serviceProvider = scope.ServiceProvider;
+        var databaseCreator = serviceProvider.GetRequiredService<IDatabaseCreator>();
+        var storageSession = serviceProvider.GetRequiredService<IStorageSession>();
         await databaseCreator.EnsureDatabaseCreated();
 
-        var repository = _serviceProvider
-            .GetRequiredService<IDomainRepository<CompletedPresentation, CompletedPresentationRecord, string>>();
+        var store = serviceProvider.GetRequiredService<ICompletedPresentationStore>();
 
         var p1 = CreateSamplePresentation();
         var p2 = CreateSamplePresentation();
-        await repository.Add(p1);
-        await repository.Add(p2);
+        await store.Add(p1);
+        await store.Add(p2);
+        await storageSession.Commit();
 
-        var list = await repository.ListAll();
+        var list = await store.List();
 
-        list.Match(
-            Some: items =>
-            {
-                items.Count.Should().BeGreaterOrEqualTo(2);
-                items.Any(i => i.PresentationId == p1.PresentationId).Should().BeTrue();
-                items.Any(i => i.PresentationId == p2.PresentationId).Should().BeTrue();
-            },
-            None: () => throw new InvalidOperationException("List should not be empty")
-        );
+        list.Count.Should().BeGreaterOrEqualTo(2);
+        list.Any(i => i.PresentationId == p1.PresentationId).Should().BeTrue();
+        list.Any(i => i.PresentationId == p2.PresentationId).Should().BeTrue();
     }
 
     [Fact]
     public async Task Can_Find_CompletedPresentationRecords_By_ClientId()
     {
-        var databaseCreator = _serviceProvider.GetRequiredService<IDatabaseCreator>();
+        using var scope = _serviceProvider.CreateScope();
+        var serviceProvider = scope.ServiceProvider;
+        var databaseCreator = serviceProvider.GetRequiredService<IDatabaseCreator>();
+        var storageSession = serviceProvider.GetRequiredService<IStorageSession>();
         await databaseCreator.EnsureDatabaseCreated();
 
-        var repository = _serviceProvider
-            .GetRequiredService<IDomainRepository<CompletedPresentation, CompletedPresentationRecord, string>>();
+        var store = serviceProvider.GetRequiredService<ICompletedPresentationStore>();
 
         var clientId = Guid.NewGuid().ToString("N");
         var p1 = CreateSamplePresentation() with { ClientId = clientId };
         var p2 = CreateSamplePresentation() with { ClientId = clientId };
         var other = CreateSamplePresentation();
 
-        await repository.Add(p1);
-        await repository.Add(p2);
-        await repository.Add(other);
+        await store.Add(p1);
+        await store.Add(p2);
+        await store.Add(other);
+        await storageSession.Commit();
 
-        var cfg = new FindCompletedPresentationsByClientId(clientId);
-        var result = await repository.Find(cfg);
+        var result = await store.ListByClientId(clientId);
 
-        result.Match(
-            Some: items =>
-            {
-                items.Count.Should().Be(2);
-                items.All(i => i.ClientId == clientId).Should().BeTrue();
-            },
-            None: () => throw new InvalidOperationException("Result should not be empty")
-        );
+        result.Count.Should().Be(2);
+        result.All(i => i.ClientId == clientId).Should().BeTrue();
     }
 
     [Fact]
     public async Task RecordConfiguration_Enforces_Unique_PresentationId()
     {
-        var databaseCreator = _serviceProvider.GetRequiredService<IDatabaseCreator>();
+        using var scope = _serviceProvider.CreateScope();
+        var serviceProvider = scope.ServiceProvider;
+        var databaseCreator = serviceProvider.GetRequiredService<IDatabaseCreator>();
+        var storageSession = serviceProvider.GetRequiredService<IStorageSession>();
         await databaseCreator.EnsureDatabaseCreated();
 
-        var repository = _serviceProvider
-            .GetRequiredService<IDomainRepository<CompletedPresentation, CompletedPresentationRecord, string>>();
+        var store = serviceProvider.GetRequiredService<ICompletedPresentationStore>();
 
         var p1 = CreateSamplePresentation();
         var p2 = p1 with { ClientId = Guid.NewGuid().ToString() };
 
-        await repository.Add(p1);
+        await store.Add(p1);
+        await storageSession.Commit();
 
-        Func<Task> act = async () => await repository.Add(p2);
+        Func<Task> act = async () =>
+        {
+            await store.Add(p2);
+            await storageSession.Commit();
+        };
 
         await act.Should().ThrowAsync<Exception>();
     }
@@ -227,14 +222,5 @@ public class CompletedPresentationRecordCrudTests : IDisposable
             clientMetadata,
             name,
             DateTimeOffset.UtcNow);
-    }
-
-    private sealed record FindCompletedPresentationsByClientId(string ClientId)
-        : ISearchConfig<CompletedPresentationRecord>
-    {
-        public Expression<Func<CompletedPresentationRecord, bool>> ToPredicate()
-        {
-            return record => record.ClientId == ClientId;
-        }
     }
 }

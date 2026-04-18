@@ -1,16 +1,14 @@
 using LanguageExt;
 using WalletFramework.Core.Credentials;
-using WalletFramework.Core.Functional;
 using WalletFramework.MdocLib.Device.Request;
 using WalletFramework.MdocVc;
 using WalletFramework.Oid4Vc.Oid4Vci.Abstractions;
 using WalletFramework.MdocVc.Persistence;
-using WalletFramework.Storage;
 
 namespace WalletFramework.Oid4Vc.Oid4Vci.Implementations;
 
 public class MdocCandidateService(
-    IDomainRepository<MdocCredential, MdocCredentialRecord, CredentialId> repository) : IMdocCandidateService
+    IMdocCredentialStore mdocCredentialStore) : IMdocCandidateService
 {
     public async Task<Option<IEnumerable<MdocCredential>>> GetCandidates(DeviceRequest deviceRequest)
     {
@@ -18,9 +16,7 @@ public class MdocCandidateService(
         var docType = first.ItemsRequest.DocType;
 
         // TODO: refactor with search query and constraint with items
-        var mdocsOption = await repository.ListAll();
-        var mdocs = mdocsOption.UnwrapOrThrow();
-        var candidates = mdocs.Where(c => c.Mdoc.DocType == docType);
+        var candidates = await mdocCredentialStore.ListByDocType(docType);
         return candidates.ToList();
     }
 }
