@@ -1,0 +1,574 @@
+using System.Net;
+using System.Security.Cryptography;
+using System.Text;
+using LanguageExt;
+using Microsoft.Extensions.Options;
+using Microsoft.IdentityModel.Tokens;
+using OneOf;
+using WalletFramework.Core.Credentials;
+using WalletFramework.Core.Credentials.Abstractions;
+using WalletFramework.Core.Functional;
+using WalletFramework.Core.Localization;
+using WalletFramework.Core.String;
+using WalletFramework.Credentials.CredentialSet.Models;
+using WalletFramework.Credentials.CredentialSet.Persistence;
+using WalletFramework.MdocVc;
+using WalletFramework.MdocVc.Persistence;
+using WalletFramework.Oid4Vci.Abstractions;
+using WalletFramework.Oid4Vci.AuthFlow;
+using WalletFramework.Oid4Vci.AuthFlow.Models;
+using WalletFramework.Oid4Vci.AuthFlow.Persistence;
+using WalletFramework.Oid4Vci.Authorization.Abstractions;
+using WalletFramework.Oid4Vci.Authorization.DPop.Models;
+using WalletFramework.Oid4Vci.Authorization.Models;
+using WalletFramework.Oid4Vci.CredentialNonce.Abstractions;
+using WalletFramework.Oid4Vci.CredOffer.Abstractions;
+using WalletFramework.Oid4Vci.CredOffer.Models;
+using WalletFramework.Oid4Vci.CredRequest.Abstractions;
+using WalletFramework.Oid4Vci.Issuer.Abstractions;
+using WalletFramework.Oid4Vci.Issuer.Models;
+using WalletFramework.SdJwtVc.Persistence;
+using WalletFramework.Storage;
+using WalletFramework.WalletAttestations;
+using WalletFramework.WalletAttestations.Abstractions;
+using static Newtonsoft.Json.JsonConvert;
+
+namespace WalletFramework.Oid4Vci.Implementations;
+
+/// <summary>
+///     Initializes a new instance of the <see cref="Oid4VciClientService" /> class.
+/// </summary>
+/// <param name="authFlowSessionStore">The authorization flow session storage service.</param>
+/// <param name="credentialOfferService">The credential offer service.</param>
+/// <param name="credentialRequestService">The credential request service.</param>
+/// <param name="credentialDataSetStore">The store for credential data sets.</param>
+/// <param name="sdJwtCredentialStore">The store for SD-JWT credentials.</param>
+/// <param name="mdocCredentialStore">The store for mDOC credentials.</param>
+/// <param name="httpClientFactory">The factory to create HTTP client instances.</param>
+/// <param name="issuerMetadataService">The issuer metadata service.</param>
+/// <param name="credentialNonceService">The credential nonce service.</param>
+/// <param name="tokenService">The token service.</param>
+public class Oid4VciClientService(
+    IClientAttestationService clientAttestationService,
+    ICredentialNonceService credentialNonceService,
+    ICredentialOfferService credentialOfferService,
+    ICredentialRequestService credentialRequestService,
+    IAuthFlowSessionStore authFlowSessionStore,
+    ICredentialDataSetStore credentialDataSetStore,
+    IMdocCredentialStore mdocCredentialStore,
+    ISdJwtCredentialStore sdJwtCredentialStore,
+    IHttpClientFactory httpClientFactory,
+    IIssuerMetadataService issuerMetadataService,
+    IOptions<ClientOptions> clientOptions,
+    ITokenService tokenService,
+    IStorageSession storageSession) : IOid4VciClientService
+{
+    private const string AuthorizationCodeGrantTypeIdentifier = "authorization_code";
+    private const string PreAuthorizedCodeGrantTypeIdentifier = "urn:ietf:params:oauth:grant-type:pre-authorized_code";
+
+    private readonly HttpClient _httpClient = httpClientFactory.CreateClient();
+
+    public async Task<Validation<IEnumerable<CredentialDataSet>>> AcceptOffer(
+        CredentialOfferMetadata credentialOfferMetadata,
+        string? transactionCode)
+    {
+        var issuerMetadata = credentialOfferMetadata.IssuerMetadata;
+
+        var preAuthorizedCode =
+            from grants in credentialOfferMetadata.CredentialOffer.Grants
+            from preAuthCode in grants.PreAuthorizedCode
+            select preAuthCode.Value;
+
+        var tokenRequest = new TokenRequest
+        {
+            GrantType = PreAuthorizedCodeGrantTypeIdentifier,
+            PreAuthorizedCode = preAuthorizedCode.ToNullable(),
+            TransactionCode = transactionCode
+        };
+
+        var authorizationServerMetadata =
+            await FetchAuthorizationServerMetadataAsync(issuerMetadata, credentialOfferMetadata.CredentialOffer);
+
+        var clientAttestation = await clientAttestationService.GetClientAttestation(
+            new ClientAttestationRequest(authorizationServerMetadata.Issuer));
+
+        var token = await tokenService.RequestToken(
+            authorizationServerMetadata,
+            clientAttestation,
+            issuerMetadata.CredentialNonceEndpoint,
+            tokenRequest);
+
+        // TODO: Support multiple configs
+        var configurationId = credentialOfferMetadata.CredentialOffer.CredentialConfigurationIds.First();
+        var configurationPair =
+            issuerMetadata.CredentialConfigurationsSupported.Single(config => config.Key == configurationId);
+
+        var validResponses = await credentialRequestService.RequestCredentials(
+            configurationPair,
+            issuerMetadata,
+            token,
+            Option<int>.None);
+
+        var credentialSets = new List<CredentialDataSet>();
+        var result =
+            from responses in validResponses
+            let setId = CredentialSetId.CreateCredentialSetId()
+            select
+                from response in responses
+                let credentialsOrTransactionId = response.CredentialsOrTransactionId
+                select credentialsOrTransactionId.Match(
+                    async creds =>
+                    {
+                        var records = new List<ICredential>();
+                        foreach (var credential in creds)
+                        {
+                            await credential.Value.Match(
+                                async sdJwt =>
+                                {
+                                    var record = sdJwt.Decoded.ToCredential(
+                                        response.KeyId,
+                                        setId,
+                                        creds.Count > 1);
+
+                                    await sdJwtCredentialStore.Save(record);
+                                    records.Add(record);
+                                },
+                                async mdoc =>
+                                {
+                                    var mdocCredential = new MdocCredential(
+                                        mdoc.Decoded,
+                                        CredentialId.CreateCredentialId(),
+                                        setId,
+                                        response.KeyId.UnwrapOrThrow(),
+                                        CredentialState.Active,
+                                        creds.Count > 1,
+                                        Option<DateTime>.None);
+
+                                        await mdocCredentialStore.Add(mdocCredential);
+                                    records.Add(mdocCredential);
+                                });
+                        }
+
+                        var dataSet = CredentialDataSet.FromCredentials(
+                            records,
+                            issuerMetadata.CredentialIssuer.ToString());
+
+                        credentialSets.Add(dataSet);
+                    },
+                    // ReSharper disable once UnusedParameter.Local
+                    transactionId => throw new NotImplementedException());
+
+        await result.OnSuccess(
+            async tasks =>
+            {
+                foreach (var task in tasks)
+                {
+                    await task;
+                }
+            });
+
+        await credentialDataSetStore.AddMany(credentialSets);
+        await storageSession.Commit();
+
+        return credentialSets;
+    }
+
+    /// <inheritdoc />
+    public async Task<Uri> InitiateAuthFlow(CredentialOfferMetadata offer)
+    {
+        var authorizationCodeParameters = CreateAndStoreCodeChallenge();
+        var sessionId = AuthFlowSessionState.CreateAuthFlowSessionState();
+        var issuerMetadata = offer.IssuerMetadata;
+
+        var scopes = offer
+            .CredentialOffer
+            .CredentialConfigurationIds
+            .Select(id => issuerMetadata.CredentialConfigurationsSupported[id])
+            .Select(oneOf => oneOf.Match(
+                sdJwt => sdJwt.CredentialConfiguration.Scope.OnSome(scope => scope.ToString()),
+                mdoc => mdoc.CredentialConfiguration.Scope.OnSome(scope => scope.ToString())
+            ))
+            .Where(option => option.IsSome)
+            .Select(option => option.Fallback(string.Empty));
+
+        var scope = string.Join(" ", scopes);
+
+        var authorizationDetails = issuerMetadata
+            .CredentialConfigurationsSupported
+            .Where(config => offer.CredentialOffer.CredentialConfigurationIds.Contains(config.Key))
+            .Select(pair => pair.Value.Match(
+                    _ => new AuthorizationDetails(
+                        pair.Key.ToString(),
+                        issuerMetadata.AuthorizationServers.ToNullable()?.Select(id => id.ToString()).ToArray()
+                    ),
+                    _ => new AuthorizationDetails(
+                        pair.Key.ToString(),
+                        issuerMetadata.AuthorizationServers.ToNullable()?.Select(id => id.ToString()).ToArray())
+                )
+            );
+
+        var authCode =
+            from grants in offer.CredentialOffer.Grants
+            from code in grants.AuthorizationCode
+            select code;
+
+        var issuerState =
+            from code in authCode
+            from issState in code.IssuerState
+            select issState;
+
+        var vciAuthorizationRequest = new VciAuthorizationRequest(
+            sessionId,
+            clientOptions.Value,
+            authorizationCodeParameters,
+            [.. authorizationDetails],
+            scope,
+            issuerState.ToNullable(),
+            null,
+            null);
+
+        var authServerMetadata = await FetchAuthorizationServerMetadataAsync(issuerMetadata, offer.CredentialOffer);
+        
+        var clientAttestation = await clientAttestationService.GetClientAttestation(
+            new ClientAttestationRequest(authServerMetadata.Issuer));
+
+        var authorizationRequestUri = await CreateAuthRequestUri(
+            authServerMetadata,
+            clientAttestation,
+            vciAuthorizationRequest);
+
+        var authorizationData = new AuthorizationData(
+            clientOptions.Value,
+            issuerMetadata,
+            authServerMetadata,
+            Option<OAuthToken>.None,
+            offer.CredentialOffer.CredentialConfigurationIds);
+
+        var session = new AuthFlowSession(
+            sessionId,
+            authorizationData,
+            authorizationCodeParameters,
+            Option<int>.None);
+
+        await authFlowSessionStore.Save(session);
+        await storageSession.Commit();
+
+        return authorizationRequestUri;
+    }
+
+    public async Task<Validation<CredentialOfferMetadata>> ProcessOffer(Uri credentialOffer, Option<Locale> language)
+    {
+        var locale = language.Match(
+            some => some,
+            () => Core.Localization.Constants.DefaultLocale);
+
+        var result =
+            from offer in credentialOfferService.ProcessCredentialOffer(credentialOffer, locale)
+            from metadata in issuerMetadataService.ProcessMetadata(offer.CredentialIssuer, locale)
+            select new CredentialOfferMetadata(offer, metadata);
+
+        return await result;
+    }
+
+    /// <inheritdoc />
+    public async Task<Validation<IEnumerable<CredentialDataSet>>> RequestCredentialSet(IssuanceSession issuanceSession)
+    {
+        var session = (await authFlowSessionStore.Get(issuanceSession.AuthFlowSessionState))
+            .UnwrapOrThrow(new InvalidOperationException("Auth flow session not found"));
+
+        var relevantConfigurations = session
+            .AuthorizationData
+            .IssuerMetadata
+            .CredentialConfigurationsSupported
+            .Where(config => session.AuthorizationData.CredentialConfigurationIds.Contains(config.Key));
+
+        var configurations = relevantConfigurations.ToList();
+
+        var scopes = configurations
+            .Select(config => config.Value.Match(
+                sdJwtConfig => sdJwtConfig.CredentialConfiguration.Scope.OnSome(scope => scope.ToString()),
+                mdDocConfig => mdDocConfig.CredentialConfiguration.Scope.OnSome(scope => scope.ToString())))
+            .Where(scope => scope.IsSome)
+            .Select(option => option.Fallback(string.Empty));
+
+        var tokenRequest = new TokenRequest
+        {
+            GrantType = AuthorizationCodeGrantTypeIdentifier,
+            RedirectUri = session.AuthorizationData.ClientOptions.RedirectUri,
+            CodeVerifier = session.AuthorizationCodeParameters.Verifier,
+            Code = issuanceSession.AuthFlowSessionCode,
+            Scope = string.Join(" ", scopes),
+            ClientId = session.AuthorizationData.ClientOptions.ClientId
+        };
+            
+        var clientAttestation = await clientAttestationService.GetClientAttestation(
+            new ClientAttestationRequest(session.AuthorizationData.AuthorizationServerMetadata.Issuer));
+
+        var token = await tokenService.RequestToken(
+            session.AuthorizationData.AuthorizationServerMetadata,
+            clientAttestation,
+            session.AuthorizationData.IssuerMetadata.CredentialNonceEndpoint,
+            tokenRequest);
+
+        //TODO: Make sure that it does not always request all available credConfigurations
+        var credentialSets = new List<CredentialDataSet>();
+        var records = new List<ICredential>();
+        var setId = CredentialSetId.CreateCredentialSetId();
+        foreach (var configuration in configurations)
+        {
+            var validResponses = await credentialRequestService.RequestCredentials(
+                configuration,
+                session.AuthorizationData.IssuerMetadata,
+                token,
+                session.SpecVersion.ToOption());
+
+            var result =
+                from responses in validResponses
+                select
+                    from response in responses
+                    let cNonce = response.CNonce
+                    let credentialsOrTransactionId = response.CredentialsOrTransactionId
+                    select credentialsOrTransactionId.Match(
+                        async creds =>
+                        {
+                            token = await session.AuthorizationData.IssuerMetadata.CredentialNonceEndpoint.Match(
+                                Some: async credentialNonceEndpoint =>
+                                {
+                                    var credentialNonce =
+                                        await credentialNonceService.GetCredentialNonce(credentialNonceEndpoint);
+                                    return token.Match<OneOf<OAuthToken, DPopToken>>(
+                                        oAuth => oAuth with { CNonce = credentialNonce.Value },
+                                        dPop => dPop with
+                                        {
+                                            Token = dPop.Token with { CNonce = credentialNonce.Value }
+                                        });
+                                },
+                                None: () =>
+                                {
+                                    return Task.FromResult(token.Match<OneOf<OAuthToken, DPopToken>>(
+                                        oAuth => oAuth with { CNonce = cNonce.ToNullable() },
+                                        dPop => dPop with
+                                        {
+                                            Token = dPop.Token with { CNonce = cNonce.ToNullable() }
+                                        }));
+                                });
+
+                            if (configurations.Count == 1)
+                            {
+                                records = [];
+                                setId = CredentialSetId.CreateCredentialSetId();
+                            }
+
+                            foreach (var credential in creds)
+                            {
+                                await credential.Value.Match(
+                                    async sdJwt =>
+                                    {
+                                        var record = sdJwt.Decoded.ToCredential(
+                                            response.KeyId,
+                                            setId,
+                                            creds.Count > 1);
+
+                                        await sdJwtCredentialStore.Save(record);
+                                        records.Add(record);
+                                    },
+                                    async mdoc =>
+                                    {
+                                        var mdocCredential = new MdocCredential(
+                                            mdoc.Decoded,
+                                            CredentialId.CreateCredentialId(),
+                                            setId,
+                                            response.KeyId.UnwrapOrThrow(),
+                                            CredentialState.Active,
+                                            creds.Count > 1,
+                                            Option<DateTime>.None);
+
+                                        await mdocCredentialStore.Add(mdocCredential);
+                                        records.Add(mdocCredential);
+                                    });
+                            }
+
+                            if (configurations.Count == 1)
+                            {
+                                var dataSet = CredentialDataSet.FromCredentials(
+                                    records,
+                                    session.AuthorizationData.IssuerMetadata.CredentialIssuer.ToString());
+                                credentialSets.Add(dataSet);
+                            }
+                        },
+                        // ReSharper disable once UnusedParameter.Local
+                        transactionId => throw new NotImplementedException());
+
+            await result.OnSuccess(
+                async tasks =>
+                {
+                    foreach (var task in tasks)
+                    {
+                        await task;
+                    }
+                });
+        }
+
+        if (configurations.Count > 1)
+        {
+            var dataSet = CredentialDataSet.FromCredentials(
+                records,
+                session.AuthorizationData.IssuerMetadata.CredentialIssuer.ToString());
+            credentialSets.Add(dataSet);
+        }
+
+        await credentialDataSetStore.AddMany(credentialSets);
+
+        await authFlowSessionStore.Delete(session.AuthFlowSessionState);
+        await storageSession.Commit();
+
+        return credentialSets;
+    }
+
+    private static AuthorizationCodeParameters CreateAndStoreCodeChallenge()
+    {
+        var randomNumber = RandomNumberGenerator.GetBytes(32);
+        var codeVerifier = Base64UrlEncoder.Encode(randomNumber);
+
+        var bytes = SHA256.HashData(Encoding.UTF8.GetBytes(codeVerifier));
+        var codeChallenge = Base64UrlEncoder.Encode(bytes);
+
+        return new AuthorizationCodeParameters(codeChallenge, codeVerifier);
+    }
+
+    private static Uri CreateAuthorizationServerMetadataUri(Uri authorizationServerUri)
+    {
+        string result;
+        if (string.IsNullOrWhiteSpace(authorizationServerUri.AbsolutePath) ||
+            authorizationServerUri.AbsolutePath == "/")
+            result =
+                $"{authorizationServerUri.GetLeftPart(UriPartial.Authority)}/.well-known/oauth-authorization-server";
+        else
+            result =
+                $"{authorizationServerUri.GetLeftPart(UriPartial.Authority)}/.well-known/oauth-authorization-server" +
+                authorizationServerUri.AbsolutePath.TrimEnd('/');
+        return new Uri(result);
+    }
+
+    private async Task<AuthorizationServerMetadata> FetchAuthorizationServerMetadataAsync(
+        IssuerMetadata issuerMetadata,
+        Option<CredentialOffer> credentialOffer)
+    {
+        Uri credentialIssuer = issuerMetadata.CredentialIssuer;
+
+        var authServerUrls = issuerMetadata.AuthorizationServers.Match(
+            issuerMetadataAuthServers =>
+            {
+                var credentialOfferAuthServer = from offer in credentialOffer
+                    from grants in offer.Grants
+                    from code in grants.AuthorizationCode
+                    from server in code.AuthorizationServer
+                    select server;
+
+                return credentialOfferAuthServer.Match(
+                    offerAuthServer =>
+                    {
+                        var matchingAuthServer = issuerMetadataAuthServers.Find(issuerMetadataAuthServer =>
+                            issuerMetadataAuthServer.ToString() == offerAuthServer);
+
+                        return matchingAuthServer.Match(
+                            Some: server => new List<Uri> { CreateAuthorizationServerMetadataUri(server) },
+                            None: () => throw new InvalidOperationException(
+                                "The authorization server in the credential offer does not match any authorization server in the issuer metadata."));
+                    },
+                    () => issuerMetadataAuthServers.Select(uri => CreateAuthorizationServerMetadataUri(uri))
+                );
+            },
+            () => [CreateAuthorizationServerMetadataUri(credentialIssuer)]);
+
+
+        var authorizationServerMetadatas = new List<AuthorizationServerMetadata>();
+        foreach (var authServerUrl in authServerUrls)
+        {
+            var getAuthServerResponse = await _httpClient.GetAsync(authServerUrl);
+
+            if (!getAuthServerResponse.IsSuccessStatusCode)
+                continue;
+
+            var content = await getAuthServerResponse.Content.ReadAsStringAsync();
+
+            var authServer = DeserializeObject<AuthorizationServerMetadata>(content)
+                             ?? throw new InvalidOperationException(
+                                 "Failed to deserialize the authorization server metadata.");
+
+            authorizationServerMetadatas.Add(authServer);
+        }
+
+        return credentialOffer.Match(
+            Some: offer =>
+            {
+                var credentialOfferAuthCodeGrantType = from grants in offer.Grants
+                    from code in grants.AuthorizationCode
+                    select code;
+
+                return credentialOfferAuthCodeGrantType.Match(
+                    Some: code => code.AuthorizationServer.Match(
+                        Some: requestedAuthServer =>
+                            authorizationServerMetadatas.Find(authServer =>
+                                authServer.Issuer == requestedAuthServer.ToString())
+                            ?? throw new InvalidOperationException("No suitable Authorization Server found"),
+                        None: () => authorizationServerMetadatas.Find(authServer => authServer.SupportsAuthCodeFlow)
+                                    ?? authorizationServerMetadatas.FirstOrDefault()
+                                    ?? throw new InvalidOperationException("No suitable Authorization Server found")),
+                    None: () =>
+                    {
+                        var credentialOfferPreAuthGrantType = from grants in offer.Grants
+                            from code in grants.PreAuthorizedCode
+                            select code;
+
+                        return credentialOfferPreAuthGrantType.Match(
+                            Some: preAuth =>
+                            {
+                                return preAuth.AuthorizationServer.Match(
+                                    Some: requestedAuthServer =>
+                                        authorizationServerMetadatas.Find(authServer =>
+                                            authServer.Issuer == requestedAuthServer.ToString())
+                                        ?? throw new InvalidOperationException(
+                                            "No suitable Authorization Server found"),
+                                    None: () => authorizationServerMetadatas.Find(authServer =>
+                                                    authServer.SupportsPreAuthFlow)
+                                                ?? authorizationServerMetadatas.FirstOrDefault()
+                                                ?? throw new InvalidOperationException(
+                                                    "No suitable Authorization Server found"));
+                            },
+                            None: () => authorizationServerMetadatas[0]);
+                    });
+            },
+            None: () => authorizationServerMetadatas.Find(authServer => authServer.SupportsAuthCodeFlow)
+                        ?? authorizationServerMetadatas.FirstOrDefault()
+                        ?? throw new InvalidOperationException("No suitable Authorization Server found"));
+    }
+
+    private async Task<Uri> CreateAuthRequestUri(
+        AuthorizationServerMetadata authorizationServerMetadata,
+        Option<ClientAttestation> clientAttestation,
+        VciAuthorizationRequest vciAuthorizationRequest)
+    {
+        _httpClient.DefaultRequestHeaders.Clear();
+
+        if (authorizationServerMetadata.PushedAuthorizationRequestEndpoint.IsNullOrEmpty())
+        {
+            return new Uri(authorizationServerMetadata.AuthorizationEndpoint + vciAuthorizationRequest.ToQueryString());
+        }
+        
+        clientAttestation.IfSome(attestation => _httpClient.AddClientAttestation(attestation));
+        
+        var response = await _httpClient.PostAsync(
+            authorizationServerMetadata.PushedAuthorizationRequestEndpoint,
+            vciAuthorizationRequest.ToFormUrlEncoded()
+        );
+
+        var parResponse =
+            DeserializeObject<PushedAuthorizationRequestResponse>(await response.Content.ReadAsStringAsync())
+            ?? throw new InvalidOperationException("Failed to deserialize the PAR response.");
+
+        return new Uri(authorizationServerMetadata.AuthorizationEndpoint
+                       + "?client_id=" + vciAuthorizationRequest.ClientId
+                       + "&request_uri=" + WebUtility.UrlEncode(parResponse.RequestUri.ToString()));
+    }
+}

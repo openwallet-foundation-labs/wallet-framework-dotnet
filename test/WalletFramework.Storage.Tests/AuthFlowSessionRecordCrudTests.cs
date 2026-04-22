@@ -3,14 +3,13 @@ using LanguageExt;
 using Microsoft.Extensions.DependencyInjection;
 using Newtonsoft.Json.Linq;
 using WalletFramework.Core.Functional;
-using WalletFramework.Oid4Vc.Oid4Vci.AuthFlow;
-using WalletFramework.Oid4Vc.Oid4Vci.AuthFlow.Models;
-using WalletFramework.Oid4Vc.Oid4Vci.AuthFlow.Persistence;
-using WalletFramework.Oid4Vc.Oid4Vci.Authorization.Models;
-using WalletFramework.Oid4Vc.Oid4Vci.CredOffer.Models;
-using WalletFramework.Oid4Vc.Oid4Vci.Issuer.Models;
+using WalletFramework.Oid4Vci.AuthFlow;
+using WalletFramework.Oid4Vci.AuthFlow.Models;
+using WalletFramework.Oid4Vci.AuthFlow.Persistence;
+using WalletFramework.Oid4Vci.Authorization.Models;
+using WalletFramework.Oid4Vci.CredOffer.Models;
+using WalletFramework.Oid4Vci.Issuer.Models;
 using WalletFramework.Storage.Database;
-using WalletFramework.Storage;
 
 namespace WalletFramework.Storage.Tests;
 

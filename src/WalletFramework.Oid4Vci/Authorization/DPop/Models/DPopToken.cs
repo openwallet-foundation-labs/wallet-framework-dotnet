@@ -1,0 +1,16 @@
+using WalletFramework.Oid4Vci.Authorization.Models;
+
+namespace WalletFramework.Oid4Vci.Authorization.DPop.Models;
+
+public record DPopToken
+{
+    internal OAuthToken Token { get; init;  }
+
+    internal DPop DPop { get; }
+    
+    internal DPopToken(OAuthToken token, DPop dPop)
+    {
+        Token = token;
+        DPop = dPop;
+    }
+}
