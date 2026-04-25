@@ -9,7 +9,6 @@ using WalletFramework.MdocLib;
 using WalletFramework.MdocVc;
 using WalletFramework.MdocVc.Persistence;
 using WalletFramework.Storage.Database;
-using WalletFramework.Storage;
 using WalletFramework.TestSamples;
 
 namespace WalletFramework.Storage.Tests;

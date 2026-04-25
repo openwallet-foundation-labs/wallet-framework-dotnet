@@ -6,7 +6,7 @@ using Newtonsoft.Json.Linq;
 using WalletFramework.Core.Functional;
 using WalletFramework.Core.Functional.Errors;
 using WalletFramework.Core.Json;
-using WalletFramework.Oid4Vc.Oid4Vci.Errors;
+using WalletFramework.Core.Localization.Errors;
 
 namespace WalletFramework.Core.Localization;
 
