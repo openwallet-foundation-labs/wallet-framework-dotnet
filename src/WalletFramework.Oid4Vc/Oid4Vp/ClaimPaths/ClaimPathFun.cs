@@ -6,7 +6,6 @@ using WalletFramework.MdocLib;
 using WalletFramework.Core.ClaimPaths.Errors;
 using WalletFramework.MdocLib.Elements;
 using WalletFramework.SdJwtLib.Models;
-using static WalletFramework.Core.ClaimPaths.ClaimPathSelectionFun;
 
 namespace WalletFramework.Oid4Vc.Oid4Vp.ClaimPaths;
 
@@ -24,25 +23,11 @@ public static class ClaimPathFun
             return new InvalidJsonError(json, e);
         }
 
-        var components = path.GetPathComponents();
-        return components.Aggregate(
-            ClaimPathSelection.Create([jObject]),
-            (validation, component) => validation.OnSuccess(selection =>
-            {
-                return component.Match(
-                    s => SelectObjectKey(selection, s),
-                    i => SelectArrayIndex(selection, i),
-                    _ => SelectAllArrayElements(selection)
-                );
-            })
-        );
+        return path.ProcessWith(jObject);
     }
-    
-    public static Validation<ClaimPathSelection> ProcessWith(this ClaimPath path, SdJwtDoc sdJwtDoc)
-    {
-        var jsonStr = sdJwtDoc.UnsecuredPayload.ToString();
-        return path.ProcessWith(jsonStr);
-    }
+
+    public static Validation<ClaimPathSelection> ProcessWith(this ClaimPath path, SdJwtDoc sdJwtDoc) =>
+        path.ProcessWith(sdJwtDoc.UnsecuredPayload);
 
     public static Validation<ClaimPathSelection> ProcessWith(this ClaimPath path, Mdoc mdoc)
     {

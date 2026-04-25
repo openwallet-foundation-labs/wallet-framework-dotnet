@@ -1,5 +1,6 @@
 using LanguageExt;
 using Microsoft.IdentityModel.Tokens;
+using WalletFramework.Core.ClaimPaths;
 using WalletFramework.Core.Credentials;
 using WalletFramework.Core.Credentials.Abstractions;
 using WalletFramework.Core.Functional;
@@ -96,10 +97,14 @@ public class PresentationService : IPresentationService
             {
                 case SdJwtCredential sdJwt:
                     format = Format.ValidFormat(sdJwt.Format).UnwrapOrThrow();
-                    
+
+                    var sdJwtPaths = credential.ClaimsToDisclose.Match(
+                        queries => queries.Select(q => q.Path).ToArray(),
+                        () => Array.Empty<ClaimPath>());
+
                     presentation = await _sdJwtVcHolderService.CreatePresentation(
                         sdJwt,
-                        [.. claims],
+                        sdJwtPaths,
                         txDataHashesAsHexOption,
                         txDataHashesAlgOption,
                         audience,

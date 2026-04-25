@@ -112,4 +112,58 @@ public class ClaimPathJsonCredentialTests
             errors => errors.Should().ContainSingle(e => e is UnknownComponentError)
         );
     }
+
+    [Fact]
+    public void ClaimPathSelection_Selects_All_Array_Elements_With_Null()
+    {
+        var credential = JObject.Parse(
+            """
+            {
+              "degrees": [
+                { "type": "Bachelor of Science", "university": "U1" },
+                { "type": "Master of Science",   "university": "U2" }
+              ]
+            }
+            """);
+
+        var path = ClaimPath.FromJArray(new JArray("degrees", JValue.CreateNull(), "type")).UnwrapOrThrow();
+
+        path.ProcessWith(credential).Match(
+            selection => selection
+                .GetValues()
+                .Select(t => t.ToString())
+                .Should()
+                .BeEquivalentTo(new[] { "Bachelor of Science", "Master of Science" }),
+            _ => Assert.Fail("ClaimPathSelection validation failed"));
+    }
+
+    [Fact]
+    public void ClaimPathSelection_Selects_By_Integer_Index()
+    {
+        var credential = JObject.Parse(
+            """
+            { "nationalities": ["British", "Betelgeusian"] }
+            """);
+
+        var path = ClaimPath.FromJArray(new JArray("nationalities", 1)).UnwrapOrThrow();
+
+        path.ProcessWith(credential).Match(
+            selection => selection
+                .GetValues()
+                .Select(t => t.ToString())
+                .Should()
+                .BeEquivalentTo(new[] { "Betelgeusian" }),
+            _ => Assert.Fail("ClaimPathSelection validation failed"));
+    }
+
+    [Fact]
+    public void ClaimPathSelection_Errors_When_Component_Targets_NonArray()
+    {
+        var credential = JObject.Parse("""{ "name": "Arthur" }""");
+        var path = ClaimPath.FromJArray(new JArray("name", JValue.CreateNull())).UnwrapOrThrow();
+
+        path.ProcessWith(credential).Match(
+            _ => Assert.Fail("Expected error, got selection"),
+            errors => errors.Should().ContainSingle(e => e is SelectedElementIsNotAnArrayError));
+    }
 }
