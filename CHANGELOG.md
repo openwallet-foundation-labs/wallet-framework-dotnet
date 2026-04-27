@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### [Unreleased]
 
+- Fixed crash when resolving credential state from a status list: malformed JWT payloads, invalid base64, zlib/deflate errors, and out-of-range indices are handled by returning no state instead of throwing
+
 ### [3.0.1] - 2026.02.27
 
 - Fix Database concurrency issues
