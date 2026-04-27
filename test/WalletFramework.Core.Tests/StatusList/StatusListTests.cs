@@ -1,4 +1,8 @@
 using System.Net;
+using FluentAssertions;
+using LanguageExt;
+using Microsoft.Extensions.Logging;
+using Microsoft.IdentityModel.Tokens;
 using Moq;
 using Moq.Protected;
 using WalletFramework.Core.Credentials;
@@ -23,6 +27,7 @@ public class StatusListTests
 
     private readonly Mock<HttpMessageHandler> _httpMessageHandlerMock = new();
     private readonly Mock<IHttpClientFactory> _httpClientFactoryMock = new();
+    private readonly Mock<ILogger<StatusListService>> _loggerMock = new();
     
     [Theory]
     [InlineData(6, RequestUriResponseWithBitSize1, CredentialState.Active)]
@@ -33,30 +38,133 @@ public class StatusListTests
     [InlineData(5, RequestUriResponseWithBitSize4, CredentialState.Revoked)]
     [InlineData(4, RequestUriResponseWithBitSize8, CredentialState.Active)]
     [InlineData(3, RequestUriResponseWithBitSize8, CredentialState.Revoked)]
-    public async Task CanCreateStatus(int statusListIntex, string httpResponseJwt, CredentialState expectedState)
+    public void CanCreateStatus(int statusListIntex, string httpResponseJwt, CredentialState expectedState)
     {
-        // Arrange
-        var httpResponseMessage = new HttpResponseMessage
-        {
-            StatusCode = HttpStatusCode.OK,
-            Content = new StringContent(httpResponseJwt)
-        };
-        
-        _httpMessageHandlerMock.Protected()
-            .Setup<Task<HttpResponseMessage>>("SendAsync",
-                ItExpr.IsAny<HttpRequestMessage>(),
-                ItExpr.IsAny<CancellationToken>())
-            .ReturnsAsync(() => httpResponseMessage);
-
-        var httpClient = new HttpClient(_httpMessageHandlerMock.Object);
-        _httpClientFactoryMock.Setup(f => f.CreateClient(It.IsAny<string>())).Returns(httpClient);
-        
-        var status = new StatusListEntry(statusListIntex, "https://example.com");
-        
         // Act
-        var sut = await new StatusListService(_httpClientFactoryMock.Object).GetState(status);
+        var sut = StatusListStateReader.GetState(httpResponseJwt, statusListIntex);
         
         // Assert
         Assert.True(sut.Match(state => state == expectedState, () => false));
     }
+
+    [Fact]
+    public async Task ReturnsNoneWhenRequestFails()
+    {
+        // Arrange
+        SetupHttpException(new HttpRequestException("Network unavailable"));
+        var status = new StatusListEntry(0, "https://example.com");
+
+        // Act
+        var state = await CreateService().GetState(status);
+
+        // Assert
+        state.IsNone.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task ReturnsNoneWhenRequestTimesOut()
+    {
+        // Arrange
+        SetupHttpException(new OperationCanceledException("Request timed out"));
+        var status = new StatusListEntry(0, "https://example.com");
+
+        // Act
+        var state = await CreateService().GetState(status);
+
+        // Assert
+        state.IsNone.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task ReturnsNoneWhenResponseIsNotSuccessful()
+    {
+        // Arrange
+        SetupHttpResponse(HttpStatusCode.ServiceUnavailable, string.Empty);
+        var status = new StatusListEntry(0, "https://example.com");
+
+        // Act
+        var state = await CreateService().GetState(status);
+
+        // Assert
+        state.IsNone.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task ReturnsNoneWhenResponseCannotBeParsed()
+    {
+        // Arrange
+        SetupHttpResponse(HttpStatusCode.OK, "not-a-token");
+        var status = new StatusListEntry(0, "https://example.com");
+
+        // Act
+        var state = await CreateService().GetState(status);
+
+        // Assert
+        state.IsNone.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task ReturnsNoneWhenStatusListCannotBeDecompressed()
+    {
+        // Arrange
+        var token = CreateToken("""{"bits":1,"lst":"bad"}""");
+        SetupHttpResponse(HttpStatusCode.OK, token);
+        var status = new StatusListEntry(0, "https://example.com");
+
+        // Act
+        var state = await CreateService().GetState(status);
+
+        // Assert
+        state.IsNone.Should().BeTrue();
+    }
+
+    private StatusListService CreateService() =>
+        new(_httpClientFactoryMock.Object, _loggerMock.Object);
+
+    private void SetupHttpResponse(HttpStatusCode statusCode, string content)
+    {
+        var httpResponseMessage = new HttpResponseMessage
+        {
+            StatusCode = statusCode,
+            Content = new StringContent(content)
+        };
+
+        _httpMessageHandlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.IsAny<HttpRequestMessage>(),
+                ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(() => httpResponseMessage);
+
+        SetupHttpClient();
+    }
+
+    private void SetupHttpException(Exception exception)
+    {
+        _httpMessageHandlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.IsAny<HttpRequestMessage>(),
+                ItExpr.IsAny<CancellationToken>())
+            .ThrowsAsync(exception);
+
+        SetupHttpClient();
+    }
+
+    private void SetupHttpClient()
+    {
+        var httpClient = new HttpClient(_httpMessageHandlerMock.Object);
+        _httpClientFactoryMock.Setup(f => f.CreateClient(It.IsAny<string>())).Returns(httpClient);
+    }
+
+    private static string CreateToken(string statusListJson)
+    {
+        var header = Base64UrlEncode("""{"alg":"none"}""");
+        var payload = Base64UrlEncode($$"""{"status_list":{{statusListJson}}}""");
+
+        return $"{header}.{payload}.";
+    }
+
+    private static string Base64UrlEncode(string value) =>
+        Base64UrlEncoder.Encode(global::System.Text.Encoding.UTF8.GetBytes(value));
 }
