@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### [Unreleased]
 
+#### Fixed
+
+- Claim paths that select all elements in an array are preserved correctly when credentials or metadata are serialized.
+- SD-JWT presentations include the right disclosures for nested and array-shaped claims, not only simple top-level paths.
+
+#### Changed
+
+- SD-JWT holder presentation APIs now take structured claim paths instead of raw path strings.
+
 ### [3.0.1] - 2026.02.27
 
 - Fix Database concurrency issues
