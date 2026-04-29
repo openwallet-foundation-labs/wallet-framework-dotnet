@@ -112,5 +112,6 @@ internal static class TransactionDataFun
         transactionData.Match(
             payment => payment.TransactionDataProperties,
             qes => qes.TransactionDataProperties,
-            qcert => qcert.TransactionDataProperties);
+            qcert => qcert.TransactionDataProperties,
+            ts12Payment => ts12Payment.TransactionDataProperties);
 }

@@ -8,7 +8,8 @@ public enum TransactionDataTypeValue
 {
     Payment,
     Qes,
-    QCertCreation
+    QCertCreation,
+    Ts12Payment
 }
 
 public static class TransactionDataTypeValueFun
@@ -19,6 +20,7 @@ public static class TransactionDataTypeValueFun
             TransactionDataTypeValue.Payment => SupportedTransactionDataTypeConstants.Payment,
             TransactionDataTypeValue.Qes => SupportedTransactionDataTypeConstants.Qes,
             TransactionDataTypeValue.QCertCreation => SupportedTransactionDataTypeConstants.QCertCreation,
+            TransactionDataTypeValue.Ts12Payment => SupportedTransactionDataTypeConstants.Ts12Payment,
             _ => throw new ArgumentOutOfRangeException(nameof(value), value, null)
         };
 }
@@ -34,6 +36,8 @@ public static class SupportedTransactionDataTypeConstants
     public const string QCertCreation = "qcert_creation_acceptance";
     
     public const string CscQCertCreation = "https://cloudsignatureconsortium.org/2025/qc-request";
+
+    public const string Ts12Payment = "urn:eudi:sca:payment:1";
 }
 
 public readonly struct TransactionDataType
@@ -62,6 +66,7 @@ public readonly struct TransactionDataType
             SupportedTransactionDataTypeConstants.CscQes => new TransactionDataType(TransactionDataTypeValue.Qes),
             SupportedTransactionDataTypeConstants.QCertCreation => new TransactionDataType(TransactionDataTypeValue.QCertCreation),
             SupportedTransactionDataTypeConstants.CscQCertCreation => new TransactionDataType(TransactionDataTypeValue.QCertCreation),
+            SupportedTransactionDataTypeConstants.Ts12Payment => new TransactionDataType(TransactionDataTypeValue.Ts12Payment),
             _ => throw new ArgumentOutOfRangeException()
         };
     }
