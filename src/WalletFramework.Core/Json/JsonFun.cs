@@ -1,4 +1,5 @@
 using System.Globalization;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using WalletFramework.Core.Base64Url;
 using WalletFramework.Core.Encoding.Errors;
@@ -134,7 +135,12 @@ public static class JsonFun
     {
         try
         {
-            var jObject = JObject.Parse(json);
+            using var stringReader = new StringReader(json);
+            using var jsonReader = new JsonTextReader(stringReader)
+            {
+                DateParseHandling = DateParseHandling.None
+            };
+            var jObject = JObject.Load(jsonReader);
             return jObject;
         }
         catch (Exception e)
@@ -190,7 +196,12 @@ public static class JsonFun
         JObject result;
         try
         {
-            result = JObject.Parse(json);
+            using var stringReader = new StringReader(json);
+            using var jsonReader = new JsonTextReader(stringReader)
+            {
+                DateParseHandling = DateParseHandling.None
+            };
+            result = JObject.Load(jsonReader);
         }
         catch (Exception e)
         {
