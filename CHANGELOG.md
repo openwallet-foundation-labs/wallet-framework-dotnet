@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Claim paths that select all elements in an array are preserved correctly when credentials or metadata are serialized.
 - SD-JWT presentations include the right disclosures for nested and array-shaped claims, not only simple top-level paths.
+- Fixed crash when resolving credential state from a status list: malformed JWT payloads, invalid base64, zlib/deflate errors, and out-of-range indices are handled by returning no state instead of throwing
 
 #### Changed
 
