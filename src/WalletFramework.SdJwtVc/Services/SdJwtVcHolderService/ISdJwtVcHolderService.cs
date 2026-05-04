@@ -1,4 +1,5 @@
 using LanguageExt;
+using WalletFramework.Core.ClaimPaths;
 
 namespace WalletFramework.SdJwtVc.Services.SdJwtVcHolderService;
 
@@ -11,10 +12,7 @@ public interface ISdJwtVcHolderService
     ///     Creates a SD-JWT in presentation format where the provided claims are disclosed.
     ///     The key binding is optional and can be activated by providing an audience and a nonce.
     /// </summary>
-    /// <remarks>
-    ///     The SD-JWT is created using the provided SD-JWT credential and the provided claims are disclosed
-    /// </remarks>
-    /// <param name="disclosedClaimPaths">The claims to disclose</param>
+    /// <param name="disclosedClaimPaths">The claim paths to disclose</param>
     /// <param name="sdJwt">The SD-JWT credential</param>
     /// <param name="transactionDataHashes">The transaction data hashes</param>
     /// <param name="transactionDataHashesAlg">The transaction data hashes alg</param>
@@ -23,7 +21,7 @@ public interface ISdJwtVcHolderService
     /// <returns>The SD-JWT in presentation format</returns>
     Task<string> CreatePresentation(
         SdJwtCredential sdJwt,
-        string[] disclosedClaimPaths,
+        ClaimPath[] disclosedClaimPaths,
         Option<IEnumerable<string>> transactionDataHashes,
         Option<string> transactionDataHashesAlg,
         string? audience = null,
