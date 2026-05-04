@@ -2,6 +2,7 @@ using FluentAssertions;
 using LanguageExt;
 using Moq;
 using Newtonsoft.Json.Linq;
+using WalletFramework.Core.ClaimPaths;
 using WalletFramework.Core.Credentials.Abstractions;
 using WalletFramework.Core.Encoding;
 using WalletFramework.Core.Functional;
@@ -223,12 +224,12 @@ public class Ts12PaymentTransactionDataTests
         sdJwtVcHolderService
             .Setup(service => service.CreatePresentation(
                 It.IsAny<SdJwtCredential>(),
-                It.IsAny<string[]>(),
+                It.IsAny<ClaimPath[]>(),
                 It.IsAny<Option<IEnumerable<string>>>(),
                 It.IsAny<Option<string>>(),
                 It.IsAny<string?>(),
                 It.IsAny<string?>()))
-            .Callback<SdJwtCredential, string[], Option<IEnumerable<string>>, Option<string>, string?, string?>(
+            .Callback<SdJwtCredential, ClaimPath[], Option<IEnumerable<string>>, Option<string>, string?, string?>(
                 (_, _, hashes, hashesAlg, _, _) =>
                 {
                     capturedHashes = hashes;
