@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### [Unreleased]
 
+#### Added
+
+- Add new Strong Customer Authentication (SCA) transaction data type according to TS12
+
 #### Fixed
 
 - Claim paths that select all elements in an array are preserved correctly when credentials or metadata are serialized.
