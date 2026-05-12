@@ -21,6 +21,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - SD-JWT holder presentation APIs now take structured claim paths instead of raw path strings.
 
+#### Removed
+
+- Removed support for Hyperledger Aries Stack
+
 ### [3.0.1] - 2026.02.27
 
 - Fix Database concurrency issues
