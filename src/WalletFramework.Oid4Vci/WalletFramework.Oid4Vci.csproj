@@ -7,6 +7,12 @@
     </PropertyGroup>
 
     <ItemGroup>
+      <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
+        <_Parameter1>WalletFramework.Oid4Vci.Tests</_Parameter1>
+      </AssemblyAttribute>
+    </ItemGroup>
+
+    <ItemGroup>
       <ProjectReference Include="..\WalletFramework.Credentials\WalletFramework.Credentials.csproj" />
       <ProjectReference Include="..\WalletFramework.WalletAttestations\WalletFramework.WalletAttestations.csproj" />
     </ItemGroup>

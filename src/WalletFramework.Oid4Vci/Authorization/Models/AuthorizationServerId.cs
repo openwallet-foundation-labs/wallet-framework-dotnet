@@ -2,18 +2,22 @@ using System.Globalization;
 using Newtonsoft.Json.Linq;
 using WalletFramework.Core.Functional;
 using WalletFramework.Core.Json;
-using WalletFramework.Core.Uri;
 using WalletFramework.Oid4Vci.Authorization.Errors;
 
 namespace WalletFramework.Oid4Vci.Authorization.Models;
 
 public readonly struct AuthorizationServerId
 {
+    private string OriginalString { get; }
     private Uri Value { get; }
     
-    private AuthorizationServerId(Uri value) => Value = value;
+    private AuthorizationServerId(string originalString, Uri value)
+    {
+        OriginalString = originalString;
+        Value = value;
+    }
     
-    public override string ToString() => Value.ToStringWithoutTrail();
+    public override string ToString() => OriginalString;
     
     public static implicit operator Uri(AuthorizationServerId authorizationServerId) => authorizationServerId.Value;
 
@@ -23,7 +27,7 @@ public readonly struct AuthorizationServerId
         {
             var str = value.ToString(CultureInfo.InvariantCulture);
             var uri = new Uri(str);
-            return new AuthorizationServerId(uri);
+            return new AuthorizationServerId(str, uri);
         }
         catch (Exception e)
         {

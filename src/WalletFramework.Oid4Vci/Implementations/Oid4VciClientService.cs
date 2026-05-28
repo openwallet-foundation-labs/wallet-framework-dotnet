@@ -27,6 +27,7 @@ using WalletFramework.Oid4Vci.CredOffer.Models;
 using WalletFramework.Oid4Vci.CredRequest.Abstractions;
 using WalletFramework.Oid4Vci.Issuer.Abstractions;
 using WalletFramework.Oid4Vci.Issuer.Models;
+using WalletFramework.Oid4Vci.Metadata;
 using WalletFramework.SdJwtVc.Persistence;
 using WalletFramework.Storage;
 using WalletFramework.WalletAttestations;
@@ -144,7 +145,7 @@ public class Oid4VciClientService(
                                         creds.Count > 1,
                                         Option<DateTime>.None);
 
-                                        await mdocCredentialStore.Add(mdocCredential);
+                                    await mdocCredentialStore.Add(mdocCredential);
                                     records.Add(mdocCredential);
                                 });
                         }
@@ -228,7 +229,7 @@ public class Oid4VciClientService(
             null);
 
         var authServerMetadata = await FetchAuthorizationServerMetadataAsync(issuerMetadata, offer.CredentialOffer);
-        
+
         var clientAttestation = await clientAttestationService.GetClientAttestation(
             new ClientAttestationRequest(authServerMetadata.Issuer));
 
@@ -300,7 +301,7 @@ public class Oid4VciClientService(
             Scope = string.Join(" ", scopes),
             ClientId = session.AuthorizationData.ClientOptions.ClientId
         };
-            
+
         var clientAttestation = await clientAttestationService.GetClientAttestation(
             new ClientAttestationRequest(session.AuthorizationData.AuthorizationServerMetadata.Issuer));
 
@@ -436,34 +437,20 @@ public class Oid4VciClientService(
         return new AuthorizationCodeParameters(codeChallenge, codeVerifier);
     }
 
-    private static Uri CreateAuthorizationServerMetadataUri(Uri authorizationServerUri)
-    {
-        string result;
-        if (string.IsNullOrWhiteSpace(authorizationServerUri.AbsolutePath) ||
-            authorizationServerUri.AbsolutePath == "/")
-            result =
-                $"{authorizationServerUri.GetLeftPart(UriPartial.Authority)}/.well-known/oauth-authorization-server";
-        else
-            result =
-                $"{authorizationServerUri.GetLeftPart(UriPartial.Authority)}/.well-known/oauth-authorization-server" +
-                authorizationServerUri.AbsolutePath.TrimEnd('/');
-        return new Uri(result);
-    }
-
     private async Task<AuthorizationServerMetadata> FetchAuthorizationServerMetadataAsync(
         IssuerMetadata issuerMetadata,
         Option<CredentialOffer> credentialOffer)
     {
         Uri credentialIssuer = issuerMetadata.CredentialIssuer;
 
-        var authServerUrls = issuerMetadata.AuthorizationServers.Match(
+        IEnumerable<Uri> authServerUrls = issuerMetadata.AuthorizationServers.Match(
             issuerMetadataAuthServers =>
             {
                 var credentialOfferAuthServer = from offer in credentialOffer
-                    from grants in offer.Grants
-                    from code in grants.AuthorizationCode
-                    from server in code.AuthorizationServer
-                    select server;
+                                                from grants in offer.Grants
+                                                from code in grants.AuthorizationCode
+                                                from server in code.AuthorizationServer
+                                                select server;
 
                 return credentialOfferAuthServer.Match(
                     offerAuthServer =>
@@ -472,14 +459,14 @@ public class Oid4VciClientService(
                             issuerMetadataAuthServer.ToString() == offerAuthServer);
 
                         return matchingAuthServer.Match(
-                            Some: server => new List<Uri> { CreateAuthorizationServerMetadataUri(server) },
+                            Some: server => new List<Uri> { MetadataDiscoveryUrl.ForAuthorizationServer((Uri)server) },
                             None: () => throw new InvalidOperationException(
                                 "The authorization server in the credential offer does not match any authorization server in the issuer metadata."));
                     },
-                    () => issuerMetadataAuthServers.Select(uri => CreateAuthorizationServerMetadataUri(uri))
+                    () => issuerMetadataAuthServers.Select(server => MetadataDiscoveryUrl.ForAuthorizationServer((Uri)server))
                 );
             },
-            () => [CreateAuthorizationServerMetadataUri(credentialIssuer)]);
+            () => [MetadataDiscoveryUrl.ForAuthorizationServer(credentialIssuer)]);
 
 
         var authorizationServerMetadatas = new List<AuthorizationServerMetadata>();
@@ -503,8 +490,8 @@ public class Oid4VciClientService(
             Some: offer =>
             {
                 var credentialOfferAuthCodeGrantType = from grants in offer.Grants
-                    from code in grants.AuthorizationCode
-                    select code;
+                                                       from code in grants.AuthorizationCode
+                                                       select code;
 
                 return credentialOfferAuthCodeGrantType.Match(
                     Some: code => code.AuthorizationServer.Match(
@@ -518,8 +505,8 @@ public class Oid4VciClientService(
                     None: () =>
                     {
                         var credentialOfferPreAuthGrantType = from grants in offer.Grants
-                            from code in grants.PreAuthorizedCode
-                            select code;
+                                                              from code in grants.PreAuthorizedCode
+                                                              select code;
 
                         return credentialOfferPreAuthGrantType.Match(
                             Some: preAuth =>
@@ -555,17 +542,29 @@ public class Oid4VciClientService(
         {
             return new Uri(authorizationServerMetadata.AuthorizationEndpoint + vciAuthorizationRequest.ToQueryString());
         }
-        
+
         clientAttestation.IfSome(attestation => _httpClient.AddClientAttestation(attestation));
-        
+
         var response = await _httpClient.PostAsync(
             authorizationServerMetadata.PushedAuthorizationRequestEndpoint,
             vciAuthorizationRequest.ToFormUrlEncoded()
         );
+        var responseBody = await response.Content.ReadAsStringAsync();
+
+        if (!response.IsSuccessStatusCode)
+        {
+            throw new InvalidOperationException(
+                $"PAR request failed with status code {(int)response.StatusCode} ({response.StatusCode}). Response body: {responseBody}");
+        }
 
         var parResponse =
-            DeserializeObject<PushedAuthorizationRequestResponse>(await response.Content.ReadAsStringAsync())
+            DeserializeObject<PushedAuthorizationRequestResponse>(responseBody)
             ?? throw new InvalidOperationException("Failed to deserialize the PAR response.");
+
+        if (parResponse.RequestUri is null)
+        {
+            throw new InvalidOperationException($"PAR response did not contain a request_uri. Response body: {responseBody}");
+        }
 
         return new Uri(authorizationServerMetadata.AuthorizationEndpoint
                        + "?client_id=" + vciAuthorizationRequest.ClientId

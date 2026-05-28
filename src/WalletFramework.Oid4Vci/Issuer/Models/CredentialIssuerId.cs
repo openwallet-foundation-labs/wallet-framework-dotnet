@@ -2,18 +2,22 @@ using System.Globalization;
 using Newtonsoft.Json.Linq;
 using WalletFramework.Core.Functional;
 using WalletFramework.Core.Json;
-using WalletFramework.Core.Uri;
 using WalletFramework.Oid4Vci.Issuer.Errors;
 
 namespace WalletFramework.Oid4Vci.Issuer.Models;
 
 public readonly struct CredentialIssuerId
 {
+    private string OriginalString { get; }
     private Uri Value { get; }
     
-    private CredentialIssuerId(Uri value) => Value = value;
+    private CredentialIssuerId(string originalString, Uri value)
+    {
+        OriginalString = originalString;
+        Value = value;
+    }
 
-    public override string ToString() => Value.ToStringWithoutTrail();
+    public override string ToString() => OriginalString;
     
     public static implicit operator Uri(CredentialIssuerId credentialIssuerId) => credentialIssuerId.Value;
 
@@ -23,7 +27,7 @@ public readonly struct CredentialIssuerId
         {
             var str = value.ToString(CultureInfo.InvariantCulture);
             var uri = new Uri(str);
-            return new CredentialIssuerId(uri);
+            return new CredentialIssuerId(str, uri);
         }
         catch (Exception e)
         {
