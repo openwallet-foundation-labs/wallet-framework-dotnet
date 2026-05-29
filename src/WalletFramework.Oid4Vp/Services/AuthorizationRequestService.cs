@@ -56,9 +56,12 @@ public class AuthorizationRequestService(
                 return (await FetchClientMetadata(authRequest)
                     .OnException(_ => Option<ClientMetadata>.None))
                     .Match(
-                        clientMetadataOption => 
+                        clientMetadataOption =>
                         {
                             var error = new InvalidRequestError($"Client ID Scheme {requestObject.ClientIdScheme} is not supported");
+
+                            if (authRequest.ClientIdScheme is null)
+                                return new AuthorizationRequestCancellation(authRequest.GetResponseUriMaybe(), [error]);
 
                             Validation<AuthorizationRequestCancellation, RequestObject> result;
                             try
@@ -135,8 +138,11 @@ public class AuthorizationRequestService(
                         clientMetadataOption =>
                         {
                             var error = new InvalidRequestError($"Client ID Scheme {authRequest.ClientIdScheme} is not supported");
-                
-                            Validation<AuthorizationRequestCancellation, AuthorizationRequest> result = 
+
+                            if (authRequest.ClientIdScheme is null)
+                                return new AuthorizationRequestCancellation(authRequest.GetResponseUriMaybe(), [error]);
+
+                            Validation<AuthorizationRequestCancellation, AuthorizationRequest> result =
                                 authRequest.ClientIdScheme.Value switch
                                 {
                                     RedirectUri => authRequest.WithClientMetadata(clientMetadataOption),
