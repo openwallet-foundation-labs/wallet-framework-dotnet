@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 #### Added
 
+- Add HAIP 1.0 conformance support for OID4VP `x509_hash` client ID validation and OID4VCI metadata discovery.
 - Add new Strong Customer Authentication (SCA) transaction data type according to TS12
 
 #### Fixed
