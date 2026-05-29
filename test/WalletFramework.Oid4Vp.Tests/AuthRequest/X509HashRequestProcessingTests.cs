@@ -1,12 +1,7 @@
-using System.Net;
 using FluentAssertions;
-using Moq;
-using Moq.Protected;
 using WalletFramework.Core.Functional;
 using WalletFramework.Oid4Vp.Models;
-using WalletFramework.Oid4Vp.RelyingPartyAuthentication;
-using WalletFramework.Oid4Vp.RelyingPartyAuthentication.Abstractions;
-using WalletFramework.Oid4Vp.Services;
+using static WalletFramework.Oid4Vp.Tests.AuthRequest.AuthorizationRequestServiceFactory;
 using static WalletFramework.Oid4Vp.Tests.AuthRequest.Samples.X509HashSamples;
 
 namespace WalletFramework.Oid4Vp.Tests.AuthRequest;
@@ -37,34 +32,7 @@ public class X509HashRequestProcessingTests
 
     private static AuthorizationRequestUri ReferenceUri()
     {
-        var uri = new Uri($"openid4vp://?client_id=x509_hash:placeholder&request_uri={Uri.EscapeDataString(RequestUri)}");
+        var uri = new Uri($"openid4vp://?client_id={ClientIdScheme.X509HashScheme}:placeholder&request_uri={Uri.EscapeDataString(RequestUri)}");
         return AuthorizationRequestUri.FromUri(uri).UnwrapOrThrow();
-    }
-
-    private static AuthorizationRequestService CreateServiceReturning(string requestObjectJwt)
-    {
-        var handler = new Mock<HttpMessageHandler>();
-        handler
-            .Protected()
-            .Setup<Task<HttpResponseMessage>>(
-                "SendAsync",
-                ItExpr.IsAny<HttpRequestMessage>(),
-                ItExpr.IsAny<CancellationToken>())
-            .ReturnsAsync(new HttpResponseMessage(HttpStatusCode.OK)
-            {
-                Content = new StringContent(requestObjectJwt)
-            });
-
-        var httpClientFactory = new Mock<IHttpClientFactory>();
-        httpClientFactory
-            .Setup(factory => factory.CreateClient(It.IsAny<string>()))
-            .Returns(() => new HttpClient(handler.Object));
-
-        var rpAuthService = new Mock<IRpAuthService>();
-        rpAuthService
-            .Setup(service => service.Authenticate(It.IsAny<RequestObject>()))
-            .ReturnsAsync(RpAuthResult.GetWithLevelUnknown());
-
-        return new AuthorizationRequestService(httpClientFactory.Object, rpAuthService.Object);
     }
 }

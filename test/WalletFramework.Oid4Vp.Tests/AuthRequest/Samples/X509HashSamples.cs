@@ -2,17 +2,19 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using Microsoft.IdentityModel.Tokens;
+using WalletFramework.Oid4Vp.Models;
 
 namespace WalletFramework.Oid4Vp.Tests.AuthRequest.Samples;
 
 public static class X509HashSamples
 {
     private const string ResponseUri = "https://verifier.example.com/response";
+    private const string MismatchedCertificateHash = "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA";
 
     public static string SignedRequestObjectWithMatchingCertificateHash()
     {
         var chain = CreateLeafSignedByCa();
-        var clientId = $"x509_hash:{LeafCertificateHash(chain.Leaf)}";
+        var clientId = $"{ClientIdScheme.X509HashScheme}:{LeafCertificateHash(chain.Leaf)}";
 
         return BuildSignedRequestObject(clientId, chain, includeX5c: true);
     }
@@ -20,7 +22,7 @@ public static class X509HashSamples
     public static string SignedRequestObjectWithMismatchedCertificateHash()
     {
         var chain = CreateLeafSignedByCa();
-        const string clientId = "x509_hash:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA";
+        var clientId = $"{ClientIdScheme.X509HashScheme}:{MismatchedCertificateHash}";
 
         return BuildSignedRequestObject(clientId, chain, includeX5c: true);
     }
@@ -28,7 +30,7 @@ public static class X509HashSamples
     public static string SignedRequestObjectWithoutX5c()
     {
         var chain = CreateLeafSignedByCa();
-        const string clientId = "x509_hash:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA";
+        var clientId = $"{ClientIdScheme.X509HashScheme}:{MismatchedCertificateHash}";
 
         return BuildSignedRequestObject(clientId, chain, includeX5c: false);
     }
