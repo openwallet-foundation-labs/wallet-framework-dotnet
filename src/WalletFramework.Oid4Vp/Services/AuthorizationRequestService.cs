@@ -59,24 +59,41 @@ public class AuthorizationRequestService(
                         clientMetadataOption => 
                         {
                             var error = new InvalidRequestError($"Client ID Scheme {requestObject.ClientIdScheme} is not supported");
-    
-                Validation<AuthorizationRequestCancellation, RequestObject> result = 
-                    requestObject.ClientIdScheme.Value switch
-                    {
-                        X509SanDns => requestObject
-                            .ValidateJwtSignature()
-                            .ValidateTrustChain()
-                            .ValidateSanName()
-                            .WithX509()
-                            .WithClientMetadata(clientMetadataOption),
-                        RedirectUri => requestObject
-                            .ValidateClientIdPrefix()
-                            .WithClientMetadata(clientMetadataOption),
-                        //TODO: Remove Did in the future (kept for now for compatibility)
-                        Did => requestObject
-                            .WithClientMetadata(clientMetadataOption),
-                        _ => new AuthorizationRequestCancellation(authRequest.GetResponseUriMaybe(), [error])
-                    };
+
+                            Validation<AuthorizationRequestCancellation, RequestObject> result;
+                            try
+                            {
+                                result = requestObject.ClientIdScheme.Value switch
+                                {
+                                    X509SanDns => requestObject
+                                        .ValidateJwtSignature()
+                                        .ValidateTrustChain()
+                                        .ValidateSanName()
+                                        .WithX509()
+                                        .WithClientMetadata(clientMetadataOption),
+                                    X509Hash => requestObject
+                                        .ValidateJwtSignature()
+                                        .ValidateTrustChain()
+                                        .ValidateCertificateHash()
+                                        .WithX509()
+                                        .WithClientMetadata(clientMetadataOption),
+                                    RedirectUri => requestObject
+                                        .ValidateClientIdPrefix()
+                                        .WithClientMetadata(clientMetadataOption),
+                                    //TODO: Remove Did in the future (kept for now for compatibility)
+                                    Did => requestObject
+                                        .WithClientMetadata(clientMetadataOption),
+                                    _ => new AuthorizationRequestCancellation(authRequest.GetResponseUriMaybe(), [error])
+                                };
+                            }
+                            catch (Exception exception)
+                            {
+                                var validationError = new InvalidRequestError(
+                                    $"Validation of the request object for Client ID Scheme {requestObject.ClientIdScheme} failed",
+                                    exception);
+                                result = new AuthorizationRequestCancellation(
+                                    authRequest.GetResponseUriMaybe(), [validationError]);
+                            }
 
                             return result;
                         },

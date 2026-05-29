@@ -3,6 +3,8 @@ using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using LanguageExt;
 using Org.BouncyCastle.X509;
+using WalletFramework.Core.Base64Url;
+using WalletFramework.Core.Encoding;
 using WalletFramework.Core.Functional;
 using WalletFramework.Core.X509;
 using WalletFramework.Oid4Vp.DcApi.Models;
@@ -176,6 +178,22 @@ public static class RequestObjectExtensions
             .Any(sanDnsName => requestObject.ClientId.EndsWith(sanDnsName.Split("*").Last()))
             ? requestObject
             : throw new InvalidOperationException("SAN does not match Client ID");
+    }
+
+    /// <summary>
+    ///     Validates that the client ID equals the base64url-encoded SHA-256 hash of the DER-encoded leaf certificate.
+    /// </summary>
+    /// <returns>The validated request object</returns>
+    /// <exception cref="InvalidOperationException">Throws when validation fails</exception>
+    public static RequestObject ValidateCertificateHash(this RequestObject requestObject)
+    {
+        var leafCertificateDer = requestObject.GetLeafCertificate().GetEncoded();
+        var leafCertificateHash = Sha256Hash.ComputeHash(leafCertificateDer);
+        var expectedClientId = Base64UrlString.CreateBase64UrlString(leafCertificateHash.AsBytes).AsString;
+
+        return requestObject.ClientId == expectedClientId
+            ? requestObject
+            : throw new InvalidOperationException("Leaf certificate hash does not match Client ID");
     }
 
     /// <summary>
