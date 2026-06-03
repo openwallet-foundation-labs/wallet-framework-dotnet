@@ -56,33 +56,68 @@ public class AuthorizationRequestService(
                 return (await FetchClientMetadata(authRequest)
                     .OnException(_ => Option<ClientMetadata>.None))
                     .Match(
-                        clientMetadataOption => 
+                        clientMetadataOption =>
                         {
-                            var error = new InvalidRequestError($"Client ID Scheme {requestObject.ClientIdScheme} is not supported");
-    
-                Validation<AuthorizationRequestCancellation, RequestObject> result = 
-                    requestObject.ClientIdScheme.Value switch
-                    {
-                        X509SanDns => requestObject
-                            .ValidateJwtSignature()
-                            .ValidateTrustChain()
-                            .ValidateSanName()
-                            .WithX509()
-                            .WithClientMetadata(clientMetadataOption),
-                        RedirectUri => requestObject
-                            .ValidateClientIdPrefix()
-                            .WithClientMetadata(clientMetadataOption),
-                        //TODO: Remove Did in the future (kept for now for compatibility)
-                        Did => requestObject
-                            .WithClientMetadata(clientMetadataOption),
-                        _ => new AuthorizationRequestCancellation(authRequest.GetResponseUriMaybe(), [error])
-                    };
+                            if (authRequest.ClientIdScheme is not { } clientIdScheme)
+                            {
+                                var error = new InvalidRequestError(
+                                    $"Client ID Scheme {authRequest.ClientIdScheme} is not supported");
+                                return new AuthorizationRequestCancellation(authRequest.GetResponseUriMaybe(), [error]);
+                            }
+
+                            var unsupportedSchemeError = new InvalidRequestError(
+                                $"Client ID Scheme {clientIdScheme.AsString()} is not supported");
+
+                            Validation<AuthorizationRequestCancellation, RequestObject> result;
+                            try
+                            {
+                                result = clientIdScheme.Value switch
+                                {
+                                    X509SanDns => ValidateSignedX509Request(
+                                        requestObject,
+                                        request => request.ValidateSanName(),
+                                        clientMetadataOption),
+                                    X509Hash => ValidateSignedX509Request(
+                                        requestObject,
+                                        request => request.ValidateCertificateHash(),
+                                        clientMetadataOption),
+                                    RedirectUri => requestObject
+                                        .ValidateClientIdPrefix()
+                                        .WithClientMetadata(clientMetadataOption),
+                                    //TODO: Remove Did in the future (kept for now for compatibility)
+                                    Did => requestObject
+                                        .WithClientMetadata(clientMetadataOption),
+                                    _ => new AuthorizationRequestCancellation(authRequest.GetResponseUriMaybe(), [unsupportedSchemeError])
+                                };
+                            }
+                            catch (Exception exception)
+                            {
+                                var validationError = new InvalidRequestError(
+                                    $"Validation of the request object for Client ID Scheme {clientIdScheme.AsString()} failed",
+                                    exception);
+                                result = new AuthorizationRequestCancellation(
+                                    authRequest.GetResponseUriMaybe(), [validationError]);
+                            }
 
                             return result;
                         },
                         cancellation => cancellation);
             },
             seq => seq);
+    }
+
+    private static RequestObject ValidateSignedX509Request(
+        RequestObject requestObject,
+        Func<RequestObject, RequestObject> validateClientIdentity,
+        Option<ClientMetadata> clientMetadataOption)
+    {
+        var signedRequestObject = requestObject
+            .ValidateJwtSignature()
+            .ValidateTrustChain();
+
+        return validateClientIdentity(signedRequestObject)
+            .WithX509()
+            .WithClientMetadata(clientMetadataOption);
     }
 
     private async Task<Validation<AuthorizationRequestCancellation, AuthorizationRequest>> GetAuthRequestByValue(
@@ -118,8 +153,11 @@ public class AuthorizationRequestService(
                         clientMetadataOption =>
                         {
                             var error = new InvalidRequestError($"Client ID Scheme {authRequest.ClientIdScheme} is not supported");
-                
-                            Validation<AuthorizationRequestCancellation, AuthorizationRequest> result = 
+
+                            if (authRequest.ClientIdScheme is null)
+                                return new AuthorizationRequestCancellation(authRequest.GetResponseUriMaybe(), [error]);
+
+                            Validation<AuthorizationRequestCancellation, AuthorizationRequest> result =
                                 authRequest.ClientIdScheme.Value switch
                                 {
                                     RedirectUri => authRequest.WithClientMetadata(clientMetadataOption),

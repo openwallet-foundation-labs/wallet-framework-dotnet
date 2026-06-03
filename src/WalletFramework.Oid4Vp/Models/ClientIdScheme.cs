@@ -18,6 +18,11 @@ public record ClientIdScheme
         X509SanDns,
 
         /// <summary>
+        ///     The X509 hash client ID scheme.
+        /// </summary>
+        X509Hash,
+
+        /// <summary>
         ///     The verifier attestation client ID scheme.
         /// </summary>
         VerifierAttestation,
@@ -42,6 +47,11 @@ public record ClientIdScheme
     ///     The X509 SAN DNS scheme.
     /// </summary>
     public const string X509SanDnsScheme = "x509_san_dns";
+
+    /// <summary>
+    ///     The X509 hash scheme.
+    /// </summary>
+    public const string X509HashScheme = "x509_hash";
         
     /// <summary>
     ///     The Redirect Uri scheme.
@@ -73,6 +83,7 @@ public record ClientIdScheme
         input switch
         {
             X509SanDnsScheme => new ClientIdScheme(X509SanDns),
+            X509HashScheme => new ClientIdScheme(X509Hash),
             RedirectUriScheme => new ClientIdScheme(RedirectUri),
             DidScheme => new ClientIdScheme(Did),
             VerifierAttestationScheme =>
@@ -92,6 +103,7 @@ public record ClientIdScheme
         => clientIdScheme.Value switch
         {
             X509SanDns => X509SanDnsScheme,
+            X509Hash => X509HashScheme,
             RedirectUri => RedirectUriScheme,
             Did => DidScheme,
             ClientIdSchemeValue.VerifierAttestation => VerifierAttestationScheme,

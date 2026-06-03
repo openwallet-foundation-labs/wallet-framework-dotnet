@@ -28,7 +28,7 @@ public record AuthorizationRequest
     public const string DcApiJwt = "dc_api.jwt";
 
     private static readonly string[] SupportedClientIdSchemes =
-        [RedirectUriScheme, VerifierAttestationScheme, X509SanDnsScheme];
+        [RedirectUriScheme, VerifierAttestationScheme, X509SanDnsScheme, X509HashScheme];
 
     /// <summary>
     ///     Gets the client id scheme.

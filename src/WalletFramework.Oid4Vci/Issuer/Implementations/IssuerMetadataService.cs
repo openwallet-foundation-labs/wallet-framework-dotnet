@@ -1,5 +1,6 @@
 using WalletFramework.Core.Functional;
 using WalletFramework.Core.Localization;
+using WalletFramework.Oid4Vci.Metadata;
 using WalletFramework.Oid4Vci.Issuer.Abstractions;
 using WalletFramework.Oid4Vci.Issuer.Models;
 using static WalletFramework.Core.Json.JsonFun;
@@ -13,13 +14,7 @@ public class IssuerMetadataService(IHttpClientFactory httpClientFactory) : IIssu
     
     public async Task<Validation<IssuerMetadata>> ProcessMetadata(Uri issuerEndpoint, Locale language)
     {
-        var baseEndpoint = issuerEndpoint
-            .AbsolutePath
-            .EndsWith("/")
-            ? issuerEndpoint
-            : new Uri(issuerEndpoint.OriginalString + "/");
-        
-        var metadataUrl = new Uri(baseEndpoint, ".well-known/openid-credential-issuer");
+        var metadataUrl = MetadataDiscoveryUrl.ForCredentialIssuer(issuerEndpoint);
         
         _httpClient.DefaultRequestHeaders.Add("Accept-Language", language);
         
