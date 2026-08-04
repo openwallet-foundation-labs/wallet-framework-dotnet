@@ -24,10 +24,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 #### Changed
 
 - SD-JWT holder presentation APIs now take structured claim paths instead of raw path strings.
+- Credential Requests always send the key proof of possession in the `proofs` array; the deprecated `proof` parameter is no longer used.
 
 #### Removed
 
 - Removed support for Hyperledger Aries Stack
+- Removed the obsolete `ProofOfPossession` type and the `CredentialRequest.Proof` property.
 
 ### [3.0.1] - 2026.02.27
 

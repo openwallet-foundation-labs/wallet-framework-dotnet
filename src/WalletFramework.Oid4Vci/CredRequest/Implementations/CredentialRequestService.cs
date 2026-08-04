@@ -36,6 +36,8 @@ public class CredentialRequestService(
 {
     private const int MaxBatchSize = 10;
 
+    private const int SingleProofBatchSize = 1;
+
     public async Task<Validation<IEnumerable<CredentialResponse>>> RequestCredentials(
         KeyValuePair<CredentialConfigurationId, SupportedCredentialConfiguration> configurationPair,
         IssuerMetadata issuerMetadata,
@@ -140,33 +142,21 @@ public class CredentialRequestService(
             oauthToken => oauthToken.CNonce,
             dPopToken => dPopToken.Token.CNonce);
 
-        var proof = Option<ProofOfPossession>.None;
         var proofs = Option<ProofsOfPossession>.None;
         var sessionTranscript = Option<SessionTranscript>.None;
 
         await keyId.IfSomeAsync(async id =>
         {
-            await issuerMetadata.BatchCredentialIssuance.Match(
-                Some: async batchCredentialIssuance =>
-                {
-                    await batchCredentialIssuance.BatchSize.Match(
-                        Some: async batchSize =>
-                        {
-                            proofs = await GetProofsOfPossessionAsync(
-                                Math.Min(MaxBatchSize, batchSize),
-                                id,
-                                issuerMetadata,
-                                cNonce);
-                        },
-                        None: async () =>
-                        {
-                            proof = await GetProofOfPossessionAsync(id, issuerMetadata, cNonce);
-                        });
-                },
-                None: async () => proof = await GetProofOfPossessionAsync(id, issuerMetadata, cNonce));
+            var batchSize = issuerMetadata.BatchCredentialIssuance.Match(
+                Some: batchCredentialIssuance => batchCredentialIssuance.BatchSize.Match(
+                    Some: size => Math.Min(MaxBatchSize, size),
+                    None: () => SingleProofBatchSize),
+                None: () => SingleProofBatchSize);
+
+            proofs = await GetProofsOfPossessionAsync(batchSize, id, issuerMetadata, cNonce);
         });
 
-        return new CredentialRequest(credentialIdentification, format, specVersion, proof, proofs, sessionTranscript);
+        return new CredentialRequest(credentialIdentification, format, specVersion, proofs, sessionTranscript);
     }
 
     private async Task<string> GenerateKbProofOfPossession(
@@ -182,16 +172,6 @@ public class CredentialRequestService(
             clientOptions.Value.ClientId,
             Option<IEnumerable<string>>.None,
             Option<string>.None);
-
-    private async Task<ProofOfPossession> GetProofOfPossessionAsync(
-        KeyId keyId,
-        IssuerMetadata issuerMetadata,
-        string cNonce) =>
-        new()
-        {
-            ProofType = "jwt",
-            Jwt = await GenerateKbProofOfPossession(keyId, issuerMetadata, cNonce)
-        };
 
     private async Task<ProofsOfPossession> GetProofsOfPossessionAsync(
         int batchSize,
