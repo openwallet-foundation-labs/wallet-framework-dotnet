@@ -19,13 +19,11 @@ public record CredentialRequest(
     OneOf<CredentialIdentifier, CredentialConfigurationId> CredentialIdentification,
     CredentialFormat Format,
     Option<int> SpecVersion,
-    Option<ProofOfPossession> Proof,
     Option<ProofsOfPossession> Proofs,
     Option<SessionTranscript> SessionTranscript);
 
 public static class CredentialRequestFun
 {
-    private const string ProofJsonKey = "proof";
     private const string ProofsJsonKey = "proofs";
     private const string FormatJsonKey = "format";
     private const string SessionTranscriptKey = "session_transcript";
@@ -36,11 +34,6 @@ public static class CredentialRequestFun
     {
         var result = new JObject();
 
-        request.Proof.IfSome(proof =>
-        {
-            result.Add(ProofJsonKey, JObject.FromObject(proof));
-        });
-        
         request.Proofs.IfSome(proofs =>
         {
             result.Add(ProofsJsonKey, proofs.EncodeToJson());
