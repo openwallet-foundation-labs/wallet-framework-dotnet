@@ -1,7 +1,9 @@
+using System.Text;
 using FluentAssertions;
 using LanguageExt;
 using Moq;
 using Newtonsoft.Json.Linq;
+using WalletFramework.Core.Base64Url;
 using WalletFramework.Core.ClaimPaths;
 using WalletFramework.Core.Credentials.Abstractions;
 using WalletFramework.Core.Encoding;
@@ -117,14 +119,14 @@ public class Ts12PaymentTransactionDataTests
         var sample = Ts12PaymentTransactionDataSamples.GetBase64UrlString(originalJson);
         var reserializedJson = JObject.Parse(originalJson).ToString(Newtonsoft.Json.Formatting.None);
         var reserializedSample = Ts12PaymentTransactionDataSamples.GetBase64UrlString(reserializedJson);
-        var expectedHash = Sha256Hash.ComputeHash(sample.AsByteArray).AsHex;
-        var reserializedHash = Sha256Hash.ComputeHash(reserializedSample.AsByteArray).AsHex;
+        var expectedHash = HashOfEncodedString(sample);
+        var reserializedHash = HashOfEncodedString(reserializedSample);
 
         var sut = TransactionData.FromBase64Url(sample).UnwrapOrThrow();
 
         sut.AsT3.TransactionDataProperties.Encoded.Should().Be(sample);
-        sut.Hash(TransactionDataHashesAlg.Sha256).AsHex.Should().Be(expectedHash);
-        sut.Hash(TransactionDataHashesAlg.Sha256).AsHex.Should().NotBe(reserializedHash);
+        sut.Hash(TransactionDataHashesAlg.Sha256).AsBase64Url.Should().Be(expectedHash);
+        sut.Hash(TransactionDataHashesAlg.Sha256).AsBase64Url.Should().NotBe(reserializedHash);
     }
 
     [Fact]
@@ -217,7 +219,7 @@ public class Ts12PaymentTransactionDataTests
             credential,
             Option<List<ClaimQuery>>.None,
             new List<TransactionData> { transactionData });
-        var expectedHash = transactionData.Hash(TransactionDataHashesAlg.Sha256).AsHex;
+        var expectedHash = transactionData.Hash(TransactionDataHashesAlg.Sha256).AsBase64Url;
         Option<IEnumerable<string>> capturedHashes = Option<IEnumerable<string>>.None;
         Option<string> capturedHashesAlg = Option<string>.None;
         var sdJwtVcHolderService = new Mock<ISdJwtVcHolderService>();
@@ -250,4 +252,11 @@ public class Ts12PaymentTransactionDataTests
             alg => alg.Should().Be("sha-256"),
             () => Assert.Fail("Expected transaction_data_hashes_alg to be present"));
     }
+
+    // sha-256 over the ASCII bytes of the base64url string itself (no decoding before hashing),
+    // encoded as base64url per OID4VP 1.0 B.3.3.1
+    private static string HashOfEncodedString(Base64UrlString encoded) =>
+        Base64UrlString
+            .CreateBase64UrlString(Sha256Hash.ComputeHash(Encoding.UTF8.GetBytes(encoded.AsString)).AsBytes)
+            .AsString;
 }

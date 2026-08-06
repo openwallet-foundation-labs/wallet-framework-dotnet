@@ -1,5 +1,7 @@
 using FluentAssertions;
+using WalletFramework.Core.Base64Url;
 using WalletFramework.Core.Credentials.Abstractions;
+using WalletFramework.Core.Functional;
 using WalletFramework.Oid4Vp.Dcql;
 using WalletFramework.Oid4Vp.Models;
 using WalletFramework.Oid4Vp.Tests.Dcql.Samples;
@@ -10,6 +12,20 @@ namespace WalletFramework.Oid4Vp.Tests.TransactionDatas;
 
 public class TransactionDataTests
 {
+    [Fact]
+    public void Hash_Is_Computed_Over_The_Encoded_String_And_Base64Url_Encoded()
+    {
+        var encoded = Base64UrlString
+            .FromString(TransactionDataSamples.PaymentTransactionDataForPid)
+            .UnwrapOrThrow();
+
+        var transactionData = TransactionData.FromBase64Url(encoded).UnwrapOrThrow();
+
+        var hash = transactionData.Hash(TransactionDataHashesAlg.Sha256);
+
+        hash.AsBase64Url.Should().Be(TransactionDataSamples.PaymentTransactionDataForPidHash);
+    }
+
     [Fact]
     public void Transaction_Data_Are_Matched_To_Candidate_Correctly()
     {

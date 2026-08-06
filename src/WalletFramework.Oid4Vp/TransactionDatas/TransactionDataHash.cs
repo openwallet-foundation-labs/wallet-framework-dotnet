@@ -1,3 +1,5 @@
+using System.Text;
+using WalletFramework.Core.Base64Url;
 using WalletFramework.Core.Encoding;
 
 namespace WalletFramework.Oid4Vp.TransactionDatas;
@@ -10,9 +12,9 @@ namespace WalletFramework.Oid4Vp.TransactionDatas;
 public readonly struct TransactionDataHash(Sha256Hash hash, TransactionDataHashesAlg alg)
 {
     public TransactionDataHashesAlg Alg { get; } = alg;
-    
-    public string AsHex => hash.AsHex;
-}    
+
+    public string AsBase64Url => Base64UrlString.CreateBase64UrlString(hash.AsBytes).AsString;
+}
 
 public static class TransactionDataHashFun
 {
@@ -20,7 +22,7 @@ public static class TransactionDataHashFun
     {
         var hashWith256 = new Func<TransactionData, TransactionDataHash>(data =>
         {
-            var bytes = data.GetEncoded().AsByteArray;
+            var bytes = Encoding.UTF8.GetBytes(data.GetEncoded().AsString);
             var hash = Sha256Hash.ComputeHash(bytes);
             return new TransactionDataHash(hash, TransactionDataHashesAlg.Sha256);
         });
