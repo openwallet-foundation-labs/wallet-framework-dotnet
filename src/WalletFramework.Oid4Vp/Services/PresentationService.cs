@@ -72,8 +72,8 @@ public class PresentationService : IPresentationService
                     });
                 });
 
-            var txDataHashesAsHexOption = txDataHashesOption
-                .OnSome(hashes => hashes.Select(hash => hash.AsHex));
+            var txDataHashesAsBase64UrlOption = txDataHashesOption
+                .OnSome(hashes => hashes.Select(hash => hash.AsBase64Url));
 
             var txDataHashesAlgOption = txDataHashesOption
                 .OnSome(hashes => hashes.First().Alg.AsString);
@@ -104,7 +104,7 @@ public class PresentationService : IPresentationService
                     presentation = await _sdJwtVcHolderService.CreatePresentation(
                         sdJwt,
                         sdJwtPaths,
-                        txDataHashesAsHexOption,
+                        txDataHashesAsBase64UrlOption,
                         txDataHashesAlgOption,
                         audience,
                         authorizationRequest.Nonce);
