@@ -1,6 +1,5 @@
 using WalletFramework.Core.Functional;
 using WalletFramework.MdocLib;
-using WalletFramework.TestSamples;
 using WalletFramework.MdocVc.Serialization;
 using WalletFramework.Core.Credentials;
 using WalletFramework.Core.Cryptography.Models;
@@ -8,6 +7,7 @@ using FluentAssertions;
 using Newtonsoft.Json.Linq;
 using LanguageExt;
 using WalletFramework.MdocVc.Persistence;
+using WalletFramework.TestSamples;
 using Xunit;
 
 namespace WalletFramework.MdocVc.Tests;

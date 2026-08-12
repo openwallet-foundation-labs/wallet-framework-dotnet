@@ -53,7 +53,7 @@ public record SdJwtCredentialRecord : RecordBase
     {
         var credentialId = CredentialId.ValidCredentialId(RecordId.ToString()).UnwrapOrThrow();
         var setId = Core.Credentials.CredentialSetId.ValidCredentialSetId(CredentialSetId).UnwrapOrThrow();
-        var keyId = Core.Cryptography.Models.KeyId.ValidKeyId(KeyId).UnwrapOrThrow();
+        var keyId = KeyId.AsOption().OnSome(keyId => Core.Cryptography.Models.KeyId.ValidKeyId(keyId).ToOption());
         var state = Enum.Parse<CredentialState>(CredentialState);
         var expires = ExpiresAt is null ? Option<DateTime>.None : Option<DateTime>.Some(ExpiresAt.Value);
 

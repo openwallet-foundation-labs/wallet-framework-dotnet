@@ -2,11 +2,10 @@ using FluentAssertions;
 using LanguageExt;
 using Microsoft.Extensions.DependencyInjection;
 using WalletFramework.Core.Credentials;
-using WalletFramework.Oid4Vc.Oid4Vp;
-using WalletFramework.Oid4Vc.Oid4Vp.Models;
-using WalletFramework.Oid4Vc.Oid4Vp.Persistence;
+using WalletFramework.Oid4Vp;
+using WalletFramework.Oid4Vp.Models;
+using WalletFramework.Oid4Vp.Persistence;
 using WalletFramework.Storage.Database;
-using WalletFramework.Storage;
 
 namespace WalletFramework.Storage.Tests;
 

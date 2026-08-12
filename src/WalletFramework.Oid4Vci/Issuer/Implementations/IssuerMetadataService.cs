@@ -1,0 +1,30 @@
+using WalletFramework.Core.Functional;
+using WalletFramework.Core.Localization;
+using WalletFramework.Oid4Vci.Metadata;
+using WalletFramework.Oid4Vci.Issuer.Abstractions;
+using WalletFramework.Oid4Vci.Issuer.Models;
+using static WalletFramework.Core.Json.JsonFun;
+using static WalletFramework.Oid4Vci.Issuer.Models.IssuerMetadata;
+
+namespace WalletFramework.Oid4Vci.Issuer.Implementations;
+
+public class IssuerMetadataService(IHttpClientFactory httpClientFactory) : IIssuerMetadataService
+{
+    private readonly HttpClient _httpClient = httpClientFactory.CreateClient();
+    
+    public async Task<Validation<IssuerMetadata>> ProcessMetadata(Uri issuerEndpoint, Locale language)
+    {
+        var metadataUrl = MetadataDiscoveryUrl.ForCredentialIssuer(issuerEndpoint);
+        
+        _httpClient.DefaultRequestHeaders.Add("Accept-Language", language);
+        
+        var response = await _httpClient.GetAsync(metadataUrl);
+        if (response.IsSuccessStatusCode)
+        {
+            var str = await response.Content.ReadAsStringAsync();
+            return ParseAsJObject(str).OnSuccess(ValidIssuerMetadata);
+        }
+        
+        throw new HttpRequestException($"Failed to get Issuer metadata. Status code is {response.StatusCode}");
+    }
+}
