@@ -87,4 +87,13 @@ public static class ClaimPathFun
 
         return JsonPath.ValidJsonPath(jsonPath.ToString()).UnwrapOrThrow();
     }
+
+    public static Validation<ClaimPathSelection> ProcessWith(this ClaimPath path, JObject jObject) =>
+        path.GetPathComponents().Aggregate(
+            ClaimPathSelection.Create([(JToken)jObject]),
+            (validation, component) => validation.OnSuccess(selection =>
+                component.Match(
+                    s => ClaimPathSelectionFun.SelectObjectKey(selection, s),
+                    i => ClaimPathSelectionFun.SelectArrayIndex(selection, i),
+                    _ => ClaimPathSelectionFun.SelectAllArrayElements(selection))));
 }

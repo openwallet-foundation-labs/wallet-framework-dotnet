@@ -1,3 +1,0 @@
-namespace WalletFramework.Oid4Vc.WalletAttestations.Issuance;
-
-public record WalletAttestationIssuanceResponse;

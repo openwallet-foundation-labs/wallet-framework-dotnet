@@ -1,21 +1,12 @@
 using Microsoft.Extensions.DependencyInjection;
-using WalletFramework.Core.Credentials;
-using WalletFramework.MdocVc;
+using WalletFramework.Credentials.CredentialSet.Persistence;
 using WalletFramework.MdocVc.Persistence;
-using WalletFramework.Storage;
-using WalletFramework.Storage.Database;
 using WalletFramework.Storage.Database.DependencyInjection;
 using WalletFramework.Storage.Tests.TestModels;
 using WalletFramework.Storage.Unencrypted.DependencyInjection;
-using WalletFramework.SdJwtVc;
 using WalletFramework.SdJwtVc.Persistence;
-using WalletFramework.Oid4Vc.CredentialSet.Models;
-using WalletFramework.Oid4Vc.CredentialSet.Persistence;
-using WalletFramework.Oid4Vc.Oid4Vci.AuthFlow;
-using WalletFramework.Oid4Vc.Oid4Vci.AuthFlow.Models;
-using WalletFramework.Oid4Vc.Oid4Vci.AuthFlow.Persistence;
-using WalletFramework.Oid4Vc.Oid4Vp.Persistence;
-using WalletFramework.Oid4Vc.Oid4Vp;
+using WalletFramework.Oid4Vci.AuthFlow.Persistence;
+using WalletFramework.Oid4Vp.Persistence;
 
 namespace WalletFramework.Storage.Tests;
 

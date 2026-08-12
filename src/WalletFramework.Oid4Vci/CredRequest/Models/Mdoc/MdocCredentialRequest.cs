@@ -1,0 +1,33 @@
+using LanguageExt;
+using WalletFramework.MdocLib;
+using WalletFramework.Oid4Vci.CredConfiguration.Models.Mdoc;
+
+namespace WalletFramework.Oid4Vci.CredRequest.Models.Mdoc;
+
+public record MdocCredentialRequest
+{
+    public CredentialRequest VciRequest { get; }
+    
+    public DocType DocType { get; }
+    
+    public Option<bool> NamespacedData { get; }
+
+    public MdocCredentialRequest(CredentialRequest credentialRequest, MdocConfiguration configuration)
+    {
+        VciRequest = credentialRequest;
+        DocType = configuration.DocType;
+        NamespacedData = false;
+    }
+}
+
+public static class MdocCredentialRequestFun
+{
+    public static string EncodeToJson(this MdocCredentialRequest request)
+    {
+        var json = request.VciRequest.EncodeToJson();
+        
+        json.Add("doctype", request.DocType.ToString());
+
+        return json.ToString();
+    }
+}
