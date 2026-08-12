@@ -8,6 +8,8 @@ public static class TransactionDataSamples
     public const string PaymentTransactionDataForPid =
         "eyJwYXltZW50X2RhdGEiOnsicGF5ZWUiOiJBQkMgQmFuayIsImN1cnJlbmN5X2Ftb3VudCI6eyJjdXJyZW5jeSI6IkVVUiIsInZhbHVlIjoiODAwIn19LCJ0cmFuc2FjdGlvbl9kYXRhX2hhc2hlc19hbGciOlsic2hhLTI1NiJdLCJjcmVkZW50aWFsX2lkcyI6WyJwaWQiXSwidHlwZSI6InBheW1lbnRfZGF0YSJ9";
 
+    public const string PaymentTransactionDataForPidHash = "LSmXQMjCLNV24gObvbOOrJQVgBZLhg0yO8zaqgB0S3w";
+
     private const string AuthRequestWithTransactionDataTemplate = @"{
   ""response_uri"": ""https://test.test.test.io/openid4vp/authorization-response"",
   ""transaction_data"": [
