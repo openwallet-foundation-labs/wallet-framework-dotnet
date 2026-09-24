@@ -1,4 +1,9 @@
-# Wallet Framework for .NET
+#  ⚠️ IMPORTANT: PROJECT ARCHIVED
+Development in Wallet Framework for .Net ended in September 2026 when the maintainers decided to archive the project. OpenWallet thanks the maintainers / contributors for all of their hard work and effort.
+
+For any questions or issues, email support@lfdecentralizedtrust.org
+
+---# Wallet Framework for .NET
 
 Wallet Framework for .NET is an open framework for building digital identity wallets with a focus on [OID4VC](https://openid.net/openid4vc/), [SD-JWT](https://datatracker.ietf.org/doc/html/draft-ietf-oauth-selective-disclosure-jwt-05) and mdoc (ISO/IEC 18013-5).
 
